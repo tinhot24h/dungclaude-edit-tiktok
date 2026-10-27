@@ -22,6 +22,7 @@ from fonts import FONTS
 import ai_translate
 import ai33_audio
 import audio_files
+import library_store
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / '.local'
@@ -95,6 +96,24 @@ def delete_audio(aid):
     (DATA/'previews'/('audio-'+aid+'.json')).unlink(missing_ok=True)
 
 
+def videos():
+    rows=[]
+    for folder in projects():
+        try:data=json.loads((folder/'source.json').read_text(encoding='utf-8'));stamp=(folder/'source').stat().st_mtime
+        except (OSError,ValueError):continue
+        if isinstance(data,dict) and data.get('id')==folder.name:rows.append({**data,'thumb':'/media/thumb/'+folder.name,'uploaded':stamp})
+    return sorted(rows,key=lambda r:r['uploaded'],reverse=True)
+
+
+def thumbnail(key):
+    target=DATA/key/'thumb.jpg'
+    if not target.is_file():
+        duration=json.loads((DATA/key/'source.json').read_text(encoding='utf-8')).get('duration',0)
+        subprocess.run(['ffmpeg','-v','error','-nostdin','-y','-ss',str(min(1,duration/3)),'-i',str(DATA/key/'source'),'-frames:v','1',
+                        '-vf','scale=160:284:force_original_aspect_ratio=increase,crop=160:284','-q:v','5',str(target)],capture_output=True,check=True,timeout=20)
+    return target.read_bytes()
+
+
 def storage():
     folders=projects()
     return dict(projects=len(folders),project_bytes=sum(folder_size(f) for f in folders),
@@ -133,57 +152,79 @@ def validate_options(opts,strict=True):
     return opts
 
 
+def library_audio(aid,label):
+    if not isinstance(aid,str) or not PROJECT.fullmatch(aid) or not (AUDIO/(aid+'.mp3')).is_file():raise ValueError(label+' không còn trong thư viện. Hãy nhập hoặc tải lại audio.')
+    return AUDIO/(aid+'.mp3')
+
+
 def compose(folder,options):
+    """Build the FFmpeg command(s); a hardware encoder gets a libx264 fallback command."""
     folder=Path(folder)
     video=probe(folder/'source')
-    aid=options.get('audio_asset_id','')
-    audio_path=None;audio=None
-    if aid:
-        if not isinstance(aid,str) or not re.fullmatch('[a-f0-9]{32}',aid) or not (AUDIO/(aid+'.mp3')).is_file():raise ValueError('MP3 không còn trong thư viện. Hãy nhập hoặc tải lại audio.')
-        audio_path=AUDIO/(aid+'.mp3');audio=media_engine.probe(audio_path)
+    audio_path=audio=music_path=music=None
+    if options.get('audio_asset_id',''):
+        audio_path=library_audio(options['audio_asset_id'],'MP3');audio=media_engine.probe(audio_path)
+    if options.get('music_asset_id',''):
+        music_path=library_audio(options['music_asset_id'],'Nhạc nền');music=media_engine.probe(music_path)
     frame=FRAMES/(options.get('frame_id','')+'.png') if options['frame_style']=='custom' else None
-    return media_engine.build(folder,options,folder/'source',video,audio_path,audio,frame)
+    command,plan=media_engine.build(folder,options,folder/'source',video,audio_path,audio,frame,music_path,music)
+    fallback=None
+    if plan['encoder']!='cpu':
+        fallback,_=media_engine.build(folder,{**options,'encoder':'cpu'},folder/'source',video,audio_path,audio,frame,music_path,music)
+    return command,plan,fallback
 
 
-def render(job_id,command,plan,name,cancel=None):
+def render(job_id,command,plan,name,cancel=None,fallback=None):
     cancel=cancel or threading.Event()
     folder=DATA/job_id;process=None;acquired=False
+    output=folder/plan.get('output','review.mp4');length=plan.get('output_duration',plan.get('duration',1)) or 1
     result={'state':'error','error':'Xuất video bị gián đoạn.','name':name}
     try:
         while not cancel.is_set():
             acquired=RENDER_LOCK.acquire(timeout=.1)
             if acquired:break
         if cancel.is_set():return
-        with LOCK:JOBS[job_id]={'state':'rendering','progress':0,'name':name,'plan':plan}
-        progress=folder/'progress.txt';progress.unlink(missing_ok=True)
-        with (folder/'render-error.log').open('wb') as err:
-            process=subprocess.Popen(command,cwd=folder,stdout=subprocess.DEVNULL,stderr=err)
-            deadline=time.monotonic()+7200
-            while process.poll() is None:
-                if cancel.wait(.15):
-                    process.terminate()
-                    try:process.wait(timeout=3)
-                    except subprocess.TimeoutExpired:process.kill();process.wait()
-                    break
-                if time.monotonic()>deadline:
-                    process.kill();process.wait();raise TimeoutError('Quá 2 giờ xử lý. Giảm thời lượng/độ phân giải.')
-                try:
-                    values=re.findall(r'out_time_us=(\d+)',progress.read_text(errors='replace')[-10000:])
-                    percent=min(99,round(int(values[-1])/1000000/plan['duration']*100)) if values else 0
-                    with LOCK:JOBS[job_id]['progress']=percent
-                except OSError:pass
+        started=time.time()
+        with LOCK:JOBS[job_id]={'state':'rendering','progress':0,'name':name,'plan':plan,'eta':None,'encoder':plan.get('encoder','cpu')}
+        progress=folder/'progress.txt'
+        for attempt in [command]+([fallback] if fallback else []):
+            progress.unlink(missing_ok=True)
+            with (folder/'render-error.log').open('wb') as err:
+                process=subprocess.Popen(attempt,cwd=folder,stdout=subprocess.DEVNULL,stderr=err)
+                deadline=time.monotonic()+7200
+                while process.poll() is None:
+                    if cancel.wait(.15):
+                        process.terminate()
+                        try:process.wait(timeout=3)
+                        except subprocess.TimeoutExpired:process.kill();process.wait()
+                        break
+                    if time.monotonic()>deadline:
+                        process.kill();process.wait();raise TimeoutError('Quá 2 giờ xử lý. Giảm thời lượng/độ phân giải.')
+                    try:
+                        values=re.findall(r'out_time_us=(\d+)',progress.read_text(errors='replace')[-10000:])
+                        percent=min(99,round(int(values[-1])/1000000/length*100)) if values else 0
+                        elapsed=time.time()-started
+                        with LOCK:JOBS[job_id].update(progress=percent,eta=round(elapsed*(100-percent)/percent) if percent>=3 else None)
+                    except OSError:pass
             if cancel.is_set():return
-            if process.returncode:raise ValueError('FFmpeg xuất lỗi. Kiểm tra media và thông số, hoặc giảm độ phân giải.')
-        actual=media_engine.probe(folder/'review.mp4')
+            if not process.returncode:break
+            if attempt is not fallback and fallback:
+                # Hardware encoders fail on some drivers; finish the export on the CPU instead.
+                with LOCK:JOBS[job_id].update(progress=0,eta=None,encoder='cpu',note='Card đồ họa không xuất được, chuyển sang CPU.')
+                started=time.time();continue
+            raise ValueError('FFmpeg xuất lỗi. Kiểm tra media và thông số, hoặc giảm độ phân giải.')
+        actual=media_engine.probe(output)
         if (actual['width'],actual['height'])!=(plan['width'],plan['height']):raise ValueError('Kích thước xuất không đúng yêu cầu.')
-        result={'state':'done','progress':100,'url':f'/download/{job_id}','name':name,'plan':plan,'duration':actual['duration']}
+        with LOCK:encoder=JOBS[job_id].get('encoder','cpu')
+        result={'state':'done','progress':100,'url':f'/download/{job_id}','name':name,'plan':plan,'duration':actual['duration'],
+                'file':output.name,'preview':output.name=='preview.mp4','encoder':encoder,'seconds':round(time.time()-started,1)}
     except (subprocess.SubprocessError,OSError,ValueError,TimeoutError) as exc:
         result={'state':'error','error':str(exc),'name':name}
     finally:
         if process is not None and process.poll() is None:process.kill();process.wait()
         with LOCK:
             if cancel.is_set():
-                (folder/'review.mp4').unlink(missing_ok=True)
+                output.unlink(missing_ok=True)
                 result={'state':'cancelled','name':name,'progress':0}
             JOBS[job_id]=result
             CANCELS.pop(job_id,None)
@@ -260,7 +301,7 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == '/':
             return self.respond(200, (ROOT / 'index.html').read_bytes(), 'text/html; charset=utf-8')
-        if path in ('/studio.css','/studio.js','/ai_ui.js','/audio_ui.js','/editor_ui.js','/timeline_ui.js'):
+        if path in ('/studio.css','/studio.js','/ai_ui.js','/audio_ui.js','/editor_ui.js','/timeline_ui.js','/history_ui.js','/workspace_ui.js'):
             mime = 'text/css' if path.endswith('.css') else 'text/javascript'
             return self.respond(200, (ROOT/path.lstrip('/')).read_bytes(), mime+'; charset=utf-8')
         if path in ('/assets/'+font[0] for font in FONTS.values()):
@@ -298,6 +339,23 @@ class Handler(BaseHTTPRequestHandler):
                                                   for name in ('openai','gemini')}})
         if path == '/health':
             return self.respond(200, {'status': 'ok','version':VERSION})
+        library=re.fullmatch(r'/library/(projects|templates)(?:/([a-f0-9]{32}))?',path)
+        if library:
+            try:
+                if library[2]:return self.respond(200,library_store.read(DATA/'library',library[1],library[2]))
+                return self.respond(200,{'items':library_store.items(DATA/'library',library[1])})
+            except ValueError as error:return self.respond(404,{'error':str(error)})
+        if path == '/media/videos':
+            return self.respond(200,{'videos':videos()})
+        thumb=re.fullmatch(r'/media/thumb/([a-f0-9]{32})',path)
+        if thumb and (DATA/thumb[1]/'source').is_file():
+            try:return self.respond(200,thumbnail(thumb[1]),'image/jpeg')
+            except (OSError,ValueError,subprocess.SubprocessError):return self.respond(404,{'error':'Chưa tạo được ảnh nhỏ.'})
+        if path == '/frames':
+            items=[{'id':f.stem,'url':'/frames/'+f.stem} for f in sorted(FRAMES.glob('*.png'),key=lambda f:f.stat().st_mtime,reverse=True) if PROJECT.fullmatch(f.stem)]
+            return self.respond(200,{'frames':items})
+        if path == '/encoders':
+            return self.respond(200, {'hardware':media_engine.hardware_encoders()})
         if path == '/storage':
             return self.respond(200, storage())
         match = re.fullmatch(r'/(jobs|download)/([a-f0-9]{32})', path)
@@ -306,11 +364,11 @@ class Handler(BaseHTTPRequestHandler):
             job = load_job(key)
             if kind == 'jobs' and job:
                 return self.respond(200, job)
-            output = DATA / key / 'review.mp4'
+            output = DATA / key / ('preview.mp4' if job and job.get('file') == 'preview.mp4' else 'review.mp4')
             if kind == 'download' and job and job['state'] == 'done' and output.is_file():
                 self.send_response(200)
                 self.send_header('Content-Type', 'video/mp4')
-                self.send_header('Content-Disposition', "attachment; filename=\"review.mp4\"; filename*=UTF-8''"+quote(job.get('name','review')+'.mp4'))
+                self.send_header('Content-Disposition', "attachment; filename=\"review.mp4\"; filename*=UTF-8''"+quote(job.get('name','review')+('-xem-thu' if job.get('preview') else '')+'.mp4'))
                 self.send_header('Content-Length', str(output.stat().st_size))
                 self.end_headers()
                 try:
@@ -448,12 +506,20 @@ class Handler(BaseHTTPRequestHandler):
                 if isinstance(days,bool) or not isinstance(days,int) or not 1 <= days <= 3650:
                     raise ValueError('Số ngày phải từ 1 đến 3650.')
                 return self.respond(200, cleanup(days))
+            library=re.fullmatch(r'/library/(projects|templates)/(save|([a-f0-9]{32})/delete)',path)
+            if library:
+                if library[3]:
+                    library_store.delete(DATA/'library',library[1],library[3])
+                    return self.respond(200,{'items':library_store.items(DATA/'library',library[1])})
+                if not 0 < size <= library_store.LIMIT:
+                    raise ValueError('Dự án quá lớn để lưu (tối đa 512 KB).')
+                return self.respond(200,library_store.save(DATA/'library',library[1],json.loads(self.rfile.read(size))))
             delete_match=re.fullmatch(r'/audio/([a-f0-9]{32})/delete',path)
             if delete_match:
                 delete_audio(delete_match[1])
                 return self.respond(200, storage())
             if path == '/design':
-                if not 0 < size <= 8192:
+                if not 0 < size <= 65536:
                     raise ValueError('Yêu cầu không hợp lệ.')
                 opts = validate_options(json.loads(self.rfile.read(size)),strict=False)
                 custom = None
@@ -477,7 +543,7 @@ class Handler(BaseHTTPRequestHandler):
                     result=dict(job)
                 return self.respond(200,result)
             if path == '/render':
-                if not 0 < size <= 8192:
+                if not 0 < size <= 65536:
                     raise ValueError('Yêu cầu không hợp lệ.')
                 opts = validate_options(json.loads(self.rfile.read(size)))
                 key = opts.get('id', '')
@@ -491,7 +557,7 @@ class Handler(BaseHTTPRequestHandler):
                         return self.respond(409, {'error': 'Clip đang được xử lý.'})
                     JOBS[key] = {'state': 'queued'}
                 try:
-                    command,plan=compose(folder,opts)
+                    command,plan,fallback=compose(folder,opts)
                 except ValueError:
                     with LOCK:
                         JOBS.pop(key, None)
@@ -499,7 +565,7 @@ class Handler(BaseHTTPRequestHandler):
                 name=asset_store.clean_name(opts.get('project_name'),'review-video').removesuffix('.mp4')
                 cancel=threading.Event()
                 with LOCK:CANCELS[key]=cancel
-                threading.Thread(target=render,args=(key,command,plan,name,cancel),daemon=True).start()
+                threading.Thread(target=render,args=(key,command,plan,name,cancel,fallback),daemon=True).start()
                 return self.respond(202, {'id': key})
             self.respond(404, {'error': 'Không tìm thấy.'})
         except ai33_audio.AudioError as error:
@@ -518,5 +584,6 @@ if __name__ == '__main__':
         swept = cleanup(keep_days())
         if swept['removed']:
             print(f"Removed {swept['removed']} video project(s) idle for over {keep_days()} days ({swept['freed']//1048576} MB).", flush=True)
+    threading.Thread(target=media_engine.hardware_encoders,daemon=True).start()
     print(f'Review Studio {VERSION} running on port {address[1]}', flush=True)
     ThreadingHTTPServer(address, Handler).serve_forever()

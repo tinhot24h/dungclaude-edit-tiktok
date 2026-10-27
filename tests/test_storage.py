@@ -1,6 +1,8 @@
 import http.client
 import json
 import os
+import shutil
+import sys
 import tempfile
 import threading
 import time
@@ -73,6 +75,37 @@ class StorageTests(unittest.TestCase):
             self.assertEqual(status,400)
         status,data=self.call('POST','/storage/cleanup',b'{"days":7}')
         self.assertEqual(status,200);self.assertIn('project_bytes',json.loads(data))
+
+    @unittest.skipUnless(shutil.which('ffmpeg'),'FFmpeg required')
+    def test_hardware_failure_falls_back_to_cpu(self):
+        key='9'*32;self.project(key)
+        broken=[sys.executable,'-c','raise SystemExit(3)']
+        working=['ffmpeg','-v','error','-y','-f','lavfi','-i','testsrc2=s=72x128:r=30:d=0.5','-c:v','libx264','-pix_fmt','yuv420p','review.mp4']
+        app.render(key,broken,dict(width=72,height=128,duration=.5,encoder='h264_nvenc'),'gpu',None,working)
+        job=app.JOBS.pop(key)
+        self.assertEqual((job['state'],job['encoder']),('done','cpu'),job)
+
+    def test_project_and_template_library(self):
+        status,data=self.call('POST','/library/projects/save',json.dumps({'name':'  Dự án   A ','data':{'video_id':'a'*32,'design':{'color':'#ffffff'}}}).encode())
+        self.assertEqual(status,200);saved=json.loads(data)
+        self.assertEqual(saved['name'],'Dự án A')
+        status,data=self.call('POST','/library/projects/save',json.dumps({'id':saved['id'],'name':'Dự án B','data':{}}).encode())
+        status,data=self.call('GET','/library/projects')
+        self.assertEqual([(i['id'],i['name']) for i in json.loads(data)['items']],[(saved['id'],'Dự án B')])
+        status,data=self.call('GET','/library/projects/'+saved['id'])
+        self.assertEqual((status,json.loads(data)['data']),(200,{}))
+        self.assertEqual(json.loads(self.call('GET','/library/templates')[1])['items'],[])
+        for body in (b'[]',b'{"name":"","data":{}}',b'{"name":"x","data":[]}',json.dumps({'id':'../x','name':'x','data':{}}).encode()):
+            self.assertEqual(self.call('POST','/library/templates/save',body)[0],400)
+        self.assertEqual(self.call('POST',f"/library/projects/{saved['id']}/delete")[0],200)
+        self.assertEqual(self.call('GET','/library/projects/'+saved['id'])[0],404)
+
+    def test_video_library_lists_uploaded_sources(self):
+        key='7'*32;folder=self.project(key)
+        (folder/'source.json').write_text(json.dumps({'id':key,'name':'clip.mp4','duration':3}),encoding='utf-8')
+        self.project('6'*32)
+        rows=json.loads(self.call('GET','/media/videos')[1])['videos']
+        self.assertEqual([(r['id'],r['thumb']) for r in rows],[(key,'/media/thumb/'+key)])
 
     def test_delete_audio(self):
         aid='a'*32

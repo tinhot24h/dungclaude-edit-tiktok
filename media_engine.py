@@ -7,6 +7,7 @@ from design import artwork,layout,frame_box,video_box
 from fonts import FONTS
 
 MAX_SECONDS=1800  # longest source video and export, shared with app.probe
+HARDWARE=('h264_nvenc','h264_qsv','h264_amf','h264_videotoolbox')
 RESOLUTIONS={'720':(720,1280),'1080':(1080,1920),'2k':(1440,2560),'4k':(2160,3840)}
 
 
@@ -25,13 +26,37 @@ def number(opts,key,default,lo,hi):
     return float(value)
 
 
-def plan(opts,video,audio=None):
+def keep(cuts,start,end):
+    """Source ranges kept after removing `cuts` ([[a,b],...] in source seconds) from start..end."""
+    if not isinstance(cuts,list) or len(cuts)>200:raise ValueError('Danh sách đoạn xóa không hợp lệ.')
+    removed=[]
+    for cut in cuts:
+        if not isinstance(cut,list) or len(cut)!=2 or any(isinstance(v,bool) or not isinstance(v,(int,float)) or not math.isfinite(v) for v in cut) or cut[0]>=cut[1]:
+            raise ValueError('Đoạn xóa không hợp lệ.')
+        removed.append((max(start,float(cut[0])),min(end,float(cut[1]))))
+    segments=[];at=start
+    for a,b in sorted(r for r in removed if r[1]-r[0]>1e-6):
+        if a-at>=.01:segments.append((at,a))
+        at=max(at,b)
+    if end-at>=.01:segments.append((at,end))
+    return segments
+
+
+def choice(opts,key,default,allowed):
+    value=opts.get(key,default)
+    if value not in allowed:raise ValueError('Thông số không hợp lệ: '+key)
+    return value
+
+
+def plan(opts,video,audio=None,music=None):
     vs=number(opts,'video_start',0,0,video['duration'])
     ve=number(opts,'video_end',0,0,video['duration']+.05) or video['duration']
     ve=min(ve,video['duration'])
     vr=number(opts,'video_speed',1,.25,4)
     if ve-vs<.05:raise ValueError('Đoạn video cần dài ít nhất 0,05 giây.')
-    vdur=(ve-vs)/vr
+    segments=keep(opts.get('video_cuts',[]),vs,ve)
+    if sum(b-a for a,b in segments)<.05:raise ValueError('Đoạn video còn lại sau khi xóa cần dài ít nhất 0,05 giây.')
+    vdur=sum(b-a for a,b in segments)/vr
     mode=opts.get('audio_mode','replace' if audio else 'original')
     if mode not in ('original','replace','mix'):raise ValueError('Chế độ âm thanh không hợp lệ.')
     if mode in ('replace','mix') and not audio:raise ValueError('Chọn MP3 trước khi thay/trộn âm thanh.')
@@ -61,7 +86,25 @@ def plan(opts,video,audio=None):
         if duration<vdur-.05:warnings.append(f'Cắt {vdur-duration:.2f}s cuối track video.')
         if duration<adur-.05:warnings.append(f'Cắt {adur-duration:.2f}s cuối track MP3.')
         if duration>adur+.05:warnings.append(f'Đệm im lặng {duration-adur:.2f}s cuối MP3.')
-    return dict(video_start=vs,video_end=ve,video_speed=vr,video_duration=vdur,audio_start=astart,audio_end=aend,
+    fps=choice(opts,'fps',30,(30,60))
+    motion=choice(opts,'video_motion','none',('none','zoom_in','zoom_out'))
+    amount=number(opts,'motion_amount',12,0,50)
+    loudness=choice(opts,'loudness','off',('off','tiktok'))
+    encoder=choice(opts,'encoder','cpu',('cpu',)+HARDWARE)
+    track=None
+    if music:
+        mstart=number(opts,'music_start',0,0,music['duration'])
+        if music['duration']-mstart<.05:raise ValueError('Đoạn nhạc nền cần dài ít nhất 0,05 giây.')
+        if not isinstance(opts.get('music_loop',True),bool) or not isinstance(opts.get('music_duck',True),bool):raise ValueError('Tùy chọn nhạc nền không hợp lệ.')
+        track=dict(start=mstart,volume=number(opts,'music_volume',30,0,300),fade_in=number(opts,'music_fade_in',1,0,10),
+                   fade_out=number(opts,'music_fade_out',2,0,10),loop=opts.get('music_loop',True),duck=opts.get('music_duck',True))
+    preview=opts.get('preview_at')
+    if preview is not None:
+        preview=number(opts,'preview_at',0,0,duration)
+        if duration-preview<.05:preview=max(0,duration-5)
+    return dict(video_start=vs,video_end=ve,video_speed=vr,video_duration=vdur,video_segments=segments,fps=fps,motion=motion,motion_amount=amount,
+                loudness=loudness,encoder=encoder,music=track,preview_at=preview,
+                output_duration=min(5,duration-preview) if preview is not None else duration,audio_start=astart,audio_end=aend,
                 audio_speed=ar,audio_offset=delay,audio_duration=adur,active_audio=active,audio_mode=mode,
                 audio_volume=volume,original_volume=original,duration=duration,resolution=resolution,
                 width=RESOLUTIONS[resolution][0],height=RESOLUTIONS[resolution][1],quality=quality,warnings=warnings)
@@ -75,9 +118,43 @@ def tempo(rate):
     return ','.join(filters)
 
 
-def build(folder,opts,video_path,video,audio_path=None,audio=None,frame_path=None):
-    folder=Path(folder);p=plan(opts,video,audio)
-    ow,oh=p['width'],p['height'];scale=ow/720
+def window(segments,offset,variable='t'):
+    """FFmpeg select expression keeping source `segments`, shifted so the input starts at `offset`."""
+    return '+'.join(f"gte({variable},{a-offset:.6f})*lt({variable},{b-offset:.6f})" for a,b in segments)
+
+
+def encoder_args(encoder,quality):
+    high=quality=='high'
+    if encoder=='h264_nvenc':return ['-c:v','h264_nvenc','-preset','p4','-rc','vbr','-cq','19' if high else '24','-b:v','0','-pix_fmt','yuv420p']
+    if encoder=='h264_qsv':return ['-c:v','h264_qsv','-global_quality','19' if high else '24','-pix_fmt','nv12']
+    if encoder=='h264_amf':return ['-c:v','h264_amf','-quality','balanced','-rc','cqp','-qp_i','19' if high else '24','-qp_p','19' if high else '24','-pix_fmt','yuv420p']
+    if encoder=='h264_videotoolbox':return ['-c:v','h264_videotoolbox','-q:v','75' if high else '62','-pix_fmt','yuv420p']
+    return ['-c:v','libx264','-preset','veryfast','-crf','18' if high else '23','-threads','2','-pix_fmt','yuv420p']
+
+
+_ENCODERS=None
+
+
+def hardware_encoders():
+    """Hardware H.264 encoders that can really open on this machine (cached after the first probe)."""
+    global _ENCODERS
+    if _ENCODERS is None:
+        found=[]
+        try:
+            listed=subprocess.run(['ffmpeg','-hide_banner','-encoders'],capture_output=True,text=True,timeout=20).stdout
+            for name in HARDWARE:
+                if name not in listed:continue
+                test=subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-nostdin','-f','lavfi','-i','color=s=256x256:d=0.2',
+                                     '-frames:v','3',*encoder_args(name,'standard'),'-f','null','-'],capture_output=True,timeout=20)
+                if test.returncode==0:found.append(name)
+        except (OSError,subprocess.SubprocessError):pass
+        _ENCODERS=found
+    return list(_ENCODERS)
+
+
+def build(folder,opts,video_path,video,audio_path=None,audio=None,frame_path=None,music_path=None,music=None):
+    folder=Path(folder);p=plan(opts,video,audio,music)
+    ow,oh=p['width'],p['height'];scale=ow/720;fps=p['fps'];duration=p['duration']
     box=video_box(opts);vw=max(2,round(box['width']*scale));vh=max(2,round(box['height']*scale))
     angle=float(opts.get('video_rotation',0));rad=math.radians(angle)
     rw=abs(vw*math.cos(rad))+abs(vh*math.sin(rad));rh=abs(vh*math.cos(rad))+abs(vw*math.sin(rad))
@@ -85,14 +162,21 @@ def build(folder,opts,video_path,video,audio_path=None,audio=None,frame_path=Non
     (folder/'overlay.png').write_bytes(artwork(opts))
     args=['ffmpeg','-hide_banner','-loglevel','error','-nostdin','-y','-ss',str(p['video_start']),'-t',str(p['video_end']-p['video_start']),'-i',str(video_path),'-i','overlay.png']
     graph=[]
-    source='[0:v]setpts=(PTS-STARTPTS)/'+str(p['video_speed'])+',fps=30,format=rgba,'
+    cut=p['video_segments']!=[(p['video_start'],p['video_end'])]
+    if cut:source=f"[0:v]fps={fps},select='{window(p['video_segments'],p['video_start'])}',setpts=N/{fps*p['video_speed']}/TB,fps={fps},format=rgba,"
+    else:source='[0:v]setpts=(PTS-STARTPTS)/'+str(p['video_speed'])+f',fps={fps},format=rgba,'
     fit=opts.get('video_fit','cover')
     if fit=='cover':source+=f'scale={vw}:{vh}:force_original_aspect_ratio=increase,crop={vw}:{vh},'
     elif fit=='contain':source+=f'scale={vw}:{vh}:force_original_aspect_ratio=decrease,pad={vw}:{vh}:(ow-iw)/2:(oh-ih)/2:color=0x00000000,'
     else:source+=f'scale={vw}:{vh},'
-    source+=f'rotate={rad:.12f}:ow=rotw({rad:.12f}):oh=roth({rad:.12f}):c=none,setsar=1,tpad=stop_mode=clone:stop_duration={p["duration"]},trim=duration={p["duration"]}[clip]'
+    if p['motion']!='none' and p['motion_amount']>0:
+        k=p['motion_amount']/100
+        f=f'(1+{k}*t/{duration})' if p['motion']=='zoom_in' else f'(1+{k}*(1-t/{duration}))'
+        source+=(f"scale=w='trunc({vw}*{f}/2)*2':h='trunc({vh}*{f}/2)*2':eval=frame,"
+                 f"crop={vw}:{vh}:x='(trunc({vw}*{f}/2)*2-{vw})/2':y='(trunc({vh}*{f}/2)*2-{vh})/2',")
+    source+=f'rotate={rad:.12f}:ow=rotw({rad:.12f}):oh=roth({rad:.12f}):c=none,setsar=1,tpad=stop_mode=clone:stop_duration={duration},trim=duration={duration}[clip]'
     graph.append(source)
-    graph.append(f'color=c={opts["color"].replace("#","0x")}:s={ow}x{oh}:r=30:d={p["duration"]},format=rgba[base]')
+    graph.append(f'color=c={opts["color"].replace("#","0x")}:s={ow}x{oh}:r={fps}:d={duration},format=rgba[base]')
     x=box['x']*scale;y=box['y']*scale
     graph.append(f'[base][clip]overlay=x={x}+({vw}-overlay_w)/2:y={y}+({vh}-overlay_h)/2:shortest=1:format=auto[placed]')
     graph.append(f'[1:v]scale={ow}:{oh}:flags=lanczos[art]')
@@ -115,16 +199,32 @@ def build(folder,opts,video_path,video,audio_path=None,audio=None,frame_path=Non
     graph.append(f'[{top}]'+(','.join(textfilters) if textfilters else 'null')+',format=yuv420p[out]')
     labels=[]
     if video['has_audio'] and (not p['active_audio'] or p['audio_mode']=='mix'):
-        graph.append(f'[0:a:0]asetpts=PTS-STARTPTS,{tempo(p["video_speed"])},volume={p["original_volume"]/100},aresample=48000,aformat=channel_layouts=stereo,apad,atrim=duration={p["duration"]}[original]')
+        start=f"aselect='{window(p['video_segments'],p['video_start'])}',asetpts=N/SR/TB" if cut else 'asetpts=PTS-STARTPTS'
+        graph.append(f'[0:a:0]{start},{tempo(p["video_speed"])},volume={p["original_volume"]/100},aresample=48000,aformat=channel_layouts=stereo,apad,atrim=duration={duration}[original]')
         labels.append('original')
+    music_track=p['music']
+    duck=bool(music_track and music_track['duck'] and p['active_audio'])
     if p['active_audio']:
         args+=['-ss',str(p['audio_start']),'-t',str(p['audio_end']-p['audio_start']),'-i',str(audio_path)]
-        graph.append(f'[{next_input}:a:0]asetpts=PTS-STARTPTS,{tempo(p["audio_speed"])},volume={p["audio_volume"]/100},aresample=48000,aformat=channel_layouts=stereo,adelay={round(p["audio_offset"]*1000)}:all=1,apad,atrim=duration={p["duration"]}[voice]')
-        labels.append('voice')
-    if len(labels)==2:graph.append('[original][voice]amix=inputs=2:duration=longest:normalize=0,alimiter=limit=0.95:level=false[aout]')
-    elif labels:graph.append(f'[{labels[0]}]alimiter=limit=0.95:level=false[aout]')
+        graph.append(f'[{next_input}:a:0]asetpts=PTS-STARTPTS,{tempo(p["audio_speed"])},volume={p["audio_volume"]/100},aresample=48000,aformat=channel_layouts=stereo,adelay={round(p["audio_offset"]*1000)}:all=1,apad,atrim=duration={duration}'+(',asplit=2[voice][voicekey]' if duck else '[voice]'))
+        labels.append('voice');next_input+=1
+    if music_track:
+        args+=(['-stream_loop','-1'] if music_track['loop'] else [])+['-ss',str(music_track['start']),'-i',str(music_path)]
+        chain=f'[{next_input}:a:0]asetpts=PTS-STARTPTS,aresample=48000,aformat=channel_layouts=stereo,volume={music_track["volume"]/100},apad,atrim=duration={duration}'
+        if music_track['fade_in']>0:chain+=f',afade=t=in:st=0:d={min(music_track["fade_in"],duration)}'
+        if music_track['fade_out']>0:
+            fade=min(music_track['fade_out'],duration);chain+=f',afade=t=out:st={duration-fade}:d={fade}'
+        graph.append(chain+('[musicraw]' if duck else '[music]'))
+        if duck:graph.append('[musicraw][voicekey]sidechaincompress=threshold=0.03:ratio=8:attack=15:release=350[music]')
+        labels.append('music');next_input+=1
+    finish=('loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000,' if p['loudness']=='tiktok' else '')+'alimiter=limit=0.95:level=false[aout]'
+    if len(labels)>1:graph.append(''.join(f'[{label}]' for label in labels)+f'amix=inputs={len(labels)}:duration=longest:normalize=0,{finish}')
+    elif labels:graph.append(f'[{labels[0]}]{finish}')
     script=folder/'render.ffgraph';script.write_text(';\n'.join(graph),encoding='utf-8')
     args+=['-filter_complex_threads','1','-filter_complex_script','render.ffgraph','-map','[out]']
     if labels:args+=['-map','[aout]','-c:a','aac','-b:a','192k']
-    args+=['-c:v','libx264','-preset','veryfast','-crf','18' if p['quality']=='high' else '23','-threads','2','-r','30','-pix_fmt','yuv420p','-t',str(p['duration']),'-movflags','+faststart','-progress','progress.txt','review.mp4']
+    output='preview.mp4' if p['preview_at'] is not None else 'review.mp4'
+    if p['preview_at'] is not None:args+=['-ss',str(p['preview_at'])]
+    args+=[*encoder_args(p['encoder'],p['quality']),'-r',str(fps),'-t',str(p['output_duration']),'-movflags','+faststart','-progress','progress.txt',output]
+    p['output']=output
     return args,p

@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from design import settings,layout
-from media_engine import plan,tempo,probe,build,RESOLUTIONS
+from media_engine import plan,tempo,probe,build,keep,RESOLUTIONS
 
 ROOT=Path(__file__).resolve().parents[1]
 
@@ -22,6 +22,20 @@ class TimingTests(unittest.TestCase):
         with self.assertRaises(ValueError):plan({**opts,'audio_speed':0},video,audio)
         self.assertEqual(tempo(.25),'atempo=0.5,atempo=0.500000000')
         self.assertIn('atempo=2',tempo(4))
+
+    def test_cuts_music_and_preview_plan(self):
+        video=dict(duration=10,has_audio=True);music=dict(duration=3,has_audio=True)
+        self.assertEqual(keep([[2,3],[2.5,4],[9,12]],1,10),[(1,2),(4,9)])
+        p=plan(dict(video_start=1,video_end=10,video_speed=2,video_cuts=[[2,4]]),video)
+        self.assertEqual(p['duration'],3.5)
+        with self.assertRaises(ValueError):plan(dict(video_cuts=[[0,10]]),video)
+        with self.assertRaises(ValueError):plan(dict(video_cuts=[[3,2]]),video)
+        with self.assertRaises(ValueError):plan(dict(video_cuts='x'),video)
+        p=plan(dict(music_volume=50,preview_at=8),video,None,music)
+        self.assertEqual((p['music']['volume'],p['preview_at'],p['output_duration']),(50,8,2))
+        with self.assertRaises(ValueError):plan(dict(fps=24),video)
+        with self.assertRaises(ValueError):plan(dict(encoder='libx265'),video)
+        with self.assertRaises(ValueError):plan(dict(music_loop='yes'),video,None,music)
 
     def test_justify_spans_fill_nonfinal_line(self):
         opts=settings(dict(units='px',title='',body='Một đoạn nội dung tiếng Việt để thử căn đều hai bên với nhiều từ và nhiều dòng.',body_align='justify',body_width=230,body_x=90,body_y=400))
@@ -72,6 +86,28 @@ class NativeRenderTests(unittest.TestCase):
         self.assertAlmostEqual(crossings,880,delta=35) # atempo preserves pitch, replacement is not original 440Hz
         self.render(**options,audio_volume=50)
         self.assertAlmostEqual(rms(samples())/rms(full),.5,delta=.08)
+
+    def test_cuts_music_motion_loudness_and_60fps(self):
+        options=dict(video_end=3,video_cuts=[[.5,1.5]],audio_mode='original',fps=60,video_motion='zoom_in',motion_amount=20,
+                     loudness='tiktok',music_volume=40,music_fade_in=.3,music_fade_out=.3)
+        opts=settings(dict(units='px',title='THỬ',body='',**options))
+        cmd,p=build(self.folder,opts,self.video,self.vi,None,None,None,self.audio,self.ai)
+        result=subprocess.run(cmd,cwd=self.folder,capture_output=True,text=True,timeout=180)
+        self.assertEqual(result.returncode,0,result.stderr[-2000:])
+        actual=probe(self.folder/'review.mp4')
+        self.assertAlmostEqual(actual['duration'],2,delta=.12)
+        rate=subprocess.check_output(['ffprobe','-v','error','-select_streams','v','-show_entries','stream=r_frame_rate','-of','csv=p=0',str(self.folder/'review.mp4')],text=True).strip()
+        self.assertEqual(rate,'60/1')
+
+    def test_ducked_music_and_preview_window(self):
+        options=dict(audio_mode='replace',audio_end=2,duration_policy='video',music_duck=True,preview_at=1)
+        opts=settings(dict(units='px',title='',body='',**options))
+        cmd,p=build(self.folder,opts,self.video,self.vi,self.audio,self.ai,None,self.audio,self.ai)
+        self.assertIn('sidechaincompress',(self.folder/'render.ffgraph').read_text())
+        result=subprocess.run(cmd,cwd=self.folder,capture_output=True,text=True,timeout=180)
+        self.assertEqual(result.returncode,0,result.stderr[-2000:])
+        self.assertEqual(p['output'],'preview.mp4')
+        self.assertAlmostEqual(probe(self.folder/'preview.mp4')['duration'],2,delta=.12)
 
     def test_native_output_dimensions_all_presets(self):
         for resolution,size in RESOLUTIONS.items():
