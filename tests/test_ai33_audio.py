@@ -127,3 +127,59 @@ class AudioApiTests(unittest.TestCase):
 
 
 if __name__=='__main__':unittest.main()
+
+
+class AudioV3ExtrasTests(unittest.TestCase):
+    KEY=dict(api_key='dummy-ai33-key')
+
+    def call(self,fn,raw,response):
+        with patch.object(api.request,'urlopen',return_value=io.BytesIO(json.dumps(response).encode())) as call:
+            result=fn({**self.KEY,**raw})
+        return result,call.call_args.args[0]
+
+    def test_dialogue_sends_speakers_json_and_checks_labels(self):
+        speakers=[dict(voice_id='elevenlabs_hpp4J3VqNfWAUOO0d1Us',speed=1),dict(voice_id='minimax_male-qn-qingse',speed=1.2)]
+        result,req=self.call(api.create_dialogue,dict(text='A> Xin chào.\nB> Chào bạn.',speakers=speakers,delay=.4,with_transcript=True),dict(success=True,task_id='dlg-1'))
+        self.assertEqual(req.full_url,'https://api.ai33.pro/v3/text-to-speech/dialogue')
+        self.assertIn(b'name="speakers"\r\n\r\n[{"voice_id": "elevenlabs_hpp4J3VqNfWAUOO0d1Us", "speed": 1}',req.data)
+        self.assertIn(b'name="delay"\r\n\r\n0.4',req.data)
+        self.assertIn(b'name="with_transcript"\r\n\r\ntrue',req.data)
+        self.assertEqual(result['task_id'],'dlg-1')
+        for bad in (dict(speakers=speakers[:1]),dict(text='không có nhãn'),dict(text='A> x\nC> y'),dict(delay=6),dict(speakers=[dict(voice_id='bad'),speakers[1]])):
+            with self.subTest(bad=bad),self.assertRaises(ValueError):
+                api.dialogue_fields({'text':'A> Xin chào.\nB> Chào.','speakers':speakers,**bad})
+
+    def test_dictionary_crud_and_preview(self):
+        rows=[{'from':'AI','to':'Ây Ai','matchType':'word','caseSensitive':True}]
+        result,req=self.call(api.save_dictionary,dict(name=' Brand ',rules=rows),dict(success=True,dictionary=dict(id=1,name='Brand',rules=rows)))
+        self.assertEqual((req.full_url,req.get_method()),('https://api.ai33.pro/v3/dictionaries','POST'))
+        self.assertEqual(json.loads(req.data),dict(name='Brand',rules=rows))
+        self.assertEqual(result['id'],1)
+        _,req=self.call(api.save_dictionary,dict(id=1,name='Brand',rules=rows),dict(success=True,dictionary=dict(id=1,name='Brand',rules=rows)))
+        self.assertEqual((req.full_url,req.get_method()),('https://api.ai33.pro/v3/dictionaries/1','PUT'))
+        listed,req=self.call(api.dictionaries,{},dict(success=True,data=[dict(id=1,name='Brand',rules=rows),dict(name='no id')]))
+        self.assertEqual(([d['id'] for d in listed['dictionaries']],req.get_method()),([1],'GET'))
+        _,req=self.call(api.delete_dictionary,dict(id=1),dict(success=True))
+        self.assertEqual(req.get_method(),'DELETE')
+        preview,req=self.call(api.preview_dictionary,dict(text='AI hay',rules=rows),dict(success=True,input='AI hay',output='Ây Ai hay'))
+        self.assertEqual((req.full_url,preview['output']),('https://api.ai33.pro/v3/dictionaries/preview','Ây Ai hay'))
+        for bad in ([],[{'from':'','to':'x'}],[{'from':'a','to':'b','matchType':'regex'}]):
+            with self.assertRaises(ValueError):api.rules(bad)
+
+    def test_clone_upload_and_delete(self):
+        with patch.object(api.request,'urlopen',return_value=io.BytesIO(json.dumps(dict(success=True,data=dict(voice_id='123'))).encode())) as call:
+            result=api.clone_voice('dummy-ai33-key','Giọng của tôi','mẫu.mp3',b'ID3fake')
+        req=call.call_args.args[0]
+        self.assertEqual(req.full_url,'https://api.ai33.pro/v3/text-to-speech/voice-clone')
+        self.assertIn('name="voice_name"\r\n\r\nGiọng của tôi'.encode(),req.data)
+        self.assertIn(b'name="audio_file"; filename="',req.data)
+        self.assertEqual(result['voice_id'],'clone_123')
+        with self.assertRaises(ValueError):api.clone_voice('k','x','a.mp3',b'0'*(10*1024*1024+1))
+        _,req=self.call(api.delete_clone,dict(voice_id='clone_123'),dict(success=True))
+        self.assertEqual((req.full_url,req.get_method()),('https://api.ai33.pro/v3/text-to-speech/voice-clone/123','DELETE'))
+
+    def test_voice_filters_and_transcript_url(self):
+        _,req=self.call(api.voice_library,dict(provider='vbee',locale='southern',category='review',voice_ownership='vbee'),dict(success=True,data=[]))
+        self.assertIn('locale=southern',req.full_url);self.assertIn('category=review',req.full_url);self.assertIn('voice_ownership=vbee',req.full_url)
+        task,_=self.call(api.get_task,dict(task_id='t1'),dict(id='t1',status='done',metadata=dict(audio_url='https://media.example/a.mp3',srt_url='https://media.example/a.srt')))
+        self.assertEqual(task['srt_url'],'https://media.example/a.srt')

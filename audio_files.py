@@ -14,6 +14,7 @@ import asset_store
 import ssl
 import os
 import uuid
+import tempfile
 import errno
 from http.client import HTTPException
 
@@ -165,3 +166,17 @@ def import_audio(source,directory,name):
     except (subprocess.SubprocessError,OSError):
         raise api.AudioError('Không đọc được audio nhập. Dùng MP3/WAV/M4A/FLAC/Ogg hợp lệ và FFmpeg có libmp3lame.') from None
     finally:encoded.unlink(missing_ok=True)
+
+
+def subtitles(raw):
+    """Fetch the SRT transcript of a finished task (with_transcript=true) as text; never cached with keys."""
+    detail=api.get_task(raw)
+    if detail['status']!='done' or not detail.get('srt_url'):
+        raise api.AudioError('Tác vụ này chưa có phụ đề. Bật "Xuất kèm phụ đề" khi tạo audio.',409)
+    with tempfile.TemporaryDirectory() as folder:
+        target=Path(folder)/'subtitles.srt'
+        download(detail['srt_url'],target)
+        if target.stat().st_size>2*1024*1024:raise api.AudioError('File phụ đề quá lớn.')
+        text=target.read_bytes().decode('utf-8-sig','replace')
+    if '-->' not in text:raise api.AudioError('Link phụ đề không trả về file SRT hợp lệ.')
+    return dict(task_id=detail['task_id'],srt=text,name=detail.get('name') or detail['task_id'])

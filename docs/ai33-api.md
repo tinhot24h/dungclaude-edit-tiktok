@@ -57,3 +57,12 @@ Download gửi Accept audio, User-Agent và Referer ai33; giữ xác minh TLS v�
 ## Thay đổi 0.8
 
 Key input tự tải giọng/lịch sử sau debounce 800 ms hoặc blur. Phản hồi cũ khi đổi tài khoản bị bỏ qua. Lịch sử cập nhật theo trang hiện tại mỗi 30 giây khi tab audio đang hiển thị, sau tạo và cache audio. Không tự tải hàng loạt file hoặc gửi TTS mới.
+
+## Thay đổi 0.9.2 — đủ bộ API v3 theo tài liệu người dùng cung cấp
+
+- **Text To Dialogue** `POST /v3/text-to-speech/dialogue` (multipart): `text` dùng nhãn `A>`, `B>`…, `speakers` là JSON `[{voice_id,speed}]` (tối thiểu 2, ánh xạ theo thứ tự), `delay` 0–5 giây, `with_transcript` chỉ ở cấp trên cùng, `file_name`, `pronunciation_dictionary_id`. Ứng dụng kiểm tra nhãn trong văn bản không vượt số người nói.
+- **Pronunciation Dictionary** `GET/POST /v3/dictionaries`, `PUT/DELETE /v3/dictionaries/:id`, `POST /v3/dictionaries/preview` (JSON). Quy tắc `{from,to,matchType:word|contains,caseSensitive}`; `id` trả về dùng làm `pronunciation_dictionary_id`.
+- **Clone Voice** `POST /v3/text-to-speech/voice-clone` (multipart `voice_name`, `audio_file` ≤ 10 MB) → `data.voice_id`, dùng dạng `clone_<id>`. **Delete Clone Voice** `DELETE /v3/text-to-speech/voice-clone/:id`.
+- **Voice Library** thêm bộ lọc `tags, locale, age, accent, category, use_case, descriptive`, riêng vbee `voice_ownership`, riêng fishaudio `sort`, `tag`.
+- **Phụ đề**: khi bật `with_transcript`, `metadata.srt_url` của tác vụ được tải qua cùng kiểm tra HTTPS/địa chỉ công khai như audio và trả về file `.srt` cho người dùng; không lưu link có chữ ký.
+- Không gửi `receive_url` (ứng dụng cục bộ dùng polling `GET /v1/task/:id`).

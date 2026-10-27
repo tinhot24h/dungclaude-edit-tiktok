@@ -406,8 +406,15 @@ class Handler(BaseHTTPRequestHandler):
                             out.write(chunk);remaining-=len(chunk)
                     return self.respond(200,audio_files.import_audio(temp,AUDIO,original))
                 finally:temp.unlink(missing_ok=True)
-            if path in ('/audio/voices','/audio/create','/audio/task','/audio/history','/audio/credits','/audio/cache'):
-                if not 0 < size <= (4*1024*1024 if path=='/audio/create' else 32768):
+            if path=='/audio/clone':
+                if not 0<size<=10*1024*1024:raise ValueError('File mẫu giọng tối đa 10 MB.')
+                data=self.rfile.read(size)
+                if len(data)!=size:raise ValueError('Tải mẫu giọng bị gián đoạn.')
+                key=self.headers.get('X-Api-Key','') or None
+                return self.respond(200,ai33_audio.clone_voice(key,unquote(self.headers.get('X-Voice-Name','')),unquote(self.headers.get('X-Filename','sample.mp3')),data))
+            if path in ('/audio/voices','/audio/create','/audio/dialogue','/audio/task','/audio/history','/audio/credits','/audio/cache','/audio/srt',
+                        '/audio/dictionaries','/audio/dictionary/save','/audio/dictionary/delete','/audio/dictionary/preview','/audio/clone/delete'):
+                if not 0 < size <= (4*1024*1024 if path in ('/audio/create','/audio/dialogue') else 262144):
                     raise ValueError('Yêu cầu audio quá lớn hoặc trống.')
                 raw=json.loads(self.rfile.read(size))
                 if not isinstance(raw,dict):
@@ -417,8 +424,8 @@ class Handler(BaseHTTPRequestHandler):
                 try:
                     if path=='/audio/voices':
                         result=ai33_audio.voice_library(raw)
-                    elif path=='/audio/create':
-                        result=ai33_audio.create_tts(raw)
+                    elif path in ('/audio/create','/audio/dialogue'):
+                        result=(ai33_audio.create_tts if path=='/audio/create' else ai33_audio.create_dialogue)(raw)
                         aid=audio_files.asset_id(result['task_id'])
                         record=asset_store.write(AUDIO,aid,name=raw.get('file_name') or result['task_id'],source='ai33',task_id=result['task_id'],voice_id=raw.get('voice_id',''))
                         result['name']=record['name']
@@ -427,10 +434,24 @@ class Handler(BaseHTTPRequestHandler):
                         for task in result['tasks']:
                             record=asset_store.read(AUDIO,audio_files.asset_id(task['task_id']))
                             task['name']=task.get('name') or record.get('name') or task['task_id']
+                            aid=audio_files.asset_id(task['task_id'])
+                            if (AUDIO/(aid+'.mp3')).is_file() and isinstance(record.get('duration'),(int,float)):task['asset']=asset_store.public(record)
                     elif path=='/audio/credits':
                         result=ai33_audio.credits(raw)
                     elif path=='/audio/cache':
                         result=audio_files.cache(raw,AUDIO)
+                    elif path=='/audio/srt':
+                        result=audio_files.subtitles(raw)
+                    elif path=='/audio/dictionaries':
+                        result=ai33_audio.dictionaries(raw)
+                    elif path=='/audio/dictionary/save':
+                        result=ai33_audio.save_dictionary(raw)
+                    elif path=='/audio/dictionary/delete':
+                        result=ai33_audio.delete_dictionary(raw)
+                    elif path=='/audio/dictionary/preview':
+                        result=ai33_audio.preview_dictionary(raw)
+                    elif path=='/audio/clone/delete':
+                        result=ai33_audio.delete_clone(raw)
                     else:
                         detail=ai33_audio.get_task(raw)
                         result={key:value for key,value in detail.items() if key!='audio_url'}

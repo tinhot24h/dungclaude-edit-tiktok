@@ -9,6 +9,8 @@ from urllib import request, error, parse
 
 ROOT = 'https://api.ai33.pro'
 PROVIDERS = ('elevenlabs','minimax','clone','edge','kokoro','vbee','fishaudio')
+# Optional voice-library filters from the v3 docs (vbee/fishaudio specific ones are ignored by other providers).
+FILTERS = ('tags','locale','age','accent','category','use_case','descriptive','voice_ownership','sort','tag')
 
 
 class AudioError(Exception):
@@ -32,9 +34,9 @@ def api_key(raw):
     return key
 
 
-def json_request(path,key,data=None,content_type=None):
+def json_request(path,key,data=None,content_type=None,method=None):
     # Only documented paths are constructed by this module. Never put keys in URLs.
-    req=request.Request(ROOT+path,data=data,headers={'xi-api-key':key,**({'Content-Type':content_type} if content_type else {})})
+    req=request.Request(ROOT+path,data=data,headers={'xi-api-key':key,**({'Content-Type':content_type} if content_type else {})},method=method)
     try:
         with request.urlopen(req,timeout=80) as response:
             body=response.read(8*1024*1024+1)
@@ -75,7 +77,7 @@ def voice_library(raw):
     size=raw.get('page_size',30)
     if isinstance(size,bool) or not isinstance(size,int) or not 1<=size<=100:raise ValueError('Số giọng mỗi trang phải từ 1 đến 100.')
     query=dict(provider=provider,page=page,page_size=size)
-    for field,default,limit in [('language','Vietnamese',100),('gender','',40),('search','',200)]:
+    for field,default,limit in [('language','Vietnamese',100),('gender','',40),('search','',200),*[(f,'',100) for f in FILTERS]]:
         value=raw.get(field,default)
         if not isinstance(value,str) or len(value)>limit:
             raise ValueError('Bộ lọc giọng không hợp lệ.')
@@ -94,8 +96,10 @@ def voice_library(raw):
             preview=https_url(preview) if preview else ''
         except AudioError:
             preview=''
+        tags=item.get('tags') if isinstance(item.get('tags'),list) else []
         voices.append(dict(voice_id=item['voice_id'],name=str(item.get('name',item['voice_id']))[:300],
                            language=str(item.get('language',''))[:100],gender=str(item.get('gender',''))[:40],
+                           tags=[str(t)[:40] for t in tags[:8]],description=str(item.get('description',''))[:300],
                            preview_url=preview))
     pagination=result.get('pagination',{})
     pagination=pagination if isinstance(pagination,dict) else {}
@@ -123,18 +127,7 @@ def tts_fields(raw):
     if not isinstance(transcript,bool):
         raise ValueError('Tùy chọn transcript không hợp lệ.')
     fields=dict(text=text.strip(),voice_id=voice,speed=str(speed),with_transcript=str(transcript).lower())
-    dictionary=raw.get('pronunciation_dictionary_id')
-    if dictionary not in (None,''):
-        if isinstance(dictionary,bool) or not isinstance(dictionary,int) or not 1<=dictionary<=9007199254740991:
-            raise ValueError('ID từ điển phát âm phải là số nguyên dương.')
-        fields['pronunciation_dictionary_id']=str(dictionary)
-    filename=raw.get('file_name','')
-    if not isinstance(filename,str) or len(filename)>120 or '\n' in filename or '\r' in filename:
-        raise ValueError('Tên file audio không hợp lệ.')
-    if filename.strip():
-        fields['file_name']=filename.strip()
-    # No receive_url: a local desktop app cannot receive a public webhook.
-    return fields
+    return common_fields(raw,fields)
 
 
 def form_data(fields):
@@ -150,11 +143,7 @@ def create_tts(raw):
     fields=tts_fields(raw)
     key=api_key(raw)
     body,content_type=form_data(fields)
-    result=json_request('/v3/text-to-speech',key,body,content_type)
-    task=result.get('task_id')
-    if result.get('success') is not True or not isinstance(task,str) or not task.strip() or len(task)>200 or not re.fullmatch('[A-Za-z0-9_-]+',task):
-        raise AudioError('ai33.pro chưa trả task_id hợp lệ. Kiểm tra lịch sử tác vụ trước khi tạo lại để tránh trừ credit trùng.')
-    return dict(task_id=task,state='submitted')
+    return submitted(json_request('/v3/text-to-speech',key,body,content_type))
 
 
 def task_id(raw):
@@ -210,7 +199,10 @@ def get_task(raw):
     audio=metadata.get('audio_url') or ''
     if audio:
         audio=https_url(audio)
-    return dict(task_id=task,status=status,progress=max(0,min(100,progress)),audio_url=audio,
+    srt=metadata.get('srt_url') or ''
+    try:srt=https_url(srt) if srt else ''
+    except AudioError:srt=''
+    return dict(task_id=task,status=status,progress=max(0,min(100,progress)),audio_url=audio,srt_url=srt,
                 credit_cost=cost,type=str(result.get('type',''))[:80],
                 text=str(result.get('text',''))[:1000],name=str(result.get('file_name') or metadata.get('file_name') or metadata.get('filename') or result.get('name') or '')[:120],
                 error='ai33.pro báo lỗi tác vụ. Xem chi tiết trong lịch sử ai33.pro; không tạo lại tự động.' if status=='error' else '')
@@ -237,8 +229,190 @@ def list_tasks(raw):
         if not isinstance(row,dict) or not isinstance(row.get('id'),str) or not re.fullmatch('[A-Za-z0-9_-]{1,200}',row['id']):
             continue
         md=row.get('metadata') if isinstance(row.get('metadata'),dict) else {}
-        tasks.append(dict(task_id=row['id'],status=str(row.get('status',''))[:30],
+        cost=row.get('credit_cost')
+        tasks.append(dict(task_id=row['id'],status=str(row.get('status',''))[:30],progress=row.get('progress') if isinstance(row.get('progress'),(int,float)) and not isinstance(row.get('progress'),bool) else None,
+                          credit_cost=cost if isinstance(cost,(int,float)) and not isinstance(cost,bool) and math.isfinite(cost) else None,
+                          srt_available=bool(md.get('srt_url')),
                           created_at=str(row.get('created_at',''))[:80],type=str(row.get('type',''))[:80],
                           text=str(row.get('text',''))[:1000],name=str(row.get('file_name') or md.get('file_name') or row.get('name') or '')[:120],
                           audio_available=bool((row.get('metadata') or {}).get('audio_url')) if isinstance(row.get('metadata'),dict) else False))
     return dict(tasks=tasks,page=page,has_more=isinstance(result.get('total'),int) and page*20<result['total'])
+
+
+def common_fields(raw,fields):
+    """with_transcript, file_name and pronunciation_dictionary_id are shared by TTS and dialogue."""
+    transcript=raw.get('with_transcript',False)
+    if not isinstance(transcript,bool):
+        raise ValueError('Tùy chọn transcript không hợp lệ.')
+    fields['with_transcript']=str(transcript).lower()
+    dictionary=raw.get('pronunciation_dictionary_id')
+    if dictionary not in (None,''):
+        if isinstance(dictionary,bool) or not isinstance(dictionary,int) or not 1<=dictionary<=9007199254740991:
+            raise ValueError('ID từ điển phát âm phải là số nguyên dương.')
+        fields['pronunciation_dictionary_id']=str(dictionary)
+    filename=raw.get('file_name','')
+    if not isinstance(filename,str) or len(filename)>120 or '\n' in filename or '\r' in filename:
+        raise ValueError('Tên file audio không hợp lệ.')
+    if filename.strip():
+        fields['file_name']=filename.strip()
+    return fields
+
+
+VOICE=r'(?:elevenlabs|minimax|clone|edge|kokoro|vbee|fishaudio)_[^\s\x00-\x1f]+'
+LABEL=re.compile(r'^\s*([A-Z])>',re.M)
+
+
+def dialogue_fields(raw):
+    if not isinstance(raw,dict):
+        raise ValueError('Yêu cầu hội thoại không hợp lệ.')
+    text=raw.get('text')
+    if not isinstance(text,str) or not 1<=len(text.strip())<=1000000:
+        raise ValueError('Văn bản hội thoại phải từ 1 đến 1.000.000 ký tự.')
+    speakers=raw.get('speakers')
+    if not isinstance(speakers,list) or not 2<=len(speakers)<=26:
+        raise ValueError('Hội thoại cần từ 2 đến 26 người nói.')
+    rows=[]
+    for item in speakers:
+        if not isinstance(item,dict) or not isinstance(item.get('voice_id'),str) or len(item['voice_id'])>500 or not re.fullmatch(VOICE,item['voice_id']):
+            raise ValueError('Mỗi người nói cần voice_id có prefix nhà cung cấp.')
+        speed=item.get('speed',1)
+        if isinstance(speed,bool) or not isinstance(speed,(int,float)) or not math.isfinite(speed) or not .5<=speed<=1.5:
+            raise ValueError('Tốc độ người nói phải nằm trong khoảng 0,5–1,5.')
+        rows.append(dict(voice_id=item['voice_id'],speed=speed))
+    labels=sorted(set(LABEL.findall(text)))
+    if not labels:
+        raise ValueError('Đánh dấu từng câu bằng nhãn A>, B>, C>… ở đầu dòng.')
+    if any(ord(label)-65>=len(rows) for label in labels):
+        raise ValueError(f'Văn bản dùng nhãn {labels[-1]}> nhưng mới có {len(rows)} người nói. Thêm người nói hoặc sửa nhãn.')
+    delay=raw.get('delay',0)
+    if isinstance(delay,bool) or not isinstance(delay,(int,float)) or not math.isfinite(delay) or not 0<=delay<=5:
+        raise ValueError('Khoảng nghỉ giữa người nói phải từ 0 đến 5 giây.')
+    fields=dict(text=text.strip(),speakers=json.dumps(rows,ensure_ascii=False),delay=str(delay))
+    return common_fields(raw,fields)
+
+
+def submitted(result):
+    task=result.get('task_id')
+    if result.get('success') is not True or not isinstance(task,str) or not task.strip() or len(task)>200 or not re.fullmatch('[A-Za-z0-9_-]+',task):
+        raise AudioError('ai33.pro chưa trả task_id hợp lệ. Kiểm tra lịch sử tác vụ trước khi tạo lại để tránh trừ credit trùng.')
+    return dict(task_id=task,state='submitted')
+
+
+def create_dialogue(raw):
+    fields=dialogue_fields(raw)
+    key=api_key(raw)
+    body,content_type=form_data(fields)
+    return submitted(json_request('/v3/text-to-speech/dialogue',key,body,content_type))
+
+
+# ---- Pronunciation dictionaries (/v3/dictionaries, JSON body)
+
+def rules(value):
+    if not isinstance(value,list) or not 1<=len(value)<=500:
+        raise ValueError('Từ điển cần từ 1 đến 500 quy tắc.')
+    out=[]
+    for rule in value:
+        if not isinstance(rule,dict):
+            raise ValueError('Quy tắc phát âm không hợp lệ.')
+        source,target=rule.get('from'),rule.get('to')
+        match=rule.get('matchType','word');case=rule.get('caseSensitive',False)
+        if not isinstance(source,str) or not 1<=len(source.strip())<=200 or not isinstance(target,str) or len(target)>200:
+            raise ValueError('Mỗi quy tắc cần chữ gốc (1–200 ký tự) và cách đọc (tối đa 200 ký tự).')
+        if match not in ('word','contains') or not isinstance(case,bool):
+            raise ValueError('matchType chỉ nhận word hoặc contains; caseSensitive là đúng/sai.')
+        out.append({'from':source.strip(),'to':target.strip(),'matchType':match,'caseSensitive':case})
+    return out
+
+
+def dictionary_row(item):
+    if not isinstance(item,dict) or isinstance(item.get('id'),bool) or not isinstance(item.get('id'),int):
+        return None
+    raw=item.get('rules') if isinstance(item.get('rules'),list) else []
+    clean=[]
+    for rule in raw[:500]:
+        if isinstance(rule,dict) and isinstance(rule.get('from'),str):
+            clean.append({'from':rule['from'][:200],'to':str(rule.get('to',''))[:200],'matchType':rule.get('matchType') if rule.get('matchType') in ('word','contains') else 'word','caseSensitive':rule.get('caseSensitive') is True})
+    return dict(id=item['id'],name=str(item.get('name',''))[:120],rules=clean)
+
+
+def dictionary_id(raw):
+    value=raw.get('id') if isinstance(raw,dict) else None
+    if isinstance(value,bool) or not isinstance(value,int) or not 1<=value<=9007199254740991:
+        raise ValueError('ID từ điển không hợp lệ.')
+    return value
+
+
+def dictionaries(raw):
+    result=json_request('/v3/dictionaries',api_key(raw),content_type='application/json')
+    rows=next((result[k] for k in ('data','dictionaries','items') if isinstance(result.get(k),list)),None)
+    if rows is None:
+        raise AudioError('Danh sách từ điển ai33.pro không hợp lệ.')
+    return dict(dictionaries=[r for r in map(dictionary_row,rows) if r])
+
+
+def unwrap(result):
+    for key in ('dictionary','data'):
+        if isinstance(result.get(key),dict):
+            return result[key]
+    return result
+
+
+def save_dictionary(raw):
+    key=api_key(raw)
+    name=raw.get('name')
+    if not isinstance(name,str) or not 1<=len(name.strip())<=120:
+        raise ValueError('Tên từ điển cần từ 1 đến 120 ký tự.')
+    body=json.dumps(dict(name=name.strip(),rules=rules(raw.get('rules'))),ensure_ascii=False).encode()
+    if raw.get('id') is None:
+        result=json_request('/v3/dictionaries',key,body,'application/json')
+    else:
+        result=json_request(f'/v3/dictionaries/{dictionary_id(raw)}',key,body,'application/json','PUT')
+    row=dictionary_row(unwrap(result))
+    if not row:
+        raise AudioError('ai33.pro chưa trả từ điển hợp lệ sau khi lưu.')
+    return row
+
+
+def delete_dictionary(raw):
+    json_request(f'/v3/dictionaries/{dictionary_id(raw)}',api_key(raw),content_type='application/json',method='DELETE')
+    return dict(deleted=True)
+
+
+def preview_dictionary(raw):
+    text=raw.get('text')
+    if not isinstance(text,str) or not 1<=len(text)<=5000:
+        raise ValueError('Văn bản thử cần từ 1 đến 5.000 ký tự.')
+    body=json.dumps(dict(text=text,rules=rules(raw.get('rules'))),ensure_ascii=False).encode()
+    result=unwrap(json_request('/v3/dictionaries/preview',api_key(raw),body,'application/json'))
+    output=result.get('output')
+    if not isinstance(output,str):
+        raise AudioError('ai33.pro chưa trả kết quả xem trước từ điển.')
+    return dict(input=str(result.get('input',text))[:5000],output=output[:5000])
+
+
+# ---- Voice cloning (/v3/text-to-speech/voice-clone)
+
+def clone_voice(key,name,filename,data):
+    if not isinstance(name,str) or not 1<=len(name.strip())<=100 or any(ord(c)<32 for c in name):
+        raise ValueError('Tên giọng nhân bản cần từ 1 đến 100 ký tự.')
+    if not 0<len(data)<=10*1024*1024:
+        raise ValueError('File mẫu giọng tối đa 10 MB.')
+    boundary='ReviewStudio'+uuid.uuid4().hex
+    safe=re.sub(r'[^A-Za-z0-9._-]','_',filename or 'sample.mp3')[-80:] or 'sample.mp3'
+    body=b''.join([f'--{boundary}\r\nContent-Disposition: form-data; name="voice_name"\r\n\r\n'.encode(),name.strip().encode('utf-8'),b'\r\n',
+                   f'--{boundary}\r\nContent-Disposition: form-data; name="audio_file"; filename="{safe}"\r\nContent-Type: application/octet-stream\r\n\r\n'.encode(),data,b'\r\n',
+                   f'--{boundary}--\r\n'.encode()])
+    result=json_request('/v3/text-to-speech/voice-clone',api_key({'api_key':key}),body,'multipart/form-data; boundary='+boundary)
+    voice=unwrap(result).get('voice_id')
+    if isinstance(voice,int) and not isinstance(voice,bool):voice=str(voice)
+    if not isinstance(voice,str) or not re.fullmatch('[A-Za-z0-9_-]{1,200}',voice):
+        raise AudioError('ai33.pro chưa trả voice_id cho giọng nhân bản.')
+    return dict(voice_id=voice if voice.startswith('clone_') else 'clone_'+voice,name=name.strip())
+
+
+def delete_clone(raw):
+    voice=raw.get('voice_id') if isinstance(raw,dict) else None
+    if not isinstance(voice,str) or not re.fullmatch('(?:clone_)?[A-Za-z0-9_-]{1,200}',voice):
+        raise ValueError('voice_id giọng nhân bản không hợp lệ.')
+    json_request('/v3/text-to-speech/voice-clone/'+parse.quote(voice.removeprefix('clone_'),safe=''),api_key(raw),content_type='application/json',method='DELETE')
+    return dict(deleted=True)
