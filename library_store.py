@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-KINDS=('projects','templates')
+KINDS=('projects','templates','styles')
 LIMIT=512*1024
 LOCK=threading.Lock()
 

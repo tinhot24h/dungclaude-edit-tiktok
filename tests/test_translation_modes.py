@@ -142,3 +142,13 @@ class CustomPromptTests(unittest.TestCase):
         result=ai.import_manual(dict(text=json.dumps(dict(script='Chỉ 99k là có ngay.',hook='Giá mềm bất ngờ?',title='GIÁ 150.000Đ',body='Đang có ưu đãi.'))))
         labels=' '.join(result['warnings'])
         self.assertIn('Kịch bản',labels);self.assertIn('Tiêu đề',labels);self.assertNotIn('Hook',labels);self.assertNotIn('Nội dung video',labels)
+
+
+class LooseImportTests(unittest.TestCase):
+    def test_chat_answers_with_fences_text_newlines_and_smart_quotes_import(self):
+        from ai_translate import import_manual
+        fenced='Đây là kết quả:\n```json\n{"hook":"A","hook_options":["B"],"script":"dòng 1\ndòng 2","title":"T","body":"X",}\n```\nChúc bạn thành công!'
+        result=import_manual(dict(text=fenced))
+        self.assertEqual((result['script'],result['title'],result['hook_options']),('dòng 1\ndòng 2','T',['A','B']))
+        self.assertEqual(import_manual(dict(text='{“hook”: “A”, “script”: “S”, “title”: “T”, “body”: “B”}'))['body'],'B')
+        with self.assertRaises(ValueError):import_manual(dict(text='không có JSON nào'))

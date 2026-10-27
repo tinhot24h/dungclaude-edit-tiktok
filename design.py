@@ -75,9 +75,33 @@ def settings(raw):
     for name in TEXT_KEYS:
         if out[name+'_end'] and out[name+'_end']<=out[name+'_start']+.05:
             raise ValueError(TEXT_LABELS[name]+': thời điểm kết thúc phải sau thời điểm bắt đầu (0 = tới hết video).')
+    out['images']=image_layers(out.get('images',[]))
     if out['frame_style']=='custom':
         if not isinstance(out.get('frame_id'),str) or not re.fullmatch('[a-f0-9]{32}',out['frame_id']):
             raise ValueError('Hãy tải khung PNG từ máy trước.')
+    return out
+
+
+MAX_IMAGES=12
+IMAGE_SPEC=dict(x=(-720,1440),y=(-1280,2560),width=(8,2160),height=(8,3840),opacity=(0,100),start=(0,1800),end=(0,1800),rotation=(-180,180))
+
+
+def image_layers(value):
+    """Image/logo/sticker layers in 720x1280 design pixels, drawn above the frame and below the text."""
+    if value in (None,[]):return []
+    if not isinstance(value,list) or len(value)>MAX_IMAGES:raise ValueError(f'Tối đa {MAX_IMAGES} lớp ảnh.')
+    out=[]
+    for item in value:
+        if not isinstance(item,dict) or not isinstance(item.get('id'),str) or not re.fullmatch('[a-f0-9]{32}',item['id']):raise ValueError('Lớp ảnh không hợp lệ.')
+        layer=dict(id=item['id'])
+        for key,(low,high) in IMAGE_SPEC.items():
+            v=item.get(key,{'opacity':100}.get(key,0))
+            if isinstance(v,bool) or not isinstance(v,(int,float)) or not math.isfinite(v) or not low<=v<=high:raise ValueError('Thông số lớp ảnh ngoài giới hạn: '+key)
+            layer[key]=round(float(v),2)
+        if layer['end'] and layer['end']<=layer['start']+.05:raise ValueError('Lớp ảnh: thời điểm kết thúc phải sau thời điểm bắt đầu (0 = tới hết video).')
+        for key in ('uid','name'):
+            if isinstance(item.get(key),str) and len(item[key])<=120:layer[key]=item[key]
+        out.append(layer)
     return out
 
 

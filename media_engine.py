@@ -45,16 +45,18 @@ def keep(cuts,start,end):
 
 
 def ordered(value,total):
-    """Video pieces in playback order ([[a,b],...] source seconds); pieces may be reordered or repeated."""
+    """Video pieces in playback order ([[a,b] or [a,b,speed],...] source seconds); pieces may be reordered or repeated."""
     if value in (None,[]):return []
     if not isinstance(value,list) or len(value)>MAX_PIECES:raise ValueError(f'Tối đa {MAX_PIECES} đoạn video.')
     out=[]
     for item in value:
-        if not isinstance(item,list) or len(item)!=2 or any(isinstance(v,bool) or not isinstance(v,(int,float)) or not math.isfinite(v) for v in item):
+        if not isinstance(item,list) or len(item) not in (2,3) or any(isinstance(v,bool) or not isinstance(v,(int,float)) or not math.isfinite(v) for v in item):
             raise ValueError('Đoạn video không hợp lệ.')
         a,b=max(0.0,float(item[0])),min(float(total),float(item[1]))
+        speed=float(item[2]) if len(item)==3 else 1.0
         if b-a<.02:raise ValueError('Mỗi đoạn video cần dài ít nhất 0,02 giây.')
-        out.append((a,b))
+        if not .25<=speed<=4:raise ValueError('Tốc độ mỗi đoạn video phải từ 0,25× đến 4×.')
+        out.append((a,b,speed))
     return out
 
 
@@ -70,11 +72,11 @@ def plan(opts,video,audio=None,music=None):
     ve=min(ve,video['duration'])
     vr=number(opts,'video_speed',1,.25,4)
     if ve-vs<.05:raise ValueError('Đoạn video cần dài ít nhất 0,05 giây.')
-    segments=ordered(opts.get('video_segments'),video['duration']) or keep(opts.get('video_cuts',[]),vs,ve)
-    if opts.get('video_segments'):vs,ve=min(a for a,_ in segments),max(b for _,b in segments)
+    segments=ordered(opts.get('video_segments'),video['duration']) or [(a,b,1.0) for a,b in keep(opts.get('video_cuts',[]),vs,ve)]
+    if opts.get('video_segments'):vs,ve=min(x[0] for x in segments),max(x[1] for x in segments)
     if len(segments)>MAX_PIECES:raise ValueError(f'Tối đa {MAX_PIECES} đoạn video.')
-    if sum(b-a for a,b in segments)<.05:raise ValueError('Đoạn video còn lại sau khi xóa cần dài ít nhất 0,05 giây.')
-    vdur=sum(b-a for a,b in segments)/vr
+    if sum(b-a for a,b,_ in segments)<.05:raise ValueError('Đoạn video còn lại sau khi xóa cần dài ít nhất 0,05 giây.')
+    vdur=sum((b-a)/k for a,b,k in segments)/vr
     mode=opts.get('audio_mode','replace' if audio else 'original')
     if mode not in ('original','replace','mix'):raise ValueError('Chế độ âm thanh không hợp lệ.')
     if mode in ('replace','mix') and not audio:raise ValueError('Chọn MP3 trước khi thay/trộn âm thanh.')
@@ -165,7 +167,7 @@ def hardware_encoders():
     return list(_ENCODERS)
 
 
-def build(folder,opts,video_path,video,audio_path=None,audio=None,frame_path=None,music_path=None,music=None):
+def build(folder,opts,video_path,video,audio_path=None,audio=None,frame_path=None,music_path=None,music=None,images_dir=None):
     folder=Path(folder);p=plan(opts,video,audio,music)
     ow,oh=p['width'],p['height'];scale=ow/720;fps=p['fps'];duration=p['duration']
     box=video_box(opts);vw=max(2,round(box['width']*scale));vh=max(2,round(box['height']*scale))
@@ -176,13 +178,12 @@ def build(folder,opts,video_path,video,audio_path=None,audio=None,frame_path=Non
     args=['ffmpeg','-hide_banner','-loglevel','error','-nostdin','-y']
     pieces=p['video_segments'];count=len(pieces)
     # Each piece is its own seeked input so reordered pieces never buffer the whole source.
-    for a,b in pieces:args+=['-ss',str(a),'-t',str(b-a),'-i',str(video_path)]
+    for a,b,_ in pieces:args+=['-ss',str(a),'-t',str(b-a),'-i',str(video_path)]
     art=count;args+=['-i','overlay.png']
     graph=[]
-    if count>1:
-        for i in range(count):graph.append(f'[{i}:v]setpts=PTS-STARTPTS,fps={fps},setsar=1[piece{i}]')
-        source=''.join(f'[piece{i}]' for i in range(count))+f'concat=n={count}:v=1:a=0,setpts=PTS/{p["video_speed"]},fps={fps},format=rgba,'
-    else:source='[0:v]setpts=(PTS-STARTPTS)/'+str(p['video_speed'])+f',fps={fps},format=rgba,'
+    # Every piece is retimed on its own (piece speed × track speed), then the pieces are joined.
+    for i,(a,b,k) in enumerate(pieces):graph.append(f'[{i}:v]setpts=(PTS-STARTPTS)/{k*p["video_speed"]:.9f},fps={fps},setsar=1[piece{i}]')
+    source=''.join(f'[piece{i}]' for i in range(count))+(f'concat=n={count}:v=1:a=0,' if count>1 else '')+f'fps={fps},format=rgba,'
     fit=opts.get('video_fit','cover')
     if fit=='cover':source+=f'scale={vw}:{vh}:force_original_aspect_ratio=increase,crop={vw}:{vh},'
     elif fit=='contain':source+=f'scale={vw}:{vh}:force_original_aspect_ratio=decrease,pad={vw}:{vh}:(ow-iw)/2:(oh-ih)/2:color=0x00000000,'
@@ -206,6 +207,17 @@ def build(folder,opts,video_path,video,audio_path=None,audio=None,frame_path=Non
         graph.append(f'[{next_input}:v]format=rgba,scale={w}:{h}:force_original_aspect_ratio=decrease,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color=0x00000000,colorchannelmixer=aa={opts["frame_opacity"]/100}[custom]')
         graph.append(f'[design][custom]overlay={round(b["x"]*scale)}:{round(b["y"]*scale)}:format=auto[framed]')
         next_input+=1;top='framed'
+    # Image/logo layers: each still PNG is scaled, faded, rotated about its centre and shown in its time window.
+    for n,image in enumerate(opts.get('images') or []):
+        if not images_dir or not (Path(images_dir)/(image['id']+'.png')).is_file():raise ValueError('Ảnh của lớp ảnh không còn trong ứng dụng. Hãy nhập lại ảnh.')
+        args+=['-i',str(Path(images_dir)/(image['id']+'.png'))];w=max(2,round(image['width']*scale));h=max(2,round(image['height']*scale))
+        chain=f'[{next_input}:v]format=rgba,scale={w}:{h}'+(f',colorchannelmixer=aa={image["opacity"]/100}' if image['opacity']<100 else '')
+        if image['rotation']:
+            turn=math.radians(image['rotation']);chain+=f',rotate={turn:.9f}:ow=rotw({turn:.9f}):oh=roth({turn:.9f}):c=none'
+        graph.append(chain+f'[image{n}]')
+        shown=f":enable='between(t,{image['start']},{image['end'] or duration+1})'" if image['start']>0 or image['end']>0 else ''
+        graph.append(f'[{top}][image{n}]overlay=x={round(image["x"]*scale)}+({w}-overlay_w)/2:y={round(image["y"]*scale)}+({h}-overlay_h)/2:format=auto{shown}[imaged{n}]')
+        top=f'imaged{n}';next_input+=1
     textfilters=[];items=layout(opts)
     # Caption boxes are rounded PNGs overlaid under their text for the same time window.
     for item in items:
@@ -227,10 +239,9 @@ def build(folder,opts,video_path,video,audio_path=None,audio=None,frame_path=Non
     graph.append(f'[{top}]'+(','.join(textfilters) if textfilters else 'null')+',format=yuv420p[out]')
     labels=[]
     if video['has_audio'] and (not p['active_audio'] or p['audio_mode']=='mix'):
-        if count>1:
-            for i in range(count):graph.append(f'[{i}:a:0]asetpts=PTS-STARTPTS,aresample=48000,aformat=channel_layouts=stereo,apad,atrim=duration={pieces[i][1]-pieces[i][0]}[sound{i}]')
-            graph.append(''.join(f'[sound{i}]' for i in range(count))+f'concat=n={count}:v=0:a=1[joined]')
-        graph.append(('[joined]' if count>1 else '[0:a:0]asetpts=PTS-STARTPTS,')+f'{tempo(p["video_speed"])},volume={p["original_volume"]/100},aresample=48000,aformat=channel_layouts=stereo,apad,atrim=duration={duration}[original]')
+        for i,(a,b,k) in enumerate(pieces):
+            graph.append(f'[{i}:a:0]asetpts=PTS-STARTPTS,aresample=48000,aformat=channel_layouts=stereo,apad,atrim=duration={b-a},{tempo(k*p["video_speed"])}[sound{i}]')
+        graph.append(''.join(f'[sound{i}]' for i in range(count))+(f'concat=n={count}:v=0:a=1,' if count>1 else '')+f'volume={p["original_volume"]/100},aresample=48000,aformat=channel_layouts=stereo,apad,atrim=duration={duration}[original]')
         labels.append('original')
     music_track=p['music']
     duck=bool(music_track and music_track['duck'] and p['active_audio'])

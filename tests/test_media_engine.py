@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 from design import settings,layout
 from media_engine import plan,tempo,probe,build,keep,RESOLUTIONS
+from design import box_png,image_layers
 
 ROOT=Path(__file__).resolve().parents[1]
 
@@ -102,7 +103,7 @@ class NativeRenderTests(unittest.TestCase):
     def test_reordered_pieces_play_in_the_given_order(self):
         opts=settings(dict(units='px',title='',body='',audio_mode='original',video_segments=[[2,2.5],[0,1]]))
         cmd,p=build(self.folder,opts,self.video,self.vi)
-        self.assertEqual(p['video_segments'],[(2,2.5),(0,1)])
+        self.assertEqual(p['video_segments'],[(2,2.5,1),(0,1,1)])
         result=subprocess.run(cmd,cwd=self.folder,capture_output=True,text=True,timeout=180)
         self.assertEqual(result.returncode,0,result.stderr[-2000:])
         self.assertAlmostEqual(probe(self.folder/'review.mp4')['duration'],1.5,delta=.12)
@@ -113,6 +114,42 @@ class NativeRenderTests(unittest.TestCase):
         self.assertLess(diff(out,frame(self.video,2)),diff(out,frame(self.video,0)))
         with self.assertRaises(ValueError):plan(dict(video_segments=[[1,1.01]]),self.vi)
         with self.assertRaises(ValueError):plan(dict(video_segments=[[0,1]]*61),self.vi)
+
+    def test_each_piece_has_its_own_speed(self):
+        self.assertAlmostEqual(plan(dict(video_segments=[[0,1,2],[1,3,.5]],video_speed=1),self.vi)['duration'],4.5)
+        self.assertAlmostEqual(plan(dict(video_segments=[[0,1,2],[1,3]],video_speed=2),self.vi)['duration'],1.25)
+        with self.assertRaises(ValueError):plan(dict(video_segments=[[0,1,5]]),self.vi)
+        with self.assertRaises(ValueError):plan(dict(video_segments=[[0,1,True]]),self.vi)
+        opts=settings(dict(units='px',title='',body='',audio_mode='original',video_segments=[[0,1,2],[1,2,.5]]))
+        cmd,p=build(self.folder,opts,self.video,self.vi)
+        self.assertAlmostEqual(p['duration'],2.5)
+        graph=(self.folder/'render.ffgraph').read_text()
+        self.assertIn('setpts=(PTS-STARTPTS)/2.000000000',graph);self.assertIn('atempo=2.000000000',graph);self.assertIn('atempo=0.500000000',graph)
+        result=subprocess.run(cmd,cwd=self.folder,capture_output=True,text=True,timeout=180)
+        self.assertEqual(result.returncode,0,result.stderr[-2000:])
+        self.assertAlmostEqual(probe(self.folder/'review.mp4')['duration'],2.5,delta=.12)
+
+    def test_image_layer_is_drawn_in_its_window(self):
+        images=self.folder/'images';images.mkdir(exist_ok=True);key='ab'*16
+        (images/(key+'.png')).write_bytes(box_png(40,40,0,'#ff0000',100))
+        layer=dict(id=key,x=100,y=200,width=200,height=200,opacity=100,start=0,end=1,rotation=0)
+        opts=settings(dict(units='px',title='',body='',background='none',frame_style='none',audio_mode='original',video_end=2,images=[layer]))
+        cmd,p=build(self.folder,opts,self.video,self.vi,images_dir=images)
+        self.assertIn("enable='between(t,0.0,1.0)'",(self.folder/'render.ffgraph').read_text())
+        result=subprocess.run(cmd,cwd=self.folder,capture_output=True,text=True,timeout=180)
+        self.assertEqual(result.returncode,0,result.stderr[-2000:])
+        def pixel(at):
+            raw=subprocess.check_output(['ffmpeg','-v','error','-ss',str(at),'-i',str(self.folder/'review.mp4'),'-frames:v','1','-vf','crop=2:2:200:300,format=rgb24','-f','rawvideo','-'])
+            return raw[0],raw[1],raw[2]
+        r,g,b=pixel(.5);self.assertTrue(r>200 and g<60 and b<60,(r,g,b))
+        r,g,b=pixel(1.5);self.assertFalse(r>200 and g<60 and b<60,(r,g,b))
+        with self.assertRaises(ValueError):build(self.folder,opts,self.video,self.vi,images_dir=self.folder/'missing')
+
+    def test_image_layer_validation(self):
+        key='cd'*16
+        self.assertEqual(image_layers([dict(id=key,width=50,height=60)])[0]['opacity'],100)
+        for bad in ([dict(id='x',width=50,height=60)],[dict(id=key,width=1,height=60)],[dict(id=key,width=50,height=60,start=2,end=1)],[dict(id=key,width=50,height=60)]*13,'x'):
+            with self.assertRaises(ValueError):image_layers(bad)
 
     def test_timed_text_layers(self):
         opts=settings(dict(units='px',title='TIÊU ĐỀ',body='',text1='Chữ thêm',text1_start=.5,text1_end=1.5,title_start=0,title_end=0,audio_mode='original',video_end=2))

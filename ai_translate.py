@@ -189,9 +189,25 @@ def parse_response(raw):
     return decode_result(''.join(parts))
 
 
+def loose_json(text):
+    """JSON object from a chat answer: tolerates markdown fences, text around the object, raw line breaks inside
+    strings, smart quotes used as delimiters and trailing commas (all common when copying from Gemini/ChatGPT web)."""
+    text=text.strip().lstrip('\ufeff')
+    fence=re.search(r'```(?:json|JSON)?\s*(\{.*\})\s*```',text,flags=re.S)
+    if fence:text=fence[1]
+    start,end=text.find('{'),text.rfind('}')
+    if start>=0 and end>start:text=text[start:end+1]
+    tries=[text,re.sub(r',(\s*[}\]])',r'\1',text)]
+    tries.append(re.sub(r'[\u201c\u201d](\s*[:,}\]])',r'"\1',re.sub(r'([{,\[:]\s*)[\u201c\u201d]',r'\1"',tries[1])))
+    for candidate in tries:
+        try:return json.loads(candidate,strict=False)
+        except ValueError:continue
+    raise ValueError()
+
+
 def decode_result(text):
     try:
-        result=json.loads(text)
+        result=loose_json(text)
         if not isinstance(result,dict) or not isinstance(result.get('script'),str) or not result['script'].strip():
             raise ValueError()
         if not all(isinstance(result.get(k,''),str) for k in ('title','body','hook')):
@@ -223,9 +239,6 @@ def import_manual(raw):
     text=raw.get('text') if isinstance(raw,dict) else None
     if not isinstance(text,str) or not 1 <= len(text.strip()) <= 50000:
         raise ValueError('Dán kết quả JSON từ AI, tối đa 50.000 ký tự.')
-    text=text.strip()
-    if text.startswith('```') and text.endswith('```'):
-        text=re.sub(r'^```(?:json)?\s*','',text,flags=re.IGNORECASE)[:-3].strip()
     try:
         return {**check_fit(decode_result(text),fit_layout(raw)),'provider':'manual','model':'Thủ công · không gọi API'}
     except AIError as exc:

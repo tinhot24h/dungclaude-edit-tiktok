@@ -80,7 +80,7 @@ $('tp-measure-voice').onclick=()=>{const id=edit.media().audio_asset_id;if(!id){
 
 // ---- label of the piece under the playhead, shown on the preview
 const tag=el('div',{id:'stage-tag',className:'stage-tag'});$('stage').append(tag);
-function label(t,p){if(!p){tag.hidden=true;return}let at=0,index=0;const n=p.segs.length;for(let i=0;i<n;i++){const len=(p.segs[i][1]-p.segs[i][0])/p.vr;if(t<at+len||i===n-1){index=i;break}at+=len}tag.hidden=false;tag.textContent=`Đoạn ${String(index+1).padStart(2,'0')}/${String(n).padStart(2,'0')} · ${tc(t)}`}
+function label(t,p){if(!p){tag.hidden=true;return}let at=0,index=0;const n=p.segs.length;for(let i=0;i<n;i++){const len=(p.segs[i][1]-p.segs[i][0])/((p.segs[i][2]||1)*p.vr);if(t<at+len||i===n-1){index=i;break}at+=len}tag.hidden=false;tag.textContent=`Đoạn ${String(index+1).padStart(2,'0')}/${String(n).padStart(2,'0')} · ${tc(t)}`}
 function stats(){const s=api.state(),p=s.plan,tracks=1+(s.audio?1:0)+(s.music?1:0);$('pb-stats').textContent=p?`${tracks} track · ${p.segs.length} đoạn · ${tc(p.duration).slice(0,-3)} phút`:'Chưa có video'}
 
 // ---- review notes: press C (or the button), click the frame, type the note

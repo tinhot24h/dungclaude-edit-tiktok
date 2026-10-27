@@ -24,6 +24,7 @@ import ai33_audio
 import audio_files
 import library_store
 import output_folder
+import free_music
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / '.local'
@@ -32,6 +33,8 @@ FRAMES = DATA / 'frames'
 FRAMES.mkdir(exist_ok=True)
 AUDIO = DATA / 'audio'
 AUDIO.mkdir(exist_ok=True)
+IMAGES = DATA / 'images'
+IMAGES.mkdir(exist_ok=True)
 SETTINGS = DATA / 'settings.json'
 JOBS = {}
 CANCELS = {}
@@ -116,6 +119,39 @@ def thumbnail(key):
     return target.read_bytes()
 
 
+IMAGE_KINDS={b'\x89PNG':('image2','png'),b'\xff\xd8\xff':('image2','mjpeg'),b'GIF8':('gif',None),b'RIFF':('image2','webp')}
+
+
+def import_image(data,name):
+    """Store an uploaded PNG/JPEG/WebP/GIF (first frame) as an RGBA PNG, at most 2048 px per side."""
+    kind=next((v for k,v in IMAGE_KINDS.items() if data.startswith(k)),None)
+    if not kind or (data.startswith(b'RIFF') and data[8:12]!=b'WEBP'):raise ValueError('Chọn ảnh PNG, JPG, WebP hoặc GIF.')
+    key=uuid.uuid4().hex;source,target=IMAGES/(key+'.upload'),IMAGES/(key+'.png')
+    source.write_bytes(data)
+    try:
+        subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-nostdin','-y','-f',kind[0],*(['-c:v',kind[1]] if kind[1] else []),'-i',str(source),
+                        '-frames:v','1','-vf',"scale='min(2048,iw)':'min(2048,ih)':force_original_aspect_ratio=decrease,format=rgba",str(target)],
+                       capture_output=True,check=True,timeout=30)
+        width,height=struct.unpack('!II',target.read_bytes()[16:24])
+    except (subprocess.SubprocessError,OSError,struct.error):
+        target.unlink(missing_ok=True)
+        raise ValueError('Không đọc được ảnh. Hãy lưu lại dưới dạng PNG hoặc JPG.') from None
+    finally:source.unlink(missing_ok=True)
+    record=dict(id=key,name=asset_store.clean_name(name,'anh'),width=width,height=height,url='/images/'+key)
+    (IMAGES/(key+'.json')).write_text(json.dumps(record,ensure_ascii=False),encoding='utf-8')
+    return record
+
+
+def images():
+    rows=[]
+    for path in IMAGES.glob('*.json'):
+        try:record=json.loads(path.read_text(encoding='utf-8'))
+        except (OSError,ValueError):continue
+        if isinstance(record,dict) and record.get('id')==path.stem and PROJECT.fullmatch(path.stem) and path.with_suffix('.png').is_file():
+            rows.append({**record,'uploaded':path.stat().st_mtime})
+    return sorted(rows,key=lambda r:r['uploaded'],reverse=True)
+
+
 def storage():
     folders=projects()
     return dict(projects=len(folders),project_bytes=sum(folder_size(f) for f in folders),
@@ -150,6 +186,8 @@ def validate_options(opts,strict=True):
         opts[field] = unicodedata.normalize('NFC', '\n'.join(' '.join(line.split()) for line in value.splitlines()))
     if opts['frame_style'] == 'custom' and not (FRAMES / (opts['frame_id']+'.png')).is_file():
         raise ValueError('Khung PNG không còn trong ứng dụng này. Hãy tải lại khung.')
+    for image in opts['images']:
+        if not (IMAGES/(image['id']+'.png')).is_file():raise ValueError('Ảnh của một lớp ảnh không còn trong ứng dụng. Hãy nhập lại ảnh.')
     layout(opts,strict=strict)
     return opts
 
@@ -169,10 +207,10 @@ def compose(folder,options):
     if options.get('music_asset_id',''):
         music_path=library_audio(options['music_asset_id'],'Nhạc nền');music=media_engine.probe(music_path)
     frame=FRAMES/(options.get('frame_id','')+'.png') if options['frame_style']=='custom' else None
-    command,plan=media_engine.build(folder,options,folder/'source',video,audio_path,audio,frame,music_path,music)
+    command,plan=media_engine.build(folder,options,folder/'source',video,audio_path,audio,frame,music_path,music,IMAGES)
     fallback=None
     if plan['encoder']!='cpu':
-        fallback,_=media_engine.build(folder,{**options,'encoder':'cpu'},folder/'source',video,audio_path,audio,frame,music_path,music)
+        fallback,_=media_engine.build(folder,{**options,'encoder':'cpu'},folder/'source',video,audio_path,audio,frame,music_path,music,IMAGES)
     return command,plan,fallback
 
 
@@ -306,7 +344,7 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == '/':
             return self.respond(200, (ROOT / 'index.html').read_bytes(), 'text/html; charset=utf-8')
-        if path in ('/studio.css','/studio.js','/ai_ui.js','/audio_ui.js','/editor_ui.js','/timeline_ui.js','/history_ui.js','/workspace_ui.js','/clip_ui.js','/studio_shell.js','/media_bin.js'):
+        if path in ('/studio.css','/studio.js','/ai_ui.js','/audio_ui.js','/editor_ui.js','/timeline_ui.js','/history_ui.js','/workspace_ui.js','/clip_ui.js','/studio_shell.js','/media_bin.js','/image_ui.js','/export_ui.js','/music_ui.js','/style_ui.js'):
             mime = 'text/css' if path.endswith('.css') else 'text/javascript'
             return self.respond(200, (ROOT/path.lstrip('/')).read_bytes(), mime+'; charset=utf-8')
         if path in ('/assets/'+font[0] for font in FONTS.values()):
@@ -347,7 +385,7 @@ class Handler(BaseHTTPRequestHandler):
                                                   for name in ('openai','gemini')}})
         if path == '/health':
             return self.respond(200, {'status': 'ok','version':VERSION})
-        library=re.fullmatch(r'/library/(projects|templates)(?:/([a-f0-9]{32}))?',path)
+        library=re.fullmatch(r'/library/(projects|templates|styles)(?:/([a-f0-9]{32}))?',path)
         if library:
             try:
                 if library[2]:return self.respond(200,library_store.read(DATA/'library',library[1],library[2]))
@@ -359,6 +397,13 @@ class Handler(BaseHTTPRequestHandler):
         if thumb and (DATA/thumb[1]/'source').is_file():
             try:return self.respond(200,thumbnail(thumb[1]),'image/jpeg')
             except (OSError,ValueError,subprocess.SubprocessError):return self.respond(404,{'error':'Chưa tạo được ảnh nhỏ.'})
+        image_match=re.fullmatch(r'/images/([a-f0-9]{32})',path)
+        if image_match and (IMAGES/(image_match[1]+'.png')).is_file():
+            return self.respond(200,(IMAGES/(image_match[1]+'.png')).read_bytes(),'image/png')
+        if path == '/images':
+            return self.respond(200,{'images':images()})
+        if path == '/music/licenses':
+            return self.respond(200,{'licenses':free_music.LICENSES})
         if path == '/frames':
             items=[{'id':f.stem,'url':'/frames/'+f.stem} for f in sorted(FRAMES.glob('*.png'),key=lambda f:f.stat().st_mtime,reverse=True) if PROJECT.fullmatch(f.stem)]
             return self.respond(200,{'frames':items})
@@ -505,6 +550,33 @@ class Handler(BaseHTTPRequestHandler):
                 finally:
                     source.unlink(missing_ok=True)
                 return self.respond(200, {'id': key,'url':'/frames/'+key,'width':width,'height':height})
+            if path == '/image-upload':
+                if not 0 < size <= 15*1024*1024:
+                    return self.respond(413, {'error': 'Ảnh tối đa 15 MB.'})
+                data = self.rfile.read(size)
+                if len(data) != size:raise ValueError('Tải ảnh bị gián đoạn.')
+                return self.respond(200, import_image(data,unquote(self.headers.get('X-Filename','anh.png'))))
+            image_action=re.fullmatch(r'/images/([a-f0-9]{32})/(delete|as-frame)',path)
+            if image_action:
+                key,action=image_action.groups()
+                if not (IMAGES/(key+'.png')).is_file():raise ValueError('Ảnh không còn trong kho.')
+                if action=='as-frame':
+                    shutil.copyfile(IMAGES/(key+'.png'),FRAMES/(key+'.png'))
+                    return self.respond(200,{'id':key,'url':'/frames/'+key})
+                for suffix in ('.png','.json'):(IMAGES/(key+suffix)).unlink(missing_ok=True)
+                return self.respond(200,{'images':images()})
+            if path in ('/music/search','/music/import'):
+                if not 0 < size <= 4096:
+                    raise ValueError('Yêu cầu nhạc không hợp lệ.')
+                raw=json.loads(self.rfile.read(size))
+                if not isinstance(raw,dict):raise ValueError('Yêu cầu nhạc không hợp lệ.')
+                if not AUDIO_SLOTS.acquire(blocking=False):
+                    return self.respond(429, {'error':'Đang xử lý các yêu cầu âm thanh khác. Hãy chờ giây lát.'})
+                try:
+                    result=free_music.search(raw) if path=='/music/search' else free_music.fetch(raw,AUDIO)
+                finally:
+                    AUDIO_SLOTS.release()
+                return self.respond(200,result)
             if path == '/upload':
                 if not 0 < size <= 500 * 1024 * 1024:
                     return self.respond(413, {'error': 'Chọn video tối đa 500 MB.'})
@@ -537,7 +609,7 @@ class Handler(BaseHTTPRequestHandler):
                 if isinstance(days,bool) or not isinstance(days,int) or not 1 <= days <= 3650:
                     raise ValueError('Số ngày phải từ 1 đến 3650.')
                 return self.respond(200, cleanup(days))
-            library=re.fullmatch(r'/library/(projects|templates)/(save|([a-f0-9]{32})/delete)',path)
+            library=re.fullmatch(r'/library/(projects|templates|styles)/(save|([a-f0-9]{32})/delete)',path)
             if library:
                 if library[3]:
                     library_store.delete(DATA/'library',library[1],library[3])

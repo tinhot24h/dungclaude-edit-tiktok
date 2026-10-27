@@ -1,8 +1,21 @@
-# Review Studio 0.11
+# Review Studio 0.12
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.12
+
+- **Lớp ảnh / logo / sticker:** nhập PNG, JPG, WebP hoặc GIF vào kho Media (lọc "Ảnh & logo"), bấm ＋ hoặc kéo thẻ thả lên khung hình. Trên khung hình: kéo để di chuyển, kéo ô vuông ở góc/cạnh để đổi cỡ (giữ tỷ lệ), kéo nút tròn để xoay. Tab **Ảnh** có X/Y/W/H, góc xoay, độ đục, thời gian hiện, căn lề, "Góc logo", lên trên/xuống dưới, nhân bản, xóa. Mỗi ảnh có một thanh trên timeline để đổi thời gian hiện; Delete để xóa. Nút ▭ trên thẻ ảnh dùng ảnh đó làm khung PNG.
+- **Tốc độ riêng từng đoạn video:** tách đoạn (S), bấm một đoạn (Shift+bấm để chọn nhiều), chỉnh ở bảng Clip video → "Tốc độ đoạn đang chọn" (0,25×–4×, nút 0.5×…3×, "Áp dụng cho mọi đoạn"). Tiếng gốc đổi tốc độ theo, giữ cao độ; đoạn có tốc độ khác hiện nhãn "2×" trên timeline.
+- **Theo dõi tiến độ xuất:** thẻ tiến độ trong mục Xuất, thông báo nổi góc dưới phải (phần trăm, thời gian còn lại, nút Hủy), nút "Xuất bản" và tiêu đề tab trình duyệt hiện %. Xuất xong có âm báo, thông báo "Video đã xuất xong" với nút Mở thư mục / Tải về, và thông báo hệ thống nếu đang ở cửa sổ khác.
+- **Thông số xuất gọn:** bấm ô "1080 × 1920 · 30 FPS" ở góc phải trên cùng (hoặc ô tóm tắt trong mục Xuất) để chỉnh độ phân giải, FPS, chất lượng, bộ mã hóa, âm lượng tổng và thư mục lưu trong một bảng nhỏ.
+- **Bỏ "Xuất thử 5 giây"** (và phím P).
+- **Nhạc miễn phí bản quyền** (tab Âm thanh): tìm trên Openverse (Jamendo, Freesound, Wikimedia, ccMixter…), chỉ hiện nhạc giấy phép CC0 / phạm vi công cộng / CC BY / CC BY-SA cho phép dùng thương mại và chỉnh sửa; nút chủ đề nhanh (Vui tươi, Lofi, Piano…), nghe thử, "＋ Nhạc nền" tải về thư viện và đặt làm nhạc nền. Bản CC BY cần ghi tên tác giả: bảng Nhạc nền có dòng ghi nguồn và nút sao chép để dán vào mô tả video. Không dùng được kho nhạc của CapCut (điều khoản CapCut không cho phép).
+- **Sửa chữ trong tab Tiêu đề / Nội dung:** ô nhập nội dung nằm ngay đầu tab (kèm đếm ký tự). Mục Chữ bên trái liệt kê các lớp chữ, bấm để mở. Kéo chữ trực tiếp trên khung hình (có viền gợi ý khi rê chuột), nhấp đúp để sửa tại chỗ.
+- **Kiểu chữ của tôi:** trong mỗi tab chữ, "Lưu kiểu này" lưu font, cỡ, màu, căn lề, viền, nền hộp, độ rộng; áp dụng cho bất kỳ lớp chữ nào.
+- **Thiết kế của tôi:** ở cuối bảng thuộc tính, lưu/áp dụng/xóa cả thiết kế (nền, khung, kiểu chữ, vị trí, lớp ảnh/logo), không kèm nội dung chữ hay video/MP3.
+- **Trang Dịch:** "Tạo câu lệnh" xóa kết quả cũ; "Nhập kết quả" thay toàn bộ kịch bản, hook, tiêu đề, nội dung theo câu trả lời mới. Nhập được cả câu trả lời có chữ giải thích hoặc ```json bao quanh, xuống dòng trong chuỗi, dấu ngoặc kép cong, dấu phẩy thừa.
 
 ## Mới trong 0.11
 

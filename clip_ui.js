@@ -16,6 +16,19 @@ group(video,'CẮT & TỐC ĐỘ');grid(video,['video-start','video-end','video-
 group(video,'ÂM THANH GỐC');grid(video,['original-volume']);
 const fitVideo=document.createElement('div');fitVideo.className='result-actions';fitVideo.append($('fit-video-to-audio'));video.append(fitVideo);
 note(video,'Tách/xóa đoạn: đặt đầu phát rồi bấm ✂ Tách (S), bấm đoạn và Delete. Hiệu ứng phóng to từ từ nằm ở tab Video.');
+// Speed of the pieces selected on the timeline (each piece keeps its own speed, multiplied by the track speed above).
+group(video,'TỐC ĐỘ ĐOẠN ĐANG CHỌN');
+const speedBox=document.createElement('div');speedBox.className='piece-speed';
+speedBox.innerHTML='<p class="helper" id="piece-speed-note">Bấm một đoạn video trên timeline (Shift+bấm để chọn nhiều). Tách đoạn bằng ✂ hoặc phím S.</p><div class="range-row"><input id="piece-speed-range" type="range" min="0.25" max="4" step="0.05" value="1" aria-label="Tốc độ đoạn"><div class="numeric-shell"><input id="piece-speed" type="number" min="0.25" max="4" step="0.05" value="1"><span class="unit">×</span></div></div><div class="speed-presets"></div><button type="button" id="piece-speed-all" class="outline-action small-action">Áp dụng cho mọi đoạn</button>';
+video.append(speedBox);
+for(const k of [0.5,0.75,1,1.25,1.5,2,3]){const b=document.createElement('button');b.type='button';b.className='chip-button';b.textContent=k+'×';b.onclick=()=>window.timelineActions.pieceSpeed(k);speedBox.querySelector('.speed-presets').append(b)}
+let chosen=[];
+const setSpeed=(v,all)=>{const k=Number(v);if(Number.isFinite(k)&&k>=.25&&k<=4)window.timelineActions.pieceSpeed(k,all)};
+$('piece-speed-range').oninput=()=>{$('piece-speed').value=$('piece-speed-range').value};$('piece-speed-range').onchange=()=>setSpeed($('piece-speed-range').value);
+$('piece-speed').onchange=()=>setSpeed($('piece-speed').value);$('piece-speed-all').onclick=()=>setSpeed($('piece-speed').value,true);
+document.addEventListener('piece-select',e=>{chosen=e.detail;const on=chosen.length>0;for(const el of speedBox.querySelectorAll('input,.speed-presets button'))el.disabled=!on;
+ if(on){const k=chosen[0].k;$('piece-speed').value=k;$('piece-speed-range').value=k;$('piece-speed-note').textContent=chosen.length>1?`${chosen.length} đoạn đang chọn · tốc độ ${chosen.map(x=>x.k+'×').join(', ')}`:`Đoạn ${(chosen[0].b-chosen[0].a).toFixed(2)}s nguồn → ${(chosen[0].end-chosen[0].start).toFixed(2)}s trên video · ${k}×`}
+ else $('piece-speed-note').textContent='Bấm một đoạn video trên timeline (Shift+bấm để chọn nhiều). Tách đoạn bằng ✂ hoặc phím S.'});
 
 note(voice,'Bấm thanh MP3 trên timeline để mở bảng này. Kéo thân MP3 để đổi thời điểm vào. Đổi file ở cột trái hoặc tab Thư viện.');
 voice.append(heads[1],$('audio-track'));
