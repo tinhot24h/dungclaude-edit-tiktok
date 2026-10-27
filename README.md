@@ -1,8 +1,19 @@
-# Review Studio 0.9.1
+# Review Studio 0.9.2
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.9.2
+
+- **Trang Âm thanh ai33 làm lại:** ô soạn văn bản lớn bên trái (đếm ký tự, ước tính thời lượng, Ctrl+Enter để tạo); cột phải có tab **Cài đặt** và **Lịch sử**.
+  - Chọn giọng trong thư viện dạng danh sách: nghe thử từng giọng, lọc theo nhà cung cấp, ngôn ngữ, giới tính; vbee có vùng miền/thể loại/nguồn giọng, Fish Audio có sắp xếp.
+  - **Hội thoại nhiều giọng** (A>, B>, C>…): mỗi người nói một giọng và tốc độ riêng, chỉnh khoảng nghỉ, nút chèn nhãn nhanh.
+  - **Từ điển phát âm:** tạo/sửa/xóa, xem thử câu sẽ được đọc thế nào, chọn từ điển khi tạo audio.
+  - **Giọng nhân bản:** tạo từ file mẫu ≤ 10 MB, xóa giọng nhân bản.
+  - **Xuất kèm phụ đề .srt**, tự phát khi xong, số dư credit luôn hiển thị.
+  - Lịch sử dạng thẻ: giờ tạo, trạng thái, đoạn chữ, trình phát, tải MP3/SRT, tín dụng đã dùng, Dùng làm giọng đọc / Làm nhạc nền, xóa bản đã tải về máy.
+- **Khung PNG:** bấm trúng khung trên trình phát để chọn (không còn bị khóa vào lớp khác), kéo để di chuyển, 8 ô kéo ở góc/cạnh để đổi kích thước, giữ tỷ lệ PNG (mặc định bật, hoặc giữ Shift). Tab Khung có nút căn trái/giữa/phải/trên/giữa/dưới, Vừa chiều ngang, Phủ toàn khung, Tỷ lệ gốc PNG; khung có thể lớn tới 1440 × 2560 hoặc lệch ra ngoài khung hình.
 
 ## Mới trong 0.9.1
 

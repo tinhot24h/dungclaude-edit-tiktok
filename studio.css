@@ -212,3 +212,11 @@ kbd{display:inline-block;padding:2px 7px;border:1px solid #475569;border-bottom-
 .dict-row input,.dict-row select{padding:7px;font-size:12px}
 #tts-dict-list{flex:1}
 @media(max-width:900px){.tts-layout{grid-template-columns:1fr}.tts-side{max-height:none}.tts-editor{min-height:0}#tts-text{min-height:260px}}
+.frame-tools{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+.frame-tools button{padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#1f2836;color:#c4d1e3;font-size:11px;cursor:pointer}
+.frame-tools button:hover{border-color:var(--accent)}
+.resize-handle{position:absolute;width:26px;height:26px;pointer-events:auto;background:#d2fff5;border:3px solid #244f43;border-radius:4px;touch-action:none;padding:0}
+.handle-n{left:calc(50% - 13px);top:-14px;cursor:ns-resize}.handle-s{left:calc(50% - 13px);bottom:-14px;cursor:ns-resize}
+.handle-e{right:-14px;top:calc(50% - 13px);cursor:ew-resize}.handle-w{left:-14px;top:calc(50% - 13px);cursor:ew-resize}
+.handle-ne{right:-14px;top:-14px;cursor:nesw-resize}.handle-nw{left:-14px;top:-14px;cursor:nwse-resize}.handle-sw{left:-14px;bottom:-14px;cursor:nesw-resize}
+#selection[data-layer=video] .resize-handle:not(#resize-se){display:none}

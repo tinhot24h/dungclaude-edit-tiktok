@@ -39,7 +39,7 @@ def settings(raw):
     if px:
         spec.update(fade_start=(563,0,1152),fade_height=(230,16,768),
                     frame_x=(36,-720,720),frame_y=(794,-1280,1280),
-                    frame_width=(648,80,720),frame_height=(333,60,1000),
+                    frame_width=(648,80,1440),frame_height=(333,60,2560),
                     video_x=(0,-2160,720),video_y=(0,-3840,1280),
                     video_width=(720,180,2160),video_height=(1280,320,3840))
     out.setdefault('video_fit','cover')

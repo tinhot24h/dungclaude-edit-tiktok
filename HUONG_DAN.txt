@@ -1,7 +1,7 @@
-REVIEW STUDIO 0.9 — VIDEO / DỊCH AI / ÂM THANH AI33
+REVIEW STUDIO 0.9.2 — VIDEO / DỊCH AI / ÂM THANH AI33
 
 CẬP NHẬT
-Đóng bản cũ, giải nén toàn bộ ReviewStudio-v0.9.zip vào thư mục mới có
+Đóng bản cũ, giải nén toàn bộ ReviewStudio-v0.9.2.zip vào thư mục mới có
 quyền ghi. Không chạy từ trong ZIP. Đã có Python/FFmpeg thì không cần
 cài lại. Thiết kế px bản 0.4 dùng lại nếu cùng trình duyệt/địa chỉ/cổng.
 PNG thuộc thư mục cũ cần tải lại khi chuyển thư mục.
@@ -201,3 +201,12 @@ Phím tắt (bấm ? trong ứng dụng): Space/K phát-dừng, J/L lùi-tới 1
 Ctrl+Z hoàn tác, Ctrl+S lưu dự án, P xuất thử 5 giây, G vùng an toàn TikTok.
 Dịch AI: kết quả có thêm tiêu đề và nội dung ngắn vừa khung chữ; bấm
 "Đưa tiêu đề + nội dung lên video". Prompt thủ công cũ vẫn nhập được.
+
+NÂNG CẤP 0.9.2
+Âm thanh ai33: nhập key ở mục Kết nối (cột phải). Bấm ô giọng nói để mở
+thư viện, nghe thử rồi chọn. Chế độ Hội thoại: gõ A> / B> đầu mỗi câu,
+chọn giọng cho từng người nói. Từ điển phát âm: bấm Quản lý để tạo quy
+tắc đọc tên riêng. Lịch sử: nghe, tải MP3/SRT, dùng ngay trong video.
+Khung PNG: bấm vào khung trên trình phát rồi kéo; kéo ô vuông ở góc/cạnh
+để đổi cỡ (giữ tỷ lệ). Tab Khung có các nút căn và Phủ toàn khung.
+Phím tắt timeline: Q/W cắt phía trước/sau, kéo đoạn để đổi thứ tự.
