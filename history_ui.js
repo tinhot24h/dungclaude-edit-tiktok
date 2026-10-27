@@ -27,7 +27,7 @@ window.snapLayer=(x,y,w,h)=>{const xs=[0,360,720,...(safeOn?[SAFE.left,SAFE.righ
  const bx=best(x,w,xs),by=best(y,h,ys);vertical.hidden=!bx;horizontal.hidden=!by;if(bx)vertical.style.left=bx.t+'px';if(by)horizontal.style.top=by.t+'px';return {dx:bx?bx.d:0,dy:by?by.d:0}};
 document.addEventListener('layer-moved',()=>{vertical.hidden=horizontal.hidden=true});
 
-const KEYS=[['Space / K','Phát hoặc dừng (kể cả khi vừa bấm nút)'],['J / L','Lùi / tới 1 giây'],['← / →','Lùi / tới 1 khung hình (Shift: 10 khung)'],['Home / End','Về đầu / cuối video xuất'],['S','Tách đoạn video tại đầu phát'],['Delete / Backspace','Xóa đoạn hoặc clip đang chọn trên timeline (video, MP3, nhạc nền)'],['Q / W (hoặc I / O)','Cắt phía trước / phía sau đầu phát'],['Kéo một đoạn','Đổi thứ tự đoạn video'],['Ctrl + lăn chuột','Phóng to / thu nhỏ timeline'],['M','Thêm mốc tại đầu phát'],['+ / −','Phóng to / thu nhỏ timeline'],['Ctrl+Z','Hoàn tác'],['Ctrl+Shift+Z / Ctrl+Y','Làm lại'],['Alt + mũi tên','Nhích lớp đang chọn 1 px (Shift: 10 px)'],['Giữ Alt khi kéo','Tắt bám đường gióng'],['Shift + bấm đoạn','Chọn nhiều đoạn để xóa cùng lúc'],['G','Bật/tắt vùng an toàn TikTok'],['Ctrl+S','Lưu dự án'],['P','Xuất thử 5 giây'],['Ctrl+Enter','Xuất video'],['Esc','Bỏ chọn đoạn'],['?','Bảng phím tắt này']];
+const KEYS=[['Space / K','Phát hoặc dừng (kể cả khi vừa bấm nút)'],['J / L','Lùi / tới 1 giây'],['← / →','Lùi / tới 1 khung hình (Shift: 10 khung)'],['Home / End','Về đầu / cuối video xuất'],['S','Tách đoạn video tại đầu phát'],['Delete / Backspace','Xóa đoạn hoặc clip đang chọn trên timeline (video, MP3, nhạc nền)'],['Q / W (hoặc I / O)','Cắt phía trước / phía sau đầu phát'],['Kéo một đoạn','Đổi thứ tự đoạn video'],['Ctrl + lăn chuột','Phóng to / thu nhỏ timeline'],['M','Thêm mốc tại đầu phát'],['T','Thêm lớp chữ tại đầu phát (kéo thanh chữ trên timeline để đổi thời gian)'],['+ / −','Phóng to / thu nhỏ timeline'],['Ctrl+Z','Hoàn tác'],['Ctrl+Shift+Z / Ctrl+Y','Làm lại'],['Alt + mũi tên','Nhích lớp đang chọn 1 px (Shift: 10 px)'],['Giữ Alt khi kéo','Tắt bám đường gióng'],['Shift + bấm đoạn','Chọn nhiều đoạn để xóa cùng lúc'],['G','Bật/tắt vùng an toàn TikTok'],['Ctrl+S','Lưu dự án'],['P','Xuất thử 5 giây'],['Ctrl+Enter','Xuất video'],['Esc','Bỏ chọn đoạn'],['?','Bảng phím tắt này']];
 const help=document.createElement('dialog');help.id='shortcut-help';help.innerHTML='<h2>Phím tắt</h2><p class="helper">Dùng khi con trỏ không nằm trong ô nhập chữ.</p><table></table><form method="dialog"><button class="primary-action">Đóng</button></form>';
 for(const[k,v]of KEYS){const row=help.querySelector('table').insertRow();row.insertCell().innerHTML='<kbd></kbd>';row.cells[0].firstChild.textContent=k;row.insertCell().textContent=v}
 document.body.append(help);
@@ -60,6 +60,7 @@ document.addEventListener('keydown',e=>{
   case 'i':case 'q':return act(()=>timeline().trim('start'));
   case 'o':case 'w':return act(()=>timeline().trim('end'));
   case 'm':return act(()=>timeline().marker());
+  case 't':return act(()=>timeline().addText());
   case '+':case '=':return act(()=>timeline().zoom(1));
   case '-':return act(()=>timeline().zoom(-1));
   case 'g':return act(()=>showSafe(!safeOn));

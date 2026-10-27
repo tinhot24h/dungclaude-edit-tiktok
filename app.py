@@ -17,7 +17,7 @@ import media_preview
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
-from design import settings, layout, artwork, frame_box, video_box, artwork_layers
+from design import settings, layout, artwork, frame_box, video_box, artwork_layers, TEXT_LIMITS
 from fonts import FONTS
 import ai_translate
 import ai33_audio
@@ -143,8 +143,8 @@ def cleanup(days):
 
 def validate_options(opts,strict=True):
     opts = settings(opts)
-    for field, limit in [('title', 160), ('body', 600)]:
-        value = opts.get(field)
+    for field, limit in TEXT_LIMITS.items():
+        value = opts.get(field, '')
         if not isinstance(value, str) or len(value) > limit:
             raise ValueError(f'Nội dung {field} không hợp lệ (tối đa {limit} ký tự).')
         opts[field] = unicodedata.normalize('NFC', '\n'.join(' '.join(line.split()) for line in value.splitlines()))

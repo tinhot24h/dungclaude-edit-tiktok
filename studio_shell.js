@@ -36,7 +36,7 @@ panes.media.prepend(el('div',{className:'pane-title',textContent:'Media'}));pane
 const sound=panes.media.querySelector('.source-audio');panes.sound.append(el('div',{className:'pane-title',textContent:'Âm thanh'}),sound);
 const go=(tab,text)=>{const b=el('button',{type:'button',className:'outline-action small-action',textContent:text});b.onclick=()=>{if(!layout.props){layout.props=true;applyLayout()}activate(tab)};return b};
 panes.sound.append(el('div',{className:'result-actions'},go('clip-audio','Thông số giọng đọc ›'),go('clip-music','Nhạc nền ›'),go('clip-video','Âm thanh gốc video ›')));
-panes.text.prepend(el('div',{className:'pane-title',textContent:'Chữ trên video'}));panes.text.append(el('div',{className:'result-actions'},go('title','Kiểu chữ tiêu đề ›'),go('body','Kiểu chữ nội dung ›')));
+panes.text.prepend(el('div',{className:'pane-title',textContent:'Chữ trên video'}));{const add=el('button',{type:'button',className:'primary-action small-action',textContent:'＋ Thêm chữ'});add.onclick=()=>window.timelineActions.addText();panes.text.append(el('div',{className:'result-actions'},add,go('title','Kiểu chữ tiêu đề ›'),go('body','Kiểu chữ nội dung ›')),el('p',{className:'helper',textContent:'Mỗi lớp chữ là một thanh trên timeline: kéo thân để dời, kéo mép để đổi thời gian hiện, Delete để xóa. Phím T thêm chữ tại đầu phát.'}))}
 panes.export.prepend(el('div',{className:'pane-title',textContent:'Xuất video'}));
 const tabs=panel.querySelector('.source-tabs');tabs.hidden=true;
 const chips=el('div',{className:'tool-chips',role:'tablist'});

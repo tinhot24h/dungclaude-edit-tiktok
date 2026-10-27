@@ -7,6 +7,10 @@ from fonts import FONTS, width, wrap
 
 W, H = 720, 1280
 FRAMES = ('pink','glass','gold','minimal','neon','ribbon','none','custom')
+# Text layers: title and body plus up to six extra captions, each with its own style and on-screen time.
+TEXT_KEYS = ('title','body','text1','text2','text3','text4','text5','text6')
+TEXT_LIMITS = {'title':160,'body':600,**{k:300 for k in TEXT_KEYS[2:]}}
+TEXT_LABELS = {'title':'Tiêu đề','body':'Nội dung',**{k:'Chữ '+k[4:] for k in TEXT_KEYS[2:]}}
 
 
 def settings(raw):
@@ -28,7 +32,8 @@ def settings(raw):
         raise ValueError('Kiểu nền không hợp lệ.')
     for key,default in dict(color='#fad9e9',color2='#cbb9ef',frame_color='#f69fbe',border_color='#fff3e7',
                             title_color='#fff36a',body_color='#ffffff',title_outline_color='#342333',
-                            body_outline_color='#342333').items():
+                            body_outline_color='#342333',**{k+'_color':'#ffffff' for k in TEXT_KEYS[2:]},
+                            **{k+'_outline_color':'#000000' for k in TEXT_KEYS[2:]}).items():
         out.setdefault(key,default)
         if not isinstance(out[key],str) or not re.fullmatch(r'#[0-9a-fA-F]{6}',out[key]):
             raise ValueError('Mã màu không hợp lệ: '+key)
@@ -44,14 +49,16 @@ def settings(raw):
                     video_width=(720,180,2160),video_height=(1280,320,3840))
     out.setdefault('video_fit','cover')
     if out['video_fit'] not in ('cover','contain','stretch'):raise ValueError('Cách đặt video không hợp lệ.')
-    for name in ('title','body'):
-        spec.update({name+'_size':(30 if name=='title' else 22,12,144),
-                     name+'_x':(50,0,100),name+'_y':(64 if name=='title' else 73,0,98),
-                     name+'_width':(76,20,100),name+'_height':(0,0,1280),name+'_outline':(1,0,5),name+'_gap':(4,0,24)})
+    for index,name in enumerate(TEXT_KEYS):
+        extra=index-2
+        spec.update({name+'_size':(30 if name=='title' else 22 if name=='body' else 28,12,144),
+                     name+'_x':(50,0,100),name+'_y':(64 if name=='title' else 73 if name=='body' else 25+5*extra,0,98),
+                     name+'_width':(76,20,100),name+'_height':(0,0,1280),name+'_outline':(1 if extra<0 else 2,0,5),name+'_gap':(4,0,24),
+                     name+'_start':(0,0,1800),name+'_end':(0,0,1800)})
         if px:
-            spec.update({name+'_x':(86,0,719),name+'_y':(819 if name=='title' else 934,0,1270),
+            spec.update({name+'_x':(86,0,719),name+'_y':(819 if name=='title' else 934 if name=='body' else 300+60*extra,0,1270),
                          name+'_width':(548,60,720)})
-        out.setdefault(name+'_font','sans-bold' if name=='title' else 'sans')
+        out.setdefault(name+'_font','sans' if name=='body' else 'sans-bold')
         out.setdefault(name+'_align','center')
         out.setdefault(name+'_valign','top')
         if out[name+'_valign'] not in ('top','middle','bottom'):raise ValueError('Căn dọc không hợp lệ.')
@@ -62,6 +69,9 @@ def settings(raw):
         if isinstance(value,bool) or not isinstance(value,(float,int)) or not math.isfinite(value) or not low<=value<=high:
             raise ValueError('Thông số ngoài giới hạn: '+key)
         out[key]=round(value,1)
+    for name in TEXT_KEYS:
+        if out[name+'_end'] and out[name+'_end']<=out[name+'_start']+.05:
+            raise ValueError(TEXT_LABELS[name]+': thời điểm kết thúc phải sau thời điểm bắt đầu (0 = tới hết video).')
     if out['frame_style']=='custom':
         if not isinstance(out.get('frame_id'),str) or not re.fullmatch('[a-f0-9]{32}',out['frame_id']):
             raise ValueError('Hãy tải khung PNG từ máy trước.')
@@ -91,9 +101,9 @@ def frame_box(opts):
 
 def layout(opts,strict=True):
     result=[]
-    for key in ('title','body'):
+    for key in TEXT_KEYS:
         text=opts.get(key,'')
-        if not text.strip():continue
+        if not isinstance(text,str) or not text.strip():continue
         font,size=opts[key+'_font'],opts[key+'_size']
         px=opts.get('units')=='px'
         box_width=round(opts[key+'_width'] if px else W*opts[key+'_width']/100)
@@ -111,7 +121,7 @@ def layout(opts,strict=True):
         if len(lines)>40 or y+text_offset+natural>H-4:problems.append('Chữ vượt chiều cao canvas. Kéo lên hoặc giảm cỡ chữ.')
         if x+box_width>W:problems.append('Hộp chữ vượt cạnh phải. Giảm X hoặc độ rộng.')
         if natural>height+.01:problems.append('Chữ tràn chiều cao hộp. Tăng H, giảm font hoặc đặt H=0 tự động.')
-        if strict and problems:raise ValueError(('Tiêu đề: ' if key=='title' else 'Nội dung: ')+problems[0])
+        if strict and problems:raise ValueError(TEXT_LABELS[key]+': '+problems[0])
         offsets=[];line_runs=[]
         for li,line in enumerate(lines):
             factor={'left':0,'center':.5,'right':1,'justify':0}[opts[key+'_align']]
@@ -127,7 +137,8 @@ def layout(opts,strict=True):
         result.append(dict(key=key,text='\n'.join(lines),lines=lines,line_x=offsets,line_runs=line_runs,
                            x=x,y=y,width=box_width,height=height,text_offset=text_offset,content_y=y+text_offset,valign=vertical,natural_height=natural,size=size,gap=opts[key+'_gap'],
                            font=font,family=FONTS[font][1],align=opts[key+'_align'],color=opts[key+'_color'],
-                           outline=opts[key+'_outline'],outline_color=opts[key+'_outline_color'],warnings=problems))
+                           outline=opts[key+'_outline'],outline_color=opts[key+'_outline_color'],warnings=problems,
+                           start=opts.get(key+'_start',0),end=opts.get(key+'_end',0)))
     return result
 
 

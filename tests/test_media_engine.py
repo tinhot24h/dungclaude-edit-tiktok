@@ -114,6 +114,18 @@ class NativeRenderTests(unittest.TestCase):
         with self.assertRaises(ValueError):plan(dict(video_segments=[[1,1.01]]),self.vi)
         with self.assertRaises(ValueError):plan(dict(video_segments=[[0,1]]*61),self.vi)
 
+    def test_timed_text_layers(self):
+        opts=settings(dict(units='px',title='TIÊU ĐỀ',body='',text1='Chữ thêm',text1_start=.5,text1_end=1.5,title_start=0,title_end=0,audio_mode='original',video_end=2))
+        items={i['key']:i for i in layout(opts)}
+        self.assertEqual((items['text1']['start'],items['text1']['end']),(.5,1.5))
+        cmd,p=build(self.folder,opts,self.video,self.vi)
+        graph=(self.folder/'render.ffgraph').read_text()
+        self.assertIn("enable='between(t,0.5,1.5)'",graph)
+        self.assertEqual(graph.count('enable='),graph.count('text1-'))
+        result=subprocess.run(cmd,cwd=self.folder,capture_output=True,text=True,timeout=180)
+        self.assertEqual(result.returncode,0,result.stderr[-2000:])
+        with self.assertRaises(ValueError):settings(dict(units='px',text2_start=3,text2_end=2))
+
     def test_background_off_uses_black_base(self):
         opts=settings(dict(units='px',title='',body='',background='none',color='#ff00ff',audio_mode='original',video_end=.2))
         build(self.folder,opts,self.video,self.vi)
