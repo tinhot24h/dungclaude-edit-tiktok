@@ -1,7 +1,7 @@
-REVIEW STUDIO 0.8 — VIDEO / DỊCH AI / ÂM THANH AI33
+REVIEW STUDIO 0.8.1 — VIDEO / DỊCH AI / ÂM THANH AI33
 
 CẬP NHẬT
-Đóng bản cũ, giải nén toàn bộ ReviewStudio-v0.8.zip vào thư mục mới có
+Đóng bản cũ, giải nén toàn bộ ReviewStudio-v0.8.1.zip vào thư mục mới có
 quyền ghi. Không chạy từ trong ZIP. Đã có Python/FFmpeg thì không cần
 cài lại. Thiết kế px bản 0.4 dùng lại nếu cùng trình duyệt/địa chỉ/cổng.
 PNG thuộc thư mục cũ cần tải lại khi chuyển thư mục.
@@ -109,10 +109,11 @@ so với preview. Đổi thư mục cần chọn lại nguồn; file cũ không 
 
 DỮ LIỆU VÀ GIỚI HẠN
 Thiết kế/văn bản AI tự lưu trên trình duyệt, có nút xóa văn bản AI.
-Clip, PNG và kết quả ở .local trong thư mục ứng dụng. Tải kết quả cần
-giữ trước khi đóng máy chủ. Chỉ xóa .local khi ứng dụng đã dừng và đã
-giữ các tệp cần thiết. Chỉ dùng cục bộ; chưa có đăng nhập, dọn ổ đĩa,
-ghép nhiều clip hoặc tự đăng TikTok.
+Clip, PNG và kết quả ở .local trong thư mục ứng dụng. Video không dùng
+quá 30 ngày tự bị xóa khi mở ứng dụng (đặt REVIEW_KEEP_DAYS=0 để tắt);
+nút Dọn video cũ xóa theo số ngày bạn chọn, nút Xóa MP3 đã chọn xóa
+từng MP3. MP3 không bao giờ tự bị xóa. Hãy tải video kết quả về máy.
+Chỉ dùng cục bộ; chưa có đăng nhập, ghép nhiều clip hoặc tự đăng TikTok.
 
 KIỂM TRA
 Thủ công đã thử qua HTTP cục bộ và Chromium: tạo prompt, nhập JSON,

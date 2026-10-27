@@ -1,8 +1,16 @@
-# Review Studio 0.8
+# Review Studio 0.8.1
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
-**[Tải bản 0.8](https://github.com/tinhot24h/Dungx/raw/refs/heads/main/ReviewStudio-v0.8.zip)** · Cài/chạy: `HUONG_DAN.txt`.
+**Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.8.1
+
+- **Dọn bộ nhớ:** dòng **Bộ nhớ** dưới mục audio hiện số video và dung lượng. Nút **Dọn video cũ** xóa video nguồn/video đã xuất không dùng quá N ngày; khi khởi động, ứng dụng tự dọn video không dùng quá 30 ngày (`REVIEW_KEEP_DAYS`, đặt `0` để tắt). Thư viện MP3 không bao giờ bị tự xóa; nút **Xóa MP3 đã chọn** xóa từng file.
+- Tải video lên bị đứt hoặc bị từ chối không còn để lại file dở trong `.local/`.
+- Video đã xuất vẫn tải được sau khi khởi động lại ứng dụng (trạng thái lưu ở `job.json`).
+- Sửa lỗi ghi log khi trình duyệt hủy tải MP4 giữa chừng; giới hạn 30 phút dùng chung một hằng số; phiên bản đọc từ file `VERSION`.
+- CI GitHub Actions chạy toàn bộ kiểm thử với FFmpeg.
 
 ## Mới trong 0.8
 
@@ -105,9 +113,9 @@ Dừng bản cũ, giải nén thư mục mới rồi chạy; không cần cài l
 
 ## Dữ liệu và giới hạn
 
-Thiết kế và văn bản AI lưu riêng trong localStorage; có nút xóa văn bản. Key không lưu kèm. Video/PNG/MP4/MP3 trong `.local/`, Git và gói ZIP bỏ qua. Trạng thái xuất video ở RAM, mất khi dừng máy chủ: tải kết quả trước khi dừng. Chỉ xóa `.local/` khi ứng dụng đã dừng và đã giữ tệp cần thiết.
+Thiết kế và văn bản AI lưu riêng trong localStorage; có nút xóa văn bản. Key không lưu kèm. Video/PNG/MP4/MP3 trong `.local/`, Git và gói ZIP bỏ qua. Trạng thái xuất video lưu ở `job.json` cạnh video, nên vẫn tải được sau khi khởi động lại. Chỉ xóa `.local/` khi ứng dụng đã dừng và đã giữ tệp cần thiết.
 
-Chỉ dùng cục bộ với Host/Origin localhost; chưa có xác thực, dọn ổ đĩa, giới hạn hàng đợi video hoặc triển khai công khai. Chưa ghép nhiều clip hay đăng TikTok tự động.
+Chỉ dùng cục bộ với Host/Origin localhost; chưa có xác thực, giới hạn hàng đợi video hoặc triển khai công khai. Chưa ghép nhiều clip hay đăng TikTok tự động.
 
 ## Kiểm chứng
 

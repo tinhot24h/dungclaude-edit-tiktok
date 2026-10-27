@@ -6,6 +6,7 @@ from pathlib import Path
 from design import artwork,layout,frame_box,video_box
 from fonts import FONTS
 
+MAX_SECONDS=1800  # longest source video and export, shared with app.probe
 RESOLUTIONS={'720':(720,1280),'1080':(1080,1920),'2k':(1440,2560),'4k':(2160,3840)}
 
 
@@ -47,7 +48,7 @@ def plan(opts,video,audio=None):
     policy=opts.get('duration_policy','audio' if active else 'video')
     if policy not in ('audio','video','shortest'):raise ValueError('Cách khớp thời lượng không hợp lệ.')
     duration=(adur if policy=='audio' else min(vdur,adur) if policy=='shortest' else vdur) if active else vdur
-    if not .05<=duration<=1800:raise ValueError('Thời lượng xuất phải từ 0,05 giây đến 30 phút.')
+    if not .05<=duration<=MAX_SECONDS:raise ValueError('Thời lượng xuất phải từ 0,05 giây đến 30 phút.')
     resolution=opts.get('resolution','720')
     if resolution not in RESOLUTIONS:raise ValueError('Độ phân giải không hợp lệ.')
     quality=opts.get('quality','standard')

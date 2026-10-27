@@ -36,12 +36,88 @@ LOCK = threading.Lock()
 RENDER_LOCK = threading.Lock()
 AI_SLOTS = threading.BoundedSemaphore(2)
 AUDIO_SLOTS = threading.BoundedSemaphore(3)
+ACTIVE = ('queued','rendering','cancelling')
+PROJECT = re.compile('[a-f0-9]{32}')
+VERSION = (ROOT/'VERSION').read_text(encoding='utf-8').strip()
+
+
+def keep_days():
+    try:return max(0,int(os.environ.get('REVIEW_KEEP_DAYS','30')))
+    except ValueError:return 30
 
 
 def probe(path):
     data=media_engine.probe(path)
-    if not data['has_video'] or data['duration']>1800:raise ValueError('Chọn video có hình ảnh, tối đa 30 phút.')
+    if not data['has_video'] or data['duration']>media_engine.MAX_SECONDS:raise ValueError('Chọn video có hình ảnh, tối đa 30 phút.')
     return data
+
+
+def save_job(job_id,job):
+    """Persist a finished export so its download survives an app restart."""
+    try:
+        tmp=DATA/job_id/'job.json.tmp';tmp.write_text(json.dumps(job,ensure_ascii=False),encoding='utf-8');tmp.replace(DATA/job_id/'job.json')
+    except OSError:pass
+
+
+def load_job(job_id):
+    with LOCK:job=JOBS.get(job_id)
+    if job:return job
+    try:job=json.loads((DATA/job_id/'job.json').read_text(encoding='utf-8'))
+    except (OSError,ValueError):return None
+    return job if isinstance(job,dict) and job.get('state') in ('done','error','cancelled') else None
+
+
+def folder_size(path):
+    total=0
+    for item in Path(path).rglob('*'):
+        try:total+=item.stat().st_size if item.is_file() else 0
+        except OSError:pass
+    return total
+
+
+def projects():
+    return [item for item in DATA.iterdir() if item.is_dir() and PROJECT.fullmatch(item.name)]
+
+
+def delete_project(key):
+    with LOCK:
+        if JOBS.get(key,{}).get('state') in ACTIVE:raise ValueError('Video đang xuất. Hủy xuất trước khi xóa.')
+        JOBS.pop(key,None)
+        shutil.rmtree(DATA/key)
+    (DATA/'previews'/('video-'+key+'.json')).unlink(missing_ok=True)
+
+
+def delete_audio(aid):
+    if not PROJECT.fullmatch(aid) or not (AUDIO/(aid+'.mp3')).is_file():raise ValueError('MP3 không còn trong thư viện.')
+    try:
+        for suffix in ('.mp3','.json'):(AUDIO/(aid+suffix)).unlink(missing_ok=True)
+    except OSError:raise ValueError('Không xóa được MP3. Có thể file đang được dùng để xuất video; thử lại sau.') from None
+    (DATA/'previews'/('audio-'+aid+'.json')).unlink(missing_ok=True)
+
+
+def storage():
+    folders=projects()
+    return dict(projects=len(folders),project_bytes=sum(folder_size(f) for f in folders),
+                audio_bytes=folder_size(AUDIO),frame_bytes=folder_size(FRAMES),keep_days=keep_days())
+
+
+def cleanup(days):
+    """Remove video projects idle for `days` and temp files left by a crash; never touches the MP3 library."""
+    cutoff=time.time()-days*86400;removed=freed=0
+    for folder in projects():
+        try:
+            last=max([folder.stat().st_mtime]+[item.stat().st_mtime for item in folder.iterdir()])
+            if last>=cutoff:continue
+            size=folder_size(folder);delete_project(folder.name)
+            removed+=1;freed+=size
+        except (OSError,ValueError):pass
+    stale=time.time()-86400
+    for pattern,directory in [('*.input',AUDIO),('*.download',AUDIO),('*.encoding.mp3',AUDIO),('*.json.tmp',AUDIO),('*-upload.png',FRAMES)]:
+        for item in directory.glob(pattern):
+            try:
+                if item.stat().st_mtime<stale:item.unlink()
+            except OSError:pass
+    return dict(removed=removed,freed=freed,**storage())
 
 
 def validate_options(opts,strict=True):
@@ -111,6 +187,7 @@ def render(job_id,command,plan,name,cancel=None):
                 result={'state':'cancelled','name':name,'progress':0}
             JOBS[job_id]=result
             CANCELS.pop(job_id,None)
+        save_job(job_id,result)
         if acquired:RENDER_LOCK.release()
 
 
@@ -220,24 +297,28 @@ class Handler(BaseHTTPRequestHandler):
                                      'providers':{name:dict(configured=ai_translate.configured(name),model=ai_translate.default_model(name))
                                                   for name in ('openai','gemini')}})
         if path == '/health':
-            return self.respond(200, {'status': 'ok'})
+            return self.respond(200, {'status': 'ok','version':VERSION})
+        if path == '/storage':
+            return self.respond(200, storage())
         match = re.fullmatch(r'/(jobs|download)/([a-f0-9]{32})', path)
         if match:
             kind, key = match.groups()
-            with LOCK:
-                job = JOBS.get(key)
+            job = load_job(key)
             if kind == 'jobs' and job:
                 return self.respond(200, job)
             output = DATA / key / 'review.mp4'
             if kind == 'download' and job and job['state'] == 'done' and output.is_file():
                 self.send_response(200)
                 self.send_header('Content-Type', 'video/mp4')
-                self.send_header('Content-Disposition', "attachment; filename=\"review.mp4\"; filename*=UTF-8''"+quote(JOBS.get(key,{}).get('name','review')+'.mp4'))
+                self.send_header('Content-Disposition', "attachment; filename=\"review.mp4\"; filename*=UTF-8''"+quote(job.get('name','review')+'.mp4'))
                 self.send_header('Content-Length', str(output.stat().st_size))
                 self.end_headers()
-                with output.open('rb') as source:
-                    while chunk := source.read(1024 * 1024):
-                        self.wfile.write(chunk)
+                try:
+                    with output.open('rb') as source:
+                        while chunk := source.read(1024 * 1024):
+                            self.wfile.write(chunk)
+                except (BrokenPipeError,ConnectionResetError):
+                    pass
                 return
         self.respond(404, {'error': 'Không tìm thấy.'})
 
@@ -342,18 +423,35 @@ class Handler(BaseHTTPRequestHandler):
                 folder = DATA / key
                 folder.mkdir()
                 remaining = size
-                with (folder / 'source').open('wb') as output:
-                    while remaining:
-                        chunk = self.rfile.read(min(1024 * 1024, remaining))
-                        if not chunk:
-                            raise ValueError('Tải lên bị gián đoạn.')
-                        output.write(chunk)
-                        remaining -= len(chunk)
-                metadata=probe(folder/'source')
-                name=asset_store.clean_name(unquote(self.headers.get('X-Filename','video.mp4')))
-                data=dict(id=key,name=name,url='/media/video/'+key,**metadata)
-                (folder/'source.json').write_text(json.dumps(data,ensure_ascii=False),encoding='utf-8')
+                try:
+                    with (folder / 'source').open('wb') as output:
+                        while remaining:
+                            chunk = self.rfile.read(min(1024 * 1024, remaining))
+                            if not chunk:
+                                raise ValueError('Tải lên bị gián đoạn.')
+                            output.write(chunk)
+                            remaining -= len(chunk)
+                    metadata=probe(folder/'source')
+                    name=asset_store.clean_name(unquote(self.headers.get('X-Filename','video.mp4')))
+                    data=dict(id=key,name=name,url='/media/video/'+key,**metadata)
+                    (folder/'source.json').write_text(json.dumps(data,ensure_ascii=False),encoding='utf-8')
+                except BaseException:
+                    # A rejected or interrupted upload must not leave a partial video on disk.
+                    shutil.rmtree(folder,ignore_errors=True)
+                    raise
                 return self.respond(200,data)
+            if path == '/storage/cleanup':
+                if not 0 < size <= 256:
+                    raise ValueError('Yêu cầu không hợp lệ.')
+                raw = json.loads(self.rfile.read(size))
+                days = raw.get('days') if isinstance(raw,dict) else None
+                if isinstance(days,bool) or not isinstance(days,int) or not 1 <= days <= 3650:
+                    raise ValueError('Số ngày phải từ 1 đến 3650.')
+                return self.respond(200, cleanup(days))
+            delete_match=re.fullmatch(r'/audio/([a-f0-9]{32})/delete',path)
+            if delete_match:
+                delete_audio(delete_match[1])
+                return self.respond(200, storage())
             if path == '/design':
                 if not 0 < size <= 8192:
                     raise ValueError('Yêu cầu không hợp lệ.')
@@ -416,5 +514,9 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == '__main__':
     address = ('127.0.0.1', int(os.environ.get('PORT', '8000')))
-    print(f'Review Studio running on port {address[1]}', flush=True)
+    if keep_days():
+        swept = cleanup(keep_days())
+        if swept['removed']:
+            print(f"Removed {swept['removed']} video project(s) idle for over {keep_days()} days ({swept['freed']//1048576} MB).", flush=True)
+    print(f'Review Studio {VERSION} running on port {address[1]}', flush=True)
     ThreadingHTTPServer(address, Handler).serve_forever()

@@ -18,6 +18,7 @@ import errno
 from http.client import HTTPException
 
 LIMIT=100*1024*1024
+VERSION=(Path(__file__).resolve().parent/'VERSION').read_text(encoding='utf-8').strip()
 _LOCKS={}
 _MUTEX=threading.Lock()
 
@@ -49,7 +50,7 @@ def download(url,target):
     opener=request.build_opener(PublicRedirect())
     deadline=time.monotonic()+180
     headers={'Accept':'audio/mpeg,audio/*,application/octet-stream;q=0.9,*/*;q=0.5',
-             'User-Agent':'ReviewStudio/0.7','Referer':'https://ai33.pro/'}
+             'User-Agent':'ReviewStudio/'+VERSION,'Referer':'https://ai33.pro/'}
     try:
         with opener.open(request.Request(url,headers=headers),timeout=60) as response:
             declared=response.headers.get('Content-Length')
