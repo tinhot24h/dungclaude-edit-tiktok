@@ -447,21 +447,6 @@ kbd{display:inline-block;padding:2px 7px;border:1px solid #475569;border-bottom-
 .export-toast-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.export-toast-actions:empty{display:none}
 @keyframes spin{to{transform:rotate(360deg)}}
 .pb-export.exporting{background:linear-gradient(90deg,#3fd18b var(--progress,0%),#24493f var(--progress,0%))}
-/* ---- 0.12: free music */
-.pane-subtitle{font:700 12px system-ui;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px}
-.fm-search{display:grid;grid-template-columns:1fr auto auto;gap:6px}
-.fm-search select,.fm-search input{margin:0}
-.fm-moods{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
-.fm-list{display:flex;flex-direction:column;gap:6px;max-height:420px;overflow:auto}
-.fm-row{display:grid;grid-template-columns:34px 1fr auto;gap:8px;align-items:center;background:var(--input);border:1px solid var(--border);border-radius:9px;padding:7px 8px}
-.fm-play{width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:#1d2735;color:var(--text);cursor:pointer;padding:0}
-.fm-play.on{background:var(--accent);color:#0d1118}
-.fm-info{min-width:0}.fm-info strong{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.fm-info small{display:flex;gap:6px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:10.5px}
-.fm-license{border:1px solid #3fd18b;color:#3fd18b;border-radius:4px;padding:0 4px}.fm-license.credit{border-color:#f0a35a;color:#f0a35a}
-.fm-link{font-size:10.5px;color:var(--accent)}
-.fm-add{white-space:nowrap}
-.fm-legal{font-size:10.5px}
 /* ---- 0.12: text content, layer list, my styles/designs */
 .text-content-label{margin-top:0}
 .text-content{width:100%;min-height:60px;resize:vertical}

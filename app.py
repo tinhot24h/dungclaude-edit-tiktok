@@ -24,7 +24,6 @@ import ai33_audio
 import audio_files
 import library_store
 import output_folder
-import free_music
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / '.local'
@@ -344,7 +343,7 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == '/':
             return self.respond(200, (ROOT / 'index.html').read_bytes(), 'text/html; charset=utf-8')
-        if path in ('/studio.css','/studio.js','/ai_ui.js','/audio_ui.js','/editor_ui.js','/timeline_ui.js','/history_ui.js','/workspace_ui.js','/clip_ui.js','/studio_shell.js','/media_bin.js','/image_ui.js','/export_ui.js','/music_ui.js','/style_ui.js'):
+        if path in ('/studio.css','/studio.js','/ai_ui.js','/audio_ui.js','/editor_ui.js','/timeline_ui.js','/history_ui.js','/workspace_ui.js','/clip_ui.js','/studio_shell.js','/media_bin.js','/image_ui.js','/export_ui.js','/style_ui.js'):
             mime = 'text/css' if path.endswith('.css') else 'text/javascript'
             return self.respond(200, (ROOT/path.lstrip('/')).read_bytes(), mime+'; charset=utf-8')
         if path in ('/assets/'+font[0] for font in FONTS.values()):
@@ -402,8 +401,6 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(200,(IMAGES/(image_match[1]+'.png')).read_bytes(),'image/png')
         if path == '/images':
             return self.respond(200,{'images':images()})
-        if path == '/music/licenses':
-            return self.respond(200,{'licenses':free_music.LICENSES})
         if path == '/frames':
             items=[{'id':f.stem,'url':'/frames/'+f.stem} for f in sorted(FRAMES.glob('*.png'),key=lambda f:f.stat().st_mtime,reverse=True) if PROJECT.fullmatch(f.stem)]
             return self.respond(200,{'frames':items})
@@ -565,18 +562,6 @@ class Handler(BaseHTTPRequestHandler):
                     return self.respond(200,{'id':key,'url':'/frames/'+key})
                 for suffix in ('.png','.json'):(IMAGES/(key+suffix)).unlink(missing_ok=True)
                 return self.respond(200,{'images':images()})
-            if path in ('/music/search','/music/import'):
-                if not 0 < size <= 4096:
-                    raise ValueError('Yêu cầu nhạc không hợp lệ.')
-                raw=json.loads(self.rfile.read(size))
-                if not isinstance(raw,dict):raise ValueError('Yêu cầu nhạc không hợp lệ.')
-                if not AUDIO_SLOTS.acquire(blocking=False):
-                    return self.respond(429, {'error':'Đang xử lý các yêu cầu âm thanh khác. Hãy chờ giây lát.'})
-                try:
-                    result=free_music.search(raw) if path=='/music/search' else free_music.fetch(raw,AUDIO)
-                finally:
-                    AUDIO_SLOTS.release()
-                return self.respond(200,result)
             if path == '/upload':
                 if not 0 < size <= 500 * 1024 * 1024:
                     return self.respond(413, {'error': 'Chọn video tối đa 500 MB.'})

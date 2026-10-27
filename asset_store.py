@@ -23,7 +23,7 @@ def write(directory,aid,**data):
         try:old=json.loads(path.read_text(encoding='utf-8'))
         except (OSError,ValueError):pass
         if not isinstance(old,dict):old={}
-        allowed=('name','source','task_id','duration','bytes','created_at','voice_id','license','credit','source_url')
+        allowed=('name','source','task_id','duration','bytes','created_at','voice_id')
         old.update({k:v for k,v in data.items() if k in allowed})
         old.setdefault('created_at',datetime.now(timezone.utc).isoformat())
         old['asset_id']=aid;old['name']=clean_name(old.get('name'))

@@ -46,12 +46,12 @@ class PublicRedirect(request.HTTPRedirectHandler):
         return super().redirect_request(req,fp,code,msg,headers,newurl)
 
 
-def download(url,target,referer='https://ai33.pro/'):
+def download(url,target):
     public_url(url)
     opener=request.build_opener(PublicRedirect())
     deadline=time.monotonic()+180
     headers={'Accept':'audio/mpeg,audio/*,application/octet-stream;q=0.9,*/*;q=0.5',
-             'User-Agent':'ReviewStudio/'+VERSION,**({'Referer':referer} if referer else {})}
+             'User-Agent':'ReviewStudio/'+VERSION,'Referer':'https://ai33.pro/'}
     try:
         with opener.open(request.Request(url,headers=headers),timeout=60) as response:
             declared=response.headers.get('Content-Length')
