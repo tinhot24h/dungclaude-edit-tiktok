@@ -1,7 +1,7 @@
-REVIEW STUDIO 0.10 — VIDEO / DỊCH AI / ÂM THANH AI33
+REVIEW STUDIO 0.10.1 — VIDEO / DỊCH AI / ÂM THANH AI33
 
 CẬP NHẬT
-Đóng bản cũ, giải nén toàn bộ ReviewStudio-v0.10.zip vào thư mục mới có
+Đóng bản cũ, giải nén toàn bộ ReviewStudio-v0.10.1.zip vào thư mục mới có
 quyền ghi. Không chạy từ trong ZIP. Đã có Python/FFmpeg thì không cần
 cài lại. Thiết kế px bản 0.4 dùng lại nếu cùng trình duyệt/địa chỉ/cổng.
 PNG thuộc thư mục cũ cần tải lại khi chuyển thư mục.
@@ -219,3 +219,9 @@ Timeline: bấm clip rồi Delete để xóa (đoạn video, video, MP3, nhạc 
 Shift+bấm chọn nhiều đoạn; nút 🔊 tắt tiếng track, 🔒 khóa track.
 Space phát/dừng. Phím C bật Góp ý: bấm lên hình để ghim ghi chú.
 Đo bản xuất: xem LUFS/True Peak của video vừa xuất.
+
+NÂNG CẤP 0.10.1 — DỊCH & BIÊN TẬP
+Mở "⚙ Tùy chỉnh câu lệnh" để sửa quy tắc viết; bấm "Lưu thành mẫu…" để
+giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh gốc. Mẫu gốc đã
+cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
+Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.

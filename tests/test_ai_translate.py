@@ -68,7 +68,7 @@ class TranslateTests(unittest.TestCase):
         self.assertEqual(result.exception.status,504)
 
     def test_refusal_incomplete_and_invalid_json_do_not_become_scripts(self):
-        cases=[answer(status='incomplete'),dict(status='completed',output=[dict(type='message',content=[dict(type='refusal',refusal='No')])]),answer(dict(literal='',script='x',notes=[])),answer(dict(literal='x',script='x',notes='bad'))]
+        cases=[answer(status='incomplete'),dict(status='completed',output=[dict(type='message',content=[dict(type='refusal',refusal='No')])]),answer(dict(script='',hook='x')),answer(dict(script='x',hook_options='bad'))]
         for raw in cases:
             with self.assertRaises(ai.AIError):ai.parse_response(raw)
 

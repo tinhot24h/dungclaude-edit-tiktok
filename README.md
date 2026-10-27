@@ -1,8 +1,15 @@
-# Review Studio 0.10
+# Review Studio 0.10.1
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.10.1 — trang Dịch & biên tập
+
+- **Tùy chỉnh câu lệnh dịch:** mục ⚙ Tùy chỉnh câu lệnh cho sửa toàn bộ quy tắc viết gửi cho AI, lưu thành nhiều mẫu, chọn mẫu, khôi phục mặc định; tự lưu trên trình duyệt và dùng cho cả chế độ thủ công lẫn Gemini/OpenAI. Phần cảnh báo chống chèn lệnh và định dạng JSON luôn được ứng dụng tự thêm.
+- **Quy tắc giá:** câu lệnh mẫu yêu cầu tuyệt đối không nêu giá bán chính xác, chỉ dùng cách nói chung chung ("giá mềm", "đang có ưu đãi"…). Kết quả có nêu giá cụ thể (vd 39 tệ, 99k, 150.000đ) sẽ hiện cảnh báo.
+- Bỏ **bản dịch sát nghĩa** và **Điểm cần kiểm chứng**; AI chỉ trả hook, kịch bản đọc, tiêu đề và nội dung trên video. JSON kiểu cũ vẫn nhập được.
+- **Giao diện mới:** bên trái là ô tiếng Trung lớn, tùy chọn gọn một hàng, nút chọn Thủ công / Gemini / OpenAI, các bước thủ công đánh số; bên phải là kết quả theo thứ tự ① Hook → ② Kịch bản đọc → ③ Chữ trên video, nút Tạo giọng ai33 ngay cạnh kịch bản.
 
 ## Mới trong 0.10 — giao diện dựng kiểu trình edit chuyên nghiệp
 

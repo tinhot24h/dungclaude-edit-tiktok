@@ -60,7 +60,9 @@ class TranslationModeTests(unittest.TestCase):
             prompt=ai.manual_prompt(self.source(api_key='do-not-copy-this-key'))
             self.assertIn(self.source()['source'],prompt)
             self.assertNotIn('do-not-copy-this-key',prompt)
-            self.assertIn('literal',prompt)
+            self.assertIn('hook_options',prompt)
+            self.assertNotIn('literal',prompt)
+            self.assertIn('tuyệt đối không nhắc giá bán chính xác',prompt)
             call.assert_not_called()
             with self.assertRaises(ai.AIError):ai.translate(self.source(provider='manual'))
             call.assert_not_called()
@@ -73,7 +75,7 @@ class TranslationModeTests(unittest.TestCase):
                 self.assertEqual(result['script'],RESULT['script'])
                 self.assertEqual(result['provider'],'manual')
             call.assert_not_called()
-        for text in ('not json','{"script":"x"}',json.dumps(dict(literal='x',script='y',notes='bad'))):
+        for text in ('not json','{"script":""}',json.dumps(dict(script='y',hook_options='bad'))):
             with self.assertRaises(ValueError):ai.import_manual(dict(text=text))
 
     def test_gemini_incomplete_or_blocked_response_rejected(self):
@@ -99,24 +101,44 @@ class VideoTextTests(unittest.TestCase):
         self.assertNotIn('layout',config)
         with self.assertRaises(ValueError):ai.manual_prompt(dict(source='x',layout=dict(title_font='comic')))
         schema=ai.payload(ai.parameters(dict(source='x',provider='openai')))['text']['format']['schema']
-        self.assertEqual(schema['required'],['literal','hook','hook_options','script','title','body','notes'])
+        self.assertEqual(schema['required'],['hook','hook_options','script','title','body'])
 
     def test_import_keeps_title_body_and_warns_on_overflow(self):
         text=json.dumps({**RESULT,'title':'  Tinh dầu   thơm phòng ','body':'Mùi dịu nhẹ.\n\nDùng cho phòng ngủ.'})
         result=ai.import_manual(dict(text=text))
         self.assertEqual((result['title'],result['body']),('Tinh dầu thơm phòng','Mùi dịu nhẹ.\nDùng cho phòng ngủ.'))
-        self.assertEqual(result['fit']['title']['lines'],1);self.assertEqual(result['notes'],[])
+        self.assertEqual(result['fit']['title']['lines'],1);self.assertEqual(result['warnings'],[]);self.assertNotIn('notes',result)
         long=ai.import_manual(dict(text=json.dumps({**RESULT,'title':'TIÊU ĐỀ RẤT DÀI '*8,'body':''})))
-        self.assertTrue(any('Tiêu đề dài' in n for n in long['notes']))
+        self.assertTrue(any('Tiêu đề dài' in n for n in long['warnings']))
         old=ai.import_manual(dict(text=json.dumps(RESULT)))
         self.assertEqual((old['title'],old['body']),('',''))
 
     def test_hook_follows_style_and_options_are_deduplicated(self):
         news=ai.manual_prompt(dict(source='x',style='news'));tips=ai.manual_prompt(dict(source='x',style='tips'))
         self.assertIn(ai.HOOKS['news'],news);self.assertIn(ai.HOOKS['tips'],tips);self.assertNotIn(ai.HOOKS['news'],tips)
-        self.assertIn('script PHẢI bắt đầu bằng đúng câu hook',news)
+        self.assertIn('script phải bắt đầu bằng đúng câu hook',news)
         result=ai.import_manual(dict(text=json.dumps({**RESULT,'hook':' Bếp  bẩn mấy cũng sạch? ','hook_options':['Bếp bẩn mấy cũng sạch?','Chỉ 3 giây lau sạch','','Ai cũng cần']})))
         self.assertEqual(result['hook'],'Bếp bẩn mấy cũng sạch?')
         self.assertEqual(result['hook_options'],['Bếp bẩn mấy cũng sạch?','Chỉ 3 giây lau sạch','Ai cũng cần'])
         with self.assertRaises(ValueError):ai.import_manual(dict(text=json.dumps({**RESULT,'hook_options':'x'})))
         self.assertEqual(ai.import_manual(dict(text=json.dumps(RESULT)))['hook_options'],[])
+
+
+class CustomPromptTests(unittest.TestCase):
+    def test_custom_rules_replace_defaults_but_guard_and_contract_stay(self):
+        prompt=ai.manual_prompt(dict(source='产品很好',instructions='Viết thật vui, xưng "tui".'))
+        self.assertIn('Viết thật vui, xưng "tui".',prompt)
+        self.assertNotIn(ai.DEFAULT_RULES[:40],prompt)
+        self.assertTrue(prompt.startswith(ai.GUARD))
+        self.assertIn(ai.CONTRACT,prompt)
+        self.assertIn(ai.DEFAULT_RULES,ai.manual_prompt(dict(source='x',instructions='   ')))
+        with self.assertRaises(ValueError):ai.manual_prompt(dict(source='x',instructions='a'*(ai.MAX_RULES+1)))
+        with self.assertRaises(ValueError):ai.manual_prompt(dict(source='x',instructions=['bad']))
+        params=ai.parameters(dict(source='x',provider='openai',instructions='Quy tắc riêng'))
+        self.assertIn('Quy tắc riêng',ai.payload(params)['input'][0]['content'])
+        self.assertNotIn('rules',json.loads(ai.payload(params)['input'][1]['content']))
+
+    def test_concrete_prices_are_flagged(self):
+        result=ai.import_manual(dict(text=json.dumps(dict(script='Chỉ 99k là có ngay.',hook='Giá mềm bất ngờ?',title='GIÁ 150.000Đ',body='Đang có ưu đãi.'))))
+        labels=' '.join(result['warnings'])
+        self.assertIn('Kịch bản',labels);self.assertIn('Tiêu đề',labels);self.assertNotIn('Hook',labels);self.assertNotIn('Nội dung video',labels)

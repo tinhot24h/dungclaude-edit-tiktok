@@ -338,6 +338,9 @@ class Handler(BaseHTTPRequestHandler):
             record=asset_store.read(AUDIO,audio_match[1]);name=record.get('name','review-voice')
             name=re.sub(r'\.(mp3|wav|m4a|ogg|flac)$','',name,flags=re.I)+'.mp3'
             return self.serve_audio(AUDIO / (audio_match[1]+'.mp3'), 'download=1' in urlparse(self.path).query.split('&'),filename=name)
+        if path == '/translation-defaults':
+            return self.respond(200, {'rules':ai_translate.DEFAULT_RULES,'guard':ai_translate.GUARD,'contract':ai_translate.CONTRACT,'max':ai_translate.MAX_RULES,
+                                      'hooks':ai_translate.HOOKS,'styles':ai_translate.STYLES})
         if path == '/ai-status':
             return self.respond(200, {'configured':ai_translate.configured(),'model':ai_translate.default_model(),
                                      'providers':{name:dict(configured=ai_translate.configured(name),model=ai_translate.default_model(name))
@@ -470,7 +473,7 @@ class Handler(BaseHTTPRequestHandler):
                 result = {'prompt':ai_translate.manual_prompt(raw)} if path.endswith('prompt') else ai_translate.import_manual(raw)
                 return self.respond(200,result)
             if path == '/translate':
-                if not 0 < size <= 65536:
+                if not 0 < size <= 196608:
                     raise ValueError('Yêu cầu dịch quá lớn.')
                 raw = json.loads(self.rfile.read(size))
                 if not AI_SLOTS.acquire(blocking=False):
