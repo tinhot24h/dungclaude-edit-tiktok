@@ -134,6 +134,15 @@ class StorageTests(unittest.TestCase):
         self.assertEqual(status,200);self.assertLess(result['lufs'],0);self.assertIn('true_peak',result)
         self.assertEqual(self.call('POST','/media/loudness',json.dumps({'asset':'../x'}).encode())[0],400)
 
+    def test_delete_video_from_library(self):
+        key='4'*32;self.project(key)
+        self.assertEqual(self.call('POST',f'/media/video/{key}/delete')[0],200)
+        self.assertFalse((self.root/key).exists())
+        self.assertEqual(self.call('POST',f'/media/video/{key}/delete')[0],400)
+        app.JOBS['3'*32]={'state':'rendering'};self.project('3'*32)
+        try:self.assertEqual(self.call('POST',f"/media/video/{'3'*32}/delete")[0],400)
+        finally:app.JOBS.pop('3'*32,None)
+
     def test_delete_audio(self):
         aid='a'*32
         (self.root/'audio'/(aid+'.mp3')).write_bytes(b'mp3');(self.root/'audio'/(aid+'.json')).write_text('{}')

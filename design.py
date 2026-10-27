@@ -24,7 +24,7 @@ def settings(raw):
     if out['frame_style'] not in FRAMES:
         raise ValueError('Khung không hợp lệ.')
     out.setdefault('background','solid')
-    if out['background'] not in ('solid','gradient'):
+    if out['background'] not in ('solid','gradient','none'):
         raise ValueError('Kiểu nền không hợp lệ.')
     for key,default in dict(color='#fad9e9',color2='#cbb9ef',frame_color='#f69fbe',border_color='#fff3e7',
                             title_color='#fff36a',body_color='#ffffff',title_outline_color='#342333',
@@ -141,7 +141,8 @@ def artwork(opts):
         t=min(1,max(0,(y-start)/height))
         mix=min(1,max(0,(y-start)/max(1,H-start)))
         rgb=bytes(round(a+(b-a)*mix) for a,b in zip(color,other))
-        alpha=round(255*opts['opacity']/100*t*t*(3-2*t))
+        # background 'none': no colour layer or fade, the video shows on black where it does not cover
+        alpha=0 if opts['background']=='none' else round(255*opts['opacity']/100*t*t*(3-2*t))
         pixels.append(bytearray((rgb+bytes([alpha]))*W))
 
     original = [bytes(row) for row in pixels] if 0 < opts['frame_opacity'] < 100 else None

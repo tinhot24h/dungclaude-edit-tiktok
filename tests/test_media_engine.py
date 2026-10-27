@@ -114,6 +114,12 @@ class NativeRenderTests(unittest.TestCase):
         with self.assertRaises(ValueError):plan(dict(video_segments=[[1,1.01]]),self.vi)
         with self.assertRaises(ValueError):plan(dict(video_segments=[[0,1]]*61),self.vi)
 
+    def test_background_off_uses_black_base(self):
+        opts=settings(dict(units='px',title='',body='',background='none',color='#ff00ff',audio_mode='original',video_end=.2))
+        build(self.folder,opts,self.video,self.vi)
+        graph=(self.folder/'render.ffgraph').read_text()
+        self.assertIn('color=c=0x000000',graph);self.assertNotIn('0xff00ff',graph)
+
     def test_ducked_music_and_preview_window(self):
         options=dict(audio_mode='replace',audio_end=2,duration_policy='video',music_duck=True,preview_at=1)
         opts=settings(dict(units='px',title='',body='',**options))

@@ -306,7 +306,7 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == '/':
             return self.respond(200, (ROOT / 'index.html').read_bytes(), 'text/html; charset=utf-8')
-        if path in ('/studio.css','/studio.js','/ai_ui.js','/audio_ui.js','/editor_ui.js','/timeline_ui.js','/history_ui.js','/workspace_ui.js','/clip_ui.js','/studio_shell.js'):
+        if path in ('/studio.css','/studio.js','/ai_ui.js','/audio_ui.js','/editor_ui.js','/timeline_ui.js','/history_ui.js','/workspace_ui.js','/clip_ui.js','/studio_shell.js','/media_bin.js'):
             mime = 'text/css' if path.endswith('.css') else 'text/javascript'
             return self.respond(200, (ROOT/path.lstrip('/')).read_bytes(), mime+'; charset=utf-8')
         if path in ('/assets/'+font[0] for font in FONTS.values()):
@@ -571,6 +571,11 @@ class Handler(BaseHTTPRequestHandler):
                 target=job.get('saved_path') if job else None
                 output_folder.reveal(target if target and Path(target).is_file() else output_folder.check_dir(output_folder.load(SETTINGS)['output_dir']))
                 return self.respond(200, {'ok':True})
+            video_delete=re.fullmatch(r'/media/video/([a-f0-9]{32})/delete',path)
+            if video_delete:
+                if not (DATA/video_delete[1]/'source').is_file():raise ValueError('Video không còn trong kho.')
+                delete_project(video_delete[1])
+                return self.respond(200, storage())
             delete_match=re.fullmatch(r'/audio/([a-f0-9]{32})/delete',path)
             if delete_match:
                 delete_audio(delete_match[1])

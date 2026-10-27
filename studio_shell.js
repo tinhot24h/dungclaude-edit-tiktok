@@ -40,7 +40,8 @@ panes.text.prepend(el('div',{className:'pane-title',textContent:'Chữ trên vid
 panes.export.prepend(el('div',{className:'pane-title',textContent:'Xuất video'}));
 const tabs=panel.querySelector('.source-tabs');tabs.hidden=true;
 const chips=el('div',{className:'tool-chips',role:'tablist'});
-const CATS=[['media','Media'],['sound','Âm thanh'],['text','Chữ'],['export','Xuất'],['library','Thư viện'],['projects','Dự án'],['notes','Góp ý']];
+// Library, projects and review notes stay available to code (saving, autosave) but are not shown as tools.
+const CATS=[['media','Media'],['sound','Âm thanh'],['text','Chữ'],['export','Xuất']];
 for(const[id,text]of CATS){const b=el('button',{type:'button',id:'tool-'+id,textContent:text});b.setAttribute('role','tab');b.onclick=()=>tool(id);chips.append(b)}
 panel.prepend(chips);
 function tool(id){if(id==='library'||id==='projects')$('source-tab-'+id).click();for(const p of panel.querySelectorAll('.source-pane'))p.hidden=p.id!=='pane-'+id;for(const b of chips.children)b.setAttribute('aria-selected',String(b.id==='tool-'+id));if(!layout.left){layout.left=true;layout.theater=false;applyLayout()}store('review-tool',id)}
@@ -97,7 +98,7 @@ function renderNotes(){const rows=notes(),count=k=>rows.filter(n=>k==='all'||n.s
   const jump=el('button',{type:'button',className:'note-time',textContent:`#${n.index} · ${tc(n.t)}`});jump.onclick=()=>{api.seek(n.t);focus=n.id;renderNotes();pins(n.t)};
   const drop=el('button',{type:'button',className:'icon-button',textContent:'✕',title:'Xóa góp ý'});drop.onclick=()=>saveNotes(notes().filter(x=>x.id!==n.id));
   return el('div',{className:'note-card '+(n.status||'open')+(focus===n.id?' focus':'')},el('div',{className:'note-head'},jump,st,drop),el('p',{textContent:n.text}))}):[el('div',{className:'note-empty'},el('div',{textContent:'◎'}),el('strong',{textContent:'Chưa có góp ý'}),el('p',{className:'helper',textContent:'Bấm C rồi bấm lên khung hình ở chỗ cần sửa.'}))]));
- const open=rows.filter(n=>n.status!=='done').length;$('tool-notes').textContent=open?`Góp ý ${open}`:'Góp ý'}
+ const open=rows.filter(n=>n.status!=='done').length;if($('tool-notes'))$('tool-notes').textContent=open?`Góp ý ${open}`:'Góp ý'}
 const layer=el('div',{id:'note-pins',className:'note-pins'});$('stage').append(layer);
 function pins(t){const rows=notes();layer.replaceChildren(...rows.map((n,i)=>({n,i})).filter(({n})=>Math.abs(n.t-t)<=1.5||n.id===focus).map(({n,i})=>{const pin=el('button',{type:'button',className:'note-pin '+(n.status||'open'),textContent:String(i+1),title:n.text});Object.assign(pin.style,{left:(n.x/720*100)+'%',top:(n.y/1280*100)+'%'});pin.onclick=e=>{e.stopPropagation();focus=n.id;tool('notes');renderNotes()};pin.onpointerdown=e=>e.stopPropagation();return pin}))}
 const pop=el('div',{id:'note-pop',className:'note-pop',hidden:true});pop.innerHTML='<textarea id="note-text" placeholder="Muốn sửa gì ở chỗ này? (Enter xuống dòng · Ctrl+Enter lưu)"></textarea><div class="result-actions"><button type="button" id="note-cancel" class="outline-action small-action">Hủy</button><button type="button" id="note-save" class="primary-action small-action">Lưu góp ý</button></div>';$('stage').append(pop);
@@ -109,7 +110,7 @@ $('stage').addEventListener('pointerdown',e=>{if(!noteMode||e.target.closest('#n
 $('note-cancel').onclick=()=>{closePop();pins(api.state().clock)};
 $('note-save').onclick=()=>{const text=$('note-text').value.trim();if(!draft||!text){$('note-text').focus();return}const id='n'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);saveNotes([...notes(),{id,t:draft.t,x:draft.x,y:draft.y,text:text.slice(0,1000),status:'open',created:new Date().toISOString()}]);focus=id;closePop();renderNotes();pins(api.state().clock)};
 $('note-text').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();$('note-save').click()}else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closePop();pins(api.state().clock)}});
-document.addEventListener('keydown',e=>{if(view.hidden||e.ctrlKey||e.metaKey||e.altKey)return;const t=e.target;if(t.closest?.('textarea,select,input:not([type=checkbox]):not([type=range])'))return;if(e.key==='c'||e.key==='C'){e.preventDefault();setMode(!noteMode)}else if(e.key==='Escape'&&noteMode)setMode(false)});
+document.addEventListener('keydown',e=>{if(view.hidden||e.ctrlKey||e.metaKey||e.altKey)return;const t=e.target;if(t.closest?.('textarea,select,input:not([type=checkbox]):not([type=range])'))return;if(e.key==='Escape'&&noteMode)setMode(false)});
 document.addEventListener('note-focus',e=>{focus=e.detail;tool('notes');renderNotes();pins(api.state().clock)});
 document.addEventListener('history-applied',()=>{renderNotes();pins(api.state().clock);stats()});
 document.addEventListener('video-changed',()=>{focus='';renderNotes()});

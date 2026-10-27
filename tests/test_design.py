@@ -32,6 +32,11 @@ class DesignTests(unittest.TestCase):
         self.assertEqual(alphas,sorted(alphas))
         self.assertLessEqual(max(b-a for a,b in zip(alphas,alphas[1:])),3)
 
+    def test_background_off_is_fully_transparent(self):
+        sample=pixels(artwork(self.options(background='none')))
+        self.assertEqual({sample(360,y)[3] for y in (0,600,900,1279)},{0})
+        with self.assertRaises(ValueError):settings(dict(background='hidden'))
+
     def test_frame_motion_independent_of_background_and_text(self):
         first=self.options(frame_style='pink',frame_y=58)
         second=self.options(frame_style='pink',frame_y=70)

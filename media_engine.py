@@ -194,7 +194,7 @@ def build(folder,opts,video_path,video,audio_path=None,audio=None,frame_path=Non
                  f"crop={vw}:{vh}:x='(trunc({vw}*{f}/2)*2-{vw})/2':y='(trunc({vh}*{f}/2)*2-{vh})/2',")
     source+=f'rotate={rad:.12f}:ow=rotw({rad:.12f}):oh=roth({rad:.12f}):c=none,setsar=1,tpad=stop_mode=clone:stop_duration={duration},trim=duration={duration}[clip]'
     graph.append(source)
-    graph.append(f'color=c={opts["color"].replace("#","0x")}:s={ow}x{oh}:r={fps}:d={duration},format=rgba[base]')
+    graph.append(f'color=c={"0x000000" if opts.get("background")=="none" else opts["color"].replace("#","0x")}:s={ow}x{oh}:r={fps}:d={duration},format=rgba[base]')
     x=box['x']*scale;y=box['y']*scale
     graph.append(f'[base][clip]overlay=x={x}+({vw}-overlay_w)/2:y={y}+({vh}-overlay_h)/2:shortest=1:format=auto[placed]')
     graph.append(f'[{art}:v]scale={ow}:{oh}:flags=lanczos[art]')
