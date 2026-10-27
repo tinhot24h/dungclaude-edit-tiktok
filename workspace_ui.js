@@ -17,7 +17,7 @@ const library=el('div',{id:'pane-library',className:'source-pane',hidden:true});
 const projects=el('div',{id:'pane-projects',className:'source-pane',hidden:true});
 const tabs=el('div',{className:'source-tabs',role:'tablist'});
 for(const[id,label]of [['source','Nguồn & xuất'],['library','Thư viện'],['projects','Dự án & mẫu']]){const b=el('button',{type:'button',id:'source-tab-'+id,textContent:label});b.setAttribute('role','tab');b.onclick=()=>show(id);tabs.append(b)}
-function show(id){for(const name of ['source','library','projects']){$('pane-'+name).hidden=name!==id;$('source-tab-'+name).setAttribute('aria-selected',String(name===id))}if(id==='library')loadLibrary();if(id==='projects')loadProjects()}
+function show(id){if(id==='source'&&window.studioTool)return window.studioTool('media');for(const name of ['source','library','projects']){if(!$('pane-'+name))continue;$('pane-'+name).hidden=name!==id;$('source-tab-'+name).setAttribute('aria-selected',String(name===id))}if(id==='library')loadLibrary();if(id==='projects')loadProjects()}
 panel.append(tabs,main,library,projects,el('p',{id:'workspace-status',className:'helper'}));panel.querySelector('#workspace-status').setAttribute('role','status');show('source');
 
 // ---- Projects

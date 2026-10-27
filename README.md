@@ -1,8 +1,18 @@
-# Review Studio 0.9.2
+# Review Studio 0.10
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.10 — giao diện dựng kiểu trình edit chuyên nghiệp
+
+- **Thanh dự án:** đổi tên dự án ngay trên thanh, Tạo mới / Lưu, trạng thái lưu, thống kê (số track, đoạn, thời lượng), nút ẩn/hiện cột công cụ ◧, cột thuộc tính ▥, chế độ trình phát lớn ⛶, phím tắt ⌨ và nút **Xuất bản**.
+- **Cột công cụ theo nhóm:** Media · Âm thanh · Chữ · Xuất · Thư viện · Dự án · Góp ý. Kéo vạch ngăn trên timeline để đổi chiều cao (nhấp đúp để đặt lại); bố cục được nhớ.
+- **Timeline:** đầu track có tên, thông tin, nút tắt tiếng 🔊/🔇 (áp dụng cả khi xuất) và khóa 🔓/🔒; thanh công cụ icon (hoàn tác, tách, cắt trước/sau, xóa, mốc, nam châm bám mốc, zoom, mở rộng); đoạn có nhãn 01, 02…; Shift + bấm để chọn nhiều đoạn rồi xóa.
+- **Phím Delete** xóa thứ đang chọn trên timeline: đoạn video, cả video MP4, MP3 giọng đọc hoặc nhạc nền (Ctrl+Z lấy lại). **Space** luôn phát/dừng, kể cả khi vừa bấm một nút.
+- **Thanh phát:** timecode tới khung hình (phút:giây:khung), nhảy về/tới điểm cắt hoặc mốc, lùi/tới 1 giây, đồng hồ mức âm lượng khi phát, **Đo bản xuất** / **Đo giọng** (LUFS, True Peak theo EBU R128, nhắc mức TikTok ≈ −14 LUFS).
+- **Góp ý (phím C):** bấm lên khung hình để ghim ghi chú đúng thời điểm và vị trí; danh sách lọc Mở / Đang sửa / Xong, cờ trên timeline, ghim số trên trình phát; lưu cùng dự án và hoàn tác được.
+- Nhãn đoạn đang phát hiện ở góc trình phát.
 
 ## Mới trong 0.9.2
 

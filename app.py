@@ -306,7 +306,7 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == '/':
             return self.respond(200, (ROOT / 'index.html').read_bytes(), 'text/html; charset=utf-8')
-        if path in ('/studio.css','/studio.js','/ai_ui.js','/audio_ui.js','/editor_ui.js','/timeline_ui.js','/history_ui.js','/workspace_ui.js','/clip_ui.js'):
+        if path in ('/studio.css','/studio.js','/ai_ui.js','/audio_ui.js','/editor_ui.js','/timeline_ui.js','/history_ui.js','/workspace_ui.js','/clip_ui.js','/studio_shell.js'):
             mime = 'text/css' if path.endswith('.css') else 'text/javascript'
             return self.respond(200, (ROOT/path.lstrip('/')).read_bytes(), mime+'; charset=utf-8')
         if path in ('/assets/'+font[0] for font in FONTS.values()):
@@ -542,6 +542,17 @@ class Handler(BaseHTTPRequestHandler):
                 if not 0 < size <= library_store.LIMIT:
                     raise ValueError('Dự án quá lớn để lưu (tối đa 512 KB).')
                 return self.respond(200,library_store.save(DATA/'library',library[1],json.loads(self.rfile.read(size))))
+            if path == '/media/loudness':
+                raw=json.loads(self.rfile.read(size)) if 0 < size <= 1024 else {}
+                job=raw.get('job') if isinstance(raw,dict) else None
+                aid=raw.get('asset') if isinstance(raw,dict) else None
+                if isinstance(job,str) and PROJECT.fullmatch(job):
+                    record=load_job(job)
+                    target=DATA/job/'review.mp4'
+                    if not record or record.get('state')!='done' or record.get('preview') or not target.is_file():raise ValueError('Chưa có bản xuất hoàn chỉnh của video này. Xuất video trước rồi đo.')
+                elif isinstance(aid,str) and PROJECT.fullmatch(aid) and (AUDIO/(aid+'.mp3')).is_file():target=AUDIO/(aid+'.mp3')
+                else:raise ValueError('Chọn bản xuất hoặc MP3 cần đo.')
+                return self.respond(200,media_engine.loudness(target))
             if path == '/settings':
                 if not 0 < size <= 4096:
                     raise ValueError('Cài đặt không hợp lệ.')

@@ -1,5 +1,6 @@
 """Deterministic two-track trim/retime/mix and native-resolution video export."""
 import json
+import re
 import math
 import subprocess
 from pathlib import Path
@@ -247,3 +248,14 @@ def build(folder,opts,video_path,video,audio_path=None,audio=None,frame_path=Non
     args+=[*encoder_args(p['encoder'],p['quality']),'-r',str(fps),'-t',str(p['output_duration']),'-movflags','+faststart','-progress','progress.txt',output]
     p['output']=output
     return args,p
+
+
+def loudness(path):
+    """Integrated loudness (LUFS), loudness range and true peak of a file's first audio stream (EBU R128)."""
+    run=subprocess.run(['ffmpeg','-hide_banner','-nostdin','-i',str(path),'-map','0:a:0','-af','ebur128=peak=true','-f','null','-'],capture_output=True,text=True,timeout=600)
+    summary=run.stderr[run.stderr.rfind('Summary:'):]
+    def value(label):
+        match=re.search(label+r':\s+(-?[\d.]+|-inf)',summary)
+        return None if not match or match[1]=='-inf' else float(match[1])
+    if run.returncode or 'Summary:' not in run.stderr:raise ValueError('Không đo được âm lượng: file không có âm thanh hoặc bị lỗi.')
+    return dict(lufs=value('I'),lra=value('LRA'),true_peak=value('Peak'))

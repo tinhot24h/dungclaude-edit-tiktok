@@ -27,7 +27,7 @@ window.snapLayer=(x,y,w,h)=>{const xs=[0,360,720,...(safeOn?[SAFE.left,SAFE.righ
  const bx=best(x,w,xs),by=best(y,h,ys);vertical.hidden=!bx;horizontal.hidden=!by;if(bx)vertical.style.left=bx.t+'px';if(by)horizontal.style.top=by.t+'px';return {dx:bx?bx.d:0,dy:by?by.d:0}};
 document.addEventListener('layer-moved',()=>{vertical.hidden=horizontal.hidden=true});
 
-const KEYS=[['Space / K','Phát hoặc dừng'],['J / L','Lùi / tới 1 giây'],['← / →','Lùi / tới 1 khung hình (Shift: 10 khung)'],['Home / End','Về đầu / cuối video xuất'],['S','Tách đoạn video tại đầu phát'],['Delete','Xóa đoạn video đang chọn'],['Q / W (hoặc I / O)','Cắt phía trước / phía sau đầu phát'],['Kéo một đoạn','Đổi thứ tự đoạn video'],['Ctrl + lăn chuột','Phóng to / thu nhỏ timeline'],['M','Thêm mốc tại đầu phát'],['+ / −','Phóng to / thu nhỏ timeline'],['Ctrl+Z','Hoàn tác'],['Ctrl+Shift+Z / Ctrl+Y','Làm lại'],['Alt + mũi tên','Nhích lớp đang chọn 1 px (Shift: 10 px)'],['Giữ Alt khi kéo','Tắt bám đường gióng'],['G','Bật/tắt vùng an toàn TikTok'],['Ctrl+S','Lưu dự án'],['P','Xuất thử 5 giây'],['Ctrl+Enter','Xuất video'],['Esc','Bỏ chọn đoạn'],['?','Bảng phím tắt này']];
+const KEYS=[['Space / K','Phát hoặc dừng (kể cả khi vừa bấm nút)'],['J / L','Lùi / tới 1 giây'],['← / →','Lùi / tới 1 khung hình (Shift: 10 khung)'],['Home / End','Về đầu / cuối video xuất'],['S','Tách đoạn video tại đầu phát'],['Delete / Backspace','Xóa đoạn hoặc clip đang chọn trên timeline (video, MP3, nhạc nền)'],['Q / W (hoặc I / O)','Cắt phía trước / phía sau đầu phát'],['Kéo một đoạn','Đổi thứ tự đoạn video'],['Ctrl + lăn chuột','Phóng to / thu nhỏ timeline'],['M','Thêm mốc tại đầu phát'],['+ / −','Phóng to / thu nhỏ timeline'],['Ctrl+Z','Hoàn tác'],['Ctrl+Shift+Z / Ctrl+Y','Làm lại'],['Alt + mũi tên','Nhích lớp đang chọn 1 px (Shift: 10 px)'],['Giữ Alt khi kéo','Tắt bám đường gióng'],['C','Bật/tắt chế độ Góp ý (bấm lên khung hình để ghim)'],['Shift + bấm đoạn','Chọn nhiều đoạn để xóa cùng lúc'],['G','Bật/tắt vùng an toàn TikTok'],['Ctrl+S','Lưu dự án'],['P','Xuất thử 5 giây'],['Ctrl+Enter','Xuất video'],['Esc','Bỏ chọn đoạn'],['?','Bảng phím tắt này']];
 const help=document.createElement('dialog');help.id='shortcut-help';help.innerHTML='<h2>Phím tắt</h2><p class="helper">Dùng khi con trỏ không nằm trong ô nhập chữ.</p><table></table><form method="dialog"><button class="primary-action">Đóng</button></form>';
 for(const[k,v]of KEYS){const row=help.querySelector('table').insertRow();row.insertCell().innerHTML='<kbd></kbd>';row.cells[0].firstChild.textContent=k;row.insertCell().textContent=v}
 document.body.append(help);
@@ -36,7 +36,7 @@ const helpButton=document.createElement('button');helpButton.type='button';helpB
 function nudge(dx,dy){const key=$('drag-target').value;if(!['video','frame','title','body'].includes(key))return false;for(const[axis,d]of [['x',dx],['y',dy]]){const e=$(key+'_'+axis);if(d)e.value=Math.round(Math.max(Number(e.min),Math.min(Number(e.max),Number(e.value)+d)))}design.schedule();later(500);return true}
 document.addEventListener('keydown',e=>{
  if($('view-editor').hidden||help.open||e.defaultPrevented)return;
- const t=e.target,field=t.closest?.('textarea,select,[contenteditable="true"]')||(t.tagName==='INPUT'&&!['checkbox','button','radio'].includes(t.type)),mod=e.ctrlKey||e.metaKey,key=e.key.length===1?e.key.toLowerCase():e.key;
+ const t=e.target,field=t.closest?.('textarea,select,[contenteditable="true"]')||(t.tagName==='INPUT'&&!['checkbox','button','radio','range'].includes(t.type)),mod=e.ctrlKey||e.metaKey,key=e.key.length===1?e.key.toLowerCase():e.key;
  const act=fn=>{e.preventDefault();fn()};
  if(mod&&key==='s')return act(()=>window.workspace?.saveProject());
  if(field)return;
@@ -46,9 +46,9 @@ document.addEventListener('keydown',e=>{
  if(e.altKey&&e.key.startsWith('Arrow')){const step=e.shiftKey?10:1,d={ArrowLeft:[-step,0],ArrowRight:[step,0],ArrowUp:[0,-step],ArrowDown:[0,step]}[e.key];if(nudge(...d))e.preventDefault();return}
  if(mod||e.altKey)return;
  const state=api.state(),end=state.plan?.duration||0,seek=v=>api.seek(Math.max(0,Math.min(end,v)));
- if(key===' '&&t.tagName==='BUTTON')return;
+ if(t.type==='range'&&key.startsWith('Arrow'))return;
  switch(key){
-  case ' ':case 'k':return act(()=>$('play').click());
+  case ' ':case 'k':return act(()=>{if(t.tagName==='BUTTON'||t.type==='range')t.blur();$('play').click()});
   case 'j':return act(()=>seek(state.clock-1));
   case 'l':return act(()=>seek(state.clock+1));
   case 'ArrowLeft':return act(()=>seek(state.clock-(e.shiftKey?10:1)/30));

@@ -122,6 +122,18 @@ class StorageTests(unittest.TestCase):
         rows=json.loads(self.call('GET','/media/videos')[1])['videos']
         self.assertEqual([(r['id'],r['thumb']) for r in rows],[(key,'/media/thumb/'+key)])
 
+    @unittest.skipUnless(shutil.which('ffmpeg'),'FFmpeg required')
+    def test_loudness_of_export_and_voice(self):
+        key='5'*32;folder=self.project(key)
+        subprocess=__import__('subprocess')
+        subprocess.run(['ffmpeg','-v','error','-y','-f','lavfi','-i','sine=frequency=440:duration=1','-c:a','aac',str(folder/'review.mp4')],check=True)
+        self.assertEqual(self.call('POST','/media/loudness',json.dumps({'job':key}).encode())[0],400)
+        app.save_job(key,{'state':'done','name':'x'})
+        status,data=self.call('POST','/media/loudness',json.dumps({'job':key}).encode())
+        result=json.loads(data)
+        self.assertEqual(status,200);self.assertLess(result['lufs'],0);self.assertIn('true_peak',result)
+        self.assertEqual(self.call('POST','/media/loudness',json.dumps({'asset':'../x'}).encode())[0],400)
+
     def test_delete_audio(self):
         aid='a'*32
         (self.root/'audio'/(aid+'.mp3')).write_bytes(b'mp3');(self.root/'audio'/(aid+'.json')).write_text('{}')
