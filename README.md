@@ -1,8 +1,17 @@
-# Review Studio 0.10.1
+# Review Studio 0.11
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.11
+
+- **Kho media kiểu CapCut** (tab Media): ＋ Nhập nhiều file có thanh tiến độ, tìm kiếm, lọc Tất cả/Video/Âm thanh/Khung PNG; thẻ có ảnh nhỏ, sóng âm, thời lượng, nhãn "Đã thêm / Giọng đọc / Nhạc nền"; nút ＋ (♪ cho nhạc nền) và 🗑 xóa.
+- **Kéo thả vào timeline:** kéo thẻ trong kho hoặc file từ thư mục máy tính thả thẳng vào track video, giọng đọc hoặc nhạc nền.
+- **Lớp chữ trên timeline:** Tiêu đề, Nội dung và tối đa 6 lớp chữ thêm, mỗi lớp là một thanh màu cam: kéo thân để dời, kéo mép để đổi thời gian hiện, bấm để chỉnh thuộc tính, Delete để xóa. Phím **T** / nút **T+** / **＋ Thêm chữ** thêm chữ tại đầu phát.
+- **Nền hộp cho chữ:** mỗi lớp chữ có thể bật hộp nền (màu, độ đục, khoảng đệm, bo góc); bản xuất giống hệt bản xem trước.
+- **Kiểu nền "Tắt":** không dùng lớp màu/hòa nền.
+- Gọn giao diện: cột trái còn Media · Âm thanh · Chữ · Xuất; bỏ các ô "Mẫu theo loại video".
 
 ## Mới trong 0.10.1 — trang Dịch & biên tập
 

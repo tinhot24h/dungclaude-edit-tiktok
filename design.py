@@ -33,7 +33,7 @@ def settings(raw):
     for key,default in dict(color='#fad9e9',color2='#cbb9ef',frame_color='#f69fbe',border_color='#fff3e7',
                             title_color='#fff36a',body_color='#ffffff',title_outline_color='#342333',
                             body_outline_color='#342333',**{k+'_color':'#ffffff' for k in TEXT_KEYS[2:]},
-                            **{k+'_outline_color':'#000000' for k in TEXT_KEYS[2:]}).items():
+                            **{k+'_outline_color':'#000000' for k in TEXT_KEYS[2:]},**{k+'_box_color':'#000000' for k in TEXT_KEYS}).items():
         out.setdefault(key,default)
         if not isinstance(out[key],str) or not re.fullmatch(r'#[0-9a-fA-F]{6}',out[key]):
             raise ValueError('Mã màu không hợp lệ: '+key)
@@ -54,11 +54,14 @@ def settings(raw):
         spec.update({name+'_size':(30 if name=='title' else 22 if name=='body' else 28,12,144),
                      name+'_x':(50,0,100),name+'_y':(64 if name=='title' else 73 if name=='body' else 25+5*extra,0,98),
                      name+'_width':(76,20,100),name+'_height':(0,0,1280),name+'_outline':(1 if extra<0 else 2,0,5),name+'_gap':(4,0,24),
-                     name+'_start':(0,0,1800),name+'_end':(0,0,1800)})
+                     name+'_start':(0,0,1800),name+'_end':(0,0,1800),
+                     name+'_box_opacity':(70,0,100),name+'_box_pad':(14,0,60),name+'_box_radius':(12,0,60)})
         if px:
             spec.update({name+'_x':(86,0,719),name+'_y':(819 if name=='title' else 934 if name=='body' else 300+60*extra,0,1270),
                          name+'_width':(548,60,720)})
         out.setdefault(name+'_font','sans' if name=='body' else 'sans-bold')
+        out.setdefault(name+'_box','none')
+        if out[name+'_box'] not in ('none','solid'):raise ValueError('Kiểu nền chữ không hợp lệ.')
         out.setdefault(name+'_align','center')
         out.setdefault(name+'_valign','top')
         if out[name+'_valign'] not in ('top','middle','bottom'):raise ValueError('Căn dọc không hợp lệ.')
@@ -138,8 +141,30 @@ def layout(opts,strict=True):
                            x=x,y=y,width=box_width,height=height,text_offset=text_offset,content_y=y+text_offset,valign=vertical,natural_height=natural,size=size,gap=opts[key+'_gap'],
                            font=font,family=FONTS[font][1],align=opts[key+'_align'],color=opts[key+'_color'],
                            outline=opts[key+'_outline'],outline_color=opts[key+'_outline_color'],warnings=problems,
-                           start=opts.get(key+'_start',0),end=opts.get(key+'_end',0)))
+                           start=opts.get(key+'_start',0),end=opts.get(key+'_end',0),box=text_box(opts,key,x,y+text_offset,box_width,natural)))
     return result
+
+
+def text_box(opts,key,x,y,width,height):
+    """Optional filled (rounded) box behind a caption, in 720x1280 design pixels."""
+    if opts.get(key+'_box','none')!='solid':return None
+    pad=opts.get(key+'_box_pad',14)
+    return dict(x=round(x-pad),y=round(y-pad*.6),width=round(width+2*pad),height=round(height+pad*1.2),
+                radius=opts.get(key+'_box_radius',12),color=opts.get(key+'_box_color','#000000'),opacity=opts.get(key+'_box_opacity',70))
+
+
+def box_png(width,height,radius,color,opacity):
+    """Small RGBA PNG of a rounded rectangle; rows are assembled from runs so 4K boxes stay fast."""
+    width,height=max(1,round(width)),max(1,round(height));radius=max(0,min(round(radius),width//2,height//2))
+    rgba=bytes.fromhex(color[1:])+bytes([round(255*opacity/100)]);clear=b'\0\0\0\0'
+    rows=[]
+    for y in range(height):
+        edge=max(radius-y-.5,y-(height-radius)+.5,0)
+        inset=round(radius-math.sqrt(max(0,radius*radius-edge*edge))) if edge else 0
+        rows.append(b'\0'+clear*inset+rgba*(width-2*inset)+clear*inset)
+    def chunk(kind,data):
+        return struct.pack('!I',len(data))+kind+data+struct.pack('!I',zlib.crc32(kind+data)&0xffffffff)
+    return b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('!2I5B',width,height,8,6,0,0,0))+chunk(b'IDAT',zlib.compress(b''.join(rows),6))+chunk(b'IEND',b'')
 
 
 def artwork(opts):

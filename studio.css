@@ -385,3 +385,6 @@ kbd{display:inline-block;padding:2px 7px;border:1px solid #475569;border-bottom-
 .tl-add-text{font-weight:800;color:#f0a35a}
 .text-box.off-time{visibility:hidden}
 .text-box.off-time.chosen{visibility:visible;opacity:.3;outline:1px dashed #f0a35a}
+.text-bg{position:absolute;z-index:0;pointer-events:none}
+.text-box .text-run{z-index:1}
+.text-box{overflow:visible}

@@ -4,7 +4,7 @@ import re
 import math
 import subprocess
 from pathlib import Path
-from design import artwork,layout,frame_box,video_box
+from design import artwork,layout,frame_box,video_box,box_png
 from fonts import FONTS
 
 MAX_SECONDS=1800  # longest source video and export, shared with app.probe
@@ -206,8 +206,16 @@ def build(folder,opts,video_path,video,audio_path=None,audio=None,frame_path=Non
         graph.append(f'[{next_input}:v]format=rgba,scale={w}:{h}:force_original_aspect_ratio=decrease,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color=0x00000000,colorchannelmixer=aa={opts["frame_opacity"]/100}[custom]')
         graph.append(f'[design][custom]overlay={round(b["x"]*scale)}:{round(b["y"]*scale)}:format=auto[framed]')
         next_input+=1;top='framed'
-    textfilters=[]
-    for item in layout(opts):
+    textfilters=[];items=layout(opts)
+    # Caption boxes are rounded PNGs overlaid under their text for the same time window.
+    for item in items:
+        box=item.get('box')
+        if not box:continue
+        name=f'box-{item["key"]}.png';(folder/name).write_bytes(box_png(box['width']*scale,box['height']*scale,box['radius']*scale,box['color'],box['opacity']))
+        args+=['-i',name];shown=f":enable='between(t,{item['start']},{item['end'] or duration+1})'" if item['start']>0 or item['end']>0 else ''
+        graph.append(f'[{top}][{next_input}:v]overlay={round(box["x"]*scale)}:{round(box["y"]*scale)}:format=auto{shown}[boxed{next_input}]')
+        top=f'boxed{next_input}';next_input+=1
+    for item in items:
         font='../../assets/'+FONTS[item['font']][0]
         # Text shown only for part of the video: start..end seconds on the output timeline (end 0 = until the end).
         window=f":enable='between(t,{item['start']},{item['end'] or duration+1})'" if item['start']>0 or item['end']>0 else ''
