@@ -1,8 +1,19 @@
-# Review Studio 0.8.1
+# Review Studio 0.9
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.9
+
+- **Bố cục kiểu CapCut:** thư viện/nguồn bên trái, thuộc tính ở giữa, trình phát 9:16 bên phải (nút Xuất thử / Xuất ngay trên trình phát), timeline trải dài phía dưới. Cột trái có 3 tab: Nguồn & xuất · Thư viện · Dự án & mẫu.
+- **Mẫu theo loại video:** Review sản phẩm, Tin tức, Thời sự nóng, Gia dụng, Mẹo hay, Làm đẹp, Dùng chung (thay cho Mẫu hồng/Mẫu xanh). Áp mẫu giữ nguyên chữ và video, Ctrl+Z để hoàn tác.
+- **Timeline:** tách đoạn tại đầu phát (S), bấm đoạn rồi Delete để xóa và nối liền, mốc (M), track nhạc nền thứ 3 (lặp, fade vào/ra, tự giảm khi có giọng đọc), bám mép đoạn/mốc.
+- **Hoàn tác/làm lại cho mọi thao tác** (thiết kế + timeline), phím tắt đầy đủ (bấm ? để xem), Alt + mũi tên nhích lớp, đường gióng khi kéo, lớp phủ vùng an toàn TikTok (G).
+- **Dự án & mẫu của tôi:** lưu/mở dự án, tự lưu mỗi phút, tải/mở file `.json`; lưu thiết kế thành mẫu riêng.
+- **Thư viện media** có ảnh nhỏ; kéo thả video/MP3/PNG/.json từ thư mục vào cửa sổ; **xuất hàng loạt** nhiều video với cùng thiết kế.
+- **Xuất video:** chọn **thư mục lưu**, xuất xong tự chép video vào đó (không cần bấm tải về; trùng tên thêm (2), (3)…); xuất thử 5 giây (P); hiển thị thời gian còn lại và thông báo khi xong; 60 fps; chuẩn hóa âm lượng −14 LUFS; hiệu ứng phóng to/thu nhỏ từ từ; tự dùng card đồ họa (NVIDIA/Intel/AMD/Apple) nếu có, lỗi thì tự chuyển về CPU.
+- **Dịch AI:** prompt và kết quả có thêm **tiêu đề** và **nội dung hiển thị trên video**, độ dài tính theo font/cỡ chữ/độ rộng hộp chữ hiện tại (cảnh báo nếu tràn); nút **Đưa tiêu đề + nội dung lên video**.
 
 ## Mới trong 0.8.1
 

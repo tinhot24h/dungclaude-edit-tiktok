@@ -87,3 +87,26 @@ class TranslationModeTests(unittest.TestCase):
 
 
 if __name__=='__main__':unittest.main()
+
+
+class VideoTextTests(unittest.TestCase):
+    def test_prompt_asks_for_title_and_body_sized_to_the_boxes(self):
+        prompt=ai.manual_prompt(dict(source='这款香薰很好用',layout=dict(title_font='sans-bold',title_size=40,title_width=400,body_font='sans',body_size=22,body_width=548)))
+        config=json.loads(prompt[prompt.index('{',prompt.index('CẤU HÌNH')):prompt.rindex('}')+1])
+        self.assertIn('title, body',prompt)
+        self.assertLess(config['video_text']['title_max_chars'],ai.capacity(ai.fit_layout({}))['title']['max_chars'])
+        self.assertEqual(config['video_text']['body_max_lines'],5)
+        self.assertNotIn('layout',config)
+        with self.assertRaises(ValueError):ai.manual_prompt(dict(source='x',layout=dict(title_font='comic')))
+        schema=ai.payload(ai.parameters(dict(source='x',provider='openai')))['text']['format']['schema']
+        self.assertEqual(schema['required'],['literal','script','title','body','notes'])
+
+    def test_import_keeps_title_body_and_warns_on_overflow(self):
+        text=json.dumps({**RESULT,'title':'  Tinh dầu   thơm phòng ','body':'Mùi dịu nhẹ.\n\nDùng cho phòng ngủ.'})
+        result=ai.import_manual(dict(text=text))
+        self.assertEqual((result['title'],result['body']),('Tinh dầu thơm phòng','Mùi dịu nhẹ.\nDùng cho phòng ngủ.'))
+        self.assertEqual(result['fit']['title']['lines'],1);self.assertEqual(result['notes'],[])
+        long=ai.import_manual(dict(text=json.dumps({**RESULT,'title':'TIÊU ĐỀ RẤT DÀI '*8,'body':''})))
+        self.assertTrue(any('Tiêu đề dài' in n for n in long['notes']))
+        old=ai.import_manual(dict(text=json.dumps(RESULT)))
+        self.assertEqual((old['title'],old['body']),('',''))

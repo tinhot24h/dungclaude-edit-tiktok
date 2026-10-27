@@ -23,6 +23,7 @@ import ai_translate
 import ai33_audio
 import audio_files
 import library_store
+import output_folder
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / '.local'
@@ -31,6 +32,7 @@ FRAMES = DATA / 'frames'
 FRAMES.mkdir(exist_ok=True)
 AUDIO = DATA / 'audio'
 AUDIO.mkdir(exist_ok=True)
+SETTINGS = DATA / 'settings.json'
 JOBS = {}
 CANCELS = {}
 LOCK = threading.Lock()
@@ -218,6 +220,9 @@ def render(job_id,command,plan,name,cancel=None,fallback=None):
         with LOCK:encoder=JOBS[job_id].get('encoder','cpu')
         result={'state':'done','progress':100,'url':f'/download/{job_id}','name':name,'plan':plan,'duration':actual['duration'],
                 'file':output.name,'preview':output.name=='preview.mp4','encoder':encoder,'seconds':round(time.time()-started,1)}
+        if not result['preview'] and output_folder.load(SETTINGS)['auto_save']:
+            try:result['saved_path']=str(output_folder.deliver(SETTINGS,output,name))
+            except ValueError as exc:result['save_error']=str(exc)
     except (subprocess.SubprocessError,OSError,ValueError,TimeoutError) as exc:
         result={'state':'error','error':str(exc),'name':name}
     finally:
@@ -354,6 +359,8 @@ class Handler(BaseHTTPRequestHandler):
         if path == '/frames':
             items=[{'id':f.stem,'url':'/frames/'+f.stem} for f in sorted(FRAMES.glob('*.png'),key=lambda f:f.stat().st_mtime,reverse=True) if PROJECT.fullmatch(f.stem)]
             return self.respond(200,{'frames':items})
+        if path == '/settings':
+            return self.respond(200, output_folder.load(SETTINGS))
         if path == '/encoders':
             return self.respond(200, {'hardware':media_engine.hardware_encoders()})
         if path == '/storage':
@@ -514,6 +521,21 @@ class Handler(BaseHTTPRequestHandler):
                 if not 0 < size <= library_store.LIMIT:
                     raise ValueError('Dự án quá lớn để lưu (tối đa 512 KB).')
                 return self.respond(200,library_store.save(DATA/'library',library[1],json.loads(self.rfile.read(size))))
+            if path == '/settings':
+                if not 0 < size <= 4096:
+                    raise ValueError('Cài đặt không hợp lệ.')
+                return self.respond(200, output_folder.save(SETTINGS,json.loads(self.rfile.read(size))))
+            if path == '/settings/pick-folder':
+                chosen=output_folder.pick(output_folder.load(SETTINGS)['output_dir'])
+                if not chosen:return self.respond(200,{**output_folder.load(SETTINGS),'cancelled':True})
+                return self.respond(200, output_folder.save(SETTINGS,{'output_dir':chosen}))
+            if path == '/settings/open-folder':
+                # Only the configured folder or a file this app saved there can be revealed.
+                raw=json.loads(self.rfile.read(size)) if 0 < size <= 1024 else {}
+                job=load_job(raw.get('job','')) if isinstance(raw,dict) and isinstance(raw.get('job'),str) and PROJECT.fullmatch(raw['job']) else None
+                target=job.get('saved_path') if job else None
+                output_folder.reveal(target if target and Path(target).is_file() else output_folder.check_dir(output_folder.load(SETTINGS)['output_dir']))
+                return self.respond(200, {'ok':True})
             delete_match=re.fullmatch(r'/audio/([a-f0-9]{32})/delete',path)
             if delete_match:
                 delete_audio(delete_match[1])

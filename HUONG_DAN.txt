@@ -1,7 +1,7 @@
-REVIEW STUDIO 0.8.1 — VIDEO / DỊCH AI / ÂM THANH AI33
+REVIEW STUDIO 0.9 — VIDEO / DỊCH AI / ÂM THANH AI33
 
 CẬP NHẬT
-Đóng bản cũ, giải nén toàn bộ ReviewStudio-v0.8.1.zip vào thư mục mới có
+Đóng bản cũ, giải nén toàn bộ ReviewStudio-v0.9.zip vào thư mục mới có
 quyền ghi. Không chạy từ trong ZIP. Đã có Python/FFmpeg thì không cần
 cài lại. Thiết kế px bản 0.4 dùng lại nếu cùng trình duyệt/địa chỉ/cổng.
 PNG thuộc thư mục cũ cần tải lại khi chuyển thư mục.
@@ -189,3 +189,15 @@ Key chỉ giữ trong phiên. Đổi/xóa key sẽ xóa danh sách lịch sử �
 
 Khi xuất, bấm Hủy xuất video để dừng FFmpeg/bỏ lượt chờ và file dở.
 Đợi báo Đã hủy rồi xuất lại. Giữ nguồn/thiết kế, không hủy tác vụ ai33.
+
+NÂNG CẤP 0.9 — EDIT NHANH KIỂU CAPCUT
+Màn hình: trái = Nguồn & xuất / Thư viện / Dự án & mẫu; giữa = Thuộc tính
+(chọn mẫu theo loại video); phải = Trình phát; dưới = Timeline.
+Thư mục lưu: ở mục xuất video bấm Chọn… (hoặc dán đường dẫn). Xuất xong
+video tự lưu vào đó, không cần bấm tải về. Bấm Mở thư mục để xem file.
+Mặc định: thư mục Videos\ReviewStudio của máy.
+Phím tắt (bấm ? trong ứng dụng): Space/K phát-dừng, J/L lùi-tới 1 giây,
+←/→ từng khung, S tách, Delete xóa đoạn, M mốc, I/O cắt trước/sau đầu phát,
+Ctrl+Z hoàn tác, Ctrl+S lưu dự án, P xuất thử 5 giây, G vùng an toàn TikTok.
+Dịch AI: kết quả có thêm tiêu đề và nội dung ngắn vừa khung chữ; bấm
+"Đưa tiêu đề + nội dung lên video". Prompt thủ công cũ vẫn nhập được.

@@ -17,7 +17,8 @@ class StorageTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.root=Path(self.tmp.name)
         (self.root/'audio').mkdir();(self.root/'frames').mkdir()
-        self.patches=[patch.object(app,'DATA',self.root),patch.object(app,'AUDIO',self.root/'audio'),patch.object(app,'FRAMES',self.root/'frames')]
+        self.patches=[patch.object(app,'DATA',self.root),patch.object(app,'AUDIO',self.root/'audio'),patch.object(app,'FRAMES',self.root/'frames'),patch.object(app,'SETTINGS',self.root/'settings.json')]
+        (self.root/'settings.json').write_text(json.dumps({'output_dir':str(self.root/'out'),'auto_save':True}),encoding='utf-8')
         for item in self.patches:item.start()
         self.server=ThreadingHTTPServer(('127.0.0.1',0),app.Handler)
         threading.Thread(target=self.server.serve_forever,daemon=True).start()
@@ -84,6 +85,20 @@ class StorageTests(unittest.TestCase):
         app.render(key,broken,dict(width=72,height=128,duration=.5,encoder='h264_nvenc'),'gpu',None,working)
         job=app.JOBS.pop(key)
         self.assertEqual((job['state'],job['encoder']),('done','cpu'),job)
+        self.assertEqual(Path(job['saved_path']),self.root/'out'/'gpu.mp4')
+        self.project('8'*32)
+        app.render('8'*32,working,dict(width=72,height=128,duration=.5),'gpu')
+        self.assertEqual(Path(app.JOBS.pop('8'*32)['saved_path']).name,'gpu (2).mp4')
+
+    def test_output_folder_settings(self):
+        status,data=self.call('GET','/settings')
+        self.assertEqual(json.loads(data)['output_dir'],str(self.root/'out'))
+        for body in ({'output_dir':'relative/dir'},{'output_dir':''},{'auto_save':'yes'},[]):
+            self.assertEqual(self.call('POST','/settings',json.dumps(body).encode())[0],400)
+        target=self.root/'chosen'/'sub'
+        status,data=self.call('POST','/settings',json.dumps({'output_dir':str(target),'auto_save':False}).encode())
+        self.assertEqual(status,200);self.assertTrue(target.is_dir())
+        self.assertEqual(json.loads(self.call('GET','/settings')[1])['auto_save'],False)
 
     def test_project_and_template_library(self):
         status,data=self.call('POST','/library/projects/save',json.dumps({'name':'  Dự án   A ','data':{'video_id':'a'*32,'design':{'color':'#ffffff'}}}).encode())
