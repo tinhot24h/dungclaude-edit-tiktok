@@ -1,0 +1,190 @@
+REVIEW STUDIO 0.8 — VIDEO / DỊCH AI / ÂM THANH AI33
+
+CẬP NHẬT
+Đóng bản cũ, giải nén toàn bộ ReviewStudio-v0.8.zip vào thư mục mới có
+quyền ghi. Không chạy từ trong ZIP. Đã có Python/FFmpeg thì không cần
+cài lại. Thiết kế px bản 0.4 dùng lại nếu cùng trình duyệt/địa chỉ/cổng.
+PNG thuộc thư mục cũ cần tải lại khi chuyển thư mục.
+
+CÀI MỘT LẦN
+Cần Python 3.11+, FFmpeg/FFprobe có libx264/drawtext và libmp3lame. Không cần pip/npm.
+Font tiếng Việt kèm sẵn. Python/FFmpeg không kèm ZIP; chưa phải EXE.
+
+Windows 10/11, PowerShell:
+  winget install --exact --id Python.Python.3.12
+  winget install --exact --id Gyan.FFmpeg
+Đóng/mở lại terminal hoặc File Explorer để nhận PATH.
+Không có winget: cài Python từ https://www.python.org/downloads/
+(chọn Add Python to PATH), FFmpeg từ https://ffmpeg.org/download.html.
+Hoặc đặt ffmpeg.exe và ffprobe.exe trong thư mục bin cạnh launch.py.
+
+macOS có Homebrew:
+  brew install python ffmpeg
+Ubuntu 24.04 / Debian 12 hoặc mới hơn:
+  sudo apt update
+  sudo apt install python3 ffmpeg
+
+CHẠY
+Windows: nhấp đúp START_WINDOWS.bat.
+macOS/Linux: trong thư mục giải nén, chạy python3 launch.py.
+Hoặc chmod +x START_MAC_LINUX.command rồi ./START_MAC_LINUX.command.
+Trình duyệt tự mở http://127.0.0.1:8000. Giữ cửa sổ dòng lệnh mở khi dùng.
+Ctrl+C để dừng. Cổng bận: đóng bản cũ hoặc chọn cổng khác:
+  PowerShell: $env:PORT='8001'; python launch.py
+  macOS/Linux: PORT=8001 python3 launch.py
+
+CHỌN CÁCH DỊCH
+Mở tab Dịch & biên tập AI. Nguồn hiện là VĂN BẢN tiếng Trung do bạn dán,
+tối đa 8.000 ký tự; chưa tự nghe video hoặc OCR. MP3 được tạo riêng ở tab Âm thanh ai33.
+Chọn Review / Tin tức / Mẹo / Giới thiệu, giọng văn, xưng hô và mục tiêu
+15/30/60/90 giây hoặc giữ đủ ý. Thời lượng chỉ là ước tính.
+
+A. THỦ CÔNG — MẶC ĐỊNH, KHÔNG CẦN API KEY
+1. Dán nguồn và chọn phong cách, bấm Tạo câu lệnh.
+2. Sao chép câu lệnh, mở Gemini hoặc ChatGPT web bằng nút trong tool.
+3. Bạn tự đăng nhập và dán câu lệnh trên website đó, chờ câu trả lời.
+4. Sao chép đủ JSON gồm literal/script/notes về ô kết quả thủ công,
+   bấm Nhập JSON. Có thể nhận JSON được bọc trong khối ```json.
+5. Nếu chỉ có văn bản kịch bản: dán trực tiếp vào ô Kịch bản tiếng Việt,
+   có thể nhập bản dịch sát nghĩa riêng bằng tay.
+6. Duyệt và sửa, sao chép hoặc Tải TXT để tạo MP3 bên ngoài.
+Tool không gọi API trong chế độ này. Web AI có hạn mức riêng và cần
+Internet; đây không phải AI dịch tự động offline. Không tự điều khiển
+web, lấy cookie/token hoặc dùng tài khoản web như API.
+
+B. GEMINI API — CÓ THỂ CÓ HẠN MỨC MIỄN PHÍ
+1. Chọn Gemini API. Lấy key Google AI Studio:
+   https://aistudio.google.com/apikey
+2. Nhập key tại Kết nối API trong ứng dụng, không gửi key trong chat.
+3. Model gợi ý gemini-2.5-flash; có thể đổi thành model tài khoản hỗ trợ.
+4. Kiểm tra điều kiện, quota và giá hiện hành trước khi gọi:
+   https://ai.google.dev/gemini-api/docs/pricing
+5. Bấm Dịch & viết lại, chờ hai bản và ghi chú cần kiểm chứng.
+Google quyết định hạn mức miễn phí và cước; tool không thể bảo đảm mọi
+lượt gọi đều miễn phí. Không tự retry hoặc chuyển sang OpenAI trả phí
+khi hết quota. Bạn có thể tự đổi về Thủ công.
+Key máy chủ tùy chọn: REVIEW_GEMINI_KEY / GEMINI_API_KEY / GOOGLE_API_KEY.
+Model tùy chọn: GEMINI_MODEL. Cần HTTPS tới generativelanguage.googleapis.com.
+
+C. OPENAI API — TÍNH PHÍ RIÊNG
+Chọn OpenAI API, nhập key từ https://platform.openai.com/api-keys.
+Model mặc định gpt-4.1-mini; có thể đổi nếu model có Responses API và
+Structured Outputs. Phí API riêng với ChatGPT Free/Plus.
+Key máy chủ: REVIEW_OPENAI_KEY / OPENAI_API_KEY; model: OPENAI_MODEL.
+Cần HTTPS tới api.openai.com.
+
+KEY VÀ KẾT QUẢ
+Key hai provider giữ riêng trong bộ nhớ phiên, không lưu vào file,
+localStorage hoặc ZIP. Tải lại trang cần nhập lại key. Không gửi key qua
+chat. Văn bản/cấu hình chỉ gửi tới provider API đã chọn khi bấm dịch;
+video và PNG không gửi tới các API dịch.
+Bản dịch và kịch bản cần duyệt tên riêng, giá, đơn vị, công dụng và ghi
+chú; không coi AI là xác minh sự thật. Không tự đổi giá sang tiền Việt.
+Muốn lấy đoạn lên video: bôi đen tối đa 600 ký tự trong ô kịch bản rồi
+bấm Đưa đoạn chọn lên video. Toàn bộ kịch bản vẫn giữ để tải TXT.
+
+DỰNG VIDEO 0.7
+1. Chọn nguồn: video tối đa 500 MB / 30 phút, MP4 H.264 khuyến nghị.
+   Đặt tên dự án. Nhập MP3 tối đa 100 MB hoặc chọn audio đã tạo từ ai33.
+   WAV/M4A/FLAC/Ogg được chuẩn hóa sang MP3 khi nhập.
+2. Cắt & khớp âm thanh: kéo hai đầu track hoặc nhập giây đầu/cuối.
+   Cuối = 0 dùng hết nguồn. Mỗi track hiện giữ một đoạn liên tục.
+   Tốc độ hai nguồn độc lập 0,25–4x; âm lượng 0–300%, trễ MP3 theo giây.
+   Chọn tiếng gốc, thay bằng MP3 hoặc trộn cả hai. MP3 giữ cao độ.
+   Theo MP3: giữ hình cuối nếu thiếu. Theo video: cắt/đệm im lặng MP3.
+   Ngắn hơn: cắt phần dư. Có nút khớp tốc độ tính theo thời lượng.
+3. Thiết kế: nền một/chuyển hai màu, hòa nền alpha mềm; sáu mẫu khung
+   hoặc PNG tĩnh nhập máy (5 MB, 4096 px/cạnh, 8 triệu điểm ảnh).
+   Nhấp đúp chữ trên preview để sửa; Ctrl+Enter xác nhận, Escape hủy.
+   Kéo hộp để di chuyển, kéo góc dưới phải để chỉnh kích thước.
+   Chỉnh X/Y/W/H, font, cỡ, màu, viền, căn trái/giữa/phải/đều hai bên.
+   H chữ = 0 tự động. Chữ tràn viền đỏ phải chỉnh vừa mới xuất được.
+   Video: X/Y/W/H, zoom 25–400%, xoay -180 đến 180 độ, phủ kín/vừa/kéo giãn.
+4. Xuất H.264/AAC: 720x1280, 1080x1920, 2K 1440x2560, 4K 2160x3840;
+   nén tiêu chuẩn/chất lượng cao. Tọa độ thiết kế luôn 720x1280.
+   Nguồn thấp không có thêm chi tiết khi xuất 4K. Nghe/xem lại file xuất.
+Chưa ghép nhiều clip/MP3 hoặc cắt bỏ nhiều đoạn giữa nguồn, chưa tự
+nhận lời nói/OCR. Không thêm CTA. Baseline/viền chữ có thể chênh nhẹ
+so với preview. Đổi thư mục cần chọn lại nguồn; file cũ không tự chuyển.
+
+DỮ LIỆU VÀ GIỚI HẠN
+Thiết kế/văn bản AI tự lưu trên trình duyệt, có nút xóa văn bản AI.
+Clip, PNG và kết quả ở .local trong thư mục ứng dụng. Tải kết quả cần
+giữ trước khi đóng máy chủ. Chỉ xóa .local khi ứng dụng đã dừng và đã
+giữ các tệp cần thiết. Chỉ dùng cục bộ; chưa có đăng nhập, dọn ổ đĩa,
+ghép nhiều clip hoặc tự đăng TikTok.
+
+KIỂM TRA
+Thủ công đã thử qua HTTP cục bộ và Chromium: tạo prompt, nhập JSON,
+copy/TXT không cần key và không gọi API. Gemini/OpenAI kiểm tra bằng
+phản hồi giả lập, chưa gọi thật do máy không có key. Chưa xác minh
+model/tài khoản cụ thể được miễn phí. Chưa thử trực tiếp Windows/macOS.
+
+TẠO GIỌNG VỚI AI33.PRO
+1. Mở tab Âm thanh ai33, nhập AI33 API KEY trong ứng dụng. Chỉ nhập giá
+   trị key, không nhập cả chuỗi xi-api-key:. Không gửi key trong chat.
+   Không dùng key Gemini/OpenAI. Có thể cấu hình biến máy chủ trước khi
+   chạy: REVIEW_AI33_KEY hoặc AI33_API_KEY.
+2. Lấy kịch bản tiếng Việt từ tab AI hoặc dán văn bản.
+3. Bấm Kiểm tra số dư credit để đọc số dư (tùy chọn). Tạo giọng có thể
+   trừ credit ai33, không phải chức năng dịch miễn API.
+4. Chọn thư viện và Tải thư viện giọng, tự tải các trang; có bộ lọc/tìm kiếm.
+   Chọn giọng hoặc dán voice_id đã có prefix nhà cung cấp. Giọng mẫu
+   edge_vi-VN-HoaiMyNeural từ tài liệu; quyền dùng phụ thuộc tài khoản.
+5. Chọn tốc độ 0,5–1,5. Mục tùy chọn bổ sung nhận tên file gợi ý và ID
+   từ điển phát âm đã có. Từ điển chỉ ảnh hưởng cách đọc.
+6. Bấm Tạo audio. Tool nhận task_id, tự kiểm tra mỗi 5 giây. Chờ trạng
+   thái done rồi tải/chuẩn hóa MP3. Khi error, tool dừng; không tự tạo
+   lại để tránh trừ credit trùng.
+7. Nghe và Tải MP3 về máy. Bấm Dùng MP3 này trong video để chọn sang trình dựng.
+8. Nếu chờ lâu hoặc reload: nhập key lại, dùng task_id hoặc tải lịch sử
+   để lấy lại kết quả. Không cần tạo audio mới. Dừng tự kiểm tra chỉ
+   dừng theo dõi, không hủy tác vụ bên ai33. Tự theo dõi tối đa 15 phút
+   mỗi đợt; có thể kiểm tra lại tác vụ cũ.
+
+AI33 cho phép văn bản tối đa 1.000.000 ký tự theo tài liệu. File nguồn
+tải cục bộ tối đa 100 MB; kịch bản rất dài nên chia đoạn. Cần Internet
+HTTPS tới api.ai33.pro và máy chủ lưu audio do ai33 trả về.
+Key không lưu localStorage/file/ZIP, không gửi tới CDN hoặc media host.
+MP3 cache ở .local/audio; task_id và văn bản có thể lưu trên trình duyệt.
+Đổi thư mục/máy có thể cần tải lại MP3 bằng task_id/key.
+Chưa có hội thoại nhiều giọng, tạo clone mới, CRUD từ điển, xóa/refund
+tác vụ, tải transcript.
+
+KIỂM THỬ AI33
+Đã thử bằng phản hồi API giả lập theo ảnh tài liệu bạn cung cấp, với
+chuyển MP3 thật bằng FFmpeg, phát/tua/tải trong Chromium và phục hồi
+cache. Chưa gọi API ai33 thật vì môi trường chưa có key và bị chặn
+truy cập host. Bạn cần key có quyền/credit để xác minh giọng thực tế.
+
+KHẮC PHỤC TẢI AUDIO AI33
+Nếu web đã tạo thành công: chọn tác vụ cũ, bấm Kiểm tra tiến độ để
+lấy link mới. Không tạo lại audio. Lỗi mới có mã HTTP/mạng/TLS/định dạng.
+Nút Mở audio gốc bằng trình duyệt cho phép lưu file rồi nhập MP3 ở
+bước Chọn nguồn nếu tool không tải được. Link không lưu trên ổ đĩa.
+Danh sách giọng tự tải các trang cho nhà cung cấp/bộ lọc hiện tại;
+100 trang/10.000 giọng mỗi đợt, báo rõ nếu còn. Có thể thu hẹp bộ lọc.
+Tên gửi ai33, tên MP3 và task_id được giữ để đối chiếu. Tác vụ cũ thiếu
+tên từ API sẽ dùng task_id. Nút Dùng MP3 này trong video chọn audio
+đã tạo vào trình dựng; không cần tải về rồi nhập lại.
+
+NÂNG CẤP 0.8 — TIMELINE TRỰC QUAN
+Ảnh nhỏ video và sóng âm MP3 tạo trên máy, không tải lên dịch vụ.
+Zoom timeline 1–12x; bấm/kéo đầu phát để tua. Kéo mép clip để cắt,
+kéo thân MP3 để đổi thời điểm vào. Chọn track, chỉnh tốc độ/âm lượng
+bằng thanh trượt hoặc bấm Nhập số chính xác. Cắt trước/sau đầu phát,
+hoàn tác/làm lại tối đa 60 bước chỉnh track (không bao gồm thiết kế).
+Focus timeline: trái/phải từng khung hình, Shift=10 khung, Space phát/dừng.
+Sóng âm phóng theo biên độ tương đối để dễ nhìn, không đổi âm lượng.
+Mỗi track giữ một đoạn liên tục; chưa tách/ghép nhiều đoạn giữa nguồn.
+
+Tiêu đề/nội dung: chọn Căn dọc trong hộp Trên/Giữa/Dưới; đặt H lớn
+hơn chiều cao chữ để thấy hiệu ứng. H=0 tự vừa nội dung.
+
+Nhập key ai33 xong tự tải giọng và lịch sử; lịch sử cập nhật 30 giây
+khi tab Âm thanh ai33 đang hiển thị và sau tạo/lấy audio. Thẻ lịch sử
+có Lấy audio đã tạo: không tạo lại TTS. Không tự tải mọi MP3 về máy.
+Key chỉ giữ trong phiên. Đổi/xóa key sẽ xóa danh sách lịch sử đang xem.
+
+Khi xuất, bấm Hủy xuất video để dừng FFmpeg/bỏ lượt chờ và file dở.
+Đợi báo Đã hủy rồi xuất lại. Giữ nguồn/thiết kế, không hủy tác vụ ai33.
