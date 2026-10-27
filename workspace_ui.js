@@ -79,6 +79,8 @@ $('batch-export').onclick=async()=>{let base;try{base=options()}catch(e){say(e.m
  batchLabel();say(`Xuất hàng loạt xong ${jobs.length} video.`);try{if(document.hidden&&window.Notification?.permission==='granted')new Notification('Review Studio',{body:`Đã xuất xong ${jobs.length} video.`})}catch{}};
 
 $('quick-export').onclick=()=>{show('source');$('submit').click()};$('quick-preview').onclick=()=>{show('source');$('preview-export').click()};
+// The player column spans the full editor height; fit the 9:16 stage into whatever room it has.
+{const room=document.querySelector('.preview-panel .preview-workspace'),stage=$('stage'),wide=matchMedia('(min-width:1121px)');const fit=()=>{if(!wide.matches){stage.style.width='';return}const w=room.clientWidth,h=room.clientHeight-16;if(w&&h>0)stage.style.width=Math.max(160,Math.min(w,h*9/16))+'px'};new ResizeObserver(fit).observe(room);wide.addEventListener('change',fit)}
 // ---- Drag and drop from the file manager
 const drop=el('div',{id:'drop-overlay',hidden:true},el('div',{textContent:'Thả video, MP3, khung PNG hoặc file dự án .json'}));document.body.append(drop);
 let depth=0;

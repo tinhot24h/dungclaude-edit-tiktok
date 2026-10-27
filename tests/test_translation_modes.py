@@ -99,7 +99,7 @@ class VideoTextTests(unittest.TestCase):
         self.assertNotIn('layout',config)
         with self.assertRaises(ValueError):ai.manual_prompt(dict(source='x',layout=dict(title_font='comic')))
         schema=ai.payload(ai.parameters(dict(source='x',provider='openai')))['text']['format']['schema']
-        self.assertEqual(schema['required'],['literal','script','title','body','notes'])
+        self.assertEqual(schema['required'],['literal','hook','hook_options','script','title','body','notes'])
 
     def test_import_keeps_title_body_and_warns_on_overflow(self):
         text=json.dumps({**RESULT,'title':'  Tinh dầu   thơm phòng ','body':'Mùi dịu nhẹ.\n\nDùng cho phòng ngủ.'})
@@ -110,3 +110,13 @@ class VideoTextTests(unittest.TestCase):
         self.assertTrue(any('Tiêu đề dài' in n for n in long['notes']))
         old=ai.import_manual(dict(text=json.dumps(RESULT)))
         self.assertEqual((old['title'],old['body']),('',''))
+
+    def test_hook_follows_style_and_options_are_deduplicated(self):
+        news=ai.manual_prompt(dict(source='x',style='news'));tips=ai.manual_prompt(dict(source='x',style='tips'))
+        self.assertIn(ai.HOOKS['news'],news);self.assertIn(ai.HOOKS['tips'],tips);self.assertNotIn(ai.HOOKS['news'],tips)
+        self.assertIn('script PHẢI bắt đầu bằng đúng câu hook',news)
+        result=ai.import_manual(dict(text=json.dumps({**RESULT,'hook':' Bếp  bẩn mấy cũng sạch? ','hook_options':['Bếp bẩn mấy cũng sạch?','Chỉ 3 giây lau sạch','','Ai cũng cần']})))
+        self.assertEqual(result['hook'],'Bếp bẩn mấy cũng sạch?')
+        self.assertEqual(result['hook_options'],['Bếp bẩn mấy cũng sạch?','Chỉ 3 giây lau sạch','Ai cũng cần'])
+        with self.assertRaises(ValueError):ai.import_manual(dict(text=json.dumps({**RESULT,'hook_options':'x'})))
+        self.assertEqual(ai.import_manual(dict(text=json.dumps(RESULT)))['hook_options'],[])

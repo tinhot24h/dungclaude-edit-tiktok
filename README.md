@@ -1,8 +1,16 @@
-# Review Studio 0.9
+# Review Studio 0.9.1
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.9.1
+
+- Trình phát thành cột riêng bên phải, cao suốt màn hình; khung 9:16 tự co giãn theo chỗ trống.
+- Bấm thanh video / MP3 / nhạc nền trên timeline để mở ngay bảng thông số của clip đó (tab Clip video, Giọng đọc, Nhạc nền ở cột Thuộc tính).
+- Timeline thu nhỏ được dưới 100% để nhìn bao quát: nút − / + / Vừa khung, Ctrl + lăn chuột.
+- **Cắt phía trước / Cắt phía sau** (Q / W) cho đoạn đang ở đầu phát; **kéo một đoạn để đổi thứ tự**; xuất video theo đúng thứ tự mới.
+- Dịch AI tạo thêm **hook mở đầu** theo phong cách viết (1 hook chính + 3 phương án), kịch bản bắt đầu bằng hook, tiêu đề giật tít nhưng không bịa thông tin.
 
 ## Mới trong 0.9
 

@@ -99,6 +99,21 @@ class NativeRenderTests(unittest.TestCase):
         rate=subprocess.check_output(['ffprobe','-v','error','-select_streams','v','-show_entries','stream=r_frame_rate','-of','csv=p=0',str(self.folder/'review.mp4')],text=True).strip()
         self.assertEqual(rate,'60/1')
 
+    def test_reordered_pieces_play_in_the_given_order(self):
+        opts=settings(dict(units='px',title='',body='',audio_mode='original',video_segments=[[2,2.5],[0,1]]))
+        cmd,p=build(self.folder,opts,self.video,self.vi)
+        self.assertEqual(p['video_segments'],[(2,2.5),(0,1)])
+        result=subprocess.run(cmd,cwd=self.folder,capture_output=True,text=True,timeout=180)
+        self.assertEqual(result.returncode,0,result.stderr[-2000:])
+        self.assertAlmostEqual(probe(self.folder/'review.mp4')['duration'],1.5,delta=.12)
+        # testsrc2 draws a running timestamp, so frame brightness differs; compare the first frame with source t=2s
+        def frame(path,at):return subprocess.check_output(['ffmpeg','-v','error','-ss',str(at),'-i',str(path),'-frames:v','1','-vf','scale=16:28,format=gray','-f','rawvideo','-'])
+        out=frame(self.folder/'review.mp4',0)
+        diff=lambda x,y:sum(abs(a-b) for a,b in zip(x,y))
+        self.assertLess(diff(out,frame(self.video,2)),diff(out,frame(self.video,0)))
+        with self.assertRaises(ValueError):plan(dict(video_segments=[[1,1.01]]),self.vi)
+        with self.assertRaises(ValueError):plan(dict(video_segments=[[0,1]]*61),self.vi)
+
     def test_ducked_music_and_preview_window(self):
         options=dict(audio_mode='replace',audio_end=2,duration_policy='video',music_duck=True,preview_at=1)
         opts=settings(dict(units='px',title='',body='',**options))

@@ -7,6 +7,7 @@ from design import artwork,layout,frame_box,video_box
 from fonts import FONTS
 
 MAX_SECONDS=1800  # longest source video and export, shared with app.probe
+MAX_PIECES=60
 HARDWARE=('h264_nvenc','h264_qsv','h264_amf','h264_videotoolbox')
 RESOLUTIONS={'720':(720,1280),'1080':(1080,1920),'2k':(1440,2560),'4k':(2160,3840)}
 
@@ -42,6 +43,20 @@ def keep(cuts,start,end):
     return segments
 
 
+def ordered(value,total):
+    """Video pieces in playback order ([[a,b],...] source seconds); pieces may be reordered or repeated."""
+    if value in (None,[]):return []
+    if not isinstance(value,list) or len(value)>MAX_PIECES:raise ValueError(f'Tối đa {MAX_PIECES} đoạn video.')
+    out=[]
+    for item in value:
+        if not isinstance(item,list) or len(item)!=2 or any(isinstance(v,bool) or not isinstance(v,(int,float)) or not math.isfinite(v) for v in item):
+            raise ValueError('Đoạn video không hợp lệ.')
+        a,b=max(0.0,float(item[0])),min(float(total),float(item[1]))
+        if b-a<.02:raise ValueError('Mỗi đoạn video cần dài ít nhất 0,02 giây.')
+        out.append((a,b))
+    return out
+
+
 def choice(opts,key,default,allowed):
     value=opts.get(key,default)
     if value not in allowed:raise ValueError('Thông số không hợp lệ: '+key)
@@ -54,7 +69,9 @@ def plan(opts,video,audio=None,music=None):
     ve=min(ve,video['duration'])
     vr=number(opts,'video_speed',1,.25,4)
     if ve-vs<.05:raise ValueError('Đoạn video cần dài ít nhất 0,05 giây.')
-    segments=keep(opts.get('video_cuts',[]),vs,ve)
+    segments=ordered(opts.get('video_segments'),video['duration']) or keep(opts.get('video_cuts',[]),vs,ve)
+    if opts.get('video_segments'):vs,ve=min(a for a,_ in segments),max(b for _,b in segments)
+    if len(segments)>MAX_PIECES:raise ValueError(f'Tối đa {MAX_PIECES} đoạn video.')
     if sum(b-a for a,b in segments)<.05:raise ValueError('Đoạn video còn lại sau khi xóa cần dài ít nhất 0,05 giây.')
     vdur=sum(b-a for a,b in segments)/vr
     mode=opts.get('audio_mode','replace' if audio else 'original')
@@ -118,11 +135,6 @@ def tempo(rate):
     return ','.join(filters)
 
 
-def window(segments,offset,variable='t'):
-    """FFmpeg select expression keeping source `segments`, shifted so the input starts at `offset`."""
-    return '+'.join(f"gte({variable},{a-offset:.6f})*lt({variable},{b-offset:.6f})" for a,b in segments)
-
-
 def encoder_args(encoder,quality):
     high=quality=='high'
     if encoder=='h264_nvenc':return ['-c:v','h264_nvenc','-preset','p4','-rc','vbr','-cq','19' if high else '24','-b:v','0','-pix_fmt','yuv420p']
@@ -160,10 +172,15 @@ def build(folder,opts,video_path,video,audio_path=None,audio=None,frame_path=Non
     rw=abs(vw*math.cos(rad))+abs(vh*math.sin(rad));rh=abs(vh*math.cos(rad))+abs(vw*math.sin(rad))
     if rw*rh>48000000:raise ValueError('Zoom/kích thước và góc xoay quá lớn cho độ phân giải này. Giảm zoom hoặc độ phân giải.')
     (folder/'overlay.png').write_bytes(artwork(opts))
-    args=['ffmpeg','-hide_banner','-loglevel','error','-nostdin','-y','-ss',str(p['video_start']),'-t',str(p['video_end']-p['video_start']),'-i',str(video_path),'-i','overlay.png']
+    args=['ffmpeg','-hide_banner','-loglevel','error','-nostdin','-y']
+    pieces=p['video_segments'];count=len(pieces)
+    # Each piece is its own seeked input so reordered pieces never buffer the whole source.
+    for a,b in pieces:args+=['-ss',str(a),'-t',str(b-a),'-i',str(video_path)]
+    art=count;args+=['-i','overlay.png']
     graph=[]
-    cut=p['video_segments']!=[(p['video_start'],p['video_end'])]
-    if cut:source=f"[0:v]fps={fps},select='{window(p['video_segments'],p['video_start'])}',setpts=N/{fps*p['video_speed']}/TB,fps={fps},format=rgba,"
+    if count>1:
+        for i in range(count):graph.append(f'[{i}:v]setpts=PTS-STARTPTS,fps={fps},setsar=1[piece{i}]')
+        source=''.join(f'[piece{i}]' for i in range(count))+f'concat=n={count}:v=1:a=0,setpts=PTS/{p["video_speed"]},fps={fps},format=rgba,'
     else:source='[0:v]setpts=(PTS-STARTPTS)/'+str(p['video_speed'])+f',fps={fps},format=rgba,'
     fit=opts.get('video_fit','cover')
     if fit=='cover':source+=f'scale={vw}:{vh}:force_original_aspect_ratio=increase,crop={vw}:{vh},'
@@ -179,9 +196,9 @@ def build(folder,opts,video_path,video,audio_path=None,audio=None,frame_path=Non
     graph.append(f'color=c={opts["color"].replace("#","0x")}:s={ow}x{oh}:r={fps}:d={duration},format=rgba[base]')
     x=box['x']*scale;y=box['y']*scale
     graph.append(f'[base][clip]overlay=x={x}+({vw}-overlay_w)/2:y={y}+({vh}-overlay_h)/2:shortest=1:format=auto[placed]')
-    graph.append(f'[1:v]scale={ow}:{oh}:flags=lanczos[art]')
+    graph.append(f'[{art}:v]scale={ow}:{oh}:flags=lanczos[art]')
     graph.append('[placed][art]overlay=0:0:format=auto[design]')
-    next_input=2;top='design'
+    next_input=art+1;top='design'
     if opts['frame_style']=='custom':
         if not frame_path:raise ValueError('Thiếu khung PNG.')
         args+=['-i',str(frame_path)];b=frame_box(opts);w=max(1,round(b['width']*scale));h=max(1,round(b['height']*scale))
@@ -199,8 +216,10 @@ def build(folder,opts,video_path,video,audio_path=None,audio=None,frame_path=Non
     graph.append(f'[{top}]'+(','.join(textfilters) if textfilters else 'null')+',format=yuv420p[out]')
     labels=[]
     if video['has_audio'] and (not p['active_audio'] or p['audio_mode']=='mix'):
-        start=f"aselect='{window(p['video_segments'],p['video_start'])}',asetpts=N/SR/TB" if cut else 'asetpts=PTS-STARTPTS'
-        graph.append(f'[0:a:0]{start},{tempo(p["video_speed"])},volume={p["original_volume"]/100},aresample=48000,aformat=channel_layouts=stereo,apad,atrim=duration={duration}[original]')
+        if count>1:
+            for i in range(count):graph.append(f'[{i}:a:0]asetpts=PTS-STARTPTS,aresample=48000,aformat=channel_layouts=stereo,apad,atrim=duration={pieces[i][1]-pieces[i][0]}[sound{i}]')
+            graph.append(''.join(f'[sound{i}]' for i in range(count))+f'concat=n={count}:v=0:a=1[joined]')
+        graph.append(('[joined]' if count>1 else '[0:a:0]asetpts=PTS-STARTPTS,')+f'{tempo(p["video_speed"])},volume={p["original_volume"]/100},aresample=48000,aformat=channel_layouts=stereo,apad,atrim=duration={duration}[original]')
         labels.append('original')
     music_track=p['music']
     duck=bool(music_track and music_track['duck'] and p['active_audio'])
