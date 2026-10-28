@@ -1,11 +1,11 @@
 {
  "app": "ReviewStudio",
- "version": "0.20.1",
- "notes": "## Mới trong 0.20.1\n\n- Tab \"Dựng video\": **lớp ảnh hiện trên khung xem trước** như tab Lồng tiếng: kéo để di chuyển, kéo ô góc dưới phải để đổi cỡ; nằm dưới khung và chữ giống video xuất.\n- Sửa chữ tab Dựng video: \"2 video sẽ dựng\", gợi ý MP3 cùng tên ở ô kéo thả, ô chọn mẫu ghi \"Mẫu dựng\".",
+ "version": "0.21.0",
+ "notes": "## Mới trong 0.21.0\n\n- **Kiểm tra trước khi chạy:** bấm Xuất thì hiện bảng tổng số video, tổng thời lượng, chi phí OpenAI ước tính, credit ai33, key và cảnh báo (video thiếu MP3 cùng tên, bật overlay/lớp ảnh mà chưa chọn…). Bấm \"Xuất\" để chạy hoặc \"Quay lại\".\n- **Duyệt chữ AI hàng loạt:** tích \"Dừng lại để duyệt chữ AI trước khi xuất\" ở mục Tiêu đề & nội dung. AI viết xong thì các video dừng lại; bấm \"Mở bảng duyệt chữ\" để sửa tiêu đề/nội dung của mọi video trong một bảng (đếm số từ, ô đỏ là vượt giới hạn), \"↻ AI viết lại\" từng video, rồi \"Xuất tất cả\".\n- **Xem trước video nào cũng được:** bấm vào video trong danh sách để xem trước video đó (không đổi thứ tự). Bấm video đã dựng trong hàng đợi để xem nó với chữ AI của chính nó.\n- **✎ Chỉnh chi tiết:** video đã dựng mở sang tab Timeline với nền, khung, chữ của video đó (kèm giọng đọc) để chỉnh kỹ; quay lại tab Dựng video thì thiết kế của tab vẫn giữ nguyên.\n- **Chạy nhiều video cùng lúc** (1–4) và chọn **bộ mã hóa** (tự động dùng card đồ họa NVIDIA/Intel/AMD nếu có, hoặc CPU) ở mục Xuất.\n- Nút \"Thêm ảnh\" của Lớp ảnh đọc file ngay trên máy (đã như vậy từ 0.19.3, nay có kiểm tra tự động).",
  "files": {
   "design_tab.js": {
-   "sha256": "e6ae14cf3033fdabdd827a614227d0411f0c8870dc7f2c2f5b5f71fc6a19b70a",
-   "size": 17152
+   "sha256": "2f2ffba797030b3d4cc25a8f2967dac19872de677b3185788fdd3749a5953ed6",
+   "size": 19080
   },
   "local_files.js": {
    "sha256": "b9a975e980db7f5f013f6046d58228fb39817b6959e8caaf9505c4ba3cc898a7",
@@ -32,8 +32,8 @@
    "size": 5181
   },
   "dub_ui.js": {
-   "sha256": "eadbff0b26939575329f9efc5cf11e2bdf6fbafbc0f4812997656725975c20d9",
-   "size": 90464
+   "sha256": "23c4dec342304db8916940287493eaf19d8c4e2ddc4c7e320e7cd7437abff8dd",
+   "size": 101776
   },
   "layout_ui.js": {
    "sha256": "31474a69f54710df46c2483f9711e36d487d11437085b2b563f97b1f18ab711e",
@@ -52,12 +52,12 @@
    "size": 2135
   },
   "dubbing.py": {
-   "sha256": "f4dbbf0b56df542233efb6aede12a91c543abcc285ff4ac6ecf1461cddf63287",
-   "size": 124026
+   "sha256": "16e006c4e9bac6e0b89fa11a650a9765fdf07c1dc753c9df7abd59506a57fe47",
+   "size": 128805
   },
   "tests/test_dubbing.py": {
-   "sha256": "59cfcc9d092c2462b244fe61280dee9da7cc224326538587b2405b81c3819f25",
-   "size": 36418
+   "sha256": "12809c52dddccd0bf314fa3ce2f4d75109a659ba68bd09fe6bc98884726c64b4",
+   "size": 40152
   },
   "image_ui.js": {
    "sha256": "b8e2a905501aedea84033a7c962b180251e06dc018e6133241f0310b474ed8e9",
@@ -128,8 +128,8 @@
    "size": 13961
   },
   "app.py": {
-   "sha256": "70f5ef627a0bcb7ec0df4192f08ea1f09a827f5bc462e652f3cfeb01bda56bda",
-   "size": 60846
+   "sha256": "e4591fdc9fdd3885c5425ce4714dc33dbcb568c0183db793723782c7a235f0b7",
+   "size": 61718
   },
   "ai33_audio.py": {
    "sha256": "c68d977365a3cd9698ab931194f3021f535cc836cf0113383743b5441f4d30b4",
@@ -148,12 +148,12 @@
    "size": 25305
   },
   "studio.css": {
-   "sha256": "5e7e56129eea0052a26c37144a7062fa376fa04195f636a45486008d54b20cb8",
-   "size": 83901
+   "sha256": "66e94199229a32d13c2d115a0514837eb1062a061292eb41155d52f7bc37cd4c",
+   "size": 86209
   },
   "studio.js": {
-   "sha256": "3beaa5a97b9d5bfbe350504f3f8c2f64cf31f9f5926d08a0a4e3916e61a21df9",
-   "size": 25107
+   "sha256": "bf61ec05fe8b99e4812ae908707e24ce134bbdb1fc67180ad7f4e21b5db444d0",
+   "size": 25141
   },
   "ai_ui.js": {
    "sha256": "1ec042c787f08c2036685ca54d121d12fabeaf26d105d98239347fcd24595684",
@@ -168,7 +168,7 @@
    "size": 2609
   },
   "index.html": {
-   "sha256": "41638c8af977af4a84f50292e3e50e458712b4bd424b768b45dbf5b08407ab54",
+   "sha256": "5d234e9670681f799145dfd950f63d0b4a324f0224730ec9df47158985e1dd3e",
    "size": 33161
   },
   "launch.py": {
@@ -184,15 +184,15 @@
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "e7f2a43d4dc4256be1d024139dcd1a36cecea726f5fc404a508de1059a7a6109",
-   "size": 39526
+   "sha256": "ffdcf3bf05b5e7d48b0ce04ab60dcca6e9fbeb83da4d42733ef6c2810dc433bc",
+   "size": 40451
   },
   "README.md": {
-   "sha256": "15792b717030a4d1dbbbc78789b915381d97eb7959c96c22a9459ac2fbd01cb6",
-   "size": 58708
+   "sha256": "bd7e85b4f848fb9b190456b3c61913f957bd187aa8024d1690f22aae71ea9d6a",
+   "size": 60193
   },
   "VERSION": {
-   "sha256": "356c9c9f099da7f9b380c6fedc51077ee98de22402b378bc0f431fdc57aac757",
+   "sha256": "363c6aacbb689a2ef691b69674629f647f1afafebc9dc353a86e6b09300b24f6",
    "size": 7
   },
   ".gitignore": {

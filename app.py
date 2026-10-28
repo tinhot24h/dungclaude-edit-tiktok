@@ -489,6 +489,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.serve_audio(DATA/'overlays'/item['file'],False,mime,item['name'])
         if path == '/dub/jobs':
             return self.respond(200,{'jobs':DUB.jobs()})
+        if path == '/dub/queue':
+            return self.respond(200,DUB.queue_info())
         if path == '/dub/demucs':
             return self.respond(200,dubbing.demucs_status('refresh' in parse_qs(urlparse(self.path).query)))
         if path == '/dub/capabilities':
@@ -774,6 +776,16 @@ class Handler(BaseHTTPRequestHandler):
                     except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
                 finally:temp.unlink(missing_ok=True)
             if path=='/dub/demucs/install':return self.respond(200,dubbing.install_demucs())
+            if path in ('/dub/queue','/dub/review','/dub/estimate'):
+                size=int(self.headers.get('Content-Length',0) or 0)
+                if size>4*1024*1024:return self.respond(413,{'error':'Yêu cầu quá lớn.'})
+                raw=json.loads(self.rfile.read(size)) if size else {}
+                if not isinstance(raw,dict):return self.respond(400,{'error':'Yêu cầu không hợp lệ.'})
+                try:
+                    if path=='/dub/queue':return self.respond(200,DUB.set_parallel(raw.get('parallel')))
+                    if path=='/dub/review':return self.respond(200,DUB.review(raw))
+                    return self.respond(200,DUB.estimate(raw))
+                except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
             dub=re.fullmatch(r'/dub/(start|([a-f0-9]{32})/(continue|lines|texts|cancel|delete|editor))',path)
             if dub:
                 if not 0 <= size <= 4*1024*1024:raise ValueError('Yêu cầu lồng tiếng quá lớn.')

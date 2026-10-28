@@ -21,6 +21,7 @@ const text=sec('text','🔤','Tiêu đề &amp; nội dung',`<div class="group-l
  <span>tối đa</span><input id="dt-title-words" type="number" min="1" max="30" value="6" aria-label="Số từ tối đa của tiêu đề"><span>từ</span></div>
  <div class="dt-src"><label for="dt-body-src">Nội dung</label><select id="dt-body-src"><option value="ai">AI viết</option><option value="fixed">Cố định (ô bên dưới)</option><option value="file">Tên file</option><option value="none">Không hiện</option></select>
  <span>từ</span><input id="dt-body-min" type="number" min="0" max="120" value="10" aria-label="Số từ tối thiểu của nội dung"><span>–</span><input id="dt-body-max" type="number" min="1" max="120" value="20" aria-label="Số từ tối đa của nội dung"></div>
+ <label class="check-row"><input id="dt-review" type="checkbox"> ⏸ Dừng lại để duyệt chữ AI trước khi xuất <small>(sửa hàng loạt trong một bảng rồi bấm Xuất tất cả)</small></label>
  <p class="helper" id="dt-ai-note"></p>
  <div class="group-label">CHỮ CỐ ĐỊNH / CHỮ MẪU TRÊN KHUNG XEM TRƯỚC</div><div id="dt-fixed-host"></div>
  <div class="group-label">KIỂU CHỮ · KÉO, ĐỔI CỠ, NHẤP ĐÚP ĐỂ SỬA TRÊN KHUNG XEM TRƯỚC</div>
@@ -84,8 +85,8 @@ const num=(id,d)=>{const v=parseInt($(id).value,10);return Number.isFinite(v)?v:
 function extend(o){if(name==='design')o.mode='design';
  if(!on()){o.design=null;return}
  try{o.design=designOptions()}catch(e){o.design=null;o.design_error=e.message}
- Object.assign(o,{title_source:$('dt-title-src').value,body_source:$('dt-body-src').value,title_words:num('dt-title-words',6),body_min:num('dt-body-min',10),body_max:num('dt-body-max',20)})}
-function apply(o){if(o.title_source)$('dt-title-src').value=o.title_source;if(o.body_source)$('dt-body-src').value=o.body_source;
+ Object.assign(o,{title_source:$('dt-title-src').value,body_source:$('dt-body-src').value,title_words:num('dt-title-words',6),body_min:num('dt-body-min',10),body_max:num('dt-body-max',20),review_texts:$('dt-review').checked})}
+function apply(o){if(o.title_source)$('dt-title-src').value=o.title_source;if(o.review_texts!=null)$('dt-review').checked=!!o.review_texts;if(o.body_source)$('dt-body-src').value=o.body_source;
  for(const[id,k]of [['dt-title-words','title_words'],['dt-body-min','body_min'],['dt-body-max','body_max']])if(o[k]!=null)$(id).value=o[k];
  if(name==='dub')$('dt-on').checked=!!o.design;
  if(o.design&&typeof o.design==='object'){studio.apply({...o.design,images:o.design.images||[]});studio.schedule()}
@@ -107,11 +108,22 @@ function imageLayer(){const box=$('dub-imgbox'),scene=$('scene'),o=api.settings(
  const anchor=o.image_layer==='above'||!$('dt-ovv')?$('frame-art'):$('dt-ovv');if(box.parentNode!==scene||box.nextSibling!==anchor)scene.insertBefore(box,anchor);
  api.drawImage(o,720,1280);box.style.zIndex='auto'}
 for(const ev of ['play','pause','seeked'])$('video').addEventListener(ev,()=>on()&&overlayLayer());
-function preview(f){const use=on();stageHost.hidden=!use;$('dub-frame').closest('.dub-frame-wrap').hidden=use;$('dub-transport')&&($('dub-transport').hidden=use);
+let jobShown=null;
+function previewJob(job){jobShown=job&&job.texts&&on()?job:null;window.previewTexts=jobShown?{title:jobShown.texts.title||'',body:jobShown.texts.body||''}:null;studio.schedule();api.preview()}
+function preview(f){const use=on();if(jobShown)f={id:jobShown.video_id,name:jobShown.name};stageHost.hidden=!use;$('dub-frame').closest('.dub-frame-wrap').hidden=use;$('dub-transport')&&($('dub-transport').hidden=use);
  document.querySelector('#view-dub .dub-transport')?.toggleAttribute('hidden',use);
  if(!use)return false;moveIn();showVideo(f);imageLayer();setTimeout(()=>{overlayLayer();imageLayer()},50);
- $('dub-preview-info').textContent=f?`${f.name} · thiết kế 720×1280 → xuất 1080×1920`:'Chọn video ở mục 🎬 để xem trước';
+ $('dub-preview-info').textContent=jobShown?`${jobShown.name} · chữ AI của video này (đã dựng) · bấm lại vào video trong hàng đợi để thôi xem`:f?`${f.name} · thiết kế 720×1280 → xuất 1080×1920`:'Chọn video ở mục 🎬 để xem trước';
  $('dub-preview-note').textContent='Kéo video, khung, chữ trên khung hình; nhấp đúp chữ để sửa. Chữ AI của từng video thay cho chữ mẫu khi xuất.';return true}
+
+// ---- "✎ Chỉnh chi tiết": one finished video in the timeline with its own design and texts
+let restore=false;   // the timeline now holds that job's design: the tab's own settings load again on return
+async function detail(job){api.say('Đang mở video ở tab Timeline…');const full=await request('/dub/'+job.id);
+ if(!restore)api.remember();restore=true;jobShown=null;window.previewTexts=null;switchView('editor');
+ await api.toEditor(job);
+ const d=full.options?.design;if(d)studio.apply({...d,images:d.images||[]});
+ for(const k of ['title','body'])$(k).value=(job.texts||{})[k]||'';studio.schedule();setTimeout(()=>window.appHistory?.checkpoint(),400);
+ $('status').textContent=`Đã mở "${job.name}" ở Timeline với nền, khung và chữ của video này (lớp ảnh, overlay của tab Dựng video không đi kèm). Quay lại tab Dựng video thì thiết kế của tab đó được giữ nguyên.`}
 
 // ---- summaries
 function labels(){const o={};extend(o);const bg=({solid:'một màu',gradient:'chuyển hai màu',none:'không nền'})[$('background').value]||'',fr=$('frame_style').selectedOptions[0]?.textContent.split('·')[0].trim();
@@ -120,17 +132,18 @@ function labels(){const o={};extend(o);const bg=({solid:'một màu',gradient:'c
  $('sum-text').textContent=`tiêu đề: ${src($('dt-title-src').value)}${$('dt-title-src').value==='ai'?' ≤ '+$('dt-title-words').value+' từ':''} · nội dung: ${src($('dt-body-src').value)}${$('dt-body-src').value==='ai'?' '+$('dt-body-min').value+'–'+$('dt-body-max').value+' từ':''}`;
  if(name==='design'){const n=v=>Number($(v)?.value)||0;$('sum-frame').textContent=[n('dub-trim-start')||n('dub-trim-end')?`cắt ${n('dub-trim-start')}s đầu · ${n('dub-trim-end')}s cuối`:'không cắt',`video ${$('video_width').value}×${$('video_height').value}`].join(' · ');
   const files=api.files(),m=files.filter(f=>f.mp3).length;$('sum-voice').textContent=files.length?`${m}/${files.length} video có MP3 cùng tên · ${({auto:'tự khớp',voice:'MP3 khớp video',video:'video khớp MP3'})[$('dub-align').value]||''}`:'MP3 cùng tên tự nhận khi chọn video'}
+ $('dub-export-note').textContent=`Video lưu vào thư mục xuất (nút thông số xuất ở góc trên) với tên “…-${name==='design'?'dung':'long-tieng'}.mp4”.`;
  $('dub-drop').textContent=name==='design'?'Kéo thả video hoặc cả thư mục vào đây · MP3 cùng tên (vd: a.mp4 + a.mp3) tự ghép làm giọng đọc':'Kéo thả video hoặc cả thư mục vào đây · .srt cùng tên sẽ bỏ qua bước nhận diện';
  const ai=on()&&[$('dt-title-src').value,$('dt-body-src').value].includes('ai');
  $('dt-ai-note').textContent=!ai?'Không dùng AI cho chữ.':name==='design'?'Dựng video: OpenAI nhận diện lời trong video (Whisper) rồi viết tiêu đề + nội dung trong 1 lần gọi. Video không có tiếng hoặc không có key: tiêu đề lấy theo tên file.':'Lồng tiếng: tiêu đề + nội dung được viết cùng lần dịch (không thêm lượt gọi). Chế độ ai33 tự lồng tiếng cần thêm 1 lần gọi ngắn.'}
-for(const id of ['dt-title-src','dt-body-src','dt-title-words','dt-body-min','dt-body-max','dt-on'])$(id).addEventListener('change',()=>{layout();if(on())moveIn();api.remember();labels();api.preview()});
+for(const id of ['dt-title-src','dt-body-src','dt-title-words','dt-body-min','dt-body-max','dt-on','dt-review'])$(id).addEventListener('change',()=>{layout();if(on())moveIn();api.remember();labels();api.preview()});
 document.addEventListener('design-changed',()=>{if(on()&&!$('view-dub').hidden){labels();clearTimeout(labels.t);labels.t=setTimeout(()=>api.remember(),400)}});
 
 // ---- tabs: "Dựng video" and "Lồng tiếng" open this page; "Timeline" opens the old editor for one video
 const navTimeline=el('button',{type:'button',id:'nav-timeline',className:'nav-item',textContent:'Timeline · chỉnh 1 video',title:'Trình dựng chi tiết: cắt ghép nhiều đoạn, tốc độ từng đoạn, nhạc nền'});
 $('nav-dub').after(navTimeline);
 function mark(view){for(const[id,active]of [['nav-editor',view==='dub'&&name==='design'],['nav-dub',view==='dub'&&name==='dub'],['nav-timeline',view==='editor']])$(id).classList.toggle('active',active)}
-function enter(next){if(next!==name){api.remember();name=next;window.dubProfile.name=next;shownId='';api.load();api.loadPresets();api.refresh();api.draw()}
+function enter(next){if(next!==name||restore){if(!restore)api.remember();restore=false;name=next;window.dubProfile.name=next;shownId='';jobShown=null;window.previewTexts=null;api.load();api.loadPresets();api.refresh();api.draw()}
  layout();if(on())moveIn();else moveOut();switchView('dub');mark('dub');labels();api.preview()}
 $('nav-editor').onclick=()=>enter('design');$('nav-dub').onclick=()=>enter('dub');
 navTimeline.onclick=()=>switchView('editor');
@@ -143,7 +156,7 @@ $('dub-preset').addEventListener('change',async e=>{const v=$('dub-preset').valu
  try{const r=await request('/library/templates/'+v.slice(4));studio.apply(r.data.design);studio.schedule();api.remember();api.say(`Đã áp dụng thiết kế "${r.name}". Bấm 💾 Lưu mẫu dựng để lưu kèm thông số hàng loạt.`)}catch(err){api.say(err.message)}},true);
 new MutationObserver(()=>{if(name==='design'&&!$('dub-preset').querySelector('optgroup.dt-old'))addTemplates()}).observe($('dub-preset'),{childList:true});
 
-window.dubProfile={name,extend,apply,preview,labels};
+window.dubProfile={name,extend,apply,preview,labels,previewJob,detail};
 Object.defineProperty(window.dubProfile,'name',{get:()=>name,set:v=>{name=v}});
 // "Dựng video" is the start page; its own saved settings load once the dubbing defaults are known
 document.addEventListener('dub-ready',()=>enter('design'),{once:true});

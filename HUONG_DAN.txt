@@ -220,6 +220,15 @@ giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh g�
 cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
 Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
 
+NÂNG CẤP 0.21.0
+- Bấm Xuất: hiện bảng "Kiểm tra trước khi chạy" (thời lượng, chi phí ước tính, key, cảnh báo). Bấm Xuất để chạy.
+- Duyệt chữ AI: mục "Tiêu đề & nội dung", tích "Dừng lại để duyệt chữ AI trước khi xuất".
+  Khi AI viết xong, hàng đợi hiện "Mở bảng duyệt chữ": sửa chữ mọi video trong một bảng rồi bấm "Xuất tất cả".
+- Bấm vào tên video trong danh sách để xem trước video đó. Bấm video đã dựng trong hàng đợi để xem với chữ của nó.
+- Video đã dựng: nút "✎ Chỉnh chi tiết" mở video đó ở tab Timeline với nền, khung, chữ để chỉnh kỹ.
+- Mục "Xuất": chọn số video chạy cùng lúc (1–4) và bộ mã hóa (card đồ họa hoặc CPU).
+  Máy RAM 8 GB nên để 1–2 video; card đồ họa NVIDIA chọn "NVIDIA NVENC" để xuất nhanh hơn.
+
 NÂNG CẤP 0.20.1
 - Tab "Dựng video", mục "Lớp ảnh": ảnh hiện ngay trên khung xem trước. Kéo ảnh để đặt vị trí, kéo ô vuông
   góc dưới phải để đổi cỡ. Ảnh nằm dưới khung và chữ, giống video xuất ra.
@@ -232,7 +241,7 @@ NÂNG CẤP 0.20.0 — GỘP DỰNG VIDEO VÀ LỒNG TIẾNG
 - Nền: Kiểu nền (Một màu / Chuyển hai màu / Tắt), Màu chính, Màu chuyển, Hòa nền (bắt đầu từ trên,
   chiều cao vùng chuyển, độ đục) — video mờ dần vào nền như trước.
 - Chữ: kéo/đổi cỡ tiêu đề, nội dung trực tiếp trên khung xem trước, hoặc nhập số ở bảng bên trái.
-- Nguồn chữ: AI (viết cùng lần dịch, cần key OpenAI), Cố định, File .txt cùng tên, Không có.
+- Nguồn chữ: AI (viết cùng lần dịch, cần key OpenAI), Cố định, Tên file, Không có.
   Giới hạn: tiêu đề tối đa 6 từ, nội dung 10–20 từ (đổi được). Dài quá thì tự cắt và có cảnh báo.
 - Ở hàng đợi, mở một video để sửa chữ: "Lưu chữ & xuất lại" hoặc "Viết lại chữ AI" (không tạo lại giọng).
 - Tab "Lồng tiếng": mục "Nền & khung", tích "Thêm nền, khung, tiêu đề & nội dung… (kết hợp)" để video lồng tiếng có thêm nền, khung, chữ.

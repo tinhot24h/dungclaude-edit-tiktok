@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import subprocess
 import tempfile
 import threading
@@ -415,6 +416,58 @@ class DesignTests(PipelineBase):
         self.assertEqual(job['options']['frame_canvas'],'9:16')
         with self.assertRaises(dubbing.DubError):dubbing.options(dict(design=dict(background='bad')))
         with self.assertRaises(dubbing.DubError):dubbing.options(dict(body_min=30,body_max=10))
+
+    def test_review_texts_waits_before_the_export_and_the_review_table_exports(self):
+        mp3=Path(self.tmp.name)/'clip.mp3';tone(mp3,3,500)
+        with mock.patch.object(self.store,'enqueue'):
+            key=self.store.create(dict(video_ids=[self.vid],mp3={self.vid:str(mp3)},options=dict(mode='design',background='remove',subtitles='none',design=self.DESIGN,title_source='ai',body_source='ai',review_texts=True,end_with_voice=False)))[0]
+        job=self.store.load(key)
+        with mock.patch.object(dubbing,'texts_request',return_value=dict(title='Tiêu đề AI',body='nội dung AI')):
+            self.store.process(job,dict(openai='sk',ai33=''),threading.Event())
+        self.assertEqual((job['state'],job['step']),('review','export'),job['message'])
+        self.assertFalse((self.data/'dub'/key/'dubbed.mp4').exists());self.assertEqual(job['steps']['tts'],'done')
+        self.store.save(job)
+        sent=[]
+        with mock.patch.object(self.store,'enqueue',side_effect=lambda k,raw:sent.append(k)):
+            r=self.store.review(dict(items=[dict(id=key,title='Tiêu đề đã sửa',body='nội dung AI'),dict(id='0'*32)]))
+        self.assertEqual(r['done'],1);self.assertEqual(len(r['errors']),1);self.assertEqual(sent,[key])
+        job=self.store.load(key);self.assertTrue(job['texts_passed'])
+        self.assertEqual(self.store.texts_for(job)['title'],'Tiêu đề đã sửa')
+        with mock.patch.object(dubbing,'texts_request',side_effect=AssertionError('no AI call after the review')):
+            self.store.process(job,dict(),threading.Event())
+        self.assertEqual(job['state'],'done',job['message']);self.assertTrue((self.data/'dub'/key/'dubbed.mp4').is_file())
+        # "AI viết lại" from the table: one new call, then it waits for the review again
+        job['state']='review';self.store.save(job)
+        with mock.patch.object(self.store,'enqueue'):self.store.proceed(key,dict(**{'from':'texts'}))
+        self.assertFalse(self.store.load(key)['texts_passed'])
+
+    def test_estimate_and_parallel_setting(self):
+        video=Path(self.tmp.name)/'clip.mp4';shutil.copyfile(self.data/self.vid/'source',video)
+        d=self.store.estimate(dict(ids=[self.vid,'bad'],paths=[str(video),'/no/such.mp4','relative.mp4']))['durations']
+        self.assertAlmostEqual(d[self.vid],4,delta=.2);self.assertIsNone(d['bad']);self.assertAlmostEqual(d[str(video)],4,delta=.2);self.assertIsNone(d['/no/such.mp4'])
+        self.assertEqual(self.store.set_parallel(3)['parallel'],3)
+        for bad in (0,5,'2',True):
+            with self.assertRaises(dubbing.DubError):self.store.set_parallel(bad)
+        again=dubbing.Store(self.data,self.settings,self.data,self.audio,media_engine.encoder_args)
+        self.assertEqual(again.parallel,3)
+
+    def test_parallel_workers_run_that_many_jobs_at_once(self):
+        self.store.set_parallel(2);gate=threading.Event();seen=[];peak=[0]
+        def slow(key):
+            seen.append(key);peak[0]=max(peak[0],self.store.running);gate.wait(5)
+        with mock.patch.object(self.store,'run_job',side_effect=slow):
+            with self.store.lock:self.store.queue.extend(['a'*32,'b'*32,'c'*32])
+            self.store.wake.set()
+            for _ in range(50):
+                if len(seen)>=2:break
+                threading.Event().wait(.05)
+            threading.Event().wait(.3)
+            self.assertEqual(len(seen),2);self.assertEqual(peak[0],2);self.assertEqual(self.store.queue,['c'*32])
+            gate.set()
+            for _ in range(80):
+                if len(seen)==3 and not self.store.running:break
+                threading.Event().wait(.05)
+        self.assertEqual(len(seen),3);self.assertEqual(self.store.running,0)
 
 
 class OneFileTimestampTests(unittest.TestCase):

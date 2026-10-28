@@ -6,7 +6,7 @@
 04 Lồng tiếng ai33.pro TTS per sentence group → fitted (gentle speed-up) and placed at the original timestamps
 05 Xuất       MP4 H.264 + AAC, Vietnamese voice, optional Vietnamese SRT (separate file or soft track; never burned into the picture)
 
-Jobs run one at a time in a worker thread. Their state (segments, translations, ai33 task ids) is saved in
+Jobs run in worker threads (1 to MAX_PARALLEL at a time, set on the queue). Their state (segments, translations, ai33 task ids) is saved in
 .local/dub/<id>/job.json so a restart never re-buys a TTS task; API keys are only held in memory.
 """
 import json
@@ -22,6 +22,7 @@ import threading
 import time
 import uuid
 import wave
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from urllib import request, error
 import ai33_audio
@@ -36,6 +37,7 @@ from fonts import FONTS
 OPENAI = os.environ.get('REVIEW_OPENAI_BASE', 'https://api.openai.com/v1/').rstrip('/') + '/'
 STEPS = ('asr', 'translate', 'separate', 'tts', 'mix', 'export')
 WEIGHTS = dict(asr=15, translate=10, separate=15, tts=40, mix=10, export=10)
+MAX_PARALLEL = 4
 # Output frame for the dubbed video; 'source' keeps the original size (even-rounded).
 CANVAS = {'source': None, '9:16': (1080, 1920), '1:1': (1080, 1080), '4:5': (1080, 1350), '16:9': (1920, 1080)}
 BACKGROUND = ('duck', 'center', 'demucs', 'remove', 'keep')
@@ -49,7 +51,7 @@ DEFAULTS = dict(language='zh', model=ai_translate.DEFAULT_MODEL, rate=4.2, prono
                 overlay=False, overlay_ids=[], overlay_count=1, overlay_blend='screen', overlay_opacity=60, overlay_timing='loop', end_with_voice=True,
                 image=False, image_id='', image_x=0, image_y=0, image_w=60, image_h=0, image_rotate=0, image_flip='none', image_blend='normal',
                 image_opacity=100, image_layer='below',
-                design=None, title_source='ai', body_source='ai', title_words=6, body_min=10, body_max=20)
+                design=None, title_source='ai', body_source='ai', title_words=6, body_min=10, body_max=20, review_texts=False)
 TEXT_SOURCES = ('ai', 'fixed', 'file', 'none')
 PRONOUNS = {'neutral': 'xưng hô trung tính, hạn chế đại từ', 'ban': 'gọi người xem là "bạn"', 'minh-ban': 'người nói xưng "mình", gọi người xem là "bạn"'}
 
@@ -117,7 +119,7 @@ def options(raw):
     if not isinstance(image_id, str) or (image_id and not re.fullmatch('[a-f0-9]{32}', image_id)):
         raise DubError('Ảnh overlay không hợp lệ.')
     out['image_id'] = image_id
-    for key in ('no_price', 'review', 'overlay', 'end_with_voice', 'image'):
+    for key in ('no_price', 'review', 'overlay', 'end_with_voice', 'image', 'review_texts'):
         v = raw.get(key, DEFAULTS[key])
         if not isinstance(v, bool):
             raise DubError('Thông số không hợp lệ: ' + key)
@@ -150,6 +152,12 @@ def options(raw):
         raise DubError('Bộ mã hóa không hợp lệ.')
     out['encoder'] = encoder
     return out
+
+
+def parallel_count(value):
+    if not isinstance(value, int) or isinstance(value, bool) or not 1 <= value <= MAX_PARALLEL:
+        raise DubError(f'Số video chạy cùng lúc phải từ 1 đến {MAX_PARALLEL}.')
+    return value
 
 
 def check_key(value, label):
@@ -852,7 +860,24 @@ class Store:
         self.cancels = {}
         self.live = {}
         self.wake = threading.Event()
-        threading.Thread(target=self.worker, daemon=True).start()
+        self.running = 0
+        try:
+            self.parallel = parallel_count(json.loads((self.root / 'queue.json').read_text(encoding='utf-8')).get('parallel'))
+        except (OSError, ValueError, AttributeError, DubError):
+            self.parallel = 1
+        for _ in range(MAX_PARALLEL):
+            threading.Thread(target=self.worker, daemon=True).start()
+
+    def set_parallel(self, value):
+        """How many videos are processed at the same time (the steps of one job stay in order)."""
+        with self.lock:
+            self.parallel = parallel_count(value)
+            (self.root / 'queue.json').write_text(json.dumps(dict(parallel=self.parallel)), encoding='utf-8')
+        self.wake.set()
+        return self.queue_info()
+
+    def queue_info(self):
+        return dict(parallel=self.parallel, max=MAX_PARALLEL, running=self.running, waiting=len(self.queue))
 
     # -- persistence
     def path(self, key):
@@ -994,9 +1019,59 @@ class Store:
                 for seg in job['segments']:
                     seg.pop('vi', None)
         job['review_passed'] = True
+        job['texts_passed'] = start != 'texts'   # rewritten texts wait for review again
         self.save(job)
         self.enqueue(key, raw)
         return self.load(key)
+
+    def review(self, raw):
+        """Review table: save the title/body typed for each job and export them (no AI call)."""
+        items = raw.get('items')
+        if not isinstance(items, list) or not 1 <= len(items) <= 1000:
+            raise DubError('Danh sách duyệt chữ không hợp lệ.')
+        done, errors = 0, []
+        for item in items:
+            try:
+                if not isinstance(item, dict):
+                    raise DubError('Dòng không hợp lệ.')
+                key = item.get('id')
+                job = self.load(key)
+                if job['state'] != 'review':
+                    raise DubError('Không ở trạng thái chờ duyệt.')
+                if 'title' in item or 'body' in item:
+                    now = self.texts_for(job)
+                    texts = dict(title=item.get('title', now.get('title', '')), body=item.get('body', now.get('body', '')))
+                    if texts != {k: now.get(k, '') for k in ('title', 'body')}:
+                        self.edit_texts(key, texts)
+                self.proceed(key, {k: v for k, v in raw.items() if k != 'items'})
+                done += 1
+            except DubError as exc:
+                errors.append(dict(id=item.get('id') if isinstance(item, dict) else None, error=str(exc)))
+        return dict(done=done, errors=errors)
+
+    def estimate(self, raw):
+        """Durations for the check before a run: library videos from their metadata, files on this computer probed."""
+        ids, paths = raw.get('ids') or [], raw.get('paths') or []
+        if not isinstance(ids, list) or not isinstance(paths, list) or len(ids) + len(paths) > 1000:
+            raise DubError('Danh sách video không hợp lệ.')
+        out = {}
+        for vid in ids:
+            try:
+                out[vid] = float(json.loads((self.video_dir / vid / 'source.json').read_text(encoding='utf-8'))['duration']) \
+                    if isinstance(vid, str) and re.fullmatch('[a-f0-9]{32}', vid) else None
+            except (OSError, ValueError, KeyError, TypeError):
+                out[vid] = None
+        def one(p):
+            path = Path(p) if len(p) < 1000 else None
+            if not path or not path.is_absolute() or not path.is_file() or path.suffix.lower() not in ('.mp4', '.mov', '.m4v', '.mkv', '.webm', '.avi'):
+                return p, None
+            try:
+                return p, probe(path)['duration'] or None
+            except (OSError, ValueError, subprocess.SubprocessError):
+                return p, None
+        with ThreadPoolExecutor(8) as pool:
+            out.update(dict(pool.map(one, [p for p in paths if isinstance(p, str)])))
+        return dict(durations=out)
 
     def edit_paragraph(self, key, text):
         job = self.load(key)
@@ -1100,33 +1175,43 @@ class Store:
     def worker(self):
         while True:
             self.wake.wait(2)
-            self.wake.clear()
             with self.lock:
-                key = self.queue.pop(0) if self.queue else None
-            if not key:
-                continue
-            job = self.load(key)
-            cancel = self.cancels.get(key) or threading.Event()
-            if cancel.is_set():
-                continue
-            job['state'] = 'running'
-            try:
-                self.process(job, self.keys.get(key, {}), cancel)
-            except Cancelled:
-                job['state'] = 'paused'
-                job['message'] = 'Đã dừng. Bấm Tiếp tục để chạy tiếp từ bước đang dở.'
-            except (DubError, ai33_audio.AudioError) as exc:
-                job['state'] = 'error'
-                job['steps'][job['step']] = 'error'
-                job['message'] = str(exc)
-            except (OSError, ValueError, subprocess.SubprocessError, KeyError, TypeError) as exc:
-                job['state'] = 'error'
-                job['steps'][job['step']] = 'error'
-                job['message'] = 'Lỗi xử lý: ' + str(exc)[:300]
-            finally:
-                with self.lock:
-                    self.keys.pop(key, None)
-                self.save(job)
+                key = self.queue.pop(0) if self.queue and self.running < self.parallel else None
+                if key:
+                    self.running += 1
+                if not self.queue or self.running >= self.parallel:
+                    self.wake.clear()
+            if key:
+                try:
+                    self.run_job(key)
+                finally:
+                    with self.lock:
+                        self.running -= 1
+                    self.wake.set()
+
+    def run_job(self, key):
+        job = self.load(key)
+        cancel = self.cancels.get(key) or threading.Event()
+        if cancel.is_set():
+            return
+        job['state'] = 'running'
+        try:
+            self.process(job, self.keys.get(key, {}), cancel)
+        except Cancelled:
+            job['state'] = 'paused'
+            job['message'] = 'Đã dừng. Bấm Tiếp tục để chạy tiếp từ bước đang dở.'
+        except (DubError, ai33_audio.AudioError) as exc:
+            job['state'] = 'error'
+            job['steps'][job['step']] = 'error'
+            job['message'] = str(exc)
+        except (OSError, ValueError, subprocess.SubprocessError, KeyError, TypeError) as exc:
+            job['state'] = 'error'
+            job['steps'][job['step']] = 'error'
+            job['message'] = 'Lỗi xử lý: ' + str(exc)[:300]
+        finally:
+            with self.lock:
+                self.keys.pop(key, None)
+            self.save(job)
 
     def progress(self, job, step, fraction, message):
         job['step'] = step
@@ -1323,6 +1408,13 @@ class Store:
             self.finish(job, 'mix')
         check()
 
+        if settings.get('review_texts') and ai_texts_wanted(settings) and not job.get('texts_passed'):
+            # "Dừng lại để duyệt chữ": the AI title/body wait in the review table; nothing is exported yet
+            job['state'] = 'review'
+            job['step'] = 'export'
+            job['message'] = 'AI đã viết tiêu đề và nội dung. Duyệt chữ rồi bấm Xuất.'
+            job['progress'] = sum(WEIGHTS[s] for s in STEPS if job['steps'][s] in ('done', 'skipped'))
+            return
         self.export(job, folder, source, info, cancel)
         self.finish(job, 'export')
         job['state'] = 'done'
@@ -2077,7 +2169,7 @@ class Store:
         background = folder / 'background.wav'
         args = ['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(source)] + (['-i', str(background)] if background.is_file() else []) + \
                ['-map', '0:v:0'] + (['-map', '1:a:0', '-c:a', 'aac', '-b:a', '192k'] if background.is_file() else []) + \
-               (['-c:v', 'copy'] if job.get('video_stretch', 1) == 1 or job['options']['mode'] != 'paragraph' else
+               (['-c:v', 'copy'] if job.get('video_stretch', 1) == 1 or job['options']['mode'] not in ('paragraph', 'design') else
                 ['-filter:v', f'setpts=PTS*{job["video_stretch"]:.6f}', *self.encoder_args('cpu', 'high')] +
                 (['-filter:a', tempo_filter(1 / job['video_stretch'])] if background.is_file() else [])) + \
                ['-t', str(job.get('output_duration', job['duration'])), '-f', 'mp4', str(target)]
