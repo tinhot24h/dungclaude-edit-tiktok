@@ -1,8 +1,12 @@
-# Review Studio 0.17.7
+# Review Studio 0.17.8
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.17.8
+
+- **Sửa lỗi cập nhật "… lớn bất thường; dừng cập nhật":** ngay sau khi có bản mới, bộ nhớ đệm của GitHub có thể trả file mới lẫn file cũ. Trình cập nhật giờ tải mọi file theo đúng một commit nên các file luôn khớp nhau. Nếu vẫn gặp lệch tạm thời, app chỉ báo "chạy lại sau 1 phút" và không thay file nào.
 
 ## Mới trong 0.17.7
 

@@ -18,7 +18,8 @@ from urllib import request, error
 ROOT = Path(__file__).resolve().parent
 REPO = os.environ.get('REVIEW_UPDATE_REPO', 'tinhot24h/dungclaude-edit-tiktok')
 BRANCH = os.environ.get('REVIEW_UPDATE_BRANCH', 'main')
-SOURCE = os.environ.get('REVIEW_UPDATE_URL', f'https://raw.githubusercontent.com/{REPO}/{BRANCH}/').rstrip('/') + '/'
+SOURCE = os.environ.get('REVIEW_UPDATE_URL', '').rstrip('/') + '/' if os.environ.get('REVIEW_UPDATE_URL') else ''
+_pinned = {}
 WORK = ROOT / '.local' / 'update'
 SAFE = re.compile(r'[A-Za-z0-9_.][A-Za-z0-9_.\-]*')
 FILE_LIMIT = 50 * 1024 * 1024
@@ -53,8 +54,29 @@ def digest(path):
     return h.hexdigest()
 
 
+def source():
+    """Download base pinned to the newest commit of the branch. raw.githubusercontent.com caches each file on its
+    own for a few minutes after a push, so by branch name the MANIFEST and the files could come from different
+    versions; by commit they always match. Falls back to the branch when the GitHub API is unreachable."""
+    if SOURCE:
+        return SOURCE
+    if 'base' not in _pinned:
+        base = f'https://raw.githubusercontent.com/{REPO}/{BRANCH}/'
+        try:
+            req = request.Request(f'https://api.github.com/repos/{REPO}/commits/{BRANCH}',
+                                  headers={'User-Agent': 'ReviewStudio-updater', 'Accept': 'application/vnd.github.sha'})
+            with request.urlopen(req, timeout=20) as response:
+                sha = response.read(100).decode('ascii', 'replace').strip()
+            if re.fullmatch(r'[0-9a-f]{40}', sha):
+                base = f'https://raw.githubusercontent.com/{REPO}/{sha}/'
+        except (error.URLError, TimeoutError, OSError, ValueError):
+            pass
+        _pinned['base'] = base
+    return _pinned['base']
+
+
 def fetch(name, limit=FILE_LIMIT):
-    url = SOURCE + name + '?t=' + str(int(time.time()))
+    url = source() + name + '?t=' + str(int(time.time()))
     try:
         with request.urlopen(request.Request(url, headers={'User-Agent': 'ReviewStudio-updater', 'Cache-Control': 'no-cache'}), timeout=60) as response:
             data = response.read(limit + 1)
@@ -124,7 +146,12 @@ def apply(plan=None, log=print):
     files = plan['manifest']['files']
     for i, name in enumerate(plan['changed'], 1):
         log(f'[{i}/{len(plan["changed"])}] Tải {name}')
-        data = fetch(name, files[name]['size'] + 16)
+        try:
+            data = fetch(name, files[name]['size'] + 16)
+        except UpdateError as exc:
+            if 'lớn bất thường' not in str(exc):
+                raise
+            data = b''
         if len(data) != files[name]['size'] or hashlib.sha256(data).hexdigest() != files[name]['sha256']:
             raise UpdateError(f'{name} tải về không khớp mã kiểm tra (có thể GitHub đang cập nhật). Chạy lại sau 1 phút.')
         target = staging / name

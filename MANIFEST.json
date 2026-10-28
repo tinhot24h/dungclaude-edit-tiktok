@@ -1,15 +1,15 @@
 {
  "app": "ReviewStudio",
- "version": "0.17.7",
- "notes": "## Mới trong 0.17.7\n\n- **Giới hạn tự khớp giọng ↔ video** (mục 🎙 Giọng đọc, nhập được số):\n  - Tốc độ giọng **0.98–1.1×**, tốc độ video **0.85–1.2×** (mặc định, sửa được).\n  - Quá giới hạn mà giọng vẫn dài hơn thì **cắt phần cuối giọng theo độ dài video**, có làm nhỏ dần.\n  - *Tự động:* giọng dài hơn video thì đọc nhanh tới 1.1×; còn thiếu thì làm chậm video tới 0.85×; vẫn dư thì cắt.\n  - *MP3 khớp video:* chỉ co giãn giọng trong giới hạn. *Video khớp MP3:* chỉ tua video trong giới hạn.\n  - Cấu hình cũ (đọc nhanh tối đa 1.3×) tự chuyển sang giới hạn mới.\n- **Số thập phân:** xoay, zoom, dịch ngang/dọc, độ đục, âm lượng… đặt được tới 0.1 (ví dụ xoay 0.5°).\n- **Sửa ô số bị cắt chữ** (ví dụ \"103\" chỉ hiện \"03\"): ô số rộng hơn và bỏ trùng tên với một kiểu cũ.\n- Sửa lỗi FFmpeg \"Invalid duration .25/.3\" khi giọng dài hơn chỗ trống và cần cắt (bản FFmpeg mới không nhận số dạng \".3\").",
+ "version": "0.17.8",
+ "notes": "## Mới trong 0.17.8\n\n- **Sửa lỗi cập nhật \"… lớn bất thường; dừng cập nhật\":** ngay sau khi có bản mới, bộ nhớ đệm của GitHub có thể trả file mới lẫn file cũ. Trình cập nhật giờ tải mọi file theo đúng một commit nên các file luôn khớp nhau. Nếu vẫn gặp lệch tạm thời, app chỉ báo \"chạy lại sau 1 phút\" và không thay file nào.",
  "files": {
   "demucs_runner.py": {
    "sha256": "426b21e67e115d21426f0ba38d0febe8707c0dd6336f7891396a59ec55500c0d",
    "size": 1050
   },
   "update.py": {
-   "sha256": "69dea002a0cb777dc61b4f48fa2b2f4046a8181c8b9db86d8f4361d8838cac7b",
-   "size": 7901
+   "sha256": "442a4688b9c166eb6edbae0f8e2728d3f37d7672c9d1485a94d555bc907f93c4",
+   "size": 9182
   },
   "UPDATE_WINDOWS.bat": {
    "sha256": "2da8f76eaae5ffbff33ca0677350853d9895523e124d6ed73050c11d99cd1d22",
@@ -20,8 +20,8 @@
    "size": 180
   },
   "tests/test_update.py": {
-   "sha256": "9d27c4bb8bd6522479fd226bb6e2f4e47ebf2dd04cefc73f5482e32d1cfcd9c9",
-   "size": 4083
+   "sha256": "4b4c65c9bf995d7c77fe0df350e23c119cc7f16e58873bc1162e39cc099b5618",
+   "size": 5491
   },
   "update_ui.js": {
    "sha256": "9c4280d3a39addeb8181a9b9662c00b57e93962de38581ac8cfa373b89544900",
@@ -164,7 +164,7 @@
    "size": 2609
   },
   "index.html": {
-   "sha256": "af409a6082c63864a30ee42189b9d38bfdd2299187c0746d795df51cb17bceea",
+   "sha256": "e0024157431f4ade87b1bc6e79d8f870d4ca292175299a0fef45bce3efee8915",
    "size": 33084
   },
   "launch.py": {
@@ -184,15 +184,15 @@
    "size": 230
   },
   "HUONG_DAN.txt": {
-   "sha256": "c14aa9f95fbc1b2969d81c770b8456e2de57e3594089b5a5dde631aad6303ea4",
-   "size": 34365
+   "sha256": "11ee92320e7c4ae3fbec174462f9d4b12e3c8a7676daa1cf7de2edbf72392795",
+   "size": 34697
   },
   "README.md": {
-   "sha256": "3abddf1b0a4fb51b01d0d8ab9206af7d1c71703310aab560b1a29014e731e239",
-   "size": 47658
+   "sha256": "00e4ea1924b4ec87ddf793743699ae269db4706c1ebfef689e0b655b20f093db",
+   "size": 48077
   },
   "VERSION": {
-   "sha256": "47036bde3ecbc3bfb47979f1b555e7bff4c743018c8c20059eed08b264c7fb3e",
+   "sha256": "65788648870a94c46195759cba6a5c9c7407492190ac31f76af8afb1d520c23e",
    "size": 7
   },
   ".gitignore": {

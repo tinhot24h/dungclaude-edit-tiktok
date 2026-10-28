@@ -54,6 +54,28 @@ class UpdaterTests(unittest.TestCase):
             self.manifest['files']={bad:entry(b'x')}
             with self.assertRaises(update.UpdateError,msg=bad):update.check()
 
+    def test_downloads_are_pinned_to_the_newest_commit(self):
+        sha='ab'*20
+        class Reply:
+            def __init__(self,body):self.body=body
+            def __enter__(self):return self
+            def __exit__(self,*a):pass
+            def read(self,n=-1):return self.body
+        with mock.patch.object(update,'SOURCE',''),mock.patch.dict(update._pinned,clear=True),mock.patch.object(update.request,'urlopen',return_value=Reply(sha.encode())):
+            self.assertEqual(update.source(),f'https://raw.githubusercontent.com/{update.REPO}/{sha}/')
+        # GitHub API unreachable → branch name, still works
+        with mock.patch.object(update,'SOURCE',''),mock.patch.dict(update._pinned,clear=True),mock.patch.object(update.request,'urlopen',side_effect=update.error.URLError('x')):
+            self.assertEqual(update.source(),f'https://raw.githubusercontent.com/{update.REPO}/{update.BRANCH}/')
+
+    def test_stale_cache_with_a_bigger_file_asks_to_retry(self):
+        real=update.fetch.side_effect
+        def fetch(name,limit=0):
+            if name=='a.txt':raise update.UpdateError('a.txt lớn bất thường; dừng cập nhật.')
+            return real(name,limit)
+        update.fetch.side_effect=fetch
+        with self.assertRaisesRegex(update.UpdateError,'Chạy lại'):update.apply(log=lambda line:None)
+        self.assertEqual((self.root/'a.txt').read_bytes(),b'old')
+
     def test_version_order(self):
         self.assertGreater(update.version_key('0.12.1'),update.version_key('0.12'))
         self.assertGreater(update.version_key('0.13'),update.version_key('0.12.9'))
