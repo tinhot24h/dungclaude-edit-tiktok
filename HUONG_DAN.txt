@@ -220,6 +220,20 @@ giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh g�
 cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
 Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
 
+NÂNG CẤP 0.20.0 — GỘP DỰNG VIDEO VÀ LỒNG TIẾNG
+- Tab "Dựng video" nay giống tab "Lồng tiếng": cột trái cài đặt, giữa hàng đợi, phải xem trước.
+  1) Chọn mẫu dựng (hoặc tự chỉnh Nền & khung, Tiêu đề & nội dung).
+  2) Bấm "📂 Thư mục trên máy" chọn thư mục video. MP3 cùng tên (vd: a.mp4 + a.mp3) tự ghép làm giọng đọc.
+  3) Bấm Xuất. Video xong lưu tên "...-dung.mp4".
+- Nền: Kiểu nền (Một màu / Chuyển hai màu / Tắt), Màu chính, Màu chuyển, Hòa nền (bắt đầu từ trên,
+  chiều cao vùng chuyển, độ đục) — video mờ dần vào nền như trước.
+- Chữ: kéo/đổi cỡ tiêu đề, nội dung trực tiếp trên khung xem trước, hoặc nhập số ở bảng bên trái.
+- Nguồn chữ: AI (viết cùng lần dịch, cần key OpenAI), Cố định, File .txt cùng tên, Không có.
+  Giới hạn: tiêu đề tối đa 6 từ, nội dung 10–20 từ (đổi được). Dài quá thì tự cắt và có cảnh báo.
+- Ở hàng đợi, mở một video để sửa chữ: "Lưu chữ & xuất lại" hoặc "Viết lại chữ AI" (không tạo lại giọng).
+- Tab "Lồng tiếng": mục "Nền & khung", tích "Thêm nền, khung, tiêu đề & nội dung… (kết hợp)" để video lồng tiếng có thêm nền, khung, chữ.
+- Trình dựng chi tiết cũ chuyển sang tab "Timeline · chỉnh 1 video".
+
 NÂNG CẤP 0.19.5
 - Bỏ MO_REVIEW_STUDIO.vbs và TAO_LOI_TAT_DESKTOP.vbs. Mở ứng dụng bằng START_WINDOWS.bat (có cửa sổ cmd).
   Khi cập nhật, hai file này tự được xóa khỏi thư mục ứng dụng.

@@ -1,8 +1,19 @@
-# Review Studio 0.19.5
+# Review Studio 0.20.0
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.20.0
+
+- **Gộp tab "Dựng video" vào cùng cấu trúc với "Lồng tiếng"** (cột cài đặt | hàng đợi | xem trước). Dựng hàng loạt video có nền, khung, tiêu đề và nội dung; chạy chung hàng đợi, tiếp tục được khi tắt app giữa chừng.
+- Giữ đủ công cụ thiết kế cũ: kiểu nền (một màu / chuyển hai màu / tắt), màu chính, màu chuyển, hòa nền (vị trí bắt đầu, chiều cao vùng chuyển, độ đục), khung PNG, ô video. Kéo, đổi cỡ, căn chỉnh, đổi màu chữ ngay trên khung xem trước hoặc nhập số.
+- **Tiêu đề + nội dung do AI viết trong cùng lần gọi dịch** (không tốn thêm lần gọi). Giới hạn số từ: tiêu đề mặc định ≤ 6 từ, nội dung 10–20 từ; dài hơn thì tự cắt và báo. Nguồn chữ: AI / cố định / file .txt cùng tên / không có.
+- **MP3 cùng tên** với video được ghép sẵn làm giọng đọc (không tốn credit ai33), vẫn áp dụng giới hạn tốc độ.
+- Sửa chữ từng video trong hàng đợi: "Lưu chữ & xuất lại", hoặc "Viết lại chữ AI" (giữ nguyên giọng đã tạo).
+- **Mẫu dựng**: lưu trọn nền, khung, chữ, lớp phủ, thông số video để chạy hàng loạt; mẫu ở tab Dựng video cũ vẫn chọn được.
+- Tab "Lồng tiếng" có thể bật "kết hợp nền & khung" để thêm thiết kế vào video lồng tiếng.
+- Tab **"Timeline · chỉnh 1 video"** giữ trình dựng chi tiết cũ.
 
 ## Mới trong 0.19.5
 

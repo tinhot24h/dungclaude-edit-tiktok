@@ -665,3 +665,11 @@ kbd{display:inline-block;padding:2px 7px;border:1px solid #475569;border-bottom-
 .dub-bulkbar{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 0}.dub-bulkbar button{border:1px solid #37465b;background:#222e3e;border-radius:6px;color:#bed0e5;padding:5px 8px;font-size:11px}.dub-bulkbar button.danger{border-color:#6b3a3f;color:#ffb3b8}.dub-bulkbar button:hover{border-color:var(--accent)}
 .dub-ov img{background-color:#1a222e;background-image:linear-gradient(45deg,#2a3442 25%,transparent 25%,transparent 75%,#2a3442 75%),linear-gradient(45deg,#2a3442 25%,transparent 25%,transparent 75%,#2a3442 75%);background-size:12px 12px;background-position:0 0,6px 6px;object-fit:contain}
 .header-tools{display:flex;align-items:center;gap:8px;margin-left:auto}.header-tools .update-button{display:grid;place-items:center}#quit-button:hover{color:#ff8a8a;border-color:#7a3b3b}
+.dub-texts{margin:8px 0 4px;padding:10px;border:1px solid var(--border);border-radius:8px;background:#101824}.dub-texts label{margin:0 0 4px;font-size:11px}.dub-texts textarea,.dub-texts input{font-size:12px;padding:7px 9px}.dub-texts .dub-actions{margin-top:8px}
+/* Dựng video (design_tab.js) */
+.dt-src{display:grid;grid-template-columns:70px minmax(0,1fr) auto 64px auto 64px;gap:8px;align-items:center;margin:6px 0}.dt-src label{margin:0;font-size:12px}.dt-src span{font-size:11px;color:var(--muted)}.dt-src input{padding:6px 8px;text-align:right}
+.dt-src select{padding:7px 8px}
+#dt-style-tabs button.on{border-color:var(--accent);color:var(--accent);background:#1b3936}
+#dt-bg-host .editor-section,#dt-style-host .editor-section,#dt-video-host .editor-section{padding:0}#dt-fixed-host textarea{min-height:70px}
+.dt-stage-host{display:flex;flex-direction:column;gap:8px}.dt-stage-host .preview-workspace{padding:10px 0;border-radius:10px}.dt-stage-host .stage{width:min(360px,100%)}
+.dt-stage-host .playback{margin-top:4px}

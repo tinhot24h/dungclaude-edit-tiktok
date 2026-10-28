@@ -374,6 +374,49 @@ class DemucsTests(PipelineBase):
         dubbing._demucs.clear()
 
 
+class DesignTests(PipelineBase):
+    """Dựng video mode and the design layer (nền + vùng hòa nền + khung + tiêu đề + nội dung) in the shared export."""
+    DESIGN=dict(background='solid',color='#ff00ff',fade_start=50,fade_height=10,opacity=100,frame_style='none',title='CỐ ĐỊNH',body='',
+                title_y=10,title_size=40,title_color='#00ff00',body_y=80)
+
+    def pixel(self,path,x,y,t=1.0):
+        return list(subprocess.run(['ffmpeg','-v','error','-ss',str(t),'-i',str(path),'-frames:v','1','-vf',f'crop=4:4:{x}:{y},scale=1:1','-f','rawvideo','-pix_fmt','rgb24','-'],capture_output=True).stdout)
+
+    def test_design_mode_with_same_name_mp3_and_ai_texts_in_one_call(self):
+        mp3=Path(self.tmp.name)/'clip.mp3';tone(mp3,3,500)
+        calls=[]
+        def texts(key,model,lines,settings):
+            calls.append(lines);return dict(title='Nồi chiên gọn cho bếp nhỏ thật tiện',body='Chiên giòn ít dầu vệ sinh dễ dàng')
+        with mock.patch.object(self.store,'enqueue'):
+            key=self.store.create(dict(video_ids=[self.vid],mp3={self.vid:str(mp3)},options=dict(mode='design',background='remove',subtitles='none',design=self.DESIGN,title_source='ai',body_source='ai',title_words=6,end_with_voice=False)))[0]
+        job=self.store.load(key);self.assertEqual(job['mp3'],'voice-src.mp3')
+        with mock.patch.object(dubbing,'texts_request',side_effect=texts):
+            self.store.process(job,dict(openai='sk',ai33=''),threading.Event())
+        self.assertEqual(job['state'],'done',job['message']);self.assertEqual(len(calls),1)   # Whisper + ONE OpenAI call
+        self.assertEqual(job['texts']['title'],'Nồi chiên gọn cho bếp nhỏ');self.assertTrue(any('Tiêu đề dài hơn 6 từ' in w for w in job['warnings']))
+        out=self.data/'dub'/job['id']/'dubbed.mp4';info=dubbing.probe(out)
+        self.assertEqual((info['video']['width'],info['video']['height']),(1080,1920));self.assertAlmostEqual(info['duration'],4,delta=.2)
+        graph=(self.data/'dub'/job['id']/'export.ffgraph').read_text()
+        self.assertIn('[designbg]',graph);self.assertIn('[designfr]',graph);self.assertIn('drawtext',graph)
+        r,g,b=self.pixel(out,540,1700);self.assertTrue(r>200 and b>200 and g<80,(r,g,b))      # nền below the fade
+        top=self.pixel(out,540,300);self.assertFalse(top[0]>200 and top[2]>200 and top[1]<80,top)   # video above the fade
+
+    def test_fixed_and_file_texts_and_dub_with_design_in_the_same_call(self):
+        seen={}
+        def para(key,model,segments,seconds,limit,settings):
+            seen['want']=dubbing.ai_texts_wanted(settings);return dict(text='Xin chào.',title='Tiêu đề AI',body='nội dung ngắn gọn')
+        with mock.patch.object(dubbing,'paragraph_request',side_effect=para):
+            job=self.job(background='remove',review=False,subtitles='none',design=self.DESIGN,title_source='fixed',body_source='ai')
+            self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
+        self.assertEqual(job['state'],'done',job['message']);self.assertTrue(seen['want'])
+        self.assertEqual(self.store.texts_for(job),dict(title='CỐ ĐỊNH',body='nội dung ngắn gọn'))
+        job['options']=dubbing.options({**job['options'],'title_source':'file','body_source':'none'})
+        self.assertEqual(self.store.texts_for(job),dict(title='clip',body=''))
+        self.assertEqual(job['options']['frame_canvas'],'9:16')
+        with self.assertRaises(dubbing.DubError):dubbing.options(dict(design=dict(background='bad')))
+        with self.assertRaises(dubbing.DubError):dubbing.options(dict(body_min=30,body_max=10))
+
+
 class OneFileTimestampTests(unittest.TestCase):
     def test_one_voice_file_is_cut_at_the_pauses_nearest_each_sentence(self):
         # three sentences of similar length; the short 0.1 s breath at 1.95 s is not taken as a sentence break

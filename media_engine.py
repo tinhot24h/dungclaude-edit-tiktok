@@ -167,6 +167,48 @@ def hardware_encoders():
     return list(_ENCODERS)
 
 
+def design_layers(folder,opts,args,graph,top,next_input,scale,duration,frame_path=None,images_dir=None,font_dir='../../assets/'):
+    """Design layers drawn above the video, shared by the editor and the dubbing/batch export: custom PNG frame,
+    image/logo layers, caption boxes and the text. Appends inputs to args and lines to graph; returns
+    (top label, next input index, text filter chain for the last step)."""
+    if opts['frame_style']=='custom':
+        if not frame_path:raise ValueError('Thiếu khung PNG.')
+        args+=['-i',str(frame_path)];b=frame_box(opts);w=max(1,round(b['width']*scale));h=max(1,round(b['height']*scale))
+        graph.append(f'[{next_input}:v]format=rgba,scale={w}:{h}:force_original_aspect_ratio=decrease,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color=0x00000000,colorchannelmixer=aa={opts["frame_opacity"]/100}[custom]')
+        graph.append(f'[design][custom]overlay={round(b["x"]*scale)}:{round(b["y"]*scale)}:format=auto[framed]')
+        next_input+=1;top='framed'
+    # Image/logo layers: each still PNG is scaled, faded, rotated about its centre and shown in its time window.
+    for n,image in enumerate(opts.get('images') or []):
+        if not images_dir or not (Path(images_dir)/(image['id']+'.png')).is_file():raise ValueError('Ảnh của lớp ảnh không còn trong ứng dụng. Hãy nhập lại ảnh.')
+        args+=['-i',str(Path(images_dir)/(image['id']+'.png'))];w=max(2,round(image['width']*scale));h=max(2,round(image['height']*scale))
+        chain=f'[{next_input}:v]format=rgba,scale={w}:{h}'+(f',colorchannelmixer=aa={image["opacity"]/100}' if image['opacity']<100 else '')
+        if image['rotation']:
+            turn=math.radians(image['rotation']);chain+=f',rotate={turn:.9f}:ow=rotw({turn:.9f}):oh=roth({turn:.9f}):c=none'
+        graph.append(chain+f'[image{n}]')
+        shown=f":enable='between(t,{image['start']},{image['end'] or duration+1})'" if image['start']>0 or image['end']>0 else ''
+        graph.append(f'[{top}][image{n}]overlay=x={round(image["x"]*scale)}+({w}-overlay_w)/2:y={round(image["y"]*scale)}+({h}-overlay_h)/2:format=auto{shown}[imaged{n}]')
+        top=f'imaged{n}';next_input+=1
+    textfilters=[];items=layout(opts)
+    # Caption boxes are rounded PNGs overlaid under their text for the same time window.
+    for item in items:
+        box=item.get('box')
+        if not box:continue
+        name=f'box-{item["key"]}.png';(folder/name).write_bytes(box_png(box['width']*scale,box['height']*scale,box['radius']*scale,box['color'],box['opacity']))
+        args+=['-i',name];shown=f":enable='between(t,{item['start']},{item['end'] or duration+1})'" if item['start']>0 or item['end']>0 else ''
+        graph.append(f'[{top}][{next_input}:v]overlay={round(box["x"]*scale)}:{round(box["y"]*scale)}:format=auto{shown}[boxed{next_input}]')
+        top=f'boxed{next_input}';next_input+=1
+    for item in items:
+        font=font_dir+FONTS[item['font']][0]
+        # Text shown only for part of the video: start..end seconds on the output timeline (end 0 = until the end).
+        window=f":enable='between(t,{item['start']},{item['end'] or duration+1})'" if item['start']>0 or item['end']>0 else ''
+        for li,runs in enumerate(item['line_runs']):
+            for wi,run in enumerate(runs):
+                if not run['text'].strip():continue
+                filename=f'{item["key"]}-{li}-{wi}.txt';(folder/filename).write_text(run['text'],encoding='utf-8')
+                textfilters.append(f'drawtext=fontfile={font}:textfile={filename}:expansion=none:fontsize={item["size"]*scale}:fontcolor={item["color"].replace("#","0x")}:x={run["x"]*scale}:y={(item.get("content_y",item["y"])+li*(item["size"]+item["gap"]))*scale}:borderw={round(item["outline"]*scale)}:bordercolor={item["outline_color"].replace("#","0x")}'+window)
+    return top,next_input,(','.join(textfilters) if textfilters else 'null')
+
+
 def build(folder,opts,video_path,video,audio_path=None,audio=None,frame_path=None,music_path=None,music=None,images_dir=None):
     folder=Path(folder);p=plan(opts,video,audio,music)
     ow,oh=p['width'],p['height'];scale=ow/720;fps=p['fps'];duration=p['duration']
@@ -202,43 +244,8 @@ def build(folder,opts,video_path,video,audio_path=None,audio=None,frame_path=Non
     graph.append(f'[base][clip]overlay=x={x}+({vw}-overlay_w)/2:y={y}+({vh}-overlay_h)/2:shortest=1:format=auto[placed]')
     graph.append(f'[{art}:v]scale={ow}:{oh}:flags=lanczos[art]')
     graph.append('[placed][art]overlay=0:0:format=auto[design]')
-    next_input=art+1;top='design'
-    if opts['frame_style']=='custom':
-        if not frame_path:raise ValueError('Thiếu khung PNG.')
-        args+=['-i',str(frame_path)];b=frame_box(opts);w=max(1,round(b['width']*scale));h=max(1,round(b['height']*scale))
-        graph.append(f'[{next_input}:v]format=rgba,scale={w}:{h}:force_original_aspect_ratio=decrease,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color=0x00000000,colorchannelmixer=aa={opts["frame_opacity"]/100}[custom]')
-        graph.append(f'[design][custom]overlay={round(b["x"]*scale)}:{round(b["y"]*scale)}:format=auto[framed]')
-        next_input+=1;top='framed'
-    # Image/logo layers: each still PNG is scaled, faded, rotated about its centre and shown in its time window.
-    for n,image in enumerate(opts.get('images') or []):
-        if not images_dir or not (Path(images_dir)/(image['id']+'.png')).is_file():raise ValueError('Ảnh của lớp ảnh không còn trong ứng dụng. Hãy nhập lại ảnh.')
-        args+=['-i',str(Path(images_dir)/(image['id']+'.png'))];w=max(2,round(image['width']*scale));h=max(2,round(image['height']*scale))
-        chain=f'[{next_input}:v]format=rgba,scale={w}:{h}'+(f',colorchannelmixer=aa={image["opacity"]/100}' if image['opacity']<100 else '')
-        if image['rotation']:
-            turn=math.radians(image['rotation']);chain+=f',rotate={turn:.9f}:ow=rotw({turn:.9f}):oh=roth({turn:.9f}):c=none'
-        graph.append(chain+f'[image{n}]')
-        shown=f":enable='between(t,{image['start']},{image['end'] or duration+1})'" if image['start']>0 or image['end']>0 else ''
-        graph.append(f'[{top}][image{n}]overlay=x={round(image["x"]*scale)}+({w}-overlay_w)/2:y={round(image["y"]*scale)}+({h}-overlay_h)/2:format=auto{shown}[imaged{n}]')
-        top=f'imaged{n}';next_input+=1
-    textfilters=[];items=layout(opts)
-    # Caption boxes are rounded PNGs overlaid under their text for the same time window.
-    for item in items:
-        box=item.get('box')
-        if not box:continue
-        name=f'box-{item["key"]}.png';(folder/name).write_bytes(box_png(box['width']*scale,box['height']*scale,box['radius']*scale,box['color'],box['opacity']))
-        args+=['-i',name];shown=f":enable='between(t,{item['start']},{item['end'] or duration+1})'" if item['start']>0 or item['end']>0 else ''
-        graph.append(f'[{top}][{next_input}:v]overlay={round(box["x"]*scale)}:{round(box["y"]*scale)}:format=auto{shown}[boxed{next_input}]')
-        top=f'boxed{next_input}';next_input+=1
-    for item in items:
-        font='../../assets/'+FONTS[item['font']][0]
-        # Text shown only for part of the video: start..end seconds on the output timeline (end 0 = until the end).
-        window=f":enable='between(t,{item['start']},{item['end'] or duration+1})'" if item['start']>0 or item['end']>0 else ''
-        for li,runs in enumerate(item['line_runs']):
-            for wi,run in enumerate(runs):
-                if not run['text'].strip():continue
-                filename=f'{item["key"]}-{li}-{wi}.txt';(folder/filename).write_text(run['text'],encoding='utf-8')
-                textfilters.append(f'drawtext=fontfile={font}:textfile={filename}:expansion=none:fontsize={item["size"]*scale}:fontcolor={item["color"].replace("#","0x")}:x={run["x"]*scale}:y={(item.get("content_y",item["y"])+li*(item["size"]+item["gap"]))*scale}:borderw={round(item["outline"]*scale)}:bordercolor={item["outline_color"].replace("#","0x")}'+window)
-    graph.append(f'[{top}]'+(','.join(textfilters) if textfilters else 'null')+',format=yuv420p[out]')
+    top,next_input,text=design_layers(folder,opts,args,graph,'design',art+1,scale,duration,frame_path,images_dir)
+    graph.append(f'[{top}]'+text+',format=yuv420p[out]')
     labels=[]
     if video['has_audio'] and (not p['active_audio'] or p['audio_mode']=='mix'):
         for i,(a,b,k) in enumerate(pieces):

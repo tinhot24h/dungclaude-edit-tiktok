@@ -49,6 +49,7 @@ PROJECT = re.compile('[a-f0-9]{32}')
 VERSION = (ROOT/'VERSION').read_text(encoding='utf-8').strip()
 RESTART_CODE = 75
 DUB = dubbing.Store(DATA, SETTINGS, DATA, AUDIO, media_engine.encoder_args)
+DUB.frames_dir, DUB.images_dir = FRAMES, IMAGES   # custom frames and logo layers of the design templates
 
 
 def keep_days():
@@ -395,7 +396,7 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == '/':
             return self.respond(200, (ROOT / 'index.html').read_bytes(), 'text/html; charset=utf-8')
-        if path in ('/studio.css','/studio.js','/local_files.js','/ai_ui.js','/audio_ui.js','/editor_ui.js','/timeline_ui.js','/history_ui.js','/workspace_ui.js','/clip_ui.js','/studio_shell.js','/media_bin.js','/image_ui.js','/export_ui.js','/style_ui.js','/update_ui.js','/dub_ui.js','/layout_ui.js','/key_ui.js','/batch_ui.js'):
+        if path in ('/studio.css','/studio.js','/local_files.js','/design_tab.js','/ai_ui.js','/audio_ui.js','/editor_ui.js','/timeline_ui.js','/history_ui.js','/workspace_ui.js','/clip_ui.js','/studio_shell.js','/media_bin.js','/image_ui.js','/export_ui.js','/style_ui.js','/update_ui.js','/dub_ui.js','/layout_ui.js','/key_ui.js','/batch_ui.js'):
             mime = 'text/css' if path.endswith('.css') else 'text/javascript'
             return self.respond(200, (ROOT/path.lstrip('/')).read_bytes(), mime+'; charset=utf-8')
         if path in ('/assets/'+font[0] for font in FONTS.values()):
@@ -436,7 +437,7 @@ class Handler(BaseHTTPRequestHandler):
                                                   for name in ('openai','gemini')}})
         if path == '/health':
             return self.respond(200, {'status': 'ok','version':VERSION})
-        library=re.fullmatch(r'/library/(projects|templates|styles|presets|dubpresets)(?:/([a-f0-9]{32}))?',path)
+        library=re.fullmatch(r'/library/(projects|templates|styles|presets|dubpresets|buildpresets)(?:/([a-f0-9]{32}))?',path)
         if library:
             try:
                 if library[2]:return self.respond(200,library_store.read(DATA/'library',library[1],library[2]))
@@ -773,7 +774,7 @@ class Handler(BaseHTTPRequestHandler):
                     except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
                 finally:temp.unlink(missing_ok=True)
             if path=='/dub/demucs/install':return self.respond(200,dubbing.install_demucs())
-            dub=re.fullmatch(r'/dub/(start|([a-f0-9]{32})/(continue|lines|cancel|delete|editor))',path)
+            dub=re.fullmatch(r'/dub/(start|([a-f0-9]{32})/(continue|lines|texts|cancel|delete|editor))',path)
             if dub:
                 if not 0 <= size <= 4*1024*1024:raise ValueError('Yêu cầu lồng tiếng quá lớn.')
                 raw=json.loads(self.rfile.read(size)) if size else {}
@@ -783,6 +784,7 @@ class Handler(BaseHTTPRequestHandler):
                     key,action=dub[2],dub[3]
                     if action=='continue':return self.respond(200,DUB.proceed(key,raw))
                     if action=='lines':return self.respond(200,DUB.edit_paragraph(key,raw['paragraph']) if 'paragraph' in raw else DUB.edit_lines(key,raw.get('lines')))
+                    if action=='texts':return self.respond(200,DUB.summary(DUB.edit_texts(key,raw)))
                     if action=='cancel':return self.respond(200,DUB.cancel(key))
                     if action=='delete':DUB.delete(key);return self.respond(200,{'jobs':DUB.jobs()})
                     vid=uuid.uuid4().hex;folder=DATA/vid;folder.mkdir()
@@ -815,7 +817,7 @@ class Handler(BaseHTTPRequestHandler):
                     chosen=output_folder.pick(str(Path.home()),title)
                     return self.respond(200,{'folder':chosen,'cancelled':not chosen})
                 if path=='/local/scan':
-                    kinds=dubbing.OVERLAY_TYPES if raw.get('kind')=='overlay' else VIDEO_EXT+('.srt',)
+                    kinds=dubbing.OVERLAY_TYPES if raw.get('kind')=='overlay' else VIDEO_EXT+('.srt',)+AUDIO_EXT
                     return self.respond(200,{'files':scan_folder(raw,kinds)})
                 if path=='/overlays/import-local':
                     src=local_file(raw,dubbing.OVERLAY_TYPES)
@@ -868,7 +870,7 @@ class Handler(BaseHTTPRequestHandler):
                 if isinstance(days,bool) or not isinstance(days,int) or not 1 <= days <= 3650:
                     raise ValueError('Số ngày phải từ 1 đến 3650.')
                 return self.respond(200, cleanup(days))
-            library=re.fullmatch(r'/library/(projects|templates|styles|presets|dubpresets)/(save|([a-f0-9]{32})/delete)',path)
+            library=re.fullmatch(r'/library/(projects|templates|styles|presets|dubpresets|buildpresets)/(save|([a-f0-9]{32})/delete)',path)
             if library:
                 if library[3]:
                     library_store.delete(DATA/'library',library[1],library[3])
