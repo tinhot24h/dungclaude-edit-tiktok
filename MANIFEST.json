@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.21.0",
- "notes": "## Mới trong 0.21.0\n\n- **Kiểm tra trước khi chạy:** bấm Xuất thì hiện bảng tổng số video, tổng thời lượng, chi phí OpenAI ước tính, credit ai33, key và cảnh báo (video thiếu MP3 cùng tên, bật overlay/lớp ảnh mà chưa chọn…). Bấm \"Xuất\" để chạy hoặc \"Quay lại\".\n- **Duyệt chữ AI hàng loạt:** tích \"Dừng lại để duyệt chữ AI trước khi xuất\" ở mục Tiêu đề & nội dung. AI viết xong thì các video dừng lại; bấm \"Mở bảng duyệt chữ\" để sửa tiêu đề/nội dung của mọi video trong một bảng (đếm số từ, ô đỏ là vượt giới hạn), \"↻ AI viết lại\" từng video, rồi \"Xuất tất cả\".\n- **Xem trước video nào cũng được:** bấm vào video trong danh sách để xem trước video đó (không đổi thứ tự). Bấm video đã dựng trong hàng đợi để xem nó với chữ AI của chính nó.\n- **✎ Chỉnh chi tiết:** video đã dựng mở sang tab Timeline với nền, khung, chữ của video đó (kèm giọng đọc) để chỉnh kỹ; quay lại tab Dựng video thì thiết kế của tab vẫn giữ nguyên.\n- **Chạy nhiều video cùng lúc** (1–4) và chọn **bộ mã hóa** (tự động dùng card đồ họa NVIDIA/Intel/AMD nếu có, hoặc CPU) ở mục Xuất.\n- Nút \"Thêm ảnh\" của Lớp ảnh đọc file ngay trên máy (đã như vậy từ 0.19.3, nay có kiểm tra tự động).",
+ "version": "0.21.1",
+ "notes": "## Mới trong 0.21.1\n\n- **Khớp thời lượng \"Tự động\" chia tốc độ cho cả giọng và video**: ví dụ giọng dài hơn 8% thì giọng nhanh ~1.04× và video chậm ~0.96×, thay vì giọng nhanh 1.08×. Giọng ngắn hơn thì giọng chậm tối đa 0.98× và video nhanh tối đa 1.2×. Luôn trong giới hạn đã đặt (giọng 0.98–1.1×, video 0.85–1.2×).\n- Vẫn không khớp: video dài hơn thì cắt bớt video (sau câu cuối ~0.4 giây), giọng dài hơn thì cắt bớt cuối giọng (mờ dần 0.3 giây). Không lặp video hay MP3. Bỏ tick \"cắt video theo giọng\" thì video giữ đủ độ dài, không bị tua nhanh.\n- Áp dụng cho cả tab Dựng video và tab Lồng tiếng (chế độ \"Đoạn văn liền\", mặc định). Chế độ \"Từng câu\" và \"ai33 tự lồng tiếng\" đặt giọng theo mốc thời gian từng câu nên không đổi tốc độ video; giọng quá cuối video vẫn bị cắt.\n- **Giọng giữ nguyên tần số gốc** (44.1/48 kHz) của MP3 cùng tên và của file giọng ai33, ở mọi chế độ, không còn hạ xuống 24 kHz.",
  "files": {
   "design_tab.js": {
    "sha256": "2f2ffba797030b3d4cc25a8f2967dac19872de677b3185788fdd3749a5953ed6",
@@ -32,8 +32,8 @@
    "size": 5181
   },
   "dub_ui.js": {
-   "sha256": "23c4dec342304db8916940287493eaf19d8c4e2ddc4c7e320e7cd7437abff8dd",
-   "size": 101776
+   "sha256": "84131c85475415b4da8758bfb98bab6e0b8176e7aee4c803bed68fa16da25c41",
+   "size": 101948
   },
   "layout_ui.js": {
    "sha256": "31474a69f54710df46c2483f9711e36d487d11437085b2b563f97b1f18ab711e",
@@ -52,12 +52,12 @@
    "size": 2135
   },
   "dubbing.py": {
-   "sha256": "16e006c4e9bac6e0b89fa11a650a9765fdf07c1dc753c9df7abd59506a57fe47",
-   "size": 128805
+   "sha256": "f1ea6bd89cb62d6af996d51f59d28ff5bc533e86e77f89dff0f9f889b1318816",
+   "size": 130796
   },
   "tests/test_dubbing.py": {
-   "sha256": "12809c52dddccd0bf314fa3ce2f4d75109a659ba68bd09fe6bc98884726c64b4",
-   "size": 40152
+   "sha256": "2f259d4bb4712ed3a4daa63fe874f5c54f6f00d2499f15971d3e812593a697d6",
+   "size": 42869
   },
   "image_ui.js": {
    "sha256": "b8e2a905501aedea84033a7c962b180251e06dc018e6133241f0310b474ed8e9",
@@ -168,7 +168,7 @@
    "size": 2609
   },
   "index.html": {
-   "sha256": "5d234e9670681f799145dfd950f63d0b4a324f0224730ec9df47158985e1dd3e",
+   "sha256": "94f229f7054585f09acf59f730f7bab1c18a69b771307e8c13b9610dadff7bf6",
    "size": 33161
   },
   "launch.py": {
@@ -184,15 +184,15 @@
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "ffdcf3bf05b5e7d48b0ce04ab60dcca6e9fbeb83da4d42733ef6c2810dc433bc",
-   "size": 40451
+   "sha256": "b0f09dd61ee2e1f97e32942f82ba87e68e5359aeda9db2a383c23df7ff0a62c0",
+   "size": 40960
   },
   "README.md": {
-   "sha256": "bd7e85b4f848fb9b190456b3c61913f957bd187aa8024d1690f22aae71ea9d6a",
-   "size": 60193
+   "sha256": "42c0dbf7cc542500d32a69efc1c756ab7f5256c0be1e9db749a28fccb1cc9437",
+   "size": 61348
   },
   "VERSION": {
-   "sha256": "363c6aacbb689a2ef691b69674629f647f1afafebc9dc353a86e6b09300b24f6",
+   "sha256": "95d62d94330afb9a34553099a978c01944a14193d92a78462d30c395883a4550",
    "size": 7
   },
   ".gitignore": {

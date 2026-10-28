@@ -1,8 +1,15 @@
-# Review Studio 0.21.0
+# Review Studio 0.21.1
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.21.1
+
+- **Khớp thời lượng "Tự động" chia tốc độ cho cả giọng và video**: ví dụ giọng dài hơn 8% thì giọng nhanh ~1.04× và video chậm ~0.96×, thay vì giọng nhanh 1.08×. Giọng ngắn hơn thì giọng chậm tối đa 0.98× và video nhanh tối đa 1.2×. Luôn trong giới hạn đã đặt (giọng 0.98–1.1×, video 0.85–1.2×).
+- Vẫn không khớp: video dài hơn thì cắt bớt video (sau câu cuối ~0.4 giây), giọng dài hơn thì cắt bớt cuối giọng (mờ dần 0.3 giây). Không lặp video hay MP3. Bỏ tick "cắt video theo giọng" thì video giữ đủ độ dài, không bị tua nhanh.
+- Áp dụng cho cả tab Dựng video và tab Lồng tiếng (chế độ "Đoạn văn liền", mặc định). Chế độ "Từng câu" và "ai33 tự lồng tiếng" đặt giọng theo mốc thời gian từng câu nên không đổi tốc độ video; giọng quá cuối video vẫn bị cắt.
+- **Giọng giữ nguyên tần số gốc** (44.1/48 kHz) của MP3 cùng tên và của file giọng ai33, ở mọi chế độ, không còn hạ xuống 24 kHz.
 
 ## Mới trong 0.21.0
 

@@ -17,6 +17,19 @@ def tone(path,seconds,freq=440):
 
 
 class HelperTests(unittest.TestCase):
+    def test_balance_splits_the_speed_between_voice_and_video(self):
+        lo,hi,fast,slow=.98,1.1,1/1.2,1/.85
+        t,v=dubbing.balance(10.8,10,lo,hi,fast,slow)              # 8% longer voice: ~4% each instead of 8% on one side
+        self.assertAlmostEqual(t,1.0392,places=3);self.assertAlmostEqual(v,1.0392,places=3);self.assertAlmostEqual(10.8/t,10*v,places=6)
+        t,v=dubbing.balance(20,10,lo,hi,fast,slow)                # far too long: both at their limits, the rest is cut
+        self.assertEqual((t,round(v,4)),(1.1,round(slow,4)))
+        t,v=dubbing.balance(7,10,lo,hi,fast,slow)                 # shorter voice: 0.98× and the video 1.2× faster
+        self.assertEqual((t,round(v,4)),(.98,round(fast,4)))
+        t,v=dubbing.balance(9.6,10,lo,hi,fast,slow)               # voice can only slow 2%: the video takes the rest
+        self.assertEqual(t,.98);self.assertAlmostEqual(9.6/t,10*v,places=6)
+        self.assertEqual(dubbing.balance(7,10,lo,hi,fast,slow,shorten=False),(1.0,1.0))   # keep the whole video
+        self.assertEqual(dubbing.balance(10.05,10,lo,hi,fast,slow),(1.0,1.0))
+
     def test_srt_round_trip_and_limits(self):
         rows=dubbing.parse_srt('1\r\n00:00:01,000 --> 00:00:02,500\r\n你好\r\n世界\r\n\r\n2\n00:00:03.2 --> 00:00:04,000\n谢谢\n')
         self.assertEqual(rows,[dict(start=1.0,end=2.5,zh='你好 世界'),dict(start=3.2,end=4.0,zh='谢谢')])
@@ -135,9 +148,11 @@ class ParagraphTests(PipelineBase):
             job['review_passed']=True;self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
         self.assertEqual(job['state'],'done',job['message'])
         self.assertEqual(len(sent),1);self.assertNotIn('with_transcript',sent[0]);self.assertEqual(fetched,['https://cdn.example/a.mp3'])
-        self.assertEqual(job['groups'][0]['tempo'],1.0)
+        # 2.6 s voice on a 4 s video: both change a little (voice 0.98×, video 1.2×), the rest of the video is cut
+        self.assertEqual((job['groups'][0]['tempo'],job['video_stretch']),(0.98,0.8333))
+        self.assertAlmostEqual(job['output_duration'],.2*.8333+2.6/.98+.4,delta=.05)
         lines=job['vi_lines'];self.assertEqual([l['vi'] for l in lines],['Xin chào mọi người.','Cảm ơn đã xem nha.'])
-        self.assertAlmostEqual(lines[1]['start'],.2+1.3,delta=.15)
+        self.assertAlmostEqual(lines[1]['start'],.2*.8333+1.3/.98,delta=.15)
         self.assertIn('Xin chào mọi người.',(self.data/'dub'/job['id']/'vi.srt').read_text())
         # editing the paragraph re-voices it (one new task)
         self.store.edit_paragraph(job['id'],'Xin chào.')
@@ -323,7 +338,9 @@ class FrameOverlayTests(PipelineBase):
             self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
         self.assertEqual(job['state'],'done',job['message'])
         self.assertAlmostEqual(job['duration'],3,delta=.1)
-        self.assertAlmostEqual(dubbing.probe(self.data/'dub'/job['id']/'dubbed.mp4')['duration'],3,delta=.15)
+        # the shorter voice speeds the trimmed video up (≤1.2×), then the rest is cut after the last word
+        out=dubbing.probe(self.data/'dub'/job['id']/'dubbed.mp4')['duration']
+        self.assertAlmostEqual(out,job['output_duration'],delta=.15);self.assertLessEqual(out,3.05)
         with self.assertRaises(dubbing.DubError):dubbing.options(dict(trim_start=-1))
 
     def test_overlay_is_optional_and_empty_library_does_not_block(self):
@@ -416,6 +433,19 @@ class DesignTests(PipelineBase):
         self.assertEqual(job['options']['frame_canvas'],'9:16')
         with self.assertRaises(dubbing.DubError):dubbing.options(dict(design=dict(background='bad')))
         with self.assertRaises(dubbing.DubError):dubbing.options(dict(body_min=30,body_max=10))
+
+    def test_same_name_mp3_keeps_its_own_sample_rate(self):
+        mp3=Path(self.tmp.name)/'clip.mp3'
+        subprocess.run(['ffmpeg','-v','error','-y','-f','lavfi','-i','sine=frequency=500:duration=4.0:sample_rate=44100','-c:a','libmp3lame',str(mp3)],check=True)
+        with mock.patch.object(self.store,'enqueue'):
+            key=self.store.create(dict(video_ids=[self.vid],mp3={self.vid:str(mp3)},options=dict(mode='design',background='remove',subtitles='none',design=self.DESIGN,title_source='fixed',body_source='none')))[0]
+        job=self.store.load(key);self.store.process(job,dict(),threading.Event())
+        self.assertEqual(job['state'],'done',job['message'])
+        with wave.open(str(self.data/'dub'/key/'voice.wav')) as w:self.assertEqual(w.getframerate(),44100)
+        self.assertEqual(job['voice_rate'],44100)
+        # 4 s voice on a 4 s video (spoken up to 0.3 s before the end): voice a bit faster AND video a bit slower, both inside the limits
+        g=job['groups'][0];self.assertGreater(g['tempo'],1);self.assertLess(g['tempo'],1.1);self.assertGreater(job['video_stretch'],1)
+        self.assertAlmostEqual(g['tempo'],job['video_stretch'],delta=.03)
 
     def test_review_texts_waits_before_the_export_and_the_review_table_exports(self):
         mp3=Path(self.tmp.name)/'clip.mp3';tone(mp3,3,500)

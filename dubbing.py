@@ -638,7 +638,7 @@ def run(cmd, cancel=None, timeout=7200, cwd=None, name='FFmpeg'):
 
 
 def probe(path):
-    out = subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration:stream=codec_type,codec_name,width,height,channels,pix_fmt',
+    out = subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration:stream=codec_type,codec_name,width,height,channels,pix_fmt,sample_rate',
                           '-of', 'json', str(path)], capture_output=True, text=True, timeout=30)
     data = json.loads(out.stdout or '{}')
     streams = data.get('streams', [])
@@ -647,21 +647,43 @@ def probe(path):
     return dict(duration=float(data.get('format', {}).get('duration', 0) or 0), video=video, audio=audio)
 
 
-def mix_voice(groups, folder, duration):
-    """Write voice.wav (mono 24 kHz) with every fitted clip copied in at its start time."""
-    total = int(math.ceil(duration * VOICE_RATE)) * 2
+def native_rate(path):
+    """Sample rate of an MP3/WAV voice, kept as it is (16–48 kHz) instead of 24 kHz."""
+    try:
+        rate = int(float((probe(path)['audio'] or {}).get('sample_rate') or 0))
+    except (OSError, ValueError, subprocess.SubprocessError):
+        rate = 0
+    return min(48000, rate) if rate >= 16000 else VOICE_RATE
+
+
+def balance(voice, room, lo, hi, fast, slow, shorten=True):
+    """Voice tempo and video stretch so that voice / tempo == room * stretch, the gap split between both
+    (equal steps, so neither changes much); each stays in its limits and whatever is left is cut later.
+    shorten=False keeps the whole video when the voice is the shorter one."""
+    ratio = voice / room
+    if abs(ratio - 1) < .01 or (ratio < 1 and not shorten):
+        return 1.0, 1.0
+    tempo = min(hi, max(lo, math.sqrt(ratio)))
+    stretch = min(slow, max(fast, ratio / tempo))
+    tempo = min(hi, max(lo, ratio / stretch))   # the video reached its limit: the voice takes what is left
+    return tempo, stretch
+
+
+def mix_voice(groups, folder, duration, rate=VOICE_RATE):
+    """Write voice.wav (mono, 24 kHz or the MP3's own rate) with every fitted clip copied in at its start time."""
+    total = int(math.ceil(duration * rate)) * 2
     buffer = bytearray(total)
     for g in groups:
         if not g.get('raw'):
             continue
         data = (folder / g['raw']).read_bytes()
-        at = int(g.get('place', g['start']) * VOICE_RATE) * 2
+        at = int(g.get('place', g['start']) * rate) * 2
         data = data[:max(0, total - at)]
         buffer[at:at + len(data)] = data
     with wave.open(str(folder / 'voice.wav'), 'wb') as out:
         out.setnchannels(1)
         out.setsampwidth(2)
-        out.setframerate(VOICE_RATE)
+        out.setframerate(rate)
         out.writeframes(bytes(buffer))
     return folder / 'voice.wav'
 
@@ -1371,8 +1393,8 @@ class Store:
             g = job['groups'][0]
             g.update(tempo=1.0, place=0, overflow=round(max(0.0, g['clip_seconds'] - job['duration']), 2), raw=g['file'].replace('.wav', '.pcm'))
             run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(folder / g['file']), '-t', f"{job['duration']:.3f}",
-                 '-ac', '1', '-ar', str(VOICE_RATE), '-f', 's16le', str(folder / g['raw'])], cancel)
-            mix_voice(job['groups'], folder, job['duration'])
+                 '-ac', '1', '-ar', str(job.get('voice_rate', VOICE_RATE)), '-f', 's16le', str(folder / g['raw'])], cancel)
+            mix_voice(job['groups'], folder, job['duration'], job.get('voice_rate', VOICE_RATE))
             self.finish(job, 'mix')
         if job.pop('texts_redo', False) and ai_texts_wanted(settings):
             if keys.get('openai'):
@@ -1403,8 +1425,8 @@ class Store:
                 slot = g['clip_seconds'] / g['tempo'] - g['overflow']
                 fade = f",afade=t=out:st={max(0, slot - .25):.3f}:d=0.25,atrim=duration={slot:.3f}" if g['overflow'] > .05 else ''
                 run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(folder / g['file']), '-af', tempo_filter(g['tempo']) + fade,
-                     '-ac', '1', '-ar', str(VOICE_RATE), '-f', 's16le', str(folder / g['raw'])], cancel)
-            mix_voice(job['groups'], folder, job['duration'])
+                     '-ac', '1', '-ar', str(job.get('voice_rate', VOICE_RATE)), '-f', 's16le', str(folder / g['raw'])], cancel)
+            mix_voice(job['groups'], folder, job['duration'], job.get('voice_rate', VOICE_RATE))
             self.finish(job, 'mix')
         check()
 
@@ -1512,8 +1534,9 @@ class Store:
                 if detail['status'] == 'done' and detail['audio_url']:
                     download = folder / f'g{groups.index(g)}.download'
                     audio_files.download(detail['audio_url'], download)
+                    rate = self.voice_rate(job, download)
                     g['file'] = f'g{groups.index(g)}.wav'
-                    run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(download), '-ac', '1', '-ar', str(VOICE_RATE), str(folder / g['file'])], cancel)
+                    run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(download), '-ac', '1', '-ar', str(rate), str(folder / g['file'])], cancel)
                     download.unlink(missing_ok=True)
                     with wave.open(str(folder / g['file'])) as w:
                         g['clip_seconds'] = round(w.getnframes() / w.getframerate(), 3)
@@ -1564,12 +1587,21 @@ class Store:
                 shutil.copyfile(Path(__file__).resolve().parent / 'assets' / name, folder / name)
         return opts
 
+    def voice_rate(self, job, path):
+        """Keep the MP3's own sample rate. One-file modes take it from that file; per-line voices all share the
+        rate of the first one (lines an older version already made at 24 kHz keep 24 kHz)."""
+        if job['options']['mode'] in ('paragraph', 'design', 'ai33'):
+            job['voice_rate'] = native_rate(path)
+        elif 'voice_rate' not in job:
+            job['voice_rate'] = VOICE_RATE if any(g.get('file') for g in job.get('groups') or []) else native_rate(path)
+        return job['voice_rate']
+
     def voice_mp3(self, job, folder, cancel):
         """Dựng video: the video's own MP3 (same name) becomes the voice track; none = original sound only."""
         job['groups'] = []
         if not job.get('mp3') or not (folder / job['mp3']).is_file():
             return
-        run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(folder / job['mp3']), '-ac', '1', '-ar', str(VOICE_RATE), str(folder / 'g0.wav')], cancel)
+        run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(folder / job['mp3']), '-ac', '1', '-ar', str(self.voice_rate(job, folder / job['mp3'])), str(folder / 'g0.wav')], cancel)
         with wave.open(str(folder / 'g0.wav')) as w:
             seconds = round(w.getnframes() / w.getframerate(), 3)
         job['groups'] = [dict(start=0.0, end=job['duration'], text='', lines=[], file='g0.wav', clip_seconds=seconds)]
@@ -1618,7 +1650,7 @@ class Store:
                     raise DubError('ai33.pro chưa trả giọng sau 15 phút. Bấm Tiếp tục để kiểm tra lại (không tạo trùng).')
             download = folder / 'master.download'
             audio_files.download(detail['audio_url'], download)
-            run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(download), '-ac', '1', '-ar', str(VOICE_RATE), str(folder / 'master.wav')], cancel)
+            run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(download), '-ac', '1', '-ar', str(self.voice_rate(job, download)), str(folder / 'master.wav')], cancel)
             download.unlink(missing_ok=True)
             master['file'] = 'master.wav'
             self.save(job)
@@ -1630,7 +1662,7 @@ class Store:
         for n, (g, (a, b)) in enumerate(zip(groups, pieces)):
             g['file'] = f'g{n}.wav'
             run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(folder / master['file']), '-ss', f'{a:.3f}', '-t', f'{max(.05, b - a):.3f}',
-                 '-ac', '1', '-ar', str(VOICE_RATE), str(folder / g['file'])], cancel)
+                 '-ac', '1', '-ar', str(job.get('voice_rate', VOICE_RATE)), str(folder / g['file'])], cancel)
             with wave.open(str(folder / g['file'])) as w:
                 g['clip_seconds'] = round(w.getnframes() / w.getframerate(), 3)
         self.save(job)
@@ -1687,7 +1719,7 @@ class Store:
         download = folder / 'g0.download'
         audio_files.download(url, download)
         g['file'] = 'g0.wav'
-        run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(download), '-ac', '1', '-ar', str(VOICE_RATE), str(folder / g['file'])], cancel)
+        run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(download), '-ac', '1', '-ar', str(self.voice_rate(job, download)), str(folder / g['file'])], cancel)
         download.unlink(missing_ok=True)
         with wave.open(str(folder / g['file'])) as w:
             g['clip_seconds'] = round(w.getnframes() / w.getframerate(), 3)
@@ -1742,7 +1774,7 @@ class Store:
             raise DubError('Tác vụ chưa có lời thoại để căn giọng.')
         folder = self.path(key)
         try:
-            run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(upload), '-map', '0:a:0', '-vn', '-ac', '1', '-ar', str(VOICE_RATE), str(folder / 'g0.wav')])
+            run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(upload), '-map', '0:a:0', '-vn', '-ac', '1', '-ar', str(self.voice_rate(job, upload)), str(folder / 'g0.wav')])
         except DubError:
             raise DubError('Không đọc được file âm thanh. Dùng MP3/WAV/M4A hợp lệ.') from None
         with wave.open(str(folder / 'g0.wav')) as w:
@@ -1814,15 +1846,18 @@ class Store:
         lo, hi = settings['min_tempo'], settings['max_tempo']
         # video speed v plays the source v× faster, so the output is 1/v as long (stretch)
         slow, fast = 1 / settings['video_speed_min'], 1 / settings['video_speed_max']
-        if settings['align'] in ('voice', 'auto'):
-            # MP3 follows the video within lo–hi ('auto' only speeds up when the voice is too long)
-            tempo = min(max(need, lo if settings['align'] == 'voice' else 1.0), hi)
-        if settings['align'] in ('video', 'auto'):
-            # video follows the MP3 within its speed range ('auto': only slowed down for what the voice still lacks)
+        if settings['align'] == 'auto':
+            # both change a little instead of one a lot (the voice ends ~0.3 s before the video)
+            tempo, stretch = balance(g['clip_seconds'], max(.5, job['duration'] - start - .3), lo, hi, fast, slow, settings['end_with_voice'])
+        if settings['align'] == 'voice':
+            # MP3 follows the video within lo–hi
+            tempo = min(max(need, lo), hi)
+        if settings['align'] == 'video':
+            # video follows the MP3 within its speed range
             want = (g['clip_seconds'] / tempo + .3) / max(.5, job['duration'] - start)
-            stretch = max(fast, min(slow, want)) if settings['align'] == 'video' else min(slow, max(1.0, want))
-            if abs(stretch - 1) < .01:
-                stretch = 1.0
+            stretch = max(fast, min(slow, want))
+        if abs(stretch - 1) < .01:
+            stretch = 1.0
         # whatever still does not fit is cut at the end of the video (with a short fade)
         overflow = max(0.0, g['clip_seconds'] / tempo - (max(.5, job['duration'] - start) * stretch - .05))
         job['video_stretch'] = round(stretch, 4)
@@ -1842,9 +1877,10 @@ class Store:
             job['warnings'].append(f'Video được {"làm chậm" if stretch > 1 else "tua nhanh"} cho khớp giọng đọc: dài {job["output_duration"]:.1f}s (gốc {job["duration"]:.1f}s).')
         length = g['clip_seconds'] / tempo - overflow
         fade = f",afade=t=out:st={max(0, length - .3):.3f}:d=0.3,atrim=duration={length:.3f}" if overflow > .05 else ''
+        rate = job.get('voice_rate', VOICE_RATE)
         run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(folder / g['file']), '-af', tempo_filter(tempo) + fade,
-             '-ac', '1', '-ar', str(VOICE_RATE), '-f', 's16le', str(folder / g['raw'])], cancel)
-        mix_voice(job['groups'], folder, job['output_duration'])
+             '-ac', '1', '-ar', str(rate), '-f', 's16le', str(folder / g['raw'])], cancel)
+        mix_voice(job['groups'], folder, job['output_duration'], rate)
         # subtitles follow the voice: sentences are spread by length, then each change snaps to the nearest pause in the audio
         pauses = [t / tempo for t in silences(folder / g['file'])]
         job['vi_lines'] = [l for l in sentence_lines(job.get('paragraph') or '', place, length, pauses) if l['start'] < job['output_duration']]

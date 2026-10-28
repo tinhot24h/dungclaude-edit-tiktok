@@ -220,6 +220,12 @@ giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh g�
 cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
 Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
 
+NÂNG CẤP 0.21.1
+- Khớp thời lượng "Tự động": giọng và video cùng đổi tốc độ một chút (trong giới hạn giọng 0.98–1.1×, video 0.85–1.2×).
+  Vẫn không khớp: video dài hơn thì cắt bớt video; giọng dài hơn thì cắt bớt cuối giọng. Không lặp video/MP3.
+  Áp dụng cho cả tab Dựng video và tab Lồng tiếng (chế độ Đoạn văn liền).
+- Giọng (MP3 cùng tên, giọng ai33) giữ nguyên tần số gốc 44.1/48 kHz, rõ hơn.
+
 NÂNG CẤP 0.21.0
 - Bấm Xuất: hiện bảng "Kiểm tra trước khi chạy" (thời lượng, chi phí ước tính, key, cảnh báo). Bấm Xuất để chạy.
 - Duyệt chữ AI: mục "Tiêu đề & nội dung", tích "Dừng lại để duyệt chữ AI trước khi xuất".
