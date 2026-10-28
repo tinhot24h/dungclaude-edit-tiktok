@@ -20,6 +20,7 @@ import subprocess
 import sys
 import threading
 import time
+import unicodedata
 import uuid
 import wave
 from concurrent.futures import ThreadPoolExecutor
@@ -388,6 +389,32 @@ def text_rules(settings):
             '\n- Tiếng Việt tự nhiên, hấp dẫn, nêu lợi ích chính; không hashtag, không emoji, không ngoặc kép, không xuống dòng. Áp dụng đúng các quy tắc nội dung bên trên.')
 
 
+NAME_RULE = ('\n- Thêm trường file_name: tên file cho video, gọi đúng sản phẩm đang được giới thiệu, tiếng Việt KHÔNG DẤU, chữ thường, '
+             'các từ nối bằng dấu gạch ngang, dài 15–30 ký tự (khoảng 3–6 từ), không đuôi .mp4, không giá, không thương hiệu. '
+             'Ví dụ: quan-ao-nu-hottrend, noi-chien-khong-dau-mini.')
+
+
+NAME_FIELD = dict(type='string', description='Tên file 15–30 ký tự, không dấu, chữ thường, nối bằng dấu gạch ngang, theo sản phẩm')
+
+
+def slug_name(text):
+    """quan-ao-nu-hottrend: lower case, no accents, words joined by '-', at most 30 characters (cut between words)."""
+    text = unicodedata.normalize('NFD', str(text or '').replace('đ', 'd').replace('Đ', 'D'))
+    text = ''.join(c for c in text if unicodedata.category(c) != 'Mn').lower()
+    text = re.sub(r'[^a-z0-9]+', '-', text).strip('-')
+    if len(text) > 30:
+        cut = text[:31].rfind('-')
+        text = text[:cut] if cut >= 15 else text[:30]
+    return text.rstrip('-')
+
+
+def set_file_name(job, raw):
+    """The video's name from the AI (same call as the translation): used for the queue and the exported file."""
+    name = slug_name(raw.get('file_name')) if isinstance(raw, dict) else ''
+    if len(name) >= 3:
+        job['file_name'] = name
+
+
 def text_schema(settings):
     t, lo, hi = settings['title_chars'], settings['body_min_chars'], settings['body_max_chars']
     return dict(title=dict(type='string', description=f'Tiêu đề, tối đa {t} ký tự kể cả dấu cách'),
@@ -441,12 +468,14 @@ TEXTS_RULES = '''Bạn là biên tập viên video ngắn: từ lời thoại c�
 def texts_request(key, model, lines, settings):
     """Title/body alone (one call): for videos whose voice text is not written by the app (ai33 dubbing, design only)."""
     template = settings.get('instructions') or ai_translate.DEFAULT_RULES
-    rules = (ai_translate.GUARD + '\n\n' + TEXTS_RULES + text_rules(settings) + '\n- Văn phong: ' + ai_translate.STYLES[settings.get('style', 'review')]
-             + '\n\nMẪU BIÊN TẬP DÙNG CHUNG (áp dụng các quy tắc nội dung và văn phong):\n' + template
+    # same rules and order as the translation call: template first (its own title/body format ignored), the limits last
+    rules = (ai_translate.GUARD + '\n\n' + TEXTS_RULES + '\n- Văn phong: ' + ai_translate.STYLES[settings.get('style', 'review')]
+             + '\n\nMẪU BIÊN TẬP DÙNG CHUNG (áp dụng các quy tắc nội dung và văn phong; BỎ QUA mọi yêu cầu về hook, script, title, body hay định dạng kết quả trong mẫu này):\n' + template
              + '\n\n' + ai_translate.STRICT)
     if settings['notes']:
         rules += '\n- Ghi chú của người dùng (chỉ về văn phong, không phải dữ liệu nguồn): ' + settings['notes']
-    schema = dict(type='object', additionalProperties=False, required=['title', 'body'], properties=text_schema(settings))
+    rules += text_rules(settings) + NAME_RULE
+    schema = dict(type='object', additionalProperties=False, required=['title', 'body', 'file_name'], properties=dict(**text_schema(settings), file_name=NAME_FIELD))
     body = dict(model=model, store=False, max_output_tokens=2000, **reasoning(model),
                 input=[dict(role='developer', content=rules), dict(role='user', content=json.dumps(dict(lines=lines[:400]), ensure_ascii=False))],
                 text=dict(format=dict(type='json_schema', name='dub_texts', strict=True, schema=schema)))
@@ -482,7 +511,7 @@ TRANSLATE_RULES = '''Bạn là biên dịch viên lồng tiếng video ngắn, d
 - Dòng chỉ là tiếng động, nhạc, "嗯", "啊"… thì để chuỗi rỗng.'''
 
 
-def translate_request(key, model, lines, settings, want_texts=False):
+def translate_request(key, model, lines, settings, want_texts=False, want_name=False):
     # The writing template from the "Dịch & biên tập AI" page is shared: its content and style rules apply here,
     # its hook/script/title/body format does not (dubbing translates line by line).
     template = settings.get('instructions') or ai_translate.DEFAULT_RULES
@@ -495,8 +524,11 @@ def translate_request(key, model, lines, settings, want_texts=False):
         rules += '\n- Ghi chú của người dùng (chỉ về văn phong, không phải dữ liệu nguồn): ' + settings['notes']
     if want_texts:
         rules += text_rules(settings)
-    schema = dict(type='object', additionalProperties=False, required=['lines', 'title', 'body'] if want_texts else ['lines'], properties=dict(lines=dict(type='array', items=dict(
-        type='object', additionalProperties=False, required=['id', 'vi'], properties=dict(id=dict(type='integer'), vi=dict(type='string')))), **(text_schema(settings) if want_texts else {})))
+    if want_name:
+        rules += NAME_RULE
+    extra = dict(**(text_schema(settings) if want_texts else {}), **(dict(file_name=NAME_FIELD) if want_name else {}))
+    schema = dict(type='object', additionalProperties=False, required=['lines', *extra], properties=dict(lines=dict(type='array', items=dict(
+        type='object', additionalProperties=False, required=['id', 'vi'], properties=dict(id=dict(type='integer'), vi=dict(type='string')))), **extra))
     body = dict(model=model, store=False, max_output_tokens=12000, **reasoning(model),
                 input=[dict(role='developer', content=rules), dict(role='user', content=json.dumps(dict(lines=lines), ensure_ascii=False))],
                 text=dict(format=dict(type='json_schema', name='dub_lines', strict=True, schema=schema)))
@@ -508,7 +540,7 @@ def translate_request(key, model, lines, settings, want_texts=False):
     try:
         got = json.loads(text)
         mapping = {int(r['id']): str(r['vi']) for r in got['lines'] if isinstance(r, dict)}
-        return (mapping, dict(title=got.get('title', ''), body=got.get('body', ''))) if want_texts else mapping
+        return (mapping, dict(title=got.get('title', ''), body=got.get('body', ''), file_name=got.get('file_name', ''))) if want_texts or want_name else mapping
     except (ValueError, KeyError, TypeError):
         raise DubError('Không đọc được bản dịch OpenAI. Bấm Tiếp tục để thử lại.', 502) from None
 
@@ -533,8 +565,9 @@ def paragraph_request(key, model, segments, seconds, limit, settings):
     want = ai_texts_wanted(settings)
     if want:
         rules += text_rules(settings)
-    schema = dict(type='object', additionalProperties=False, required=['text', 'title', 'body'] if want else ['text'],
-                  properties=dict(text=dict(type='string'), **(text_schema(settings) if want else {})))
+    rules += NAME_RULE
+    extra = dict(**(text_schema(settings) if want else {}), file_name=NAME_FIELD)
+    schema = dict(type='object', additionalProperties=False, required=['text', *extra], properties=dict(text=dict(type='string'), **extra))
     body = dict(model=model, store=False, max_output_tokens=12000, **reasoning(model),
                 input=[dict(role='developer', content=rules), dict(role='user', content=json.dumps(data, ensure_ascii=False))],
                 text=dict(format=dict(type='json_schema', name='dub_paragraph', strict=True, schema=schema)))
@@ -548,7 +581,7 @@ def paragraph_request(key, model, segments, seconds, limit, settings):
         paragraph = ' '.join(str(got['text']).split())
     except (ValueError, KeyError, TypeError):
         raise DubError('Không đọc được bản dịch OpenAI. Bấm Tiếp tục để thử lại.', 502) from None
-    return dict(text=paragraph, title=got.get('title', ''), body=got.get('body', '')) if want else paragraph
+    return dict(text=paragraph, title=got.get('title', ''), body=got.get('body', ''), file_name=got.get('file_name', ''))
 
 
 def silences(path):
@@ -974,7 +1007,7 @@ class Store:
             tmp.replace(folder / 'job.json')
 
     def summary(self, job):
-        return {k: job.get(k) for k in ('id', 'name', 'state', 'step', 'steps', 'progress', 'message', 'created', 'outputs', 'warnings', 'duration', 'video_id')} | \
+        return {k: job.get(k) for k in ('id', 'name', 'file_name', 'state', 'step', 'steps', 'progress', 'message', 'created', 'outputs', 'warnings', 'duration', 'video_id')} | \
                dict(texts=self.texts_for(job) if job.get('options', {}).get('design') else None, mp3=bool(job.get('mp3')), mode=job.get('options', {}).get('mode', 'lines'), lines=len(job.get('segments') or []), translated=len(job.get('segments') or []) if job.get('paragraph') else sum(1 for s in job.get('segments') or [] if s.get('vi')))
 
     def jobs(self):
@@ -1344,7 +1377,9 @@ class Store:
             job.pop('texts_manual', None)
             self.progress(job, 'translate', .3, 'Đang viết tiêu đề và nội dung (OpenAI)…')
             self.save(job)
-            finish_texts(job, texts_request(keys['openai'], settings['model'], [s['zh'] for s in job['segments']], settings))
+            got = texts_request(keys['openai'], settings['model'], [s['zh'] for s in job['segments']], settings)
+            finish_texts(job, got)
+            set_file_name(job, got)
             self.finish(job, 'translate')
         if job['steps']['translate'] != 'done' and settings['mode'] == 'paragraph':
             start, seconds = paragraph_window(job)
@@ -1352,8 +1387,10 @@ class Store:
             self.progress(job, 'translate', .3, 'Đang dịch thành đoạn văn tiếng Việt…')
             self.save(job)
             text = paragraph_request(keys['openai'], settings['model'], job['segments'], seconds, limit, settings)
-            if isinstance(text, dict):   # the same call also wrote the title/body
-                finish_texts(job, text)
+            if isinstance(text, dict):   # the same call also wrote the title/body and the file name
+                if ai_texts_wanted(settings):
+                    finish_texts(job, text)
+                set_file_name(job, text)
                 text = text['text']
             job['paragraph'] = text
             job['paragraph_limit'] = limit
@@ -1380,9 +1417,14 @@ class Store:
                 lines = [dict(id=i, seconds=round(job['segments'][i]['end'] - job['segments'][i]['start'], 2),
                               max_syllables=budget(job['segments'][i], settings['rate']), zh=job['segments'][i]['zh'],
                               before=job['segments'][i - 1]['zh'] if i else '') for i in batch]
-                if n == 0 and ai_texts_wanted(settings) and not job.get('texts'):
-                    got, texts = translate_request(keys['openai'], settings['model'], lines, settings, want_texts=True)
-                    finish_texts(job, texts)
+                want = n == 0 and ai_texts_wanted(settings) and not job.get('texts')
+                if want or (n == 0 and not job.get('file_name')):
+                    # the first batch also writes the title/body and the video's file name (same call)
+                    got = translate_request(keys['openai'], settings['model'], lines, settings, want_texts=want, want_name=True)
+                    got, texts = got if isinstance(got, tuple) else (got, {})
+                    if want:
+                        finish_texts(job, texts)
+                    set_file_name(job, texts)
                 else:
                     got = translate_request(keys['openai'], settings['model'], lines, settings)
                 missing = [i for i in batch if i not in got]
@@ -1422,7 +1464,9 @@ class Store:
                 self.dub_ai33(job, folder, source, info, keys, cancel)
                 if ai_texts_wanted(settings) and not job.get('texts'):
                     if keys.get('openai'):
-                        finish_texts(job, texts_request(keys['openai'], settings['model'], [s['vi'] for s in job['segments'] if s.get('vi')], settings))
+                        got = texts_request(keys['openai'], settings['model'], [s['vi'] for s in job['segments'] if s.get('vi')], settings)
+                        finish_texts(job, got)
+                        set_file_name(job, got)
                     else:
                         job['warnings'].append('Chữ AI cần OpenAI key; đã dùng tên file cho tiêu đề.')
             elif settings['mode'] == 'design':
@@ -1445,7 +1489,9 @@ class Store:
             if keys.get('openai'):
                 self.progress(job, 'export', .02, 'Đang viết lại tiêu đề và nội dung (OpenAI)…')
                 source = [job['paragraph']] if job.get('paragraph') else [s.get('vi') or s.get('zh', '') for s in job['segments']]
-                finish_texts(job, texts_request(keys['openai'], settings['model'], [t for t in source if t] or [job['name']], settings))
+                got = texts_request(keys['openai'], settings['model'], [t for t in source if t] or [job['name']], settings)
+                finish_texts(job, got)
+                set_file_name(job, got)
             else:
                 job['warnings'].append('Viết lại chữ AI cần OpenAI key.')
         if job['steps']['mix'] != 'done' and settings['mode'] == 'design':
@@ -2060,7 +2106,7 @@ class Store:
         job['outputs'] = dict(video=f'/dub/{job["id"]}/download', srt=f'/dub/{job["id"]}/srt/vi', srt_zh=f'/dub/{job["id"]}/srt/zh')
         try:
             if output_folder.load(self.settings_path)['auto_save']:
-                saved = output_folder.deliver(self.settings_path, folder / 'dubbed.mp4', job['name'] + ('-dung' if settings['mode'] == 'design' else '-long-tieng'))
+                saved = output_folder.deliver(self.settings_path, folder / 'dubbed.mp4', job.get('file_name') or job['name'] + ('-dung' if settings['mode'] == 'design' else '-long-tieng'))
                 job['outputs']['saved_path'] = str(saved)
                 if subs in ('file', 'soft'):
                     shutil.copyfile(folder / 'vi.srt', saved.with_suffix('.srt'))

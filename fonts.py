@@ -76,26 +76,37 @@ def metrics(font):
     return widths, u16(hmtx)/units
 
 
+@lru_cache(maxsize=64)
+def vertical(font):
+    """(ascender, descender) of the font's hhea table, in em: where the browser puts the baseline in a line box."""
+    raw = (ROOT / 'assets' / FONTS[font][0]).read_bytes()
+    u16 = lambda p: struct.unpack_from('>H', raw, p)[0]
+    s16 = lambda p: struct.unpack_from('>h', raw, p)[0]
+    tables = {struct.unpack_from('>4s', raw, 12+16*i)[0]: struct.unpack_from('>I', raw, 12+16*i+8)[0] for i in range(u16(4))}
+    units = u16(tables[b'head']+18)
+    return s16(tables[b'hhea']+4)/units, abs(s16(tables[b'hhea']+6))/units
+
+
 def width(text, font, size):
     advances, missing = metrics(font)
     return sum(advances.get(ord(c), missing) for c in text)*size
 
 
-def wrap(text, font, size, max_width, spacing=0):
-    """Lines that fit max_width; spacing = extra width added at every space between words."""
+def wrap(text, font, size, max_width, spacing=0, letter=0):
+    """Lines that fit max_width; spacing = extra width at every space between words, letter = between all letters."""
     result = []
     for paragraph in text.split('\n'):
         line = ''
         for word in paragraph.split():
             candidate = (line+' '+word).strip()
-            if width(candidate,font,size)+spacing*candidate.count(' ')<=max_width:
+            if width(candidate,font,size)+spacing*candidate.count(' ')+letter*max(0,len(candidate)-1)<=max_width:
                 line = candidate
                 continue
             if line:
                 result.append(line)
                 line = ''
             for character in word:
-                if line and width(line+character,font,size)>max_width:
+                if line and width(line+character,font,size)+letter*len(line)>max_width:
                     result.append(line)
                     line = ''
                 line += character

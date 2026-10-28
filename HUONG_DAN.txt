@@ -220,6 +220,16 @@ giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh g�
 cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
 Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
 
+NÂNG CẤP 0.22.3
+- Mục Tiêu đề / Nội dung có bảng kiểu CapCut: phông chữ, cỡ chữ, B đậm, TT/tt/Tt, màu, độ mờ, khoảng cách ký tự/từ/dòng,
+  căn chỉnh; Biến đổi: vị trí X/Y, rộng/cao, 6 nút căn khung, ↺ về mặc định.
+- Bấm "💾 Lưu mẫu" là lưu hết mọi thông số (bỏ ô "Kiểu chữ của tôi").
+- Cột giữa là khung xem trước, hàng đợi ở ngoài cùng bên phải.
+- Video xuất được đặt tên theo sản phẩm (AI đặt cùng lần dịch, 15–30 ký tự), ví dụ quan-ao-nu-hottrend.mp4.
+  Trùng tên thì tự thêm -2, -3… không ghi đè.
+- Trên khung xem trước: bấm tiêu đề/nội dung để chọn, kéo để di chuyển, kéo ô vuông cạnh trái/phải để đổi độ rộng.
+- Sửa lỗi bấm phát mà video xem trước đứng hình.
+
 NÂNG CẤP 0.22.2
 - AI viết tiêu đề/nội dung đúng giới hạn ký tự hơn (prompt ghi rõ giới hạn, số từ, yêu cầu tự đếm).
   Dài quá thì nội dung cắt ở cuối câu, tiêu đề không bị cụt ở từ nối.

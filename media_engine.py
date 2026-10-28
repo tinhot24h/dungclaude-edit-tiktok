@@ -5,7 +5,7 @@ import math
 import subprocess
 from pathlib import Path
 from design import artwork,layout,frame_box,video_box,box_png
-from fonts import FONTS
+from fonts import FONTS,vertical
 
 MAX_SECONDS=1800  # longest source video and export, shared with app.probe
 MAX_PIECES=60
@@ -193,7 +193,7 @@ def design_layers(folder,opts,args,graph,top,next_input,scale,duration,frame_pat
     for item in items:
         box=item.get('box')
         if not box:continue
-        name=f'box-{item["key"]}.png';(folder/name).write_bytes(box_png(box['width']*scale,box['height']*scale,box['radius']*scale,box['color'],box['opacity']))
+        name=f'box-{item["key"]}.png';(folder/name).write_bytes(box_png(box['width']*scale,box['height']*scale,box['radius']*scale,box['color'],box['opacity']*item.get('opacity',100)/100))
         args+=['-i',name];shown=f":enable='between(t,{item['start']},{item['end'] or duration+1})'" if item['start']>0 or item['end']>0 else ''
         graph.append(f'[{top}][{next_input}:v]overlay={round(box["x"]*scale)}:{round(box["y"]*scale)}:format=auto{shown}[boxed{next_input}]')
         top=f'boxed{next_input}';next_input+=1
@@ -201,11 +201,16 @@ def design_layers(folder,opts,args,graph,top,next_input,scale,duration,frame_pat
         font=font_dir+FONTS[item['font']][0]
         # Text shown only for part of the video: start..end seconds on the output timeline (end 0 = until the end).
         window=f":enable='between(t,{item['start']},{item['end'] or duration+1})'" if item['start']>0 or item['end']>0 else ''
+        alpha='' if item.get('opacity',100)>=100 else f"@{item['opacity']/100:.3f}"   # "Độ mờ" of the caption
+        # every piece of a line (whole line, word or letter) sits on the same baseline, placed like the browser does in
+        # the preview: half the leading above, then the font's ascender (not the tallest letter of that piece)
+        asc,desc=vertical(item['font']);line=item['size']+item['gap']
+        baseline=lambda li:(item.get('content_y',item['y'])+li*line+(line-(asc+desc)*item['size'])/2+asc*item['size'])*scale
         for li,runs in enumerate(item['line_runs']):
             for wi,run in enumerate(runs):
                 if not run['text'].strip():continue
                 filename=f'{item["key"]}-{li}-{wi}.txt';(folder/filename).write_text(run['text'],encoding='utf-8')
-                textfilters.append(f'drawtext=fontfile={font}:textfile={filename}:expansion=none:fontsize={item["size"]*scale}:fontcolor={item["color"].replace("#","0x")}:x={run["x"]*scale}:y={(item.get("content_y",item["y"])+li*(item["size"]+item["gap"]))*scale}:borderw={round(item["outline"]*scale)}:bordercolor={item["outline_color"].replace("#","0x")}'+window)
+                textfilters.append(f'drawtext=fontfile={font}:textfile={filename}:expansion=none:fontsize={item["size"]*scale}:fontcolor={item["color"].replace("#","0x")}{alpha}:x={run["x"]*scale}:y={baseline(li):.2f}-max_glyph_a:borderw={round(item["outline"]*scale)}:bordercolor={item["outline_color"].replace("#","0x")}{alpha}'+window)
     return top,next_input,(','.join(textfilters) if textfilters else 'null')
 
 

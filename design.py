@@ -55,7 +55,7 @@ def settings(raw):
         extra=index-2
         spec.update({name+'_size':(30 if name=='title' else 22 if name=='body' else 28,12,144),
                      name+'_x':(50,0,100),name+'_y':(64 if name=='title' else 73 if name=='body' else 25+5*extra,0,98),
-                     name+'_width':(76,20,100),name+'_height':(0,0,1280),name+'_outline':(1 if extra<0 else 2,0,5),name+'_gap':(4,0,24),name+'_word':(0,0,60),
+                     name+'_width':(76,20,100),name+'_height':(0,0,1280),name+'_outline':(1 if extra<0 else 2,0,5),name+'_gap':(4,0,24),name+'_word':(0,0,60),name+'_letter':(0,0,40),name+'_opacity':(100,0,100),
                      name+'_start':(0,0,1800),name+'_end':(0,0,1800),
                      name+'_box_opacity':(70,0,100),name+'_box_pad':(14,0,60),name+'_box_radius':(12,0,60)})
         if px:
@@ -66,6 +66,8 @@ def settings(raw):
         if out[name+'_box'] not in ('none','solid'):raise ValueError('Kiểu nền chữ không hợp lệ.')
         out.setdefault(name+'_align','center')
         out.setdefault(name+'_valign','top')
+        out.setdefault(name+'_case','none')
+        if out[name+'_case'] not in CASES:raise ValueError('Kiểu chữ hoa/thường không hợp lệ.')
         if out[name+'_valign'] not in ('top','middle','bottom'):raise ValueError('Căn dọc không hợp lệ.')
         if out[name+'_font'] not in FONTS or out[name+'_align'] not in ('left','center','right','justify'):
             raise ValueError('Font hoặc căn chữ không hợp lệ.')
@@ -128,18 +130,32 @@ def frame_box(opts):
     return dict(x=x,y=y,width=w,height=h)
 
 
+CASES=('none','upper','lower','title')
+
+
+def letter_case(text,case):
+    """Chữ hoa / chữ thường / Viết Hoa Đầu Từ, like CapCut (the text typed or written by the AI is kept as it is)."""
+    if case=='upper':return text.upper()
+    if case=='lower':return text.lower()
+    if case=='title':return ' '.join(w[:1].upper()+w[1:].lower() for w in text.split(' '))
+    return text
+
+
 def layout(opts,strict=True):
     result=[]
     for key in TEXT_KEYS:
         text=opts.get(key,'')
         if not isinstance(text,str) or not text.strip():continue
+        text=letter_case(text,opts.get(key+'_case','none'))
         font,size=opts[key+'_font'],opts[key+'_size']
         spacing=opts.get(key+'_word',0) or 0   # extra design px between words
+        letter=opts.get(key+'_letter',0) or 0   # extra design px between letters (CapCut "Ký tự")
+        wide=lambda s:width(s,font,size)+letter*max(0,len(s)-1)
         px=opts.get('units')=='px'
         box_width=round(opts[key+'_width'] if px else W*opts[key+'_width']/100)
         lines=[];paragraph_ends=[]
         for paragraph in text.split('\n'):
-            wrapped=wrap(paragraph,font,size,box_width-2*opts[key+'_outline']-4,spacing)
+            wrapped=wrap(paragraph,font,size,box_width-2*opts[key+'_outline']-4,spacing,letter)
             lines.extend(wrapped);paragraph_ends.extend([False]*(len(wrapped)-1)+[True])
         step=size+opts[key+'_gap'];natural=len(lines)*step
         height=opts.get(key+'_height',0) or natural
@@ -156,24 +172,26 @@ def layout(opts,strict=True):
         for li,line in enumerate(lines):
             factor={'left':0,'center':.5,'right':1,'justify':0}[opts[key+'_align']]
             words=line.split()
-            line_width=width(line,font,size)+spacing*max(0,len(words)-1)
+            line_width=wide(line)+spacing*max(0,len(words)-1)
             at=round(x+(box_width-line_width)*factor,2);offsets.append(at)
-            if spacing and not (opts[key+'_align']=='justify' and not paragraph_ends[li]) and len(words)>1:
-                runs=[];pos=at;space=width(' ',font,size)+spacing
-                for word in words:
-                    runs.append(dict(text=word,x=round(pos,3)));pos+=width(word,font,size)+space
-                line_runs.append(runs)
-            elif opts[key+'_align']=='justify' and not paragraph_ends[li] and len(words)>1:
-                gap=(box_width-sum(width(w,font,size) for w in words))/(len(words)-1)
-                runs=[];pos=x
-                for word in words:
-                    runs.append(dict(text=word,x=round(pos,3)));pos+=width(word,font,size)+gap
-                line_runs.append(runs)
-            else:line_runs.append([dict(text=line,x=at)])
+            justify=opts[key+'_align']=='justify' and not paragraph_ends[li] and len(words)>1
+            if not (spacing or letter or justify):
+                line_runs.append([dict(text=line,x=at)]);continue
+            # one run per word (word spacing, justify) or per letter (letter spacing): same positions in preview and export
+            gap=(box_width-sum(wide(w) for w in words))/(len(words)-1) if justify else width(' ',font,size)+2*letter+spacing
+            runs=[];pos=x if justify else at
+            for word in words:
+                if letter:
+                    p=pos
+                    for c in word:
+                        runs.append(dict(text=c,x=round(p,3)));p+=width(c,font,size)+letter
+                else:runs.append(dict(text=word,x=round(pos,3)))
+                pos+=wide(word)+gap
+            line_runs.append(runs)
         result.append(dict(key=key,text='\n'.join(lines),lines=lines,line_x=offsets,line_runs=line_runs,
                            x=x,y=y,width=box_width,height=height,text_offset=text_offset,content_y=y+text_offset,valign=vertical,natural_height=natural,size=size,gap=opts[key+'_gap'],
                            font=font,family=FONTS[font][1],align=opts[key+'_align'],color=opts[key+'_color'],
-                           outline=opts[key+'_outline'],outline_color=opts[key+'_outline_color'],warnings=problems,
+                           outline=opts[key+'_outline'],outline_color=opts[key+'_outline_color'],warnings=problems,opacity=opts.get(key+'_opacity',100),
                            start=opts.get(key+'_start',0),end=opts.get(key+'_end',0),box=text_box(opts,key,x,y+text_offset,box_width,natural)))
     return result
 
@@ -221,8 +239,15 @@ def artwork(opts):
             return
         row=pixels[y]
         r,g,b,a=rgba
+        x1,x2=max(0,x1),min(W,x2)
+        if x2<=x1:
+            return
+        # fast paths (same result): an opaque fill, or a fill over fully transparent pixels, is a plain copy
+        if a==255 or not any(row[4*x1+3:4*x2:4]):
+            row[4*x1:4*x2]=bytes((r,g,b,a))*(x2-x1)
+            return
         a0=a/255
-        for x in range(max(0,x1),min(W,x2)):
+        for x in range(x1,x2):
             i=4*x
             old=row[i+3]/255
             combined=a0+old*(1-a0)

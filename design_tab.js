@@ -21,10 +21,10 @@ const SRC=`<option value="ai">AI viết (cùng lần dịch)</option><option val
 const design=sec('design','🎨','Nền &amp; khung',`<div id="dt-bg-host"></div><p class="helper">Kiểu nền, màu chính/màu chuyển, vùng hòa nền (vị trí bắt đầu, chiều cao vùng chuyển, độ đục), khung có sẵn hoặc PNG. Kéo khung trên khung xem trước.</p>`);
 const title=sec('title','🅣','Tiêu đề',`<div class="dt-src"><label for="dt-title-src">Nguồn chữ</label><select id="dt-title-src">${SRC}</select><span>tối đa</span><input id="dt-title-chars" type="number" min="5" max="160" value="30" aria-label="Số ký tự tối đa của tiêu đề"><span>ký tự</span></div>
  <div class="group-label">CHỮ CỐ ĐỊNH / CHỮ MẪU TRÊN KHUNG XEM TRƯỚC</div><div id="dt-title-text"></div>
- <div class="group-label">KIỂU CHỮ · KÉO, ĐỔI CỠ, NHẤP ĐÚP ĐỂ SỬA TRÊN KHUNG XEM TRƯỚC</div><div id="dt-title-style"></div>`);
+ <div class="group-label">THUỘC TÍNH CHỮ · CŨNG CHỈNH ĐƯỢC TRÊN KHUNG XEM TRƯỚC</div><div id="dt-title-style"></div>`);
 const body=sec('body','¶','Nội dung',`<div class="dt-src"><label for="dt-body-src">Nguồn chữ</label><select id="dt-body-src">${SRC}</select><span>từ</span><input id="dt-body-min" type="number" min="0" max="600" value="50" aria-label="Số ký tự tối thiểu của nội dung"><span>–</span><input id="dt-body-max" type="number" min="10" max="600" value="100" aria-label="Số ký tự tối đa của nội dung"><span>ký tự</span></div>
  <div class="group-label">CHỮ CỐ ĐỊNH / CHỮ MẪU TRÊN KHUNG XEM TRƯỚC</div><div id="dt-body-text"></div>
- <div class="group-label">KIỂU CHỮ · KÉO, ĐỔI CỠ, NHẤP ĐÚP ĐỂ SỬA TRÊN KHUNG XEM TRƯỚC</div><div id="dt-body-style"></div>`);
+ <div class="group-label">THUỘC TÍNH CHỮ · CŨNG CHỈNH ĐƯỢC TRÊN KHUNG XEM TRƯỚC</div><div id="dt-body-style"></div>`);
 setup.querySelector('#sec-input').after(design,title,body);
 // shared by title and body: the AI part lives with the translation (same OpenAI call)
 const aiBox=el('div',{id:'dt-ai-box'});aiBox.innerHTML=`<div class="group-label">AI VIẾT TIÊU ĐỀ &amp; NỘI DUNG · CÙNG LẦN DỊCH</div><label class="check-row"><input id="dt-review" type="checkbox"> ⏸ Dừng lại để duyệt chữ AI trước khi xuất <small>(sửa hàng loạt trong một bảng rồi bấm Xuất tất cả)</small></label><p class="helper" id="dt-ai-note"></p>`;
@@ -58,7 +58,7 @@ function layout(){for(const id of ORDER){const s=$('sec-'+id);if(s)setup.append(
 function park(node,host){if(!node)return;host.append(node);node.hidden=false}
 function moveIn(){if(moved)return;moved=true;
  park($('section-background'),$('dt-bg-host'));park($('section-frame'),$('dt-bg-host'));
- for(const k of ['title','body']){park(document.querySelector(`label[for=${k}]`),$(`dt-${k}-text`));park($(k),$(`dt-${k}-text`));park($('section-'+k),$(`dt-${k}-style`))}
+ for(const k of ['title','body']){park(document.querySelector(`label[for=${k}]`),$(`dt-${k}-text`));park($(k),$(`dt-${k}-text`));park($('section-'+k),$(`dt-${k}-style`));capcut(k)}
  park($('section-video'),videoHost);
  // only the 9:16 stage: the timeline's own transport, loudness meter and layer list stay behind (not used here)
  park(document.querySelector('#view-editor .preview-workspace'),stageHost);stageHost.append(transport);
@@ -82,6 +82,51 @@ $('video').addEventListener('timeupdate',()=>{const v=$('video'),[a,b]=cut();win
 for(const id of ['dub-trim-start','dub-trim-end'])$(id).addEventListener('input',()=>{trimView();const[a]=cut();$('video').currentTime=a});
 $('video').addEventListener('play',()=>{tPlay.textContent='❚❚'});$('video').addEventListener('pause',()=>{tPlay.textContent='▶'});
 $('dub-pv-mute').addEventListener('click',()=>setTimeout(()=>{$('video').muted=$('dub-preview-video').dataset.mute==='1'}));
+
+// ---- title/body properties laid out like CapCut: Kiểu chữ · Biến đổi · Nền chữ · Thời gian. The editor's own controls are
+// moved into these rows (so templates, undo and export keep working); buttons drive the hidden selects.
+const BOLD={sans:'sans-bold',serif:'serif-bold',mono:'mono-bold',bvp:'bvp-bold',barlow:'barlow-xbold',kanit:'kanit-bold'};
+const REGULAR=Object.fromEntries(Object.entries(BOLD).map(([a,b])=>[b,a]));REGULAR['bvp-black']='bvp';
+const DEFAULT_BOX={title:{x:86,y:819,width:548,height:0},body:{x:86,y:934,width:548,height:0}};
+const fire=e=>{e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}))};
+const setValue=(id,v)=>{const e=$(id);e.value=v;fire(e)};
+const refreshers=[];
+function capcut(k){const sec=$('section-'+k);if(sec.querySelector('.cc-panel'))return;
+ const ctl=id=>$(id)?.closest('.control'),panel=el('div',{className:'cc-panel'});
+ const group=(title,...rows)=>el('div',{className:'cc-group'},el('div',{className:'cc-head',textContent:title}),...rows);
+ const row=(label,...items)=>el('div',{className:'cc-row'},el('span',{className:'cc-label',textContent:label}),el('div',{className:'cc-items'},...items.filter(Boolean)));
+ const bare=id=>{const c=ctl(id);if(c){c.classList.add('cc-bare');c.querySelector(':scope>label')?.classList.add('cc-hide')}return c};
+ const seg=(id,choices,title)=>{const box=el('div',{className:'cc-seg',title});for(const[v,t,tip]of choices){const b=el('button',{type:'button',textContent:t,title:tip||''});b.dataset.v=v;b.onclick=()=>setValue(id,v);box.append(b)}
+  refreshers.push(()=>{for(const b of box.children)b.classList.toggle('on',b.dataset.v===$(id).value)});return box};
+ // bold: the bold file of the same font when there is one
+ const bold=el('button',{type:'button',className:'cc-toggle',innerHTML:'<b>B</b>',title:'Chữ đậm'});
+ bold.onclick=()=>{const f=$(k+'_font').value;const to=BOLD[f]||REGULAR[f];if(to)setValue(k+'_font',to)};
+ refreshers.push(()=>{const f=$(k+'_font').value;bold.disabled=!(BOLD[f]||REGULAR[f]);bold.classList.toggle('on',!!REGULAR[f]);bold.title=bold.disabled?'Font này không có bản đậm riêng':'Chữ đậm'});
+ // box to the canvas: left / centre / right, top / middle / bottom (like CapCut's 6 buttons)
+ const place=a=>{const b=document.querySelector(`#texts .text-box[data-key=${k}]`),w=Number($(k+'_width').value)||548,h=b?.offsetHeight||Number($(k+'_height').value)||40;
+  const v={l:[k+'_x',0],c:[k+'_x',(720-w)/2],r:[k+'_x',720-w],t:[k+'_y',0],m:[k+'_y',(1280-h)/2],b:[k+'_y',1280-h]}[a];setValue(v[0],Math.round(v[1]))};
+ const aligns=el('div',{className:'cc-seg cc-icons'});for(const[a,t,tip]of [['l','⇤','Sát trái khung hình'],['c','↔','Giữa ngang'],['r','⇥','Sát phải'],['t','⤒','Sát trên'],['m','↕','Giữa dọc'],['b','⤓','Sát dưới']]){const b=el('button',{type:'button',textContent:t,title:tip});b.onclick=()=>place(a);aligns.append(b)}
+ const reset=el('button',{type:'button',className:'cc-reset',textContent:'↺',title:'Về vị trí và kích thước mặc định'});reset.onclick=()=>{for(const[a,v]of Object.entries(DEFAULT_BOX[k]))setValue(k+'_'+a,v)};
+ // font size with a slider, like CapCut
+ const size=$(k+'_size'),slide=el('input',{type:'range',min:size.min,max:size.max,step:1,value:size.value,className:'cc-slider'});slide.setAttribute('aria-label','Cỡ chữ');
+ slide.oninput=()=>setValue(k+'_size',slide.value);refreshers.push(()=>{slide.value=size.value});
+ const picker=ctl(k+'_font')?.querySelector('.font-picker');
+ panel.append(
+  group('Kiểu chữ',row('Phông chữ',picker),row('Cỡ chữ',slide,bare(k+'_size')),
+   row('Hoa văn',bold,seg(k+'_case',[['none','Aa','Giữ nguyên'],['upper','TT','CHỮ HOA'],['lower','tt','chữ thường'],['title','Tt','Viết Hoa Đầu Từ']],'Chữ hoa / chữ thường')),
+   row('Màu sắc',bare(k+'_color')),row('Độ mờ',bare(k+'_opacity')),
+   row('Ký tự',bare(k+'_letter')),row('Từ',bare(k+'_word')),row('Dòng',bare(k+'_gap')),
+   row('Căn chỉnh',seg(k+'_align',[['left','⯇≡','Căn trái'],['center','≡','Căn giữa'],['right','≡⯈','Căn phải'],['justify','☰','Đều hai bên']],'Căn chữ trong hộp'),seg(k+'_valign',[['top','⊤','Trên (khi đặt chiều cao hộp)'],['middle','⊝','Giữa'],['bottom','⊥','Dưới']],'Căn dọc trong hộp')),
+   row('Viền chữ',bare(k+'_outline'),bare(k+'_outline_color'))),
+  group('Biến đổi',row('Vị trí',labelled('X',bare(k+'_x')),labelled('Y',bare(k+'_y'))),row('Kích thước',labelled('Rộng',bare(k+'_width')),labelled('Cao · 0 tự động',bare(k+'_height'))),row('Căn khung',aligns,reset)),
+  group('Nền chữ',row('Nền hộp',bare(k+'_box'),bare(k+'_box_color')),row('Độ đục',bare(k+'_box_opacity')),row('Đệm · bo góc',bare(k+'_box_pad'),bare(k+'_box_radius'))),
+  el('details',{className:'cc-group cc-more'},el('summary',{className:'cc-head',textContent:'Thời gian hiện'}),row('Từ giây',bare(k+'_start')),row('Đến giây · 0 = hết',bare(k+'_end'))));
+ // whatever the old section still holds (its headings, two centre buttons, saved caption styles) is not shown here
+ for(const c of [...sec.children])c.classList.add('cc-hide');sec.append(panel);panel.classList.remove('cc-hide');
+ for(const id of [k+'_font',k+'_case',k+'_align',k+'_valign'])$(id).addEventListener('change',()=>refreshers.forEach(f=>f()));
+ refreshers.forEach(f=>f())}
+function labelled(text,node){return node&&el('label',{className:'cc-field'},el('small',{textContent:text}),node)}
+document.addEventListener('design-changed',()=>refreshers.forEach(f=>f()));
 
 // ---- settings: everything is saved (also the groups that are off), the server drops what is switched off
 const KEEP=new Set(['units','template','frame_id','images']);
@@ -129,11 +174,11 @@ for(const ev of ['play','pause','seeked'])$('video').addEventListener(ev,()=>on(
 function previewJob(job){jobShown=job&&job.texts&&on()?job:null;designPreview();api.preview()}
 function preview(f){const use=on();if(jobShown)f={id:jobShown.video_id,name:jobShown.name};
  if((f?.id||f?.name)!==(current?.id||current?.name)){current=f;designPreview()}
- stageHost.hidden=!use;$('dub-frame').closest('.dub-frame-wrap').hidden=use;document.querySelector('#view-dub .dub-transport')?.toggleAttribute('hidden',use);
+ stageHost.hidden=!use;$('dub-frame').closest('.dub-frame-wrap').hidden=use;$('dub-pv-play').closest('.dub-transport').hidden=use;transport.hidden=!use;if(use){$('dub-preview-video').pause();$('dub-bgv').pause()}else $('video').pause();
  stageLayers(use);if(!use)return false;
  showVideo(f);overlayLayer();setTimeout(()=>{overlayLayer();stageLayers(true)},50);
  $('dub-preview-info').textContent=jobShown?`${jobShown.name} · chữ AI của video này (đã dựng) · bấm lại vào video trong hàng đợi để thôi xem`:f?`${f.name} · thiết kế 720×1280 → xuất 1080×1920`:'Chọn video ở mục 🎬 để xem trước';
- $('dub-preview-note').textContent='Kéo video, khung, chữ trên khung hình; nhấp đúp chữ để sửa. Chữ AI của từng video thay cho chữ mẫu khi xuất.';return true}
+ $('dub-preview-note').textContent='Bấm vào tiêu đề, nội dung, khung hoặc video để chọn · kéo để di chuyển · kéo ô vuông ở cạnh trái/phải để đổi độ rộng, ở góc/cạnh trên dưới để đổi kích thước · nhấp đúp chữ để sửa. Chữ AI của từng video thay cho chữ mẫu khi xuất.';return true}
 
 // ---- summaries
 function labels(){const bg=({solid:'một màu',gradient:'chuyển hai màu',none:'không nền'})[$('background').value]||'',fr=$('frame_style').selectedOptions[0]?.textContent.split('·')[0].trim();

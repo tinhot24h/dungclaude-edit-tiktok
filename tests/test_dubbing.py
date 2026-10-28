@@ -78,7 +78,7 @@ class PipelineBase(unittest.TestCase):
         def create(raw):
             k=f't{len(self.tasks)}';self.tasks[k]=raw['text'];return dict(task_id=k,state='submitted')
         self.patches=[mock.patch.object(dubbing,'transcribe_request',return_value=dict(segments=[dict(start=.2,end=1.4,text='你好'),dict(start=2.0,end=2.9,text='谢谢大家')])),
-                      mock.patch.object(dubbing,'translate_request',side_effect=lambda key,model,lines,s:{l['id']:['Xin chào','Cảm ơn mọi người'][l['id']] for l in lines}),
+                      mock.patch.object(dubbing,'translate_request',side_effect=lambda key,model,lines,s,**k:{l['id']:['Xin chào','Cảm ơn mọi người'][l['id']] for l in lines}),
                       mock.patch.object(dubbing.ai33_audio,'create_tts',side_effect=create),
                       mock.patch.object(dubbing.ai33_audio,'get_task',side_effect=lambda raw:dict(status='done',audio_url='https://cdn.example/a.mp3')),
                       mock.patch.object(dubbing.audio_files,'download',side_effect=lambda url,target:Path(target).write_bytes(self.voice.read_bytes())),
@@ -139,6 +139,26 @@ if __name__=='__main__':
 
 
 class ParagraphTests(PipelineBase):
+    def test_ai_file_name_names_the_export_and_never_overwrites(self):
+        self.assertEqual(dubbing.slug_name('Quần áo nữ Hottrend!'),'quan-ao-nu-hottrend')
+        self.assertEqual(dubbing.slug_name('  Đồ   ĐIỆN gia dụng.mp4 '),'do-dien-gia-dung-mp4')
+        self.assertEqual(dubbing.slug_name('may hut bui cam tay khong day sieu nhe cho gia dinh'),'may-hut-bui-cam-tay-khong-day')   # ≤ 30, between words
+        names=[]
+        for _ in range(2):
+            with mock.patch.object(dubbing,'paragraph_request',return_value=dict(text='Xin chào.',title='',body='',file_name='Quần áo nữ hottrend')):
+                job=self.job(background='remove',review=False,subtitles='file')
+                self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
+            self.assertEqual(job['state'],'done',job['message']);self.assertEqual(job['file_name'],'quan-ao-nu-hottrend')
+            self.assertEqual(self.store.summary(job)['file_name'],'quan-ao-nu-hottrend')
+            names.append(Path(job['outputs']['saved_path']).name)
+        self.assertEqual(names,['quan-ao-nu-hottrend.mp4','quan-ao-nu-hottrend-2.mp4'])
+        self.assertTrue((self.out/'quan-ao-nu-hottrend-2.srt').is_file())   # the .srt follows the video's name
+        # without a usable name from the AI the old name stays
+        with mock.patch.object(dubbing,'paragraph_request',return_value=dict(text='Xin chào.',file_name='!!')):
+            job=self.job(background='remove',review=False,subtitles='none');self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
+        self.assertNotIn('file_name',job);self.assertEqual(Path(job['outputs']['saved_path']).name,'clip-long-tieng.mp4')
+        self.assertEqual(dubbing.output_folder.unique(self.out,'Clip của tôi').name,'Clip của tôi.mp4')
+
     def test_one_paragraph_one_mp3_only_task_with_pause_timed_subtitles(self):
         # voice: 1.0s tone, 0.6s silence, 1.0s tone → the subtitle change lands in the pause
         voice=Path(self.tmp.name)/'speech.wav'

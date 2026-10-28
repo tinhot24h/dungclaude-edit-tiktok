@@ -715,3 +715,23 @@ kbd{display:inline-block;padding:2px 7px;border:1px solid #475569;border-bottom-
 .font-opt:hover{background:#1f2a3a}.font-opt.on{background:#1b3936;outline:1px solid #2f6b62}.font-sample{font-size:19px;line-height:1.25}
 /* 0.22.1: the editor panels living in "Dựng & lồng tiếng" stay shown (the old editor tabs used to hide them) */
 #dt-bg-host>.editor-section[hidden],#dt-title-style>.editor-section[hidden],#dt-body-style>.editor-section[hidden],#dt-video-host>.editor-section[hidden]{display:block!important}
+/* 0.22.3: caption boxes are outlined on the stage (preview only) so they can be found, picked and resized */
+.dt-stage-host .text-box{outline:1px dashed #ffffff66;outline-offset:3px;cursor:move}.dt-stage-host .text-box:hover{outline-color:#6fe0cc}
+.dt-stage-host #selection .resize-handle{width:16px;height:16px}
+/* 0.22.3: settings | preview | queue (the preview sits next to the settings it shows); one "Lưu mẫu" keeps everything,
+   so the per-caption "Kiểu chữ của tôi" box is not shown here */
+@media (min-width:1381px){.dub-layout{grid-template-columns:minmax(400px,1.15fr) minmax(320px,440px) minmax(340px,1fr);grid-template-areas:"setup side jobs"}}
+.dub-setup .my-styles{display:none!important}
+/* 0.22.3: CapCut-like caption panel */
+.cc-hide{display:none!important}.cc-panel{display:flex;flex-direction:column;gap:10px}
+.cc-group{background:#121a25;border:1px solid #263142;border-radius:10px;padding:10px 12px}.cc-head{font-size:12px;font-weight:650;color:#dfe8f3;margin:0 0 6px;cursor:default}
+details.cc-group>summary.cc-head{cursor:pointer;margin:0}details.cc-group[open]>summary.cc-head{margin-bottom:6px}
+.cc-row{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px;align-items:center;padding:4px 0}.cc-label{font-size:12px;color:#aab8c9}
+.cc-items{display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0}.cc-items>*{min-width:0}
+.cc-bare{margin:0!important;flex:1;min-width:110px}.cc-bare .range-row{grid-template-columns:minmax(40px,1fr) 84px}.cc-bare input[type=color]{min-width:60px}
+.cc-field{display:flex;flex-direction:column;gap:3px;margin:0;flex:1;min-width:100px}.cc-field small{font-size:10px;color:#8798ad}.cc-field .cc-bare{min-width:0}
+.cc-slider{flex:2;min-width:90px;accent-color:var(--accent)}
+.cc-seg{display:inline-flex;border:1px solid #344052;border-radius:7px;overflow:hidden}.cc-seg button{background:#182231;border:0;border-right:1px solid #2b3646;color:#c7d4e4;padding:6px 10px;font-size:12px;min-width:34px}
+.cc-seg button:last-child{border-right:0}.cc-seg button.on{background:#1b3936;color:var(--accent)}.cc-seg button:hover{background:#223047}
+.cc-toggle{background:#182231;border:1px solid #344052;border-radius:7px;color:#c7d4e4;padding:6px 12px;font-size:13px}.cc-toggle.on{background:#1b3936;color:var(--accent);border-color:#2f6b62}.cc-toggle:disabled{opacity:.4;cursor:not-allowed}
+.cc-reset{background:transparent;border:1px solid #344052;border-radius:7px;color:#c7d4e4;padding:5px 10px}

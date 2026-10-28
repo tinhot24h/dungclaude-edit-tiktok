@@ -1,8 +1,21 @@
-# Review Studio 0.22.2
+# Review Studio 0.22.3
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.22.3
+
+- **Bảng chữ kiểu CapCut** cho Tiêu đề và Nội dung: Kiểu chữ (phông chữ, cỡ chữ có thanh trượt, **B** đậm, Aa / TT / tt / Tt chữ hoa–thường, màu sắc, độ mờ, khoảng cách ký tự, từ, dòng, căn trái/giữa/phải/đều, căn dọc, viền chữ) · Biến đổi (vị trí X/Y, rộng/cao, 6 nút căn khung về trái/giữa/phải/trên/giữa/dưới, ↺ về mặc định) · Nền chữ · Thời gian hiện.
+- Bỏ ô "Kiểu chữ của tôi": chỉ cần **💾 Lưu mẫu** là lưu hết mọi thông số.
+- **Bố cục:** cài đặt | xem trước | hàng đợi (xem trước nằm cạnh cột cài đặt).
+- **Tên video do AI đặt theo sản phẩm** trong cùng lần gọi dịch, dạng không dấu nối gạch ngang 15–30 ký tự (vd `quan-ao-nu-hottrend`). Dùng làm tên file xuất (kèm .srt) và tên hiện ở hàng đợi; dòng dưới vẫn ghi tên file gốc.
+- **Chống trùng tên file:** đã có thì thêm `-2`, `-3`…, không bao giờ ghi đè, kể cả khi chạy nhiều video cùng lúc.
+- **Prompt đồng nhất:** mọi kiểu gọi OpenAI (đoạn văn, từng câu, chỉ viết chữ, viết lại chữ) dùng cùng quy tắc giới hạn ký tự tiêu đề/nội dung và cùng trường tên video; quy tắc giới hạn luôn đặt sau mẫu biên tập chung nên không bị mẫu đè.
+- **Chỉnh khung chữ trên xem trước:** viền nét đứt quanh tiêu đề/nội dung; kéo để di chuyển, kéo cạnh trái/phải để đổi độ rộng (chiều cao vẫn tự động), góc/cạnh trên dưới để đổi kích thước.
+- **Xem trước nhanh hơn:** đổi nền/khung giờ cập nhật gần như tức thì (vẽ khung nhanh hơn ~35 lần, ảnh giống hệt).
+- **Chữ xuất thẳng hàng:** mọi chữ nằm trên cùng đường chân chữ như khung xem trước (trước đây chữ có dấu cao như Ỗ, À có thể lệch khi dùng khoảng cách ký tự/từ).
+- Sửa lỗi bấm phát mà video xem trước đứng hình khi bật nền/khung/chữ.
 
 ## Mới trong 0.22.2
 

@@ -509,7 +509,7 @@ class Handler(BaseHTTPRequestHandler):
             if dub[2]=='download':
                 target=folder/'dubbed.mp4'
                 if not target.is_file():return self.respond(404,{'error':'Chưa có video lồng tiếng.'})
-                return self.serve_audio(target,'download=1' in urlparse(self.path).query,'video/mp4',job['name']+'-long-tieng.mp4')
+                return self.serve_audio(target,'download=1' in urlparse(self.path).query,'video/mp4',(job.get('file_name') or job['name']+'-long-tieng')+'.mp4')
             target=folder/(dub[2][-2:]+'.srt')
             if not target.is_file():return self.respond(404,{'error':'Chưa có phụ đề.'})
             self.send_response(200);data=target.read_bytes()

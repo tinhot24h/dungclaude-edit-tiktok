@@ -58,8 +58,10 @@ def save(path,raw):
 
 def unique(folder,name):
     stem=''.join('_' if c in '<>:"/\\|?*' or ord(c)<32 else c for c in name).strip(' .') or 'review-video'
+    # a name the AI gave (quan-ao-nu-hottrend) gets -2, -3…; other names " (2)", " (3)"… — an existing file is never overwritten
+    slug='-' in stem and all(c.islower() or c.isdigit() or c=='-' for c in stem)
     target=folder/(stem+'.mp4');index=2
-    while target.exists():target=folder/f'{stem} ({index}).mp4';index+=1
+    while target.exists():target=folder/(f'{stem}-{index}.mp4' if slug else f'{stem} ({index}).mp4');index+=1
     return target
 
 
