@@ -713,3 +713,5 @@ kbd{display:inline-block;padding:2px 7px;border:1px solid #475569;border-bottom-
 .font-pop{position:absolute;z-index:30;left:0;right:0;top:calc(100% + 4px);max-height:360px;overflow:auto;background:#111824;border:1px solid #3a4a5f;border-radius:9px;box-shadow:0 14px 40px #000a;padding:4px}
 .font-opt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;background:transparent;border:0;border-radius:6px;padding:8px 10px;color:var(--text);text-align:left}
 .font-opt:hover{background:#1f2a3a}.font-opt.on{background:#1b3936;outline:1px solid #2f6b62}.font-sample{font-size:19px;line-height:1.25}
+/* 0.22.1: the editor panels living in "Dựng & lồng tiếng" stay shown (the old editor tabs used to hide them) */
+#dt-bg-host>.editor-section[hidden],#dt-title-style>.editor-section[hidden],#dt-body-style>.editor-section[hidden],#dt-video-host>.editor-section[hidden]{display:block!important}

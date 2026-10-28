@@ -1,11 +1,11 @@
 {
  "app": "ReviewStudio",
- "version": "0.22.0",
- "notes": "## Mới trong 0.22.0\n\n- **Một tab \"Dựng & lồng tiếng\"** thay cho 2 tab Dựng video và Lồng tiếng; bỏ tab Timeline. Mọi video chạy tự động từ MP4 tới file hoàn thiện: OpenAI nhận diện và dịch, ai33 đọc giọng Việt, thêm nền, khung, chữ. Bỏ chức năng MP3 cùng tên.\n- **3 nhóm riêng có công tắc ở tiêu đề mục:** Nền & khung · Tiêu đề · Nội dung. Tắt nhóm nào thì video xuất và khung xem trước không có phần đó.\n- **Mẫu lưu đủ mọi thuộc tính** (nền, khung, vị trí/cỡ/màu/font chữ, video, overlay, lớp ảnh, giọng, xuất, cả nhóm đang tắt); chọn lại mẫu là trả về đúng như lúc lưu. Cấu hình lồng tiếng và mẫu dựng cũ gộp vào một danh sách \"Mẫu\".\n- **Giới hạn chữ theo số ký tự** (tiêu đề mặc định ≤ 30, nội dung 50–100 ký tự), cắt ở ranh giới từ.\n- **Khoảng cách giữa các từ** cho tiêu đề và nội dung.\n- **23 font mới hỗ trợ đủ dấu tiếng Việt** (Be Vietnam Pro, Barlow, Kanit, Prompt, Mitr, Chakra Petch, Anton, Bungee, Paytone One, Coiny, Bangers, Lobster, Pacifico, Charm, Sriracha, Patrick Hand, Itim, Mali, Krub). Ô chọn font hiện mẫu chữ của từng font. Font Mono cũ thiếu vài dấu (ẳ, ế, ố…) nên được ghi rõ.\n- **API key quản lý một chỗ:** nút \"API key\" trên thanh trên (OpenAI, ai33, Gemini), dùng chung cho mọi chức năng; bỏ các ô nhập key rải rác.\n- Khung xem trước gọn lại: chỉ khung hình và thanh phát (bỏ danh sách lớp Chữ 1–6, thanh âm lượng, nút đo của Timeline cũ). Vùng an toàn TikTok bật được. Overlay (video và ảnh), lớp ảnh, cắt đầu/cuối, hiệu ứng máy quay cập nhật ngay trên khung xem trước.\n- Sửa: nền & khung bị mất khi tắt/bật hoặc chuyển tab; màu nền/khung bị khóa khi chọn \"Tắt nền\"/\"Không dùng khung\" (giờ sửa màu là tự bật lại).\n- \"Hiệu ứng máy quay\" (phóng to/thu nhỏ dần) nay có trong video xuất.",
+ "version": "0.22.1",
+ "notes": "## Mới trong 0.22.1\n\n- Sửa lỗi mất bảng thuộc tính chữ (font, cỡ, màu, vị trí, khoảng cách…) ở mục Tiêu đề/Nội dung, và có lúc mất bảng Khung, Video: code tab cũ của trình dựng tự ẩn các bảng này. Giờ các bảng luôn hiện.",
  "files": {
   "design_tab.js": {
-   "sha256": "ff48927e0386a037e19347ae5b49cd4aa3e074aa29a4e3b9c4abed4fbc7f40fa",
-   "size": 19357
+   "sha256": "1b4a45e8a5445f410ed85991eb393fd9e53ae4a7eac06bc44cfb46e588dcdd40",
+   "size": 19731
   },
   "local_files.js": {
    "sha256": "b9a975e980db7f5f013f6046d58228fb39817b6959e8caaf9505c4ba3cc898a7",
@@ -148,8 +148,8 @@
    "size": 25305
   },
   "studio.css": {
-   "sha256": "056bcf58db9c527b0441b79a472710fa767c4f75b0bbd8f60d9dada989899478",
-   "size": 89003
+   "sha256": "c2bdbb7ed608417989cbb358b367f8a146348a362367ae24295cabfc79da61e5",
+   "size": 89301
   },
   "studio.js": {
    "sha256": "461c6a9adf404b08870f535bd82ce8825466beafde60c23e149ae4f0df15c83c",
@@ -168,7 +168,7 @@
    "size": 4702
   },
   "index.html": {
-   "sha256": "d3cfdceda0400990677aca971d16f8b6ebb096819437a736f3d60b3c85176f5d",
+   "sha256": "45d55cc040621daebe9d4f3e16654eace3b3b76ecf930661dfe5c19cd888c1c8",
    "size": 33161
   },
   "launch.py": {
@@ -184,15 +184,15 @@
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "f6e5f73a5ebf0fafdb06facc5bc4628521c9ca7404c13f7c6cfcee6887608a94",
-   "size": 41980
+   "sha256": "52a94f5f0c6808b871d2933b74b8e7e2a71232268652a639172ac63df849e3aa",
+   "size": 42142
   },
   "README.md": {
-   "sha256": "aaa5b6feada9132fab1e6e04673fd0e3588d7bab472c29aed9a2186971ff34f5",
-   "size": 63482
+   "sha256": "101c1ea1e67752e53cfd12fc455025d07ca017821235e397b6b80f921ba6dbc0",
+   "size": 63769
   },
   "VERSION": {
-   "sha256": "464863ee696ca862f6ae2bfee9728ebbd84463597825442efc62838d945b00fb",
+   "sha256": "cc001c7b0f7e3ddacdc145fb6e4101e66a11e1bc82399f59d9ed020c0cc30273",
    "size": 7
   },
   ".gitignore": {

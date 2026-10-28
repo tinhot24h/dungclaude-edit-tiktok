@@ -61,7 +61,10 @@ function moveIn(){if(moved)return;moved=true;
  for(const k of ['title','body']){park(document.querySelector(`label[for=${k}]`),$(`dt-${k}-text`));park($(k),$(`dt-${k}-text`));park($('section-'+k),$(`dt-${k}-style`))}
  park($('section-video'),videoHost);
  // only the 9:16 stage: the timeline's own transport, loudness meter and layer list stay behind (not used here)
- park(document.querySelector('#view-editor .preview-workspace'),stageHost);stageHost.append(transport)}
+ park(document.querySelector('#view-editor .preview-workspace'),stageHost);stageHost.append(transport);
+ // the old editor's tab code still hides the sections that are not its current tab: keep ours shown
+ const keep=new MutationObserver(list=>{for(const m of list)if(m.target.hidden)m.target.hidden=false});
+ for(const id of ['section-background','section-frame','section-title','section-body','section-video'])keep.observe($(id),{attributes:true,attributeFilter:['hidden']})}
 // a small transport for the stage (the overlay video follows it)
 const transport=el('div',{className:'dub-transport dt-transport'}),tPlay=el('button',{type:'button',className:'fm-play',textContent:'▶',title:'Phát/dừng'}),tSeek=el('input',{type:'range',min:0,max:1,step:.01,value:0}),tTime=el('output',{textContent:'0:00.0'});
 tSeek.setAttribute('aria-label','Vị trí');transport.append(tPlay,tSeek,tTime);

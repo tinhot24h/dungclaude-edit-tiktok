@@ -220,6 +220,9 @@ giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh g�
 cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
 Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
 
+NÂNG CẤP 0.22.1
+- Sửa lỗi mất thuộc tính chữ của Tiêu đề/Nội dung (font, cỡ, màu, vị trí…) và có lúc mất bảng Khung, Video.
+
 NÂNG CẤP 0.22.0 — MỘT TAB "DỰNG & LỒNG TIẾNG"
 - Chỉ còn 1 tab cho cả dựng và lồng tiếng (bỏ tab Lồng tiếng riêng và tab Timeline).
   Chọn thư mục video → bấm "Lồng tiếng N video": app tự nhận diện, dịch (OpenAI), đọc giọng Việt (ai33),
