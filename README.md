@@ -1,8 +1,23 @@
-# Review Studio 0.19.0
+# Review Studio 0.19.1
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.19.1
+
+- **Đọc video và overlay ngay trên máy, không tải lên:** nút **📂 Thư mục trên máy** (mục 🎬) và **📂 Thư mục overlay trên máy** (mục ✨).
+  - Hộp chọn thư mục của Windows mở ra; ứng dụng đọc file ngay tại chỗ.
+  - Cùng ổ đĩa thì dùng hardlink: tức thì, không tốn thêm dung lượng, file gốc giữ nguyên. Khác ổ thì chép thẳng trên ổ đĩa, vẫn nhanh hơn tải lên rất nhiều.
+  - File `.srt` cùng tên video được dùng tự động. Video chỉ được đưa vào kho khi bấm lồng tiếng.
+  - Cách cũ "⬆ Tải thư mục lên" vẫn còn.
+- **Theo timestamp (SRT) chỉ tạo 1 file giọng:** mọi câu dịch được đọc trong một tác vụ ai33. App cắt file tại chỗ ngắt giữa các câu (chọn khoảng lặng gần đúng độ dài câu nhất) rồi đặt từng câu đúng mốc thời gian. Sửa câu dịch thì tạo lại một file, vẫn chỉ một tác vụ.
+- **Overlay video trên khung xem trước chạy cùng video:** phát, dừng, tua cùng video, lặp đúng như khi xuất.
+- **Vị trí và căn chỉnh video gốc** (mục ✂): Vị trí X/Y (rộng tới ±300), lưới căn 9 điểm đặt mép video sát mép khung, **kéo video trên khung xem trước**.
+- **Xóa hàng loạt:**
+  - Danh sách video: "✕ Bỏ tất cả video", "Bỏ video lỗi".
+  - Overlay: "Chọn tất cả", "Bỏ chọn tất cả", "Xóa overlay đang chọn", "Xóa toàn bộ thư viện".
+  - Hàng đợi: "Xóa đã xong", "Xóa lỗi", "Xóa tất cả (trừ đang chạy)".
 
 ## Mới trong 0.19.0
 

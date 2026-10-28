@@ -70,7 +70,7 @@ def options(raw):
         if isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) or not lo <= v <= hi:
             raise DubError('Thông số không hợp lệ: ' + key)
         out[key] = float(v)
-    for key, lo, hi in (('frame_zoom', 25, 400), ('frame_x', -100, 100), ('frame_y', -100, 100), ('frame_rotate', -180, 180), ('overlay_opacity', 0, 100), ('trim_start', 0, 120), ('trim_end', 0, 120), ('rate', 2.5, 7), ('voice_speed', .5, 1.5), ('max_tempo', 1, 1.6), ('min_tempo', .5, 1), ('video_speed_min', .25, 1), ('video_speed_max', 1, 4), ('duck_level', 0, 100),
+    for key, lo, hi in (('frame_zoom', 25, 400), ('frame_x', -400, 400), ('frame_y', -400, 400), ('frame_rotate', -180, 180), ('overlay_opacity', 0, 100), ('trim_start', 0, 120), ('trim_end', 0, 120), ('rate', 2.5, 7), ('voice_speed', .5, 1.5), ('max_tempo', 1, 1.6), ('min_tempo', .5, 1), ('video_speed_min', .25, 1), ('video_speed_max', 1, 4), ('duck_level', 0, 100),
                         ('background_volume', 0, 200), ('voice_volume', 0, 300),
                         ('image_x', -150, 150), ('image_y', -150, 150), ('image_w', 1, 400), ('image_h', 0, 400), ('image_rotate', -180, 180), ('image_opacity', 0, 100)):
         num(key, lo, hi)
@@ -420,6 +420,63 @@ def silences(path):
     starts = [float(x) for x in re.findall(r'silence_start: (-?[\d.]+)', out)]
     ends = [float(x) for x in re.findall(r'silence_end: ([\d.]+)', out)]
     return [round((a + b) / 2, 3) for a, b in zip(starts, ends) if b > a]
+
+
+def silence_spans(path, noise='-35dB', least=.12):
+    """(start, end) of every pause in a voice file."""
+    try:
+        out = subprocess.run(['ffmpeg', '-hide_banner', '-nostdin', '-i', str(path), '-af', f'silencedetect=noise={noise}:d={least}', '-f', 'null', '-'],
+                             capture_output=True, text=True, timeout=300).stderr
+    except (OSError, subprocess.SubprocessError):
+        return []
+    starts = [float(x) for x in re.findall(r'silence_start: (-?[\d.]+)', out)]
+    ends = [float(x) for x in re.findall(r'silence_end: ([\d.]+)', out)]
+    return [(max(0.0, a), b) for a, b in zip(starts, ends) if b > a]
+
+
+def split_voice(spans, weights, total):
+    """Cut one voice file of `total` seconds into len(weights) sentences: the boundaries are the pauses closest to
+    where each sentence should end by its length (weights = syllables), chosen in order by dynamic programming.
+    Returns [(from, to)] per sentence; with too few pauses the missing cuts fall back to the length estimate."""
+    n = len(weights)
+    if n <= 1:
+        return [(0.0, total)]
+    spans = [s for s in spans if .05 < s[0] and s[1] < total - .05]
+    whole = sum(weights) or 1
+    targets, done = [], 0
+    for w in weights[:-1]:
+        done += w
+        targets.append(total * done / whole)
+    need = n - 1
+    if len(spans) >= need:
+        mids = [(a + b) / 2 for a, b in spans]
+        # best[i][j]: cost of placing the first i boundaries using pauses among the first j
+        inf = float('inf')
+        best = [[inf] * (len(mids) + 1) for _ in range(need + 1)]
+        pick = [[False] * (len(mids) + 1) for _ in range(need + 1)]
+        for j in range(len(mids) + 1):
+            best[0][j] = 0.0
+        for i in range(1, need + 1):
+            for j in range(i, len(mids) + 1):
+                skip = best[i][j - 1]
+                # a longer pause is a likelier sentence break: it gets a small bonus
+                take = best[i - 1][j - 1] + abs(mids[j - 1] - targets[i - 1]) - min(.3, spans[j - 1][1] - spans[j - 1][0])
+                best[i][j], pick[i][j] = (take, True) if take < skip else (skip, False)
+        chosen, i, j = [], need, len(mids)
+        while i:
+            if pick[i][j]:
+                chosen.append(spans[j - 1])
+                i -= 1
+            j -= 1
+        cuts = list(reversed(chosen))
+    else:
+        cuts = [(t, t) for t in targets]
+    out, at = [], 0.0
+    for a, b in cuts:
+        out.append((at, a))
+        at = b
+    out.append((at, total))
+    return out
 
 
 def sentence_lines(text, start, seconds, pauses=()):
@@ -1115,6 +1172,8 @@ class Store:
             else:
                 job['groups'] = group_segments(job['segments'])
         groups = job['groups']
+        if not paragraph:
+            return self.tts_one(job, folder, keys, cancel)
         todo = [g for g in groups if not g.get('file')]
         if not todo:
             return
@@ -1164,6 +1223,67 @@ class Store:
                 job['message'] = retrying['poll_message']
             if time.monotonic() - waited > 900:
                 raise DubError('ai33.pro chưa trả giọng sau 15 phút. Bấm Tiếp tục để kiểm tra lại (không tạo trùng).')
+
+    def tts_one(self, job, folder, keys, cancel):
+        """Timestamp mode with ONE ai33 file: every translated sentence is read in a single task (one line each, so
+        the voice pauses between them), then the file is cut at those pauses and each sentence goes to its own
+        timestamp. Editing any sentence re-voices the whole file once (still a single task)."""
+        settings = job['options']
+        groups = [g for g in job['groups'] if g['text'].strip()]
+        if not groups:
+            raise DubError('Chưa có câu dịch nào để tạo giọng.')
+        text = '\n'.join(t if re.search(r'[.!?…]$', t) else t + '.' for t in (g['text'].strip() for g in groups))
+        master = job.get('master') or {}
+        if master.get('text') != text:
+            master = dict(text=text)
+            job['master'] = master
+            for g in job['groups']:
+                g.pop('file', None)
+        if all(g.get('file') for g in groups):
+            return
+        if not master.get('file'):
+            if not master.get('task_id'):
+                base = dict(api_key=keys['ai33'], voice_id=settings['voice_id'], speed=settings['voice_speed'], text=text, file_name=job['name'][:60])
+                if settings['dictionary_id']:
+                    base['pronunciation_dictionary_id'] = settings['dictionary_id']
+                self.progress(job, 'tts', .05, f'Đang gửi {len(groups)} câu thành một file giọng ai33…')
+                master['task_id'] = ai33_audio.create_tts(base)['task_id']
+                self.save(job)
+            waited = time.monotonic()
+            while True:
+                if cancel.is_set():
+                    raise Cancelled()
+                time.sleep(3)
+                detail = self.poll(master, keys, job)
+                if detail is None:
+                    if master.get('poll_errors'):
+                        job['message'] = master['poll_message']
+                    continue
+                if detail['status'] == 'error':
+                    raise DubError('ai33.pro báo lỗi khi tạo file giọng. Kiểm tra credit/giọng rồi bấm Tiếp tục.')
+                if detail['status'] == 'done' and detail['audio_url']:
+                    break
+                self.progress(job, 'tts', .1 + .7 * detail.get('progress', 0) / 100, f'Đang tạo một file giọng Việt ai33 ({len(groups)} câu)…')
+                if time.monotonic() - waited > 900:
+                    raise DubError('ai33.pro chưa trả giọng sau 15 phút. Bấm Tiếp tục để kiểm tra lại (không tạo trùng).')
+            download = folder / 'master.download'
+            audio_files.download(detail['audio_url'], download)
+            run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(download), '-ac', '1', '-ar', str(VOICE_RATE), str(folder / 'master.wav')], cancel)
+            download.unlink(missing_ok=True)
+            master['file'] = 'master.wav'
+            self.save(job)
+        # cut at the pauses between sentences; each piece goes to the timestamp of its sentence
+        self.progress(job, 'tts', .9, 'Đang cắt file giọng theo từng câu…')
+        with wave.open(str(folder / master['file'])) as w:
+            total = w.getnframes() / w.getframerate()
+        pieces = split_voice(silence_spans(folder / master['file']), [max(1, syllables(g['text'])) for g in groups], total)
+        for n, (g, (a, b)) in enumerate(zip(groups, pieces)):
+            g['file'] = f'g{n}.wav'
+            run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(folder / master['file']), '-ss', f'{a:.3f}', '-t', f'{max(.05, b - a):.3f}',
+                 '-ac', '1', '-ar', str(VOICE_RATE), str(folder / g['file'])], cancel)
+            with wave.open(str(folder / g['file'])) as w:
+                g['clip_seconds'] = round(w.getnframes() / w.getframerate(), 3)
+        self.save(job)
 
     def dub_ai33(self, job, folder, source, info, keys, cancel):
         """Timestamp dubbing by ai33.pro (/v1/task/dubbing): the source audio goes up once, ai33 returns a timed

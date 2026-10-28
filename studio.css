@@ -661,3 +661,5 @@ kbd{display:inline-block;padding:2px 7px;border:1px solid #475569;border-bottom-
 .dub-jobs{container-type:inline-size}.dub-actions .small-action{white-space:nowrap;width:auto;min-height:30px;padding:6px 10px}
 @container (max-width:700px){.dub-row-main{grid-template-columns:12px minmax(0,1fr) minmax(60px,120px) auto auto}.dub-row-main .dub-dots{display:none}}
 @container (max-width:470px){.dub-row-main{grid-template-columns:12px minmax(0,1fr) auto auto}.dub-row-main .dub-row-progress{display:none}}
+.dub-side .dub-frame{cursor:grab;touch-action:none}.dub-side .dub-frame.moving{cursor:grabbing}#dub-frame-align{margin-bottom:4px}
+.dub-bulkbar{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 0}.dub-bulkbar button{border:1px solid #37465b;background:#222e3e;border-radius:6px;color:#bed0e5;padding:5px 8px;font-size:11px}.dub-bulkbar button.danger{border-color:#6b3a3f;color:#ffb3b8}.dub-bulkbar button:hover{border-color:var(--accent)}

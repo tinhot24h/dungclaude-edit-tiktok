@@ -81,17 +81,16 @@ class PipelineTests(PipelineBase):
         job['review_passed']=True;self.store.process(job,dict(openai='sk-test',ai33='k'),threading.Event())
         self.assertEqual(job['state'],'done',job['message'])
         self.assertTrue(all(v in ('done','skipped') for v in job['steps'].values()))
-        self.assertEqual(sorted(self.tasks.values()),['Cảm ơn mọi người','Xin chào'])
+        self.assertEqual(list(self.tasks.values()),['Xin chào.\nCảm ơn mọi người.'])   # timestamp mode: ONE ai33 file
         out=self.data/'dub'/job['id']/'dubbed.mp4';info=dubbing.probe(out)
         self.assertAlmostEqual(info['duration'],4,delta=.15);self.assertIsNotNone(info['audio'])
-        self.assertGreater(job['groups'][0]['tempo'],1)
+        self.assertTrue(all(g.get('file') for g in job['groups']));self.assertAlmostEqual(sum(g['clip_seconds'] for g in job['groups']),2.2,delta=.05)
         saved=Path(job['outputs']['saved_path']);self.assertTrue(saved.is_file());self.assertTrue(saved.with_suffix('.srt').is_file())
         with wave.open(str(self.data/'dub'/job['id']/'voice.wav')) as w:self.assertAlmostEqual(w.getnframes()/w.getframerate(),4,delta=.01)
-        # editing one line re-voices only that line
+        # editing a line re-voices the file once (still one task)
         self.store.edit_lines(job['id'],[dict(i=1,vi='Cảm ơn')])
-        self.assertTrue(job['groups'][0].get('file'));self.assertFalse(job['groups'][1].get('file'))
         self.store.process(job,dict(openai='sk-test',ai33='k'),threading.Event())
-        self.assertEqual(job['state'],'done');self.assertEqual(len(self.tasks),3)
+        self.assertEqual(job['state'],'done');self.assertEqual(list(self.tasks.values())[1:],['Xin chào.\nCảm ơn.'])
 
     def test_soft_subtitles_remove_background_and_editor_handoff(self):
         job=self.job(subtitles='soft',background='remove',review=False,mode='lines')
@@ -375,6 +374,14 @@ class DemucsTests(PipelineBase):
         dubbing._demucs.clear()
 
 
+class OneFileTimestampTests(unittest.TestCase):
+    def test_one_voice_file_is_cut_at_the_pauses_nearest_each_sentence(self):
+        # three sentences of similar length; the short 0.1 s breath at 1.95 s is not taken as a sentence break
+        self.assertEqual(dubbing.split_voice([(1.0,1.4),(1.9,2.0),(3.0,3.5)],[3,3,3],4.5),[(0.0,1.0),(1.4,3.0),(3.5,4.5)])
+        self.assertEqual(dubbing.split_voice([],[1,1],2),[(0.0,1.0),(1.0,2)])   # no pauses: by length
+        self.assertEqual(dubbing.split_voice([(1,1.2)],[1],3),[(0.0,3)])
+
+
 class Ai33DubbingTests(PipelineBase):
     def test_ai33_timestamp_dubbing_uses_the_replacement_voice_and_srt(self):
         sent={}
@@ -397,9 +404,11 @@ class Ai33DubbingTests(PipelineBase):
         self.assertTrue((self.data/'dub'/job['id']/'background.wav').is_file())
 
     def test_ai33_mode_needs_no_openai_key_and_rejects_kokoro(self):
-        with mock.patch.object(self.store,'enqueue'):pass
-        key=self.store.create(dict(video_ids=[self.vid],options=dict(voice_id='edge_vi-VN-HoaiMyNeural',mode='ai33'),ai33_key='k'))[0]
-        self.assertTrue(key)
+        # the real enqueue check runs (no OpenAI key needed), the worker is kept asleep
+        with mock.patch.object(self.store.wake,'set'),mock.patch.object(dubbing,'openai_key',return_value=''):
+            key=self.store.create(dict(video_ids=[self.vid],options=dict(voice_id='edge_vi-VN-HoaiMyNeural',mode='ai33'),ai33_key='k'))[0]
+            with self.store.lock:self.store.queue.clear()
+        self.assertEqual(self.store.load(key)['state'],'queued')
         with self.assertRaises(ValueError):dubbing.ai33_audio.create_dubbing('k',b'x',voice_id='kokoro_af_bella')
 
 

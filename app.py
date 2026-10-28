@@ -56,6 +56,40 @@ def keep_days():
     except ValueError:return 30
 
 
+VIDEO_EXT=('.mp4','.mov','.m4v','.mkv','.webm','.avi','.flv','.ts')
+
+
+def link_or_copy(src,target):
+    """Bring a file from this computer into the app without uploading: a hard link is instant and takes no extra
+    space (same drive, NTFS/ext4); on another drive the file is copied disk to disk. The original is never changed
+    and deleting it from the app only removes the link."""
+    try:
+        os.link(src,target);return 'link'
+    except OSError:
+        shutil.copyfile(src,target);return 'copy'
+
+
+def local_file(raw,kinds):
+    path=raw.get('path') if isinstance(raw,dict) else None
+    if not isinstance(path,str) or not 0<len(path)<=1000:raise ValueError('Đường dẫn file không hợp lệ.')
+    src=Path(path)
+    if not src.is_absolute() or not src.is_file() or src.suffix.lower() not in kinds:raise ValueError('Không đọc được file: '+src.name)
+    return src
+
+
+def scan_folder(raw,kinds):
+    """Files of the given kinds in a folder chosen on this computer (sub-folders included), sorted by name."""
+    folder=raw.get('folder') if isinstance(raw,dict) else None
+    if not isinstance(folder,str) or not folder or not Path(folder).is_dir():raise ValueError('Thư mục không tồn tại.')
+    out=[]
+    for item in sorted(Path(folder).rglob('*'),key=lambda p:str(p).lower()):
+        if item.is_file() and item.suffix.lower() in kinds and not item.name.startswith('.'):
+            try:out.append(dict(path=str(item),name=item.name,size=item.stat().st_size))
+            except OSError:continue
+            if len(out)>=5000:break
+    return out
+
+
 def probe(path):
     data=media_engine.probe(path)
     if not data['has_video'] or data['duration']>media_engine.MAX_SECONDS:raise ValueError('Chọn video có hình ảnh, tối đa 30 phút.')
@@ -653,6 +687,14 @@ class Handler(BaseHTTPRequestHandler):
                     try:return self.respond(200,DUB.import_overlay(temp,name))
                     except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
                 finally:temp.unlink(missing_ok=True)
+            if path=='/overlays/delete-many':
+                raw=json.loads(self.rfile.read(size)) if 0<size<=64*1024 else {}
+                ids=[o['id'] for o in DUB.overlays()] if raw.get('all') is True else raw.get('ids')
+                if not isinstance(ids,list) or not all(isinstance(i,str) and PROJECT.fullmatch(i) for i in ids):raise ValueError('Danh sách overlay không hợp lệ.')
+                for i in ids:
+                    try:DUB.delete_overlay(i)
+                    except dubbing.DubError:pass
+                return self.respond(200,{'overlays':DUB.overlays(),'deleted':len(ids)})
             ov_delete=re.fullmatch(r'/overlays/([a-f0-9]{32})/delete',path)
             if ov_delete:
                 try:DUB.delete_overlay(ov_delete[1])
@@ -709,6 +751,34 @@ class Handler(BaseHTTPRequestHandler):
                     return self.respond(200,{'restarting':True,'launcher':os.environ.get('REVIEW_LAUNCHER')=='1'})
                 try:return self.respond(200,update.apply(log=lambda line:None))
                 except update.UpdateError as exc:return self.respond(502,{'error':str(exc)})
+            if path in ('/local/pick-folder','/local/scan','/local/import','/overlays/import-local'):
+                raw=json.loads(self.rfile.read(size)) if 0<size<=8192 else {}
+                if path=='/local/pick-folder':
+                    title='Chọn thư mục chứa video overlay' if raw.get('kind')=='overlay' else 'Chọn thư mục chứa video cần lồng tiếng'
+                    chosen=output_folder.pick(str(Path.home()),title)
+                    return self.respond(200,{'folder':chosen,'cancelled':not chosen})
+                if path=='/local/scan':
+                    kinds=dubbing.OVERLAY_TYPES if raw.get('kind')=='overlay' else VIDEO_EXT+('.srt',)
+                    return self.respond(200,{'files':scan_folder(raw,kinds)})
+                if path=='/overlays/import-local':
+                    src=local_file(raw,dubbing.OVERLAY_TYPES)
+                    temp=DATA/'overlays'/(uuid.uuid4().hex+'.upload')
+                    link_or_copy(src,temp)
+                    try:return self.respond(200,DUB.import_overlay(temp,src.name))
+                    except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
+                    finally:temp.unlink(missing_ok=True)
+                src=local_file(raw,VIDEO_EXT)
+                key=uuid.uuid4().hex;folder=DATA/key;folder.mkdir()
+                try:
+                    how=link_or_copy(src,folder/'source')
+                    metadata=probe(folder/'source')
+                    data=dict(id=key,name=asset_store.clean_name(src.name),url='/media/video/'+key,local=how,**metadata)
+                    (folder/'source.json').write_text(json.dumps(data,ensure_ascii=False),encoding='utf-8')
+                    srt=src.with_suffix('.srt')
+                    if srt.is_file() and srt.stat().st_size<=2*1024*1024:data={**data,'srt':srt.read_text(encoding='utf-8-sig',errors='replace'),'srt_name':srt.name}
+                except BaseException:
+                    shutil.rmtree(folder,ignore_errors=True);raise
+                return self.respond(200,data)
             if path == '/upload':
                 if not 0 < size <= 500 * 1024 * 1024:
                     return self.respond(413, {'error': 'Chọn video tối đa 500 MB.'})

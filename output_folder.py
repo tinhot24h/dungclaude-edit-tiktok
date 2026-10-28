@@ -14,7 +14,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 import tkinter as tk
 from tkinter import filedialog
 root=tk.Tk();root.withdraw();root.attributes("-topmost",True)
-print(filedialog.askdirectory(initialdir=sys.argv[1],title="Chọn thư mục lưu video xuất") or "")
+print(filedialog.askdirectory(initialdir=sys.argv[1],title=sys.argv[2] if len(sys.argv)>2 else "Chọn thư mục lưu video xuất") or "")
 '''
 
 
@@ -78,10 +78,10 @@ def deliver(path,source,name):
     return target
 
 
-def pick(initial):
+def pick(initial,title='Chọn thư mục lưu video xuất'):
     """Native folder dialog in a child process (Tk must own its own main thread)."""
     try:
-        run=subprocess.run([sys.executable,'-c',PICKER,initial],capture_output=True,timeout=600)
+        run=subprocess.run([sys.executable,'-c',PICKER,initial,title],capture_output=True,timeout=600)
     except (OSError,subprocess.SubprocessError):
         raise ValueError('Không mở được hộp chọn thư mục. Hãy dán đường dẫn vào ô thư mục.') from None
     if run.returncode:raise ValueError('Máy này chưa có hộp chọn thư mục (tkinter). Hãy dán đường dẫn vào ô thư mục.')

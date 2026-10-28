@@ -1,4 +1,4 @@
-REVIEW STUDIO 0.19.0 — VIDEO / DỊCH AI / ÂM THANH AI33
+REVIEW STUDIO 0.19.1 — VIDEO / DỊCH AI / ÂM THANH AI33
 
 CẬP NHẬT
 Từ bản 0.13: không cần tải lại ZIP. Trong ứng dụng bấm nút ⟳ (góc phải
@@ -222,6 +222,14 @@ Mở "⚙ Tùy chỉnh câu lệnh" để sửa quy tắc viết; bấm "Lưu th
 giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh gốc. Mẫu gốc đã
 cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
 Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
+
+NÂNG CẤP 0.19.1
+- "📂 Thư mục trên máy": chọn thư mục video/overlay, ứng dụng đọc ngay trên máy, không phải tải lên.
+  File SRT cùng tên video được dùng tự động.
+- "Theo timestamp (SRT)": chỉ tạo 1 file giọng ai33, app tự cắt theo từng câu và đặt đúng mốc thời gian.
+- Overlay trên khung xem trước phát, dừng, tua cùng video.
+- Mục ✂: Vị trí X/Y, căn 9 điểm, kéo video trên khung xem trước.
+- Xóa hàng loạt: video trong danh sách, overlay (chọn tất cả/xóa đang chọn/xóa toàn bộ), tác vụ (đã xong/lỗi/tất cả).
 
 NÂNG CẤP 0.19.0
 - Chỉ dùng trên Windows. Mở không hiện cmd: MO_REVIEW_STUDIO.vbs. Tạo lối tắt Desktop: TAO_LOI_TAT_DESKTOP.vbs.
