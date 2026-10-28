@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.17.9",
- "notes": "## Mới trong 0.17.9\n\n- **Overlay kiểu CapCut (bình luận live, khung, sticker… nền trong suốt):**\n  - Nhận file overlay tới **4 GB** (trước đây 300 MB). MOV ProRes 4444 dài 30–60 giây thường nặng 0.5–2 GB nên trước đây bị từ chối.\n  - Khi thêm overlay nền trong suốt, độ đục tự lên **100%** (nếu đang để mặc định 60%), nên chữ hiện rõ như trong CapCut.\n  - Đã kiểm tra đủ các dạng MOV ProRes 4444, QuickTime Animation, PNG trong MOV và WebM alpha: overlay phủ full khung phía trên video, phần trong suốt giữ nguyên video.",
+ "version": "0.18.0",
+ "notes": "## Mới trong 0.18.0\n\n- **Bố cục tab Lồng tiếng 3 cột:** thông số bên trái (rộng hơn) · **Hàng đợi** ở giữa · **Xem trước** bên phải (luôn hiện khi cuộn). Màn hình hẹp tự xếp lại.\n- **Lớp ảnh (image overlay), không bắt buộc**: một ảnh PNG/JPG/WebP đặt lên mọi video, ví dụ khối đen che chữ gốc, khung, logo, sticker. Đầy đủ thuộc tính:\n  - **Kích thước:** rộng/cao theo % khung, giữ hoặc bỏ tỷ lệ ảnh. Nút nhanh: *Vừa khung*, *Lấp đầy khung*, *Kéo giãn full khung*, *Cỡ gốc*.\n  - **Vị trí:** ngang/dọc theo %, lưới căn 9 điểm, **kéo ảnh ngay trên khung xem trước**, kéo góc dưới phải để đổi cỡ.\n  - **Xoay** (số thập phân, nút ±90°) và **lật** ngang/dọc.\n  - **Hòa trộn** kiểu CapCut: Mặc định, Làm tối, Nhân, Cháy màu, Làm sáng, Màn hình, Né màu, Cộng sáng, Lớp phủ, Ánh sáng dịu/tán xạ, Ánh sáng mạnh, Khác biệt, Loại trừ.\n  - **Độ đục** và **thứ tự lớp** (dưới hoặc trên overlay video). Khung xem trước hiện đúng như khi xuất.\n- **Xem trước:** cập nhật ngay khi đổi thông số, thêm **vùng an toàn TikTok** (thanh trên, cột nút bên phải, tên/mô tả phía dưới) và nút tắt tiếng.\n- **Cắt video theo giọng:** sau khi đã chỉnh tốc độ trong giới hạn mà video vẫn dài hơn giọng, video kết thúc sau câu cuối khoảng 0.4s. Có thể tắt ở mục 🎙. Giọng dài hơn video thì vẫn cắt giọng theo video như trước.",
  "files": {
   "demucs_runner.py": {
    "sha256": "426b21e67e115d21426f0ba38d0febe8707c0dd6336f7891396a59ec55500c0d",
@@ -28,8 +28,8 @@
    "size": 3948
   },
   "dub_ui.js": {
-   "sha256": "e90c30af30af3b92e96e97fcad6d8fc80b75eccef2e2b9538c019a5b7f40837a",
-   "size": 60413
+   "sha256": "9eddc87e0f721f9262e84bb70cf4c3c9c5fe21df932a8431bc1468682992ea5f",
+   "size": 72756
   },
   "layout_ui.js": {
    "sha256": "31474a69f54710df46c2483f9711e36d487d11437085b2b563f97b1f18ab711e",
@@ -48,12 +48,12 @@
    "size": 2135
   },
   "dubbing.py": {
-   "sha256": "82c0bede442203bb2cc340d8a4d05373ba00c7c94fe6cf837c99e8142297f699",
-   "size": 83220
+   "sha256": "1eba86d3ed52954dbbb7d24fa659add7bfcbdb44d3e034976e2293566b735af5",
+   "size": 89911
   },
   "tests/test_dubbing.py": {
-   "sha256": "e0353893c491dd3257d994f369ada31f7b9ece1c5b29cc3f05b5d99e64c59c4c",
-   "size": 26692
+   "sha256": "cb81f0740ab1044c2bfc7a4c15c62aa0372a4eeef38643c414d6dd9b3f6129f1",
+   "size": 29513
   },
   "image_ui.js": {
    "sha256": "b8e2a905501aedea84033a7c962b180251e06dc018e6133241f0310b474ed8e9",
@@ -124,8 +124,8 @@
    "size": 13961
   },
   "app.py": {
-   "sha256": "296db40ff31f4ebd7130f6aa18fbb56c06586275f7214ff1b0aa344278ecfba7",
-   "size": 49737
+   "sha256": "fe8be45436fff51a2ec557d617fdd28dbd3633a72cf4e6567254562860f4f8df",
+   "size": 51195
   },
   "ai33_audio.py": {
    "sha256": "3852255575e4c88a806b90fc01cd5df2551ff7e956f04f3547a87394aac4810b",
@@ -144,8 +144,8 @@
    "size": 25305
   },
   "studio.css": {
-   "sha256": "2040731b4dd5909a7197aa5dfbf8992aab1a49d49233924f7b57e9c947c9cc50",
-   "size": 78705
+   "sha256": "6e684c4b1ec68e9aefab498169d7c0f92f9040670a403acdbd9063d4de7fdc37",
+   "size": 81829
   },
   "studio.js": {
    "sha256": "3beaa5a97b9d5bfbe350504f3f8c2f64cf31f9f5926d08a0a4e3916e61a21df9",
@@ -164,7 +164,7 @@
    "size": 2609
   },
   "index.html": {
-   "sha256": "aede44a0c591b9fae48e62a56414e457520e642f9a64f79cb613399e679cc7ee",
+   "sha256": "6d18c553cbd850ccca0d63335a839dff97fff645bb83ff8f7428f5b61e657a6c",
    "size": 33084
   },
   "launch.py": {
@@ -184,15 +184,15 @@
    "size": 230
   },
   "HUONG_DAN.txt": {
-   "sha256": "84525c504a17d3ea3f257a06831b2b28b0320254f895a5456d35959949eee227",
-   "size": 34944
+   "sha256": "be3a2e415c3fa561f6e41736429f4bfac69b32d42a4a91fd8fc2957a5f66255b",
+   "size": 35611
   },
   "README.md": {
-   "sha256": "8f64138dcdc27bbcd71d93354c0cf4fd35d556d827217a2860dc22fc87b04e29",
-   "size": 48698
+   "sha256": "ddaf79b5a9928f7da7893de7fc0cde9db166c81eb747d160b61077d9bd1d7e86",
+   "size": 50332
   },
   "VERSION": {
-   "sha256": "e3c413040fb633e597e99fa704e3eecf709aee4c9421c740b2105bce7448654a",
+   "sha256": "f5e9382967c9833066a55808829f3750fc8e1181b170cafd222c37048bb49a77",
    "size": 7
   },
   ".gitignore": {

@@ -1,4 +1,4 @@
-REVIEW STUDIO 0.17.9 — VIDEO / DỊCH AI / ÂM THANH AI33
+REVIEW STUDIO 0.18.0 — VIDEO / DỊCH AI / ÂM THANH AI33
 
 CẬP NHẬT
 Từ bản 0.13: không cần tải lại ZIP. Trong ứng dụng bấm nút ⟳ (góc phải
@@ -228,6 +228,13 @@ Mở "⚙ Tùy chỉnh câu lệnh" để sửa quy tắc viết; bấm "Lưu th
 giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh gốc. Mẫu gốc đã
 cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
 Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
+
+NÂNG CẤP 0.18.0 — BỐ CỤC 3 CỘT, LỚP ẢNH, VÙNG AN TOÀN
+- Tab Lồng tiếng: thông số bên trái, hàng đợi ở giữa, xem trước bên phải.
+- Mục 🖼 Lớp ảnh (không bắt buộc): thêm ảnh PNG/JPG, chỉnh rộng/cao, giữ tỷ lệ, vừa/lấp đầy/kéo giãn khung,
+  căn 9 điểm, kéo trên khung xem trước, xoay, lật, chế độ hòa trộn, độ đục, nằm dưới/trên overlay video.
+- Xem trước: tick "Vùng an toàn TikTok" để thấy chỗ bị giao diện TikTok che.
+- Video dài hơn giọng (sau khi đã chỉnh tốc độ) thì cắt video sau câu cuối; tắt được ở mục 🎙.
 
 NÂNG CẤP 0.17.9 — OVERLAY KIỂU CAPCUT
 - Nhận file overlay tới 4 GB (MOV ProRes nền trong suốt thường rất nặng).

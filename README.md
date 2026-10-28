@@ -1,8 +1,20 @@
-# Review Studio 0.17.9
+# Review Studio 0.18.0
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.18.0
+
+- **Bố cục tab Lồng tiếng 3 cột:** thông số bên trái (rộng hơn) · **Hàng đợi** ở giữa · **Xem trước** bên phải (luôn hiện khi cuộn). Màn hình hẹp tự xếp lại.
+- **Lớp ảnh (image overlay), không bắt buộc**: một ảnh PNG/JPG/WebP đặt lên mọi video, ví dụ khối đen che chữ gốc, khung, logo, sticker. Đầy đủ thuộc tính:
+  - **Kích thước:** rộng/cao theo % khung, giữ hoặc bỏ tỷ lệ ảnh. Nút nhanh: *Vừa khung*, *Lấp đầy khung*, *Kéo giãn full khung*, *Cỡ gốc*.
+  - **Vị trí:** ngang/dọc theo %, lưới căn 9 điểm, **kéo ảnh ngay trên khung xem trước**, kéo góc dưới phải để đổi cỡ.
+  - **Xoay** (số thập phân, nút ±90°) và **lật** ngang/dọc.
+  - **Hòa trộn** kiểu CapCut: Mặc định, Làm tối, Nhân, Cháy màu, Làm sáng, Màn hình, Né màu, Cộng sáng, Lớp phủ, Ánh sáng dịu/tán xạ, Ánh sáng mạnh, Khác biệt, Loại trừ.
+  - **Độ đục** và **thứ tự lớp** (dưới hoặc trên overlay video). Khung xem trước hiện đúng như khi xuất.
+- **Xem trước:** cập nhật ngay khi đổi thông số, thêm **vùng an toàn TikTok** (thanh trên, cột nút bên phải, tên/mô tả phía dưới) và nút tắt tiếng.
+- **Cắt video theo giọng:** sau khi đã chỉnh tốc độ trong giới hạn mà video vẫn dài hơn giọng, video kết thúc sau câu cuối khoảng 0.4s. Có thể tắt ở mục 🎙. Giọng dài hơn video thì vẫn cắt giọng theo video như trước.
 
 ## Mới trong 0.17.9
 

@@ -250,7 +250,7 @@ class FrameOverlayTests(PipelineBase):
         self.assertEqual((sparkle['still'],logo['still']),(False,True));self.assertEqual(len(self.store.overlays()),2)
         with mock.patch.object(dubbing,'paragraph_request',return_value='Xin chào.'):
             job=self.job(background='remove',review=False,subtitles='file',frame_canvas='9:16',frame_fit='blur',frame_zoom=120,frame_x=10,frame_rotate=8,frame_flip='h',
-                         overlay=True,overlay_count=2,overlay_blend='screen',overlay_timing='random',overlay_opacity=50)
+                         overlay=True,overlay_count=2,overlay_blend='screen',overlay_timing='random',overlay_opacity=50,end_with_voice=False)
             self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
         self.assertEqual(job['state'],'done',job['message'])
         self.assertEqual(sorted(o['id'] for o in job['overlays']),sorted([sparkle['id'],logo['id']]))
@@ -275,7 +275,7 @@ class FrameOverlayTests(PipelineBase):
         preview=self.store.overlay_preview(mov);self.assertEqual(preview.name,mov['id']+'.preview.webm')
         self.assertEqual(dubbing.overlay_alpha(preview),(True,'vp9'))
         with mock.patch.object(dubbing,'paragraph_request',return_value='Xin chào.'):
-            job=self.job(background='remove',review=False,subtitles='none',overlay=True,overlay_opacity=100)  # default blend is screen
+            job=self.job(background='remove',review=False,subtitles='none',overlay=True,overlay_opacity=100,end_with_voice=False)  # default blend is screen
             self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
         self.assertEqual(job['state'],'done',job['message'])
         out=self.data/'dub'/job['id']/'dubbed.mp4';src=self.data/self.vid/'source'
@@ -285,6 +285,37 @@ class FrameOverlayTests(PipelineBase):
         corner,orig=pixel(out,4,4),pixel(src,4,4)
         self.assertTrue(all(abs(a-b)<25 for a,b in zip(corner,orig)),(corner,orig))   # transparent area leaves the video untouched
         self.assertNotIn('blend=all_mode=screen',(self.data/'dub'/job['id']/'export.ffgraph').read_text())
+
+    def test_image_layer_position_size_and_blend(self):
+        folder=self.data/self.vid
+        subprocess.run(['ffmpeg','-v','error','-y','-f','lavfi','-i','color=0x808080:s=180x320:r=30:d=4','-f','lavfi','-i','sine=d=4','-c:v','libx264','-pix_fmt','yuv420p','-c:a','aac','-shortest','-f','mp4',str(folder/'source')],check=True)
+        png=Path(self.tmp.name)/'box.png';subprocess.run(['ffmpeg','-v','error','-y','-f','lavfi','-i','color=black:s=100x100','-frames:v','1',str(png)],check=True)
+        img=self.store.import_image(png,'box.png');self.assertEqual((img['width'],img['height']),(100,100))
+        def render(**opts):
+            with mock.patch.object(dubbing,'paragraph_request',return_value='Xin chào.'):
+                job=self.job(background='remove',review=False,subtitles='none',image=True,image_id=img['id'],**opts)
+                self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
+            self.assertEqual(job['state'],'done',job['message'])
+            out=self.data/'dub'/job['id']/'dubbed.mp4'
+            px=lambda x,y:list(subprocess.run(['ffmpeg','-v','error','-ss','1','-i',str(out),'-frames:v','1','-vf',f'crop=2:2:{x}:{y},scale=1:1','-f','rawvideo','-pix_fmt','rgb24','-'],capture_output=True).stdout)
+            return px,job
+        # black box, 50% of the width, top-left quarter (centre at x=-25%, y=-25%)
+        px,job=render(image_w=50,image_x=-25,image_y=-25,end_with_voice=False)
+        self.assertLess(sum(px(45,80)),40);self.assertGreater(sum(px(135,240)),300)
+        # multiply with black → black; screen with black → unchanged grey; opacity 50% → half way
+        px,_=render(image_w=100,image_h=100,image_blend='screen',end_with_voice=False);self.assertGreater(sum(px(90,160)),300)
+        px,_=render(image_w=100,image_h=100,image_blend='multiply',end_with_voice=False);self.assertLess(sum(px(90,160)),40)
+        px,_=render(image_w=100,image_h=100,image_opacity=50,end_with_voice=False);self.assertTrue(150<sum(px(90,160))<250)
+        with self.assertRaises(dubbing.DubError):dubbing.options(dict(image_blend='x'))
+
+    def test_video_is_cut_where_the_voice_ends(self):
+        # 2.2 s voice from 0.2 s in a 4 s video → the video ends ~0.4 s after the last word
+        with mock.patch.object(dubbing,'paragraph_request',return_value='Ngắn.'):
+            job=self.job(background='remove',review=False,subtitles='none')
+            self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
+        self.assertEqual(job['state'],'done',job['message'])
+        self.assertAlmostEqual(job['output_duration'],.2+2.2+.4,delta=.15)
+        self.assertAlmostEqual(dubbing.probe(self.data/'dub'/job['id']/'dubbed.mp4')['duration'],job['output_duration'],delta=.15)
 
     def test_trim_start_and_end(self):
         with mock.patch.object(dubbing,'paragraph_request',return_value='Xin chào.'):
@@ -310,7 +341,7 @@ class FrameOverlayTests(PipelineBase):
         a=self.overlay('a.mp4',['-f','lavfi','-i','testsrc2=s=160x120:r=30:d=1','-pix_fmt','yuv420p'])
         b=self.overlay('b.mp4',['-f','lavfi','-i','testsrc2=s=160x120:r=30:d=1','-pix_fmt','yuv420p'])
         with mock.patch.object(dubbing,'paragraph_request',return_value='Xin chào.'):
-            job=self.job(background='remove',review=False,subtitles='none',overlay=True,overlay_timing='sequence')
+            job=self.job(background='remove',review=False,subtitles='none',overlay=True,overlay_timing='sequence',end_with_voice=False)
             self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
         self.assertEqual(job['state'],'done',job['message'])
         seq=job['overlays'][0]['sequence'];self.assertGreaterEqual(len(seq),4);self.assertTrue(set(seq)<={a['id'],b['id']})

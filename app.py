@@ -408,6 +408,14 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(200,{'images':images()})
         if path == '/secrets':
             return self.respond(200,secrets_store.status())
+        if path == '/dub/images':
+            return self.respond(200,{'images':DUB.images()})
+        dimg=re.fullmatch(r'/dub/images/([a-f0-9]{32})/file',path)
+        if dimg:
+            item=DUB.image(dimg[1])
+            if not item:return self.respond(404,{'error':'Không tìm thấy ảnh.'})
+            mime={'.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp'}[Path(item['file']).suffix.lower()]
+            return self.respond(200,(DUB.image_dir/item['file']).read_bytes(),mime)
         if path == '/overlays':
             return self.respond(200,{'overlays':DUB.overlays()})
         ov=re.fullmatch(r'/overlays/([a-f0-9]{32})/(file|thumb|preview)',path)
@@ -617,6 +625,20 @@ class Handler(BaseHTTPRequestHandler):
                 raw=json.loads(self.rfile.read(size)) if 0<size<=4096 else {}
                 if not isinstance(raw,dict):raise ValueError('Yêu cầu không hợp lệ.')
                 return self.respond(200,secrets_store.save(raw.get('provider'),raw.get('key')) if path.endswith('save') else secrets_store.delete(raw.get('provider')))
+            if path == '/dub/images/upload':
+                if not 0 < size <= 60*1024*1024:raise ValueError('Ảnh tối đa 60 MB.')
+                name=asset_store.clean_name(unquote(self.headers.get('X-Filename','image.png')),'image.png')
+                temp=DUB.image_dir/(uuid.uuid4().hex+'.upload')
+                try:
+                    temp.write_bytes(self.rfile.read(size))
+                    try:return self.respond(200,DUB.import_image(temp,name))
+                    except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
+                finally:temp.unlink(missing_ok=True)
+            dimg_del=re.fullmatch(r'/dub/images/([a-f0-9]{32})/delete',path)
+            if dimg_del:
+                try:DUB.delete_image(dimg_del[1])
+                except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
+                return self.respond(200,{'images':DUB.images()})
             if path == '/overlays/upload':
                 if not 0 < size <= 4*1024**3:raise ValueError('File overlay tối đa 4 GB.')
                 name=asset_store.clean_name(unquote(self.headers.get('X-Filename','overlay.mp4')),'overlay.mp4')

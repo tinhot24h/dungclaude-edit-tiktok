@@ -44,7 +44,9 @@ DEFAULTS = dict(language='zh', model=ai_translate.DEFAULT_MODEL, rate=4.2, prono
                 voice_id='', voice_speed=1.0, dictionary_id=None, max_tempo=1.1, min_tempo=0.98, video_speed_min=0.85, video_speed_max=1.2, background='duck', duck_level=12,
                 background_volume=100, voice_volume=100, subtitles='file', loudness='tiktok', review=False, encoder='cpu', instructions='', mode='paragraph', align='auto', style='review',
                 frame_canvas='source', frame_fit='cover', frame_zoom=100, frame_x=0, frame_y=0, frame_rotate=0, frame_flip='none', trim_start=0, trim_end=0,
-                overlay=False, overlay_ids=[], overlay_count=1, overlay_blend='screen', overlay_opacity=60, overlay_timing='loop')
+                overlay=False, overlay_ids=[], overlay_count=1, overlay_blend='screen', overlay_opacity=60, overlay_timing='loop', end_with_voice=True,
+                image=False, image_id='', image_x=0, image_y=0, image_w=60, image_h=0, image_rotate=0, image_flip='none', image_blend='normal',
+                image_opacity=100, image_layer='below')
 PRONOUNS = {'neutral': 'xưng hô trung tính, hạn chế đại từ', 'ban': 'gọi người xem là "bạn"', 'minh-ban': 'người nói xưng "mình", gọi người xem là "bạn"'}
 
 
@@ -69,13 +71,15 @@ def options(raw):
             raise DubError('Thông số không hợp lệ: ' + key)
         out[key] = float(v)
     for key, lo, hi in (('frame_zoom', 25, 400), ('frame_x', -100, 100), ('frame_y', -100, 100), ('frame_rotate', -180, 180), ('overlay_opacity', 0, 100), ('trim_start', 0, 120), ('trim_end', 0, 120), ('rate', 2.5, 7), ('voice_speed', .5, 1.5), ('max_tempo', 1, 1.6), ('min_tempo', .5, 1), ('video_speed_min', .25, 1), ('video_speed_max', 1, 4), ('duck_level', 0, 100),
-                        ('background_volume', 0, 200), ('voice_volume', 0, 300)):
+                        ('background_volume', 0, 200), ('voice_volume', 0, 300),
+                        ('image_x', -150, 150), ('image_y', -150, 150), ('image_w', 1, 400), ('image_h', 0, 400), ('image_rotate', -180, 180), ('image_opacity', 0, 100)):
         num(key, lo, hi)
     if raw.get('subtitles') == 'burn':  # burned-in subtitles were removed; old saved settings get the .srt file instead
         raw = dict(raw, subtitles='file')
     for key, allowed in (('language', ('zh', 'auto')), ('background', BACKGROUND), ('subtitles', SUBTITLES),
                          ('loudness', ('off', 'tiktok')), ('pronoun', tuple(PRONOUNS)), ('mode', ('paragraph', 'lines')), ('align', ('auto', 'voice', 'video')), ('style', tuple(ai_translate.STYLES)), ('frame_canvas', tuple(CANVAS)), ('frame_fit', ('cover', 'contain', 'blur')),
-                         ('frame_flip', ('none', 'h', 'v', 'hv')), ('overlay_blend', ('normal', 'screen', 'key')), ('overlay_timing', ('loop', 'sequence', 'random'))):
+                         ('frame_flip', ('none', 'h', 'v', 'hv')), ('overlay_blend', ('normal', 'screen', 'key')), ('overlay_timing', ('loop', 'sequence', 'random')),
+                         ('image_flip', ('none', 'h', 'v', 'hv')), ('image_blend', tuple(IMAGE_BLENDS)), ('image_layer', ('below', 'above'))):
         v = raw.get(key, DEFAULTS[key])
         if v not in allowed:
             raise DubError('Thông số không hợp lệ: ' + key)
@@ -88,7 +92,11 @@ def options(raw):
     if isinstance(count, bool) or not isinstance(count, int) or not 1 <= count <= 3:
         raise DubError('Số overlay mỗi video phải từ 1 đến 3.')
     out['overlay_count'] = count
-    for key in ('no_price', 'review', 'overlay'):
+    image_id = raw.get('image_id', '')
+    if not isinstance(image_id, str) or (image_id and not re.fullmatch('[a-f0-9]{32}', image_id)):
+        raise DubError('Ảnh overlay không hợp lệ.')
+    out['image_id'] = image_id
+    for key in ('no_price', 'review', 'overlay', 'end_with_voice', 'image'):
         v = raw.get(key, DEFAULTS[key])
         if not isinstance(v, bool):
             raise DubError('Thông số không hợp lệ: ' + key)
@@ -542,6 +550,37 @@ def frame_graph(settings, video, before, after):
 
 
 OVERLAY_TYPES = ('.mp4', '.mov', '.webm', '.mkv', '.m4v', '.gif', '.png', '.webp', '.jpg', '.jpeg')
+
+
+# CapCut-style blend modes for the image layer → FFmpeg blend modes (the browser preview uses the CSS equivalents)
+IMAGE_BLENDS = {'normal': None, 'darken': 'darken', 'multiply': 'multiply', 'burn': 'burn', 'lighten': 'lighten', 'screen': 'screen',
+                'dodge': 'dodge', 'addition': 'addition', 'overlay': 'overlay', 'softlight': 'softlight', 'hardlight': 'hardlight',
+                'difference': 'difference', 'exclusion': 'exclusion'}
+IMAGE_TYPES = ('.png', '.jpg', '.jpeg', '.webp')
+
+
+def image_chain(index, settings, W, H, base, duration):
+    """Graph lines putting the still image (input `index`, looped for `duration`) on [base]. Size is a share of the
+    frame (image_w % of width, image_h % of height; image_h 0 = keep the picture's ratio), centre offset image_x/y %
+    of the frame, then flip, rotate, opacity and blend mode. Blend modes use the picture's own alpha as the mask."""
+    w = max(2, round(W * settings['image_w'] / 100 / 2) * 2)
+    h = max(2, round(H * settings['image_h'] / 100 / 2) * 2) if settings['image_h'] else -2
+    chain = f'[{index}:v]format=rgba,scale={w}:{h}'
+    chain += {'none': '', 'h': ',hflip', 'v': ',vflip', 'hv': ',hflip,vflip'}[settings['image_flip']]
+    if settings['image_rotate']:
+        turn = math.radians(settings['image_rotate'])
+        chain += f',rotate={turn:.9f}:ow=rotw({turn:.9f}):oh=roth({turn:.9f}):c=none'
+    chain += f",colorchannelmixer=aa={settings['image_opacity'] / 100:.3f}[im]"
+    x = f"main_w*{.5 + settings['image_x'] / 100:.5f}-overlay_w/2"
+    y = f"main_h*{.5 + settings['image_y'] / 100:.5f}-overlay_h/2"
+    mode = IMAGE_BLENDS[settings['image_blend']]
+    if not mode:
+        return [chain, f'[{base}][im]overlay=x={x}:y={y}:format=auto:eof_action=repeat[img]'], 'img'
+    return [chain, f'color=c=black@0:s={W}x{H}:r=30:d={duration:.3f},format=rgba[icv]',
+            f'[icv][im]overlay=x={x}:y={y}:format=auto:eof_action=repeat[ilay]', '[ilay]split[ilc][ila]', '[ila]alphaextract[imask]',
+            f'[{base}]split[ib1][ib2]', '[ib1]format=gbrp[ibg]', '[ilc]format=gbrp[ilg]',
+            f'[ibg][ilg]blend=all_mode={mode}:shortest=1,format=rgba[ibl]', '[ibl][imask]alphamerge[ibm]',
+            '[ib2][ibm]overlay=0:0:format=auto:shortest=1[img]'], 'img'
 
 
 ALPHA_FORMATS = re.compile(r'^(yuva|rgba|bgra|argb|abgr|gbrap|ya|pal8)')
@@ -1203,10 +1242,16 @@ class Store:
         job['video_stretch'] = round(stretch, 4)
         job['output_duration'] = round(job['duration'] * stretch, 3)
         place = round(start * stretch, 3)
+        voice_end = place + g['clip_seconds'] / tempo - overflow
+        if settings['end_with_voice'] and voice_end + .5 < job['output_duration']:
+            # still longer than the voice after the speed limits: the video ends shortly after the last word
+            job['output_duration'] = round(voice_end + .4, 3)
         g.update(tempo=round(tempo, 4), overflow=round(overflow, 2), raw=g['file'].replace('.wav', '.pcm'), place=place)
-        job['warnings'] = [w for w in job['warnings'] if not w.startswith(('Giọng dài', 'Video được'))]
+        job['warnings'] = [w for w in job['warnings'] if not w.startswith(('Giọng dài', 'Video được', 'Video dài'))]
         if overflow > .05:
             job['warnings'].append(f'Giọng dài hơn video {overflow:.1f}s dù đã khớp trong giới hạn (giọng {tempo:.2f}×, video {1 / stretch:.2f}×); phần cuối giọng được cắt theo độ dài video. Rút gọn đoạn văn hoặc nới giới hạn tốc độ.')
+        if job['output_duration'] < round(job['duration'] * stretch, 3) - .05:
+            job['warnings'].append(f'Video dài hơn giọng đọc nên được cắt theo giọng: còn {job["output_duration"]:.1f}s.')
         if stretch != 1:
             job['warnings'].append(f'Video được {"làm chậm" if stretch > 1 else "tua nhanh"} cho khớp giọng đọc: dài {job["output_duration"]:.1f}s (gốc {job["duration"]:.1f}s).')
         length = g['clip_seconds'] / tempo - overflow
@@ -1245,7 +1290,10 @@ class Store:
         video = info['video']
         identity = frame_identity(settings)
         chosen = self.pick_overlays(job, duration)
-        copy = stretch == 1 and identity and not chosen and video.get('codec_name') == 'h264' and video.get('pix_fmt') in ('yuv420p', 'yuvj420p')
+        image = self.image(settings['image_id']) if settings['image'] else None
+        if settings['image'] and not image:
+            job['warnings'] = [w for w in job['warnings'] if not w.startswith('Lớp ảnh')] + ['Lớp ảnh đang bật nhưng chưa chọn ảnh nên video xuất không có lớp ảnh.']
+        copy = stretch == 1 and identity and not chosen and not image and video.get('codec_name') == 'h264' and video.get('pix_fmt') in ('yuv420p', 'yuvj420p')
         filters = not copy
         if filters:
             width, height = frame_size(settings, video)
@@ -1254,6 +1302,14 @@ class Store:
             lines[-1] = lines[-1][:-len('[vout]')] + '[framed]'
             graph.extend(lines)
             base, index = 'framed', 2 + has_bg + (subs == 'soft')
+            def add_image(base, index):
+                nonlocal args
+                args += ['-loop', '1', '-framerate', '30', '-t', f'{duration:.3f}', '-i', str(self.image_dir / image['file'])]
+                more, base = image_chain(index, settings, width, height, base, duration)
+                graph.extend(more)
+                return base, index + 1
+            if image and settings['image_layer'] == 'below':
+                base, index = add_image(base, index)
             for k, item in enumerate(chosen):
                 if settings['overlay_timing'] == 'sequence' and item.get('sequence'):
                     # joined clips: each normalised to the frame, concatenated, then cut to the video's length
@@ -1281,6 +1337,8 @@ class Store:
                 alpha = all(c and c.get('alpha') for c in clips)
                 more, base = overlay_chain(source, dict(item, k=k, alpha=alpha), width, height, settings, base, duration)
                 graph.extend(more)
+            if image and settings['image_layer'] == 'above':
+                base, index = add_image(base, index)
             graph.append(f'[{base}]format=yuv420p[vout]')
         (folder / 'export.ffgraph').write_text(';\n'.join(graph), encoding='utf-8')
         args += ['-filter_complex_script', 'export.ffgraph', '-map', '[vout]' if filters else '0:v:0', '-map', '[aout]']
@@ -1306,6 +1364,53 @@ class Store:
                     shutil.copyfile(folder / 'vi.srt', saved.with_suffix('.srt'))
         except (ValueError, OSError) as exc:
             job['warnings'].append(str(exc))
+
+    # ---- image layer (one picture placed on every dubbed video: a cover box, frame, logo, sticker…)
+    @property
+    def image_dir(self):
+        folder = self.root.parent / 'dub-images'
+        folder.mkdir(parents=True, exist_ok=True)
+        return folder
+
+    def images(self):
+        rows = []
+        for meta in self.image_dir.glob('*.json'):
+            try:
+                item = json.loads(meta.read_text(encoding='utf-8'))
+            except (OSError, ValueError):
+                continue
+            if isinstance(item, dict) and item.get('id') == meta.stem and (self.image_dir / item.get('file', '')).is_file():
+                rows.append(item)
+        return sorted(rows, key=lambda r: r.get('created', ''), reverse=True)
+
+    def image(self, key):
+        if not isinstance(key, str) or not re.fullmatch('[a-f0-9]{32}', key):
+            return None
+        return next((o for o in self.images() if o['id'] == key), None)
+
+    def import_image(self, upload, name):
+        ext = Path(str(name)).suffix.lower()
+        if ext not in IMAGE_TYPES:
+            raise DubError('Lớp ảnh cần là PNG, JPG hoặc WebP.')
+        key = uuid.uuid4().hex
+        target = self.image_dir / (key + ext)
+        shutil.move(str(upload), target)
+        info = probe(target)
+        if not info['video'] or not info['video'].get('width'):
+            target.unlink(missing_ok=True)
+            raise DubError('Không đọc được ảnh.')
+        item = dict(id=key, name=re.sub(r'[\x00-\x1f<>:"/\\|?*]', '_', Path(str(name)).name)[:120], file=target.name,
+                    width=int(info['video']['width']), height=int(info['video']['height']), alpha=overlay_alpha(target)[0],
+                    created=time.strftime('%Y-%m-%dT%H:%M:%S'))
+        (self.image_dir / (key + '.json')).write_text(json.dumps(item, ensure_ascii=False), encoding='utf-8')
+        return item
+
+    def delete_image(self, key):
+        item = self.image(key)
+        if not item:
+            raise DubError('Không tìm thấy ảnh.', 404)
+        for path in (self.image_dir / item['file'], self.image_dir / (key + '.json')):
+            path.unlink(missing_ok=True)
 
     # ---- overlay library (videos/GIF/PNG put on top of dubbed videos, picked at random per video)
     def overlays(self):
