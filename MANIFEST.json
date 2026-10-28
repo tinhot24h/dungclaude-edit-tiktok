@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.16",
- "notes": "## Mới trong 0.16\n\n- **Lồng tiếng thành 1 file giọng (mặc định):** dịch toàn bộ lời Trung thành **một đoạn văn tiếng Việt liền mạch**, gửi ai33 **một tác vụ**, nhận **một file giọng**.\n  - ai33 trả kèm phụ đề theo đúng giọng đọc, nên phụ đề Việt vẫn khớp thời gian.\n  - Muốn khớp khẩu hình hơn thì chọn chế độ cũ \"Từng câu theo thời gian\".\n- **Khớp thời lượng giọng ↔ video** (bước 04):\n  - Giữ tốc độ giọng, chỉ đọc nhanh khi giọng dài hơn video.\n  - **MP3 khớp video:** co giãn giọng (0,8× đến mức tối đa) để kết thúc cùng video.\n  - **Video khớp MP3:** tua nhanh hoặc làm chậm video (0,25–4×), nhạc nền đổi tốc độ theo.\n- **Chọn giọng ai33 ngay trên trang Lồng tiếng:** nút 🎙 Chọn giọng ai33 mở danh sách giọng (Edge, ElevenLabs, MiniMax, Vbee, Fish Audio, Kokoro, giọng clone), có tìm kiếm và lọc nam/nữ. Bấm ▶ nghe thử, bấm Chọn để dùng.\n- **Chạy tự động 1 bước:** bấm \"Bắt đầu\" là chạy hết từ nhận diện tới video xuất, không dừng giữa chừng để hỏi. Ô \"Dừng sau bước dịch để tự duyệt câu\" vẫn còn nếu bạn cần.\n- **Xem trước video đầu tiên:** trên hàng đợi hiện video đầu tiên đã chọn. Âm nền nghe như sau khi xử lý; khi chọn \"Chèn chữ lên video\" thì phụ đề mẫu hiện đúng vị trí và cỡ chữ lúc xuất.\n- **Khu duyệt câu dịch:** thanh tiêu đề luôn hiện trên cùng khi cuộn, gồm trạng thái, các bước và nút Tiếp tục / Dừng / Tải MP4. Ở chế độ đoạn văn: lời Trung bên trái, đoạn văn Việt sửa được bên phải (đếm số tiếng/giới hạn), phụ đề theo giọng bấm vào để tua.\n- **Mẫu văn phong dịch** (dùng chung trang Dịch AI và Lồng tiếng): Review sản phẩm, Gia dụng · nhà cửa, Trải nghiệm thực tế, Tin tức · thời sự, Chia sẻ mẹo, Giới thiệu sản phẩm, Làm đẹp · chăm sóc, Công nghệ · điện tử, Ẩm thực, Thời trang, Giải trí · hài hước. Mỗi mẫu có cách mở đầu (hook) riêng.\n- **Luôn áp dụng, không tắt được:** không nhắc giá, thương hiệu, khối lượng, kích thước, thể tích, công suất chính xác; chỉ dùng từ ngữ chung chung.",
+ "version": "0.16.1",
+ "notes": "## Mới trong 0.16.1\n\n- **Sửa lỗi \"ai33 đã tạo MP3 nhưng ứng dụng không tự lấy về\":**\n  - Hỏi trạng thái ai33 gặp lỗi tạm thời (HTTP 5xx, mất mạng, quá nhiều yêu cầu) thì ứng dụng chờ rồi hỏi lại, tối đa khoảng 10 phút, thay vì dừng ngay. Thông báo hiện số lần thử và mã lỗi HTTP.\n  - Nếu cách hỏi theo mã tác vụ không được, ứng dụng tìm tác vụ trong lịch sử ai33 để lấy link MP3.\n  - Chỉ dừng ngay khi key sai, hết credit hoặc bị từ chối quyền.\n  - Thêm nút **⬆ Dùng MP3 đã tạo** trên tác vụ bị lỗi hoặc đang dừng: tải file MP3 lấy từ lịch sử ai33 lên, ứng dụng căn giọng và xuất video luôn, không tạo giọng lại.",
  "files": {
   "update.py": {
    "sha256": "69dea002a0cb777dc61b4f48fa2b2f4046a8181c8b9db86d8f4361d8838cac7b",
@@ -24,8 +24,8 @@
    "size": 3948
   },
   "dub_ui.js": {
-   "sha256": "b599e33599d3e971025bc96eca01b7cfcf795d98bd88bb2a2a4c5aeb2a9188a0",
-   "size": 39069
+   "sha256": "950ceac4e8dee4395a39c407b1c44e09d2874e5ebf13980f21169ea8527dd7b5",
+   "size": 39959
   },
   "layout_ui.js": {
    "sha256": "31474a69f54710df46c2483f9711e36d487d11437085b2b563f97b1f18ab711e",
@@ -44,12 +44,12 @@
    "size": 2135
   },
   "dubbing.py": {
-   "sha256": "cd4f2a973a2096c696131bb1a98d29ab983aca7a0b6eff6185371d02a7340528",
-   "size": 58255
+   "sha256": "91ed19db25325d426cb9e1e2528952001931e0303245b8c14062cc0159fa4974",
+   "size": 61736
   },
   "tests/test_dubbing.py": {
-   "sha256": "8b71a76af075da0ff04df117d12a01b1b46aecffe552b3bb62bea9b4b3fe571a",
-   "size": 14159
+   "sha256": "730a46c73fdcb8b3c2bed47c6cacf478693a81f13226077eba5b102dae9866da",
+   "size": 16566
   },
   "image_ui.js": {
    "sha256": "b8e2a905501aedea84033a7c962b180251e06dc018e6133241f0310b474ed8e9",
@@ -120,12 +120,12 @@
    "size": 13961
   },
   "app.py": {
-   "sha256": "75376b62e01d4806cd3d02f60565d1c1d2931af74d09681911711af3071aae4b",
-   "size": 46062
+   "sha256": "107f0564b0ff6c839c6bb87eb92718a7225e6233637622a3876a26c30218ce50",
+   "size": 47080
   },
   "ai33_audio.py": {
-   "sha256": "839b8badc118eb53d371d115fa1bca7426fef696bda789751199c5496b730807",
-   "size": 22623
+   "sha256": "3852255575e4c88a806b90fc01cd5df2551ff7e956f04f3547a87394aac4810b",
+   "size": 23838
   },
   "audio_files.py": {
    "sha256": "0a9bdf3f385a5a9627172e2930bcbd0482d59a3cf73aaae40714a54da9eed654",
@@ -160,8 +160,8 @@
    "size": 2609
   },
   "index.html": {
-   "sha256": "4039e35a6abc9b2a46c94426644ced987230cdc33c3c723762c3142b737cfb17",
-   "size": 33080
+   "sha256": "4591d778af7c08ff8c4fa60cebeb5b97c0e9bdd12ce3eff4a86b1ad784d354b5",
+   "size": 33084
   },
   "launch.py": {
    "sha256": "a493ab33e2db46235059df4460fd21a397ffd12880d85123d028cef9e2befa95",
@@ -180,16 +180,16 @@
    "size": 230
   },
   "HUONG_DAN.txt": {
-   "sha256": "a3da7906a4088e0426a9d57bbe998002e1e766dfadd6bbf4358d234993aab076",
-   "size": 27759
+   "sha256": "23d152f0b6adf3363b5e10d4737d3fc2369c5408349f7ea56739addd5c9921d0",
+   "size": 28558
   },
   "README.md": {
-   "sha256": "fbd8245a12f1af5132e7a4942a57319dc7cd60a4bae50c0d49fd9d7328fe88ec",
-   "size": 38801
+   "sha256": "11f77d763062b7012a43bd700d611622bde42da6b1615c13ae16d455f763d40c",
+   "size": 39596
   },
   "VERSION": {
-   "sha256": "29d707027ad99264288617ab4835a3704d6c95f9398523c5494206c942be6f11",
-   "size": 5
+   "sha256": "e5450fc0d13e2cf93045cd5bce133d536637a2e7f2bb202d30b39eca8036e313",
+   "size": 7
   },
   ".gitignore": {
    "sha256": "0f1a2bf5537910f90c1fe49597d40905cc011718e7987d530dbc236951f7e0d7",

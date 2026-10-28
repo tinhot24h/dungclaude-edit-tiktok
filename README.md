@@ -1,8 +1,16 @@
-# Review Studio 0.16
+# Review Studio 0.16.1
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.16.1
+
+- **Sửa lỗi "ai33 đã tạo MP3 nhưng ứng dụng không tự lấy về":**
+  - Hỏi trạng thái ai33 gặp lỗi tạm thời (HTTP 5xx, mất mạng, quá nhiều yêu cầu) thì ứng dụng chờ rồi hỏi lại, tối đa khoảng 10 phút, thay vì dừng ngay. Thông báo hiện số lần thử và mã lỗi HTTP.
+  - Nếu cách hỏi theo mã tác vụ không được, ứng dụng tìm tác vụ trong lịch sử ai33 để lấy link MP3.
+  - Chỉ dừng ngay khi key sai, hết credit hoặc bị từ chối quyền.
+  - Thêm nút **⬆ Dùng MP3 đã tạo** trên tác vụ bị lỗi hoặc đang dừng: tải file MP3 lấy từ lịch sử ai33 lên, ứng dụng căn giọng và xuất video luôn, không tạo giọng lại.
 
 ## Mới trong 0.16
 

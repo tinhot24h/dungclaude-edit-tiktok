@@ -464,7 +464,7 @@ class Store:
 
     def summary(self, job):
         return {k: job.get(k) for k in ('id', 'name', 'state', 'step', 'steps', 'progress', 'message', 'created', 'outputs', 'warnings', 'duration', 'video_id')} | \
-               dict(lines=len(job.get('segments') or []), translated=len(job.get('segments') or []) if job.get('paragraph') else sum(1 for s in job.get('segments') or [] if s.get('vi')))
+               dict(mode=job.get('options', {}).get('mode', 'lines'), lines=len(job.get('segments') or []), translated=len(job.get('segments') or []) if job.get('paragraph') else sum(1 for s in job.get('segments') or [] if s.get('vi')))
 
     def jobs(self):
         rows = []
@@ -875,9 +875,11 @@ class Store:
                         raise
                     self.save(job)
                 flight.append(todo.pop(0))
-            time.sleep(1.5)
+            time.sleep(3)
             for g in list(flight):
-                detail = ai33_audio.get_task(dict(api_key=keys['ai33'], task_id=g['task_id']))
+                detail = self.poll(g, keys, job)
+                if detail is None:
+                    continue
                 if detail['status'] == 'error':
                     raise DubError(f'ai33.pro báo lỗi khi tạo giọng câu "{g["text"][:40]}…". Kiểm tra credit/giọng rồi bấm Tiếp tục.')
                 if detail['status'] == 'done' and detail['audio_url']:
@@ -901,8 +903,73 @@ class Store:
                     self.save(job)
             ready = sum(1 for g in groups if g.get('file'))
             self.progress(job, 'tts', ready / len(groups), 'Đang tạo một file giọng Việt ai33…' if paragraph else f'Đang tạo giọng Việt ai33 ({ready}/{len(groups)} câu)…')
+            retrying = next((g for g in flight if g.get('poll_errors')), None)
+            if retrying:
+                job['message'] = retrying['poll_message']
             if time.monotonic() - waited > 900:
                 raise DubError('ai33.pro chưa trả giọng sau 15 phút. Bấm Tiếp tục để kiểm tra lại (không tạo trùng).')
+
+    def poll(self, g, keys, job):
+        """Task status; a failing /v1/task call falls back to the task history, transient errors are retried
+        (only bad key / credit / permission stop the job)."""
+        raw = dict(api_key=keys['ai33'], task_id=g['task_id'])
+        try:
+            detail = ai33_audio.get_task(raw)
+            g.pop('poll_errors', None)
+            return detail
+        except ai33_audio.AudioError as exc:
+            if exc.status in (400, 401, 402, 403):
+                raise
+            error = str(exc)
+        try:
+            found = ai33_audio.find_task(raw, g['task_id'])
+            if found:
+                g.pop('poll_errors', None)
+                return found
+        except ai33_audio.AudioError as exc:
+            error = str(exc)
+        g['poll_errors'] = g.get('poll_errors', 0) + 1
+        g['poll_message'] = f'ai33 chưa trả kết quả, đang thử lại (lần {g["poll_errors"]})… {error}'
+        if g['poll_errors'] >= 200:  # ~10 minutes of failures in a row
+            raise DubError(error + ' Nếu ai33 đã tạo xong MP3, bấm "⬆ Dùng MP3 đã tạo" để tải file lên và xuất tiếp.')
+        return None
+
+    def use_voice(self, key, upload):
+        """Use an MP3 the user downloaded from ai33 (or any voice file) as the single paragraph voice."""
+        job = self.load(key)
+        if job['state'] in ('running', 'queued'):
+            raise DubError('Dừng tác vụ trước khi thay file giọng.')
+        if job['options']['mode'] != 'paragraph':
+            raise DubError('Tải file giọng chỉ dùng cho chế độ "Đoạn văn liền · 1 file giọng".')
+        if not job['segments']:
+            raise DubError('Tác vụ chưa có lời thoại để căn giọng.')
+        folder = self.path(key)
+        try:
+            run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(upload), '-map', '0:a:0', '-vn', '-ac', '1', '-ar', str(VOICE_RATE), str(folder / 'g0.wav')])
+        except DubError:
+            raise DubError('Không đọc được file âm thanh. Dùng MP3/WAV/M4A hợp lệ.') from None
+        with wave.open(str(folder / 'g0.wav')) as w:
+            seconds = round(w.getnframes() / w.getframerate(), 3)
+        if seconds < .3:
+            raise DubError('File giọng quá ngắn.')
+        old = (job.get('groups') or [{}])[0]
+        job['groups'] = [dict(start=paragraph_window(job)[0], end=job['duration'], text=job.get('paragraph') or old.get('text', ''),
+                              lines=list(range(len(job['segments']))), task_id=old.get('task_id', ''), file='g0.wav', clip_seconds=seconds, uploaded=True)]
+        if not job.get('paragraph'):
+            job['paragraph'] = ''
+        for s in ('asr', 'translate'):
+            if job['steps'][s] not in ('done', 'skipped'):
+                job['steps'][s] = 'skipped'
+        job['steps']['tts'] = 'done'
+        for s in ('mix', 'export'):
+            job['steps'][s] = 'pending'
+        job['outputs'] = {}
+        job['review_passed'] = True
+        job['state'] = 'paused'
+        job['message'] = f'Đã nhận file giọng ({seconds:.1f}s). Đang xuất video…'
+        self.save(job)
+        self.enqueue(key, {})
+        return self.load(key)
 
     def place_paragraph(self, job, folder, cancel):
         """Put the single voice file at the first spoken line and make it end with the video.

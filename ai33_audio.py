@@ -57,7 +57,7 @@ def json_request(path,key,data=None,content_type=None,method=None):
                   403:('ai33.pro từ chối key hoặc quyền truy cập tài nguyên.',403),
                   404:('Không tìm thấy tài nguyên ai33.pro. Kiểm tra giọng hoặc task_id.',404),
                   429:('ai33.pro báo quá nhiều yêu cầu. Chờ rồi kiểm tra lại, không tạo thêm tác vụ trùng.',429)}
-        message,status=messages.get(exc.code,('Dịch vụ ai33.pro đang gặp lỗi. Kiểm tra lịch sử tác vụ trước khi gửi lại yêu cầu tạo audio.',502))
+        message,status=messages.get(exc.code,(f'Dịch vụ ai33.pro đang gặp lỗi (HTTP {exc.code}). Kiểm tra lịch sử tác vụ trước khi gửi lại yêu cầu tạo audio.',502))
         raise AudioError(message,status) from None
     except (error.URLError,socket.timeout,TimeoutError):
         message=('Không kết nối được ai33.pro hoặc hết thời gian chờ. Nếu vừa tạo audio, tác vụ có thể đã được nhận; '
@@ -238,6 +238,27 @@ def list_tasks(raw):
                           text=str(row.get('text',''))[:1000],name=str(row.get('file_name') or md.get('file_name') or row.get('name') or '')[:120],
                           audio_available=bool((row.get('metadata') or {}).get('audio_url')) if isinstance(row.get('metadata'),dict) else False))
     return dict(tasks=tasks,page=page,has_more=isinstance(result.get('total'),int) and page*20<result['total'])
+
+
+def find_task(raw,task,pages=5):
+    """Look a task up in the history (/v1/tasks) — a fallback when /v1/task/<id> fails although the audio exists."""
+    key=api_key(raw)
+    for page in range(1,pages+1):
+        result=json_request('/v1/tasks?'+parse.urlencode(dict(page=page,limit=20)),key,content_type='application/json')
+        rows=result.get('data') if isinstance(result.get('data'),list) else []
+        for row in rows:
+            if isinstance(row,dict) and row.get('id')==task:
+                md=row.get('metadata') if isinstance(row.get('metadata'),dict) else {}
+                audio=md.get('audio_url') or ''
+                try:audio=https_url(audio) if audio else ''
+                except AudioError:audio=''
+                srt=md.get('srt_url') or ''
+                try:srt=https_url(srt) if srt else ''
+                except AudioError:srt=''
+                status=row.get('status') if row.get('status') in ('doing','done','error') else ('done' if audio else 'doing')
+                return dict(task_id=task,status=status,audio_url=audio,srt_url=srt)
+        if not rows or not (isinstance(result.get('total'),int) and page*20<result['total']):break
+    return None
 
 
 def common_fields(raw,fields):

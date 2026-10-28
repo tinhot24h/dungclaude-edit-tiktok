@@ -182,6 +182,41 @@ class PromptTests(unittest.TestCase):
         self.assertIn(ai_translate.STRICT,ai_translate.system(dict(rules='x')))
 
 
+class RecoveryTests(PipelineBase):
+    def test_failed_task_lookup_falls_back_to_history_and_retries(self):
+        calls=[]
+        def get_task(raw):
+            calls.append(1)
+            raise dubbing.ai33_audio.AudioError('Dịch vụ ai33.pro đang gặp lỗi (HTTP 500).',502)
+        found=iter([None,dict(status='done',audio_url='https://cdn.example/a.mp3',srt_url='')])
+        with mock.patch.object(dubbing,'paragraph_request',return_value='Xin chào.'),mock.patch.object(dubbing.ai33_audio,'get_task',side_effect=get_task),\
+             mock.patch.object(dubbing.ai33_audio,'find_task',side_effect=lambda raw,task:next(found)):
+            job=self.job(background='remove',subtitles='none')
+            self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
+        self.assertEqual(job['state'],'done',job['message']);self.assertEqual(len(calls),2)
+
+    def test_bad_key_still_stops(self):
+        with mock.patch.object(dubbing,'paragraph_request',return_value='Xin chào.'),\
+             mock.patch.object(dubbing.ai33_audio,'get_task',side_effect=dubbing.ai33_audio.AudioError('key sai',401)):
+            job=self.job(background='remove',subtitles='none')
+            with self.assertRaises(dubbing.ai33_audio.AudioError):self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
+
+    def test_uploaded_mp3_skips_tts_and_exports(self):
+        with mock.patch.object(dubbing,'paragraph_request',return_value='Xin chào.'),\
+             mock.patch.object(dubbing.ai33_audio,'get_task',side_effect=dubbing.ai33_audio.AudioError('lỗi',502)),\
+             mock.patch.object(dubbing.ai33_audio,'find_task',return_value=None),mock.patch.object(dubbing.Store,'poll',side_effect=dubbing.DubError('ai33 lỗi')):
+            job=self.job(background='remove',subtitles='file')
+            with self.assertRaises(dubbing.DubError):self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
+        job['state']='error'
+        with mock.patch.object(self.store,'enqueue') as queued:
+            self.store.use_voice(job['id'],self.voice)
+        queued.assert_called_once()
+        self.assertEqual((job['steps']['tts'],job['groups'][0]['uploaded']),('done',True))
+        self.store.process(job,{},threading.Event())
+        self.assertEqual(job['state'],'done',job['message'])
+        self.assertTrue((self.data/'dub'/job['id']/'dubbed.mp4').is_file())
+
+
 class StyleTests(unittest.TestCase):
     def test_style_presets_reach_both_prompts_and_strict_rule_is_always_on(self):
         import ai_translate

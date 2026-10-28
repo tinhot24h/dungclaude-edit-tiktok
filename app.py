@@ -600,6 +600,21 @@ class Handler(BaseHTTPRequestHandler):
                 raw=json.loads(self.rfile.read(size)) if 0<size<=4096 else {}
                 if not isinstance(raw,dict):raise ValueError('Yêu cầu không hợp lệ.')
                 return self.respond(200,secrets_store.save(raw.get('provider'),raw.get('key')) if path.endswith('save') else secrets_store.delete(raw.get('provider')))
+            voice=re.fullmatch(r'/dub/([a-f0-9]{32})/voice',path)
+            if voice:
+                if not 0 < size <= 100*1024*1024:raise ValueError('File giọng tối đa 100 MB.')
+                if not (DATA/'dub'/voice[1]/'job.json').is_file():return self.respond(404,{'error':'Không tìm thấy tác vụ lồng tiếng.'})
+                temp=DATA/'dub'/voice[1]/'upload.voice'
+                try:
+                    with temp.open('wb') as out:
+                        remaining=size
+                        while remaining:
+                            chunk=self.rfile.read(min(1024*1024,remaining))
+                            if not chunk:raise ValueError('Tải file giọng bị gián đoạn.')
+                            out.write(chunk);remaining-=len(chunk)
+                    try:return self.respond(200,DUB.use_voice(voice[1],temp))
+                    except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
+                finally:temp.unlink(missing_ok=True)
             dub=re.fullmatch(r'/dub/(start|([a-f0-9]{32})/(continue|lines|cancel|delete|editor))',path)
             if dub:
                 if not 0 <= size <= 4*1024*1024:raise ValueError('Yêu cầu lồng tiếng quá lớn.')
