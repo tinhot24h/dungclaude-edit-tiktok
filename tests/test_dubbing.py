@@ -225,6 +225,48 @@ class RecoveryTests(PipelineBase):
         self.assertTrue((self.data/'dub'/job['id']/'dubbed.mp4').is_file())
 
 
+class FrameOverlayTests(PipelineBase):
+    def overlay(self,name,source_args):
+        path=Path(self.tmp.name)/name;subprocess.run(['ffmpeg','-v','error','-y',*source_args,str(path)],check=True)
+        return self.store.import_overlay(path,name)
+
+    def test_frame_and_random_overlays_render(self):
+        sparkle=self.overlay('sparkle.mp4',['-f','lavfi','-i','testsrc2=s=320x240:r=30:d=1.5','-pix_fmt','yuv420p'])
+        logo=self.overlay('logo.png',['-f','lavfi','-i','color=c=red:s=64x64:d=0.04','-frames:v','1'])
+        self.assertEqual((sparkle['still'],logo['still']),(False,True));self.assertEqual(len(self.store.overlays()),2)
+        with mock.patch.object(dubbing,'paragraph_request',return_value='Xin chào.'):
+            job=self.job(background='remove',review=False,subtitles='burn',frame_canvas='9:16',frame_fit='blur',frame_zoom=120,frame_x=10,frame_rotate=8,frame_flip='h',
+                         overlay=True,overlay_count=2,overlay_blend='screen',overlay_timing='random',overlay_opacity=50)
+            self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
+        self.assertEqual(job['state'],'done',job['message'])
+        self.assertEqual(sorted(o['id'] for o in job['overlays']),sorted([sparkle['id'],logo['id']]))
+        out=self.data/'dub'/job['id']/'dubbed.mp4';info=dubbing.probe(out)
+        self.assertEqual((info['video']['width'],info['video']['height']),(1080,1920));self.assertAlmostEqual(info['duration'],4,delta=.2)
+        graph=(self.data/'dub'/job['id']/'export.ffgraph').read_text()
+        for part in ('hflip','boxblur','rotate=','blend=all_mode=screen','tpad=start_duration','drawtext'):self.assertIn(part,graph)
+        # normal blend + loop, re-export keeps the same random choice
+        first=list(job['overlays'])
+        job['options']=dubbing.options({**job['options'],'overlay_blend':'normal'});job['steps']['export']='pending'
+        self.store.export(job,self.data/'dub'/job['id'],self.data/self.vid/'source',dubbing.probe(self.data/self.vid/'source'),threading.Event())
+        self.assertEqual(job['overlays'],first);self.assertIn('colorchannelmixer=aa=0.500',(self.data/'dub'/job['id']/'export.ffgraph').read_text())
+        self.store.delete_overlay(logo['id']);self.assertEqual(len(self.store.overlays()),1)
+        with self.assertRaises(dubbing.DubError):self.store.import_overlay(Path(self.tmp.name)/'x.txt','x.txt')
+
+    def test_trim_start_and_end(self):
+        with mock.patch.object(dubbing,'paragraph_request',return_value='Xin chào.'):
+            job=self.job(background='remove',review=False,subtitles='none',trim_start=.5,trim_end=.5)
+            self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
+        self.assertEqual(job['state'],'done',job['message'])
+        self.assertAlmostEqual(job['duration'],3,delta=.1)
+        self.assertAlmostEqual(dubbing.probe(self.data/'dub'/job['id']/'dubbed.mp4')['duration'],3,delta=.15)
+        with self.assertRaises(dubbing.DubError):dubbing.options(dict(trim_start=-1))
+
+    def test_overlay_on_with_empty_library_explains(self):
+        with mock.patch.object(dubbing,'paragraph_request',return_value='Xin chào.'):
+            job=self.job(background='remove',review=False,subtitles='none',overlay=True)
+            with self.assertRaises(dubbing.DubError):self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
+
+
 class StyleTests(unittest.TestCase):
     def test_style_presets_reach_both_prompts_and_strict_rule_is_always_on(self):
         import ai_translate

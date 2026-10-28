@@ -11,6 +11,7 @@ Jobs run one at a time in a worker thread. Their state (segments, translations, 
 """
 import json
 import math
+import random
 import os
 import re
 import shutil
@@ -33,13 +34,17 @@ from fonts import FONTS, wrap
 OPENAI = os.environ.get('REVIEW_OPENAI_BASE', 'https://api.openai.com/v1/').rstrip('/') + '/'
 STEPS = ('asr', 'translate', 'separate', 'tts', 'mix', 'export')
 WEIGHTS = dict(asr=15, translate=10, separate=15, tts=40, mix=10, export=10)
+# Output frame for the dubbed video; 'source' keeps the original size (even-rounded).
+CANVAS = {'source': None, '9:16': (1080, 1920), '1:1': (1080, 1080), '4:5': (1080, 1350), '16:9': (1920, 1080)}
 BACKGROUND = ('duck', 'center', 'demucs', 'remove', 'keep')
 SUBTITLES = ('none', 'file', 'soft', 'burn')
 VOICE_RATE = 24000
 MAX_LINES = 600
 DEFAULTS = dict(language='zh', model=ai_translate.DEFAULT_MODEL, rate=4.2, pronoun='neutral', notes='', no_price=True,
                 voice_id='', voice_speed=1.0, dictionary_id=None, max_tempo=1.3, background='duck', duck_level=12,
-                background_volume=100, voice_volume=100, subtitles='file', loudness='tiktok', review=False, encoder='cpu', instructions='', mode='paragraph', align='auto', style='review')
+                background_volume=100, voice_volume=100, subtitles='file', loudness='tiktok', review=False, encoder='cpu', instructions='', mode='paragraph', align='auto', style='review',
+                frame_canvas='source', frame_fit='cover', frame_zoom=100, frame_x=0, frame_y=0, frame_rotate=0, frame_flip='none', trim_start=0, trim_end=0,
+                overlay=False, overlay_ids=[], overlay_count=1, overlay_blend='screen', overlay_opacity=60, overlay_timing='loop')
 PRONOUNS = {'neutral': 'xưng hô trung tính, hạn chế đại từ', 'ban': 'gọi người xem là "bạn"', 'minh-ban': 'người nói xưng "mình", gọi người xem là "bạn"'}
 
 
@@ -63,16 +68,25 @@ def options(raw):
         if isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) or not lo <= v <= hi:
             raise DubError('Thông số không hợp lệ: ' + key)
         out[key] = float(v)
-    for key, lo, hi in (('rate', 2.5, 7), ('voice_speed', .5, 1.5), ('max_tempo', 1, 1.6), ('duck_level', 0, 100),
+    for key, lo, hi in (('frame_zoom', 25, 400), ('frame_x', -100, 100), ('frame_y', -100, 100), ('frame_rotate', -180, 180), ('overlay_opacity', 0, 100), ('trim_start', 0, 120), ('trim_end', 0, 120), ('rate', 2.5, 7), ('voice_speed', .5, 1.5), ('max_tempo', 1, 1.6), ('duck_level', 0, 100),
                         ('background_volume', 0, 200), ('voice_volume', 0, 300)):
         num(key, lo, hi)
     for key, allowed in (('language', ('zh', 'auto')), ('background', BACKGROUND), ('subtitles', SUBTITLES),
-                         ('loudness', ('off', 'tiktok')), ('pronoun', tuple(PRONOUNS)), ('mode', ('paragraph', 'lines')), ('align', ('auto', 'voice', 'video')), ('style', tuple(ai_translate.STYLES))):
+                         ('loudness', ('off', 'tiktok')), ('pronoun', tuple(PRONOUNS)), ('mode', ('paragraph', 'lines')), ('align', ('auto', 'voice', 'video')), ('style', tuple(ai_translate.STYLES)), ('frame_canvas', tuple(CANVAS)), ('frame_fit', ('cover', 'contain', 'blur')),
+                         ('frame_flip', ('none', 'h', 'v', 'hv')), ('overlay_blend', ('normal', 'screen', 'key')), ('overlay_timing', ('loop', 'random'))):
         v = raw.get(key, DEFAULTS[key])
         if v not in allowed:
             raise DubError('Thông số không hợp lệ: ' + key)
         out[key] = v
-    for key in ('no_price', 'review'):
+    ids = raw.get('overlay_ids', [])
+    if not isinstance(ids, list) or len(ids) > 500 or not all(isinstance(i, str) and re.fullmatch('[a-f0-9]{32}', i) for i in ids):
+        raise DubError('Danh sách overlay không hợp lệ.')
+    out['overlay_ids'] = ids
+    count = raw.get('overlay_count', 1)
+    if isinstance(count, bool) or not isinstance(count, int) or not 1 <= count <= 3:
+        raise DubError('Số overlay mỗi video phải từ 1 đến 3.')
+    out['overlay_count'] = count
+    for key in ('no_price', 'review', 'overlay'):
         v = raw.get(key, DEFAULTS[key])
         if not isinstance(v, bool):
             raise DubError('Thông số không hợp lệ: ' + key)
@@ -414,6 +428,63 @@ def fit(groups, duration, max_tempo):
     return warnings
 
 
+def frame_size(settings, video):
+    w, h = int(video.get('width') or 720), int(video.get('height') or 1280)
+    return CANVAS.get(settings.get('frame_canvas', 'source')) or (w // 2 * 2, h // 2 * 2)
+
+
+def frame_identity(settings):
+    return (settings.get('frame_canvas', 'source') == 'source' and settings.get('frame_zoom', 100) == 100 and not settings.get('frame_x')
+            and not settings.get('frame_y') and not settings.get('frame_rotate') and settings.get('frame_flip', 'none') == 'none')
+
+
+def frame_graph(settings, video, before, after):
+    """[0:v:0] → [vout]: flip, fit into a box of canvas×zoom (cover crops, contain/blur pad), rotate the box about its
+    centre, place it at the offset on black or a blurred copy. Same order as the CSS preview, so both match."""
+    W, H = frame_size(settings, video)
+    tail = ','.join(after + ['format=yuv420p'])
+    pre = list(before) + ['hflip'] * ('h' in settings['frame_flip']) + ['vflip'] * ('v' in settings['frame_flip'])
+    if frame_identity(settings):
+        return ['[0:v:0]' + ','.join(pre + [tail]) + '[vout]'], (W, H)
+    z = settings['frame_zoom'] / 100
+    bw, bh = max(2, round(W * z / 2) * 2), max(2, round(H * z / 2) * 2)
+    fit = settings['frame_fit']
+    box = (f'scale={bw}:{bh}:force_original_aspect_ratio=increase,crop={bw}:{bh}' if fit == 'cover' else
+           f'scale={bw}:{bh}:force_original_aspect_ratio=decrease,format=rgba,pad={bw}:{bh}:(ow-iw)/2:(oh-ih)/2:color=black@0')
+    turn = math.radians(settings['frame_rotate'])
+    if turn:
+        box += f',format=rgba,rotate={turn:.9f}:ow=rotw({turn:.9f}):oh=roth({turn:.9f}):c=none'
+    lines = ['[0:v:0]' + ','.join(pre + ['setsar=1']) + (',split=2[fgsrc][bgsrc]' if fit == 'blur' else '[fgsrc]'), f'[fgsrc]{box}[fg]']
+    lines.append(f'[bgsrc]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},boxblur=24:2,setsar=1[bg]' if fit == 'blur'
+                 else f'color=c=black:s={W}x{H}:r=30,setsar=1[bg]')
+    dx, dy = round(settings['frame_x'] * W / 200), round(settings['frame_y'] * H / 200)
+    lines.append(f'[bg][fg]overlay=x=(main_w-overlay_w)/2+({dx}):y=(main_h-overlay_h)/2+({dy}):shortest=1:format=auto,{tail}[vout]')
+    return lines, (W, H)
+
+
+OVERLAY_TYPES = ('.mp4', '.mov', '.webm', '.mkv', '.m4v', '.gif', '.png', '.webp', '.jpg', '.jpeg')
+
+
+def overlay_chain(index, item, W, H, settings, base, duration):
+    """Graph lines putting overlay input `index` on top of [base]; returns (lines, new label).
+    normal/key: alpha overlay (key removes a green background) · screen: brightening blend for effects on black."""
+    op = settings['overlay_opacity'] / 100
+    k = item['k']
+    chain = f'[{index}:v]fps=30,scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1'
+    random_time = settings['overlay_timing'] == 'random'
+    if settings['overlay_blend'] == 'screen':
+        if random_time:
+            chain += f",tpad=start_duration={item['start']:.3f}:stop_duration={duration + 5:.3f}:color=black"
+        return [chain + f',format=gbrp[ov{k}]', f'[{base}]format=gbrp[bk{k}]',
+                f'[bk{k}][ov{k}]blend=all_mode=screen:all_opacity={op:.3f}:shortest=1[os{k}]'], f'os{k}'
+    if settings['overlay_blend'] == 'key':
+        chain += ',colorkey=0x00FF00:0.30:0.10'
+    chain += f',format=rgba,colorchannelmixer=aa={op:.3f}'
+    if random_time:
+        chain += f",setpts=PTS-STARTPTS+{item['start']:.3f}/TB"
+    return [chain + f'[ov{k}]', f'[{base}][ov{k}]overlay=0:0:eof_action=pass:format=auto' + ('' if random_time else ':shortest=1') + f'[os{k}]'], f'os{k}'
+
+
 def burn_filters(segments, folder, width, height):
     """drawtext per Vietnamese line, bottom centre, wrapped to 86% of the width (same fonts as the editor)."""
     font = 'sans-bold'
@@ -445,6 +516,8 @@ class Store:
         self.video_dir = Path(video_dir)
         self.audio_dir = Path(audio_dir)
         self.encoder_args = encoder_args
+        self.overlay_dir = Path(data_dir) / 'overlays'
+        self.overlay_dir.mkdir(parents=True, exist_ok=True)
         self.lock = threading.RLock()
         self.queue = []
         self.keys = {}
@@ -690,6 +763,7 @@ class Store:
         if not source.is_file():
             raise DubError('Video nguồn đã bị xóa khỏi kho.')
         settings = job['options']
+        source = self.trimmed(job, folder, source, cancel)
         info = probe(source)
         job['duration'] = info['duration'] or job['duration']
         def check():
@@ -980,6 +1054,39 @@ class Store:
         self.enqueue(key, {})
         return self.load(key)
 
+    def trimmed(self, job, folder, source, cancel):
+        """Cut trim_start seconds off the beginning and trim_end off the end (frame-accurate re-encode) before anything
+        else, so recognition, voice and subtitles all use the trimmed timeline. Changing the cut restarts the job."""
+        settings = job['options']
+        a, b = settings.get('trim_start', 0), settings.get('trim_end', 0)
+        target = folder / 'trimmed.mp4'
+        sign = f'{a:.3f}:{b:.3f}'
+        if job.get('trim_sign', '0.000:0.000') != sign:
+            if any(job['steps'][s] == 'done' for s in STEPS):
+                for s in STEPS:
+                    if job['steps'][s] != 'skipped':
+                        job['steps'][s] = 'pending'
+                job['groups'] = []
+                job.pop('paragraph', None)
+                for seg in job['segments']:
+                    seg.pop('vi', None)
+                if not job.get('source_srt'):
+                    job['segments'] = []
+            target.unlink(missing_ok=True)
+            job['trim_sign'] = sign
+        if not a and not b:
+            return source
+        if not target.is_file():
+            total = probe(source)['duration']
+            keep = total - a - b
+            if keep < 1:
+                raise DubError(f'Cắt đầu {a}s và cuối {b}s thì video còn quá ngắn ({max(0, keep):.1f}s).')
+            self.progress(job, job['step'] if job['step'] in STEPS else 'asr', 0, f'Đang cắt video: bỏ {a}s đầu, {b}s cuối…')
+            self.save(job)
+            run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-ss', f'{a:.3f}', '-i', str(source), '-t', f'{keep:.3f}', '-map', '0:v:0', '-map', '0:a?',
+                 *self.encoder_args('cpu', 'high'), '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', str(target)], cancel)
+        return target
+
     def place_paragraph(self, job, folder, cancel):
         """Put the single voice file at the first spoken line and make it end with the video.
         align: 'auto' = read faster only when too long · 'voice' = MP3 follows the video (faster or slower)
@@ -1043,12 +1150,29 @@ class Store:
         finish = ('loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000,' if settings['loudness'] == 'tiktok' else '') + 'alimiter=limit=0.95:level=false'
         graph.append(f'[mixed]{finish},atrim=duration={duration}[aout]')
         video = info['video']
-        copy = subs != 'burn' and stretch == 1 and video.get('codec_name') == 'h264' and video.get('pix_fmt') in ('yuv420p', 'yuvj420p')
-        filters = [f'setpts=PTS*{stretch:.6f}'] if stretch != 1 else []
-        if subs == 'burn':
-            filters += burn_filters(subtitle_rows or [], folder, int(video.get('width') or 720), int(video.get('height') or 1280))
+        identity = frame_identity(settings)
+        chosen = self.pick_overlays(job, duration)
+        copy = subs != 'burn' and stretch == 1 and identity and not chosen and video.get('codec_name') == 'h264' and video.get('pix_fmt') in ('yuv420p', 'yuvj420p')
+        filters = not copy
         if filters:
-            graph.append('[0:v:0]' + ','.join(filters) + ',format=yuv420p[vout]')
+            width, height = frame_size(settings, video)
+            burn = burn_filters(subtitle_rows or [], folder, width, height) if subs == 'burn' else []
+            # frame → random overlays → burned subtitles (text always stays on top)
+            lines, _ = frame_graph(settings, video, [f'setpts=PTS*{stretch:.6f}'] if stretch != 1 else [], [])
+            lines[-1] = lines[-1][:-len('[vout]')] + '[framed]'
+            graph.extend(lines)
+            base, index = 'framed', 2 + has_bg + (subs == 'soft')
+            for k, item in enumerate(chosen):
+                meta = self.overlay(item['id'])
+                path = str(self.overlay_dir / meta['file'])
+                if meta['still']:
+                    args += ['-loop', '1', '-t', str(duration if settings['overlay_timing'] == 'loop' else min(duration, 4)), '-i', path]
+                else:
+                    args += (['-stream_loop', '-1'] if settings['overlay_timing'] == 'loop' else []) + ['-i', path]
+                more, base = overlay_chain(index, dict(item, k=k), width, height, settings, base, duration)
+                graph.extend(more)
+                index += 1
+            graph.append(f'[{base}]' + ','.join(burn + ['format=yuv420p']) + '[vout]')
         (folder / 'export.ffgraph').write_text(';\n'.join(graph), encoding='utf-8')
         args += ['-filter_complex_script', 'export.ffgraph', '-map', '[vout]' if filters else '0:v:0', '-map', '[aout]']
         if subs == 'soft':
@@ -1074,13 +1198,79 @@ class Store:
         except (ValueError, OSError) as exc:
             job['warnings'].append(str(exc))
 
+    # ---- overlay library (videos/GIF/PNG put on top of dubbed videos, picked at random per video)
+    def overlays(self):
+        rows = []
+        for meta in self.overlay_dir.glob('*.json'):
+            try:
+                item = json.loads(meta.read_text(encoding='utf-8'))
+            except (OSError, ValueError):
+                continue
+            if isinstance(item, dict) and item.get('id') == meta.stem and (self.overlay_dir / item.get('file', '')).is_file():
+                rows.append(item)
+        return sorted(rows, key=lambda r: r.get('created', ''), reverse=True)
+
+    def overlay(self, key):
+        if not isinstance(key, str) or not re.fullmatch('[a-f0-9]{32}', key):
+            return None
+        return next((o for o in self.overlays() if o['id'] == key), None)
+
+    def import_overlay(self, upload, name):
+        ext = Path(str(name)).suffix.lower()
+        if ext not in OVERLAY_TYPES:
+            raise DubError('Overlay cần là video (MP4, MOV, WebM), GIF hoặc ảnh PNG/JPG.')
+        key = uuid.uuid4().hex
+        target = self.overlay_dir / (key + ext)
+        shutil.move(str(upload), target)
+        info = probe(target)
+        if not info['video']:
+            target.unlink(missing_ok=True)
+            raise DubError('Không đọc được hình ảnh trong file overlay.')
+        still = ext in ('.png', '.jpg', '.jpeg', '.webp') or info['duration'] < .1
+        try:
+            run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-ss', str(min(1, info['duration'] / 3)) if not still else '0', '-i', str(target),
+                 '-frames:v', '1', '-vf', 'scale=160:-2', str(self.overlay_dir / (key + '.jpg'))], timeout=30)
+        except DubError:
+            pass
+        item = dict(id=key, name=re.sub(r'[\x00-\x1f<>:"/\\|?*]', '_', Path(str(name)).name)[:120], file=target.name, still=still,
+                    duration=0 if still else round(info['duration'], 2), width=int(info['video'].get('width') or 0), height=int(info['video'].get('height') or 0),
+                    created=time.strftime('%Y-%m-%dT%H:%M:%S'))
+        (self.overlay_dir / (key + '.json')).write_text(json.dumps(item, ensure_ascii=False), encoding='utf-8')
+        return item
+
+    def delete_overlay(self, key):
+        item = self.overlay(key)
+        if not item:
+            raise DubError('Không tìm thấy overlay.', 404)
+        for path in (self.overlay_dir / item['file'], self.overlay_dir / (key + '.json'), self.overlay_dir / (key + '.jpg')):
+            path.unlink(missing_ok=True)
+
+    def pick_overlays(self, job, duration):
+        """Random overlays for this video (kept in the job so re-exports look the same)."""
+        settings = job['options']
+        if not settings['overlay']:
+            return []
+        sign = json.dumps([settings[k] for k in ('overlay_ids', 'overlay_count', 'overlay_timing')])
+        chosen = [o for o in job.get('overlays') or [] if self.overlay(o['id'])]
+        if job.get('overlay_sign') == sign and chosen:
+            return chosen
+        library = self.overlays()
+        pool = [o for o in library if not settings['overlay_ids'] or o['id'] in settings['overlay_ids']]
+        if not pool:
+            raise DubError('Chưa có overlay nào trong thư viện. Thêm file overlay hoặc tắt "Overlay ngẫu nhiên".')
+        picked = random.sample(pool, min(settings['overlay_count'], len(pool)))
+        job['overlays'] = [dict(id=o['id'], name=o['name'], start=round(random.uniform(0, max(0, duration - (o['duration'] or 4))), 2)
+                                if settings['overlay_timing'] == 'random' else 0) for o in picked]
+        job['overlay_sign'] = sign
+        return job['overlays']
+
     def to_editor(self, key, new_video, import_audio):
         """Hand the result to the editor: video with background only + the Vietnamese voice as an MP3 asset."""
         job = self.load(key)
         folder = self.path(key)
         if job['state'] != 'done' or not (folder / 'voice.wav').is_file():
             raise DubError('Lồng tiếng chưa xong.')
-        source = self.video_dir / job['video_id'] / 'source'
+        source = folder / 'trimmed.mp4' if (folder / 'trimmed.mp4').is_file() else self.video_dir / job['video_id'] / 'source'
         target = new_video()
         background = folder / 'background.wav'
         args = ['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(source)] + (['-i', str(background)] if background.is_file() else []) + \

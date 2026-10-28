@@ -586,3 +586,56 @@ kbd{display:inline-block;padding:2px 7px;border:1px solid #475569;border-bottom-
 .dub-preview-stage video{max-height:420px;max-width:100%;display:block}
 .dub-preview-sub{position:absolute;left:50%;transform:translateX(-50%);text-align:center;color:#fff;font-weight:700;font-family:"DejaVu Sans",system-ui,sans-serif;line-height:1.25;-webkit-text-stroke:2px #000;paint-order:stroke fill;pointer-events:none}
 .dub-rule{font-size:11.5px;color:#a8e6c9;background:#13241f;border:1px solid #2a5a45;border-radius:8px;padding:6px 9px;margin:8px 0}
+/* ---- 0.17: dubbing tab layout */
+.dub-bar{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:16px 4px 6px;position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0}
+.dub-bar h1{margin:2px 0 0;font-size:22px}
+.dub-bar-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.dub-bar-tools select{width:auto;min-width:220px;margin:0}
+.dub-key-chip{font:600 11px system-ui;padding:6px 10px;border-radius:20px;border:1px solid #2a5a45;color:#a8e6c9;background:#13241f;cursor:pointer;white-space:nowrap}.dub-key-chip.bad{border-color:#7a3b3b;color:#ffb3b3;background:#2a1717}
+#dub-start{padding:10px 18px}
+.dub-status{margin:0 4px 8px;min-height:16px}
+.dub-layout{grid-template-columns:minmax(360px,460px) 1fr}
+.dub-setup{display:flex;flex-direction:column;gap:6px;padding:10px}
+.dub-sec{border:1px solid var(--border);border-radius:11px;background:#121a25}
+.dub-sec[open]{border-color:#34507a;background:#131d2b}
+.dub-sec>summary{display:grid;grid-template-columns:26px auto 1fr;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;list-style:none}
+.dub-sec>summary::-webkit-details-marker{display:none}
+.dub-sec-icon{font-size:16px;text-align:center}.dub-sec-title{font:700 13px system-ui;white-space:nowrap}
+.dub-sec-sum{color:var(--muted);font-size:11px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dub-sec-body{padding:0 12px 12px}
+.dub-right{display:flex;flex-direction:column;gap:14px;min-width:0}
+.dub-preview{padding:12px 14px}
+.dub-frame-wrap{display:flex;justify-content:center;background:#05080c;border-radius:10px;padding:10px}
+.dub-frame{position:relative;overflow:hidden;background:#000;max-height:440px;max-width:100%;height:440px;aspect-ratio:9/16;border-radius:6px}
+.dub-frame video,.dub-frame img{position:absolute}
+.dub-fgv{left:50%;top:50%;transform-origin:center}
+.dub-bgv{inset:0;width:100%;height:100%;object-fit:cover;filter:blur(14px);transform:scale(1.08)}
+.dub-ovv{inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+.dub-frame-empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:20px;color:var(--muted);font-size:12px}
+.dub-preview-sub{z-index:2}
+.dub-transport{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;margin-top:8px}.dub-transport output{font:600 11px ui-monospace,monospace;color:var(--muted)}
+.dub-jobs{padding:12px 14px;position:static;max-height:none;overflow:visible}
+.dub-queue-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}.dub-queue-head h2{margin:0;font-size:15px}
+.dub-filters{display:flex;gap:5px;flex-wrap:wrap}.dub-filters .chip-button[aria-pressed=true]{border-color:var(--accent);color:var(--accent)}
+.dub-bulk{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+.dub-queue{gap:6px}
+.dub-job{padding:8px 10px;gap:4px}
+.dub-row-main{display:grid;grid-template-columns:12px minmax(120px,1.4fr) auto minmax(90px,1fr) auto auto;gap:10px;align-items:center}
+.dub-state-dot{width:10px;height:10px;border-radius:50%;background:#55657c}.dub-state-dot.running,.dub-state-dot.queued{background:#f0a35a;box-shadow:0 0 0 3px #f0a35a33}.dub-state-dot.done{background:#3fd18b}.dub-state-dot.error{background:#ff5a5f}.dub-state-dot.review,.dub-state-dot.paused{background:#7aa7ff}
+.dub-row-name{min-width:0}.dub-row-name strong{display:block;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dub-row-name small{color:var(--muted);font-size:10.5px}
+.dub-dots{display:flex;gap:3px}.dub-dot{width:22px;height:18px;border-radius:5px;display:grid;place-items:center;font:700 9px system-ui;border:1px solid var(--border);color:var(--muted)}
+.dub-dot.running{border-color:#f0a35a;color:#f0a35a}.dub-dot.done,.dub-dot.skipped{border-color:#2a5a45;background:#13241f;color:#3fd18b}.dub-dot.error{border-color:#ff5a5f;color:#ff5a5f}
+.dub-row-progress{display:flex;align-items:center;gap:6px}.dub-row-progress .export-bar{flex:1}.dub-row-progress small{font:600 10.5px ui-monospace,monospace;color:var(--muted);min-width:30px;text-align:right}
+.dub-actions{display:flex;gap:6px;flex-wrap:wrap}.dub-job.current>.dub-actions{margin-top:6px}
+.dub-msg{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dub-job.current .dub-msg{white-space:normal}
+@media (max-width:1300px){.dub-row-main{grid-template-columns:12px 1fr auto auto}.dub-row-main .dub-dots,.dub-row-main .dub-row-progress{display:none}}
+.dub-list-head{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-bottom:2px}
+.dub-list{max-height:240px;overflow:auto}
+.dub-file{grid-template-columns:1fr auto auto auto}.dub-file.first{border-color:#34507a}.dub-file-name{cursor:pointer}
+.dub-ov-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;margin:8px 0;max-height:240px;overflow:auto}
+.dub-ov{position:relative;display:flex;flex-direction:column;gap:2px;background:var(--input);border:1px solid var(--border);border-radius:8px;padding:4px;margin:0;cursor:pointer}
+.dub-ov.on{border-color:var(--accent)}.dub-ov input{position:absolute;top:6px;left:6px;width:auto;margin:0}
+.dub-ov img{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:5px;background:#000}
+.dub-ov span{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dub-ov small{font-size:10px;color:var(--muted)}
+.dub-ov .icon-button{position:absolute;top:4px;right:4px;padding:0 5px}
+#dub-frame-tools{flex-wrap:wrap;margin-top:6px}
+#dub-start{width:auto;flex:none}.dub-bar-tools{justify-content:flex-end}

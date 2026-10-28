@@ -389,7 +389,7 @@ class Handler(BaseHTTPRequestHandler):
                                                   for name in ('openai','gemini')}})
         if path == '/health':
             return self.respond(200, {'status': 'ok','version':VERSION})
-        library=re.fullmatch(r'/library/(projects|templates|styles|presets)(?:/([a-f0-9]{32}))?',path)
+        library=re.fullmatch(r'/library/(projects|templates|styles|presets|dubpresets)(?:/([a-f0-9]{32}))?',path)
         if library:
             try:
                 if library[2]:return self.respond(200,library_store.read(DATA/'library',library[1],library[2]))
@@ -408,6 +408,18 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(200,{'images':images()})
         if path == '/secrets':
             return self.respond(200,secrets_store.status())
+        if path == '/overlays':
+            return self.respond(200,{'overlays':DUB.overlays()})
+        ov=re.fullmatch(r'/overlays/([a-f0-9]{32})/(file|thumb)',path)
+        if ov:
+            item=DUB.overlay(ov[1])
+            if not item:return self.respond(404,{'error':'Không tìm thấy overlay.'})
+            if ov[2]=='thumb':
+                thumb=DATA/'overlays'/(item['id']+'.jpg')
+                return self.respond(200,thumb.read_bytes(),'image/jpeg') if thumb.is_file() else self.respond(404,{'error':'Chưa có ảnh nhỏ.'})
+            ext=Path(item['file']).suffix.lower()
+            mime={'.mp4':'video/mp4','.m4v':'video/mp4','.mov':'video/quicktime','.webm':'video/webm','.mkv':'video/x-matroska','.gif':'image/gif','.png':'image/png','.webp':'image/webp','.jpg':'image/jpeg','.jpeg':'image/jpeg'}[ext]
+            return self.serve_audio(DATA/'overlays'/item['file'],False,mime,item['name'])
         if path == '/dub/jobs':
             return self.respond(200,{'jobs':DUB.jobs()})
         if path == '/dub/capabilities':
@@ -600,6 +612,25 @@ class Handler(BaseHTTPRequestHandler):
                 raw=json.loads(self.rfile.read(size)) if 0<size<=4096 else {}
                 if not isinstance(raw,dict):raise ValueError('Yêu cầu không hợp lệ.')
                 return self.respond(200,secrets_store.save(raw.get('provider'),raw.get('key')) if path.endswith('save') else secrets_store.delete(raw.get('provider')))
+            if path == '/overlays/upload':
+                if not 0 < size <= 300*1024*1024:raise ValueError('File overlay tối đa 300 MB.')
+                name=asset_store.clean_name(unquote(self.headers.get('X-Filename','overlay.mp4')),'overlay.mp4')
+                temp=DATA/'overlays'/(uuid.uuid4().hex+'.upload')
+                try:
+                    with temp.open('wb') as out:
+                        remaining=size
+                        while remaining:
+                            chunk=self.rfile.read(min(1024*1024,remaining))
+                            if not chunk:raise ValueError('Tải overlay bị gián đoạn.')
+                            out.write(chunk);remaining-=len(chunk)
+                    try:return self.respond(200,DUB.import_overlay(temp,name))
+                    except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
+                finally:temp.unlink(missing_ok=True)
+            ov_delete=re.fullmatch(r'/overlays/([a-f0-9]{32})/delete',path)
+            if ov_delete:
+                try:DUB.delete_overlay(ov_delete[1])
+                except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
+                return self.respond(200,{'overlays':DUB.overlays()})
             voice=re.fullmatch(r'/dub/([a-f0-9]{32})/voice',path)
             if voice:
                 if not 0 < size <= 100*1024*1024:raise ValueError('File giọng tối đa 100 MB.')
@@ -678,7 +709,7 @@ class Handler(BaseHTTPRequestHandler):
                 if isinstance(days,bool) or not isinstance(days,int) or not 1 <= days <= 3650:
                     raise ValueError('Số ngày phải từ 1 đến 3650.')
                 return self.respond(200, cleanup(days))
-            library=re.fullmatch(r'/library/(projects|templates|styles|presets)/(save|([a-f0-9]{32})/delete)',path)
+            library=re.fullmatch(r'/library/(projects|templates|styles|presets|dubpresets)/(save|([a-f0-9]{32})/delete)',path)
             if library:
                 if library[3]:
                     library_store.delete(DATA/'library',library[1],library[3])

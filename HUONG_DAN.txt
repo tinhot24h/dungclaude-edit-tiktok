@@ -1,4 +1,4 @@
-REVIEW STUDIO 0.16.2 — VIDEO / DỊCH AI / ÂM THANH AI33
+REVIEW STUDIO 0.17 — VIDEO / DỊCH AI / ÂM THANH AI33
 
 CẬP NHẬT
 Từ bản 0.13: không cần tải lại ZIP. Trong ứng dụng bấm nút ⟳ (góc phải
@@ -228,6 +228,30 @@ Mở "⚙ Tùy chỉnh câu lệnh" để sửa quy tắc viết; bấm "Lưu th
 giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh gốc. Mẫu gốc đã
 cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
 Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
+
+NÂNG CẤP 0.17 — TAB LỒNG TIẾNG MỚI, OVERLAY, KHUNG HÌNH
+------------------------------------------------------
+- Tab Lồng tiếng thiết kế lại cho gọn, dễ dùng:
+  - Thanh trên cùng (luôn hiện khi cuộn): chọn/lưu/xóa cấu hình lồng tiếng, trạng thái key (bấm vào để mở mục Kết nối) và nút ▶ Lồng tiếng N video.
+  - Cột trái chia mục theo thứ tự làm việc: 🎬 Video đầu vào → 🔑 Kết nối → ✂ Cắt & khung hình → ✨ Overlay → 🗣 Nhận diện & dịch → 🎙 Giọng đọc → 🎵 Âm thanh gốc → 📤 Xuất & phụ đề. Mỗi lần chỉ mở một mục; tiêu đề mỗi mục hiện tóm tắt thông số đang chọn.
+  - Cột phải là khung xem trước video đầu tiên và hàng đợi gọn. Khung xem trước có khung hình, nền mờ, xoay/lật/zoom, overlay mẫu, phụ đề mẫu và nút phát.
+- Xử lý hàng loạt không rối:
+  - Mỗi video là một dòng trong hàng đợi: trạng thái, 5 bước, tiến độ, nút chính. Bấm vào dòng để xem chi tiết và các nút khác.
+  - Lọc theo Tất cả / Đang chạy / Cần xử lý / Xong.
+  - Nút hàng loạt: Chạy lại lỗi, Dừng tất cả, Xóa đã xong.
+  - Video lỗi (ví dụ không có tiếng) không làm dừng các video khác.
+- Cắt đầu / cắt cuối video: ví dụ bỏ 0,5s đầu và 0,5s cuối. Áp dụng cho mọi video trong lô, cắt chính xác trước khi nhận diện.
+- Khung hình video khi lồng tiếng:
+  - Khung xuất: giữ gốc / 9:16 / 4:5 / 1:1 / 16:9.
+  - Cách đặt: lấp đầy, giữ toàn bộ (viền đen), giữ toàn bộ trên nền mờ.
+  - Zoom 25–300%, dịch ngang/dọc, xoay, nút ↺90° ↻90°, lật ngang/dọc, đặt lại.
+  - Bản xuất giống khung xem trước.
+- Overlay ngẫu nhiên:
+  - Thêm file hoặc cả thư mục overlay (video hiệu ứng, GIF, PNG/JPG), hoặc kéo thả vào mục ✨.
+  - Tích chọn overlay nào được dùng; mỗi video lấy ngẫu nhiên 1–3 overlay.
+  - Hòa trộn: Sáng (hiệu ứng nền đen như ánh sáng, bụi lấp lánh), Bình thường theo độ đục, hoặc Tách nền xanh.
+  - Thời gian: lặp suốt video hoặc một đoạn ngẫu nhiên. Phụ đề luôn nằm trên overlay.
+- Cấu hình lồng tiếng đã lưu: lưu toàn bộ thông số bên trái (giọng, văn phong, khung hình, overlay, phụ đề…) để chạy các lô sau giống hệt.
 
 NÂNG CẤP 0.16.2
 ---------------

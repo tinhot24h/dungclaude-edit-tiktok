@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.16.2",
- "notes": "## Mới trong 0.16.2\n\n- **ai33 chỉ tạo MP3:** khi lồng tiếng, ứng dụng không còn yêu cầu ai33 tạo SRT/JSON phụ đề, tránh làm lỗi tác vụ.\n  - Phụ đề tiếng Việt do ứng dụng tự tính: chia đoạn văn thành câu theo độ dài, rồi đặt điểm chuyển câu vào khoảng lặng gần nhất trong file giọng, để chữ đổi đúng lúc giọng ngắt nghỉ.\n- **Bỏ khu bản dịch khỏi hàng đợi:** mặc định chỉ còn danh sách tác vụ. Khi cần sửa câu, bấm **✎ Bản dịch** trên tác vụ để mở, bấm **✕ Đóng bản dịch** để ẩn.",
+ "version": "0.17",
+ "notes": "## Mới trong 0.17\n\n- **Tab Lồng tiếng thiết kế lại cho gọn, dễ dùng:**\n  - **Thanh trên cùng** (luôn hiện khi cuộn): chọn/lưu/xóa **cấu hình lồng tiếng**, trạng thái key (bấm vào để mở mục Kết nối) và nút **▶ Lồng tiếng N video**.\n  - **Cột trái** chia mục theo thứ tự làm việc: 🎬 Video đầu vào → 🔑 Kết nối → ✂ Cắt & khung hình → ✨ Overlay → 🗣 Nhận diện & dịch → 🎙 Giọng đọc → 🎵 Âm thanh gốc → 📤 Xuất & phụ đề. Mỗi lần chỉ mở một mục; tiêu đề mỗi mục hiện tóm tắt thông số đang chọn.\n  - **Cột phải** là **khung xem trước** video đầu tiên và **hàng đợi gọn**. Khung xem trước có khung hình, nền mờ, xoay/lật/zoom, overlay mẫu, phụ đề mẫu và nút phát.\n- **Xử lý hàng loạt không rối:**\n  - Mỗi video là một dòng trong hàng đợi: trạng thái, 5 bước, tiến độ, nút chính. Bấm vào dòng để xem chi tiết và các nút khác.\n  - Lọc theo Tất cả / Đang chạy / Cần xử lý / Xong.\n  - Nút hàng loạt: **Chạy lại lỗi**, **Dừng tất cả**, **Xóa đã xong**.\n  - Video lỗi (ví dụ không có tiếng) không làm dừng các video khác.\n- **Cắt đầu / cắt cuối video:** ví dụ bỏ 0,5s đầu và 0,5s cuối. Áp dụng cho mọi video trong lô, cắt chính xác trước khi nhận diện.\n- **Khung hình video khi lồng tiếng:**\n  - Khung xuất: giữ gốc / 9:16 / 4:5 / 1:1 / 16:9.\n  - Cách đặt: lấp đầy, giữ toàn bộ (viền đen), giữ toàn bộ trên nền mờ.\n  - Zoom 25–300%, dịch ngang/dọc, xoay, nút ↺90° ↻90°, lật ngang/dọc, đặt lại.\n  - Bản xuất giống khung xem trước.\n- **Overlay ngẫu nhiên:**\n  - Thêm file hoặc cả thư mục overlay (video hiệu ứng, GIF, PNG/JPG), hoặc kéo thả vào mục ✨.\n  - Tích chọn overlay nào được dùng; mỗi video lấy ngẫu nhiên 1–3 overlay.\n  - Hòa trộn: **Sáng** (hiệu ứng nền đen như ánh sáng, bụi lấp lánh), **Bình thường** theo độ đục, hoặc **Tách nền xanh**.\n  - Thời gian: lặp suốt video hoặc một đoạn ngẫu nhiên. Phụ đề luôn nằm trên overlay.\n- **Cấu hình lồng tiếng đã lưu:** lưu toàn bộ thông số bên trái (giọng, văn phong, khung hình, overlay, phụ đề…) để chạy các lô sau giống hệt.",
  "files": {
   "update.py": {
    "sha256": "69dea002a0cb777dc61b4f48fa2b2f4046a8181c8b9db86d8f4361d8838cac7b",
@@ -24,8 +24,8 @@
    "size": 3948
   },
   "dub_ui.js": {
-   "sha256": "a0f9a352410f17029b196ba6751d08a439421e229c7f2916fcb5bae13e5383ff",
-   "size": 40302
+   "sha256": "6f608ece579062f5e84d020796dfb8634c892891c764c2b61b3b21bb7a804803",
+   "size": 54270
   },
   "layout_ui.js": {
    "sha256": "31474a69f54710df46c2483f9711e36d487d11437085b2b563f97b1f18ab711e",
@@ -44,12 +44,12 @@
    "size": 2135
   },
   "dubbing.py": {
-   "sha256": "2080747558295a27b25e5d233628b659aacd1f99c869b2219e21d113741ae9a2",
-   "size": 62131
+   "sha256": "e77ad367453e2d74f574aadeb33ba4e9a837f614f0c29cd15103c0486535bd1b",
+   "size": 73960
   },
   "tests/test_dubbing.py": {
-   "sha256": "baf91b8e0967e5d001e1c58872cff4298bf5fee095de82461f76474ffa25f203",
-   "size": 17058
+   "sha256": "a6ee1fa755d6ac6b3637270f288e7cad4e469bfa029354a21bd67e0d0627154d",
+   "size": 20447
   },
   "image_ui.js": {
    "sha256": "b8e2a905501aedea84033a7c962b180251e06dc018e6133241f0310b474ed8e9",
@@ -80,8 +80,8 @@
    "size": 4835
   },
   "library_store.py": {
-   "sha256": "315f7e9e09fba3cbad59b4f42177699a75f0e2df60aa447212cf7e3c72b20a4a",
-   "size": 2494
+   "sha256": "0a0c6a2d79658f9470f5447b67423b141a9e9cfac7c023fa19edd6c95b501502",
+   "size": 2507
   },
   "history_ui.js": {
    "sha256": "a01656d6c164f613015896ae7d076c26160287b169073f2ee0937974265cec0a",
@@ -120,8 +120,8 @@
    "size": 13961
   },
   "app.py": {
-   "sha256": "107f0564b0ff6c839c6bb87eb92718a7225e6233637622a3876a26c30218ce50",
-   "size": 47080
+   "sha256": "1bb86c2ccb38ce3b4a68d03c11d5a99d4a8020c778e3e9a4f215d04fc4db5aa9",
+   "size": 49289
   },
   "ai33_audio.py": {
    "sha256": "3852255575e4c88a806b90fc01cd5df2551ff7e956f04f3547a87394aac4810b",
@@ -140,8 +140,8 @@
    "size": 25305
   },
   "studio.css": {
-   "sha256": "6a88cb5327d3eee2648b9ad18720e87ac3f2322123bb8ede38008e9b48b5be1b",
-   "size": 72427
+   "sha256": "5e0da0a37f1c7b455e16ad15b454d7c3f2fb8e7f40eb60a5ae2d8ac114873fa1",
+   "size": 78021
   },
   "studio.js": {
    "sha256": "3beaa5a97b9d5bfbe350504f3f8c2f64cf31f9f5926d08a0a4e3916e61a21df9",
@@ -160,8 +160,8 @@
    "size": 2609
   },
   "index.html": {
-   "sha256": "b9fcb5ef877b84f0b58f6b146fff3a456583c52cbff858642aa470cb79ff67e9",
-   "size": 33084
+   "sha256": "c9dbd28fe9cdd824f9e9ea22765a6ba22a3228780a1f578eab02e05d6235ccca",
+   "size": 33080
   },
   "launch.py": {
    "sha256": "a493ab33e2db46235059df4460fd21a397ffd12880d85123d028cef9e2befa95",
@@ -180,16 +180,16 @@
    "size": 230
   },
   "HUONG_DAN.txt": {
-   "sha256": "67dea6fbf6548098321deff30a5b8b9f5192d11b9127035a85d8632bb8a2e489",
-   "size": 29082
+   "sha256": "d6ff24b31cef301b57ed696cda47b0d7bc914f519ee0ee0c1205c50a439877bd",
+   "size": 31620
   },
   "README.md": {
-   "sha256": "ac90055ecab7ff5c7e729cd0a08528ddcebded1324da7e29de7fc7bfd717342b",
-   "size": 40124
+   "sha256": "bcef18785ded5d6ce5b4d3a9b01cf46acfcd8106840f239faa2580014aee5307",
+   "size": 42636
   },
   "VERSION": {
-   "sha256": "0d2f4b8beffd0ba7cc705047c5e18ace93d071c55254b38da6ba39ad66e3f201",
-   "size": 7
+   "sha256": "84ee4798483725f50df0487f6ba7ef7eae4944f53cde26b46f2a5df8e70c6a84",
+   "size": 5
   },
   ".gitignore": {
    "sha256": "0f1a2bf5537910f90c1fe49597d40905cc011718e7987d530dbc236951f7e0d7",
