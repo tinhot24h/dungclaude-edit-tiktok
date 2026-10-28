@@ -77,7 +77,12 @@ function apply(o){if(o.subtitles==='burn')o={...o,subtitles:'file'};for(const[k,
  if(Array.isArray(o.overlay_ids)){ovAll=!o.overlay_ids.length;ovUse=new Set(o.overlay_ids);drawOverlays()}labels();preview()}
 function remember(){try{localStorage.setItem(STORE,JSON.stringify({...settings(),instructions:undefined,_v:2}))}catch{}labels()}
 const pct=v=>(v>0?'+':'')+v+'%';
-function labels(){const o=settings(),t=(id,v)=>{$(id).textContent=v};t('dub-rate-value',o.rate+' tiếng/giây');t('dub-duck-value',o.duck_level+'%');t('dub-bg-value',o.background_volume+'%');t('dub-speed-value',o.voice_speed+'×');t('dub-tempo-value',o.max_tempo+'×');t('dub-voice-value',o.voice_volume+'%');
+for(const range of view.querySelectorAll('input[type=range]')){const box=el('input',{type:'number',className:'dub-num',min:range.min,max:range.max,step:range.step||1,value:range.value,title:'Nhập số chính xác'});box.setAttribute('aria-label',(range.labels?.[0]?.textContent||'Giá trị').trim());
+ const row=el('div',{className:'dub-range'});range.replaceWith(row);row.append(range,box);range.addEventListener('input',()=>{box.value=range.value});
+ const commit=()=>{const v=Number(box.value);if(box.value===''||!Number.isFinite(v)){box.value=range.value;return}range.value=Math.min(+range.max,Math.max(+range.min,v));box.value=range.value;range.dispatchEvent(new Event('input',{bubbles:true}));range.dispatchEvent(new Event('change',{bubbles:true}))};
+ box.addEventListener('change',commit);box.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();commit()}})}
+function syncNumbers(){for(const box of view.querySelectorAll('.dub-num'))if(document.activeElement!==box)box.value=box.previousElementSibling.value}
+function labels(){syncNumbers();const o=settings(),t=(id,v)=>{$(id).textContent=v};t('dub-rate-value',o.rate+' tiếng/giây');t('dub-duck-value',o.duck_level+'%');t('dub-bg-value',o.background_volume+'%');t('dub-speed-value',o.voice_speed+'×');t('dub-tempo-value',o.max_tempo+'×');t('dub-voice-value',o.voice_volume+'%');
  t('dub-zoom-value',o.frame_zoom+'%');t('dub-x-value',pct(o.frame_x));t('dub-y-value',pct(o.frame_y));t('dub-rotate-value',o.frame_rotate+'°');t('dub-ov-opacity-value',o.overlay_opacity+'%');
  $('dub-duck').disabled=o.background!=='duck';$('dub-bg-volume').disabled=o.background==='remove';
  // one-line summaries on the section headers
@@ -166,7 +171,7 @@ function drawOverlays(){$('dub-ov-list').replaceChildren(...overlays.map(o=>{con
  $('dub-ov-note').textContent=overlays.length?`${overlays.length} overlay trong thư viện · mỗi video lấy ngẫu nhiên từ các overlay được tích. Overlay dài hơn video tự cắt bằng video; ngắn hơn thì lặp hoặc ghép nối tùy mục Thời gian.`:'Chưa có overlay. Thêm video hiệu ứng (ánh sáng, bụi, khung động…), GIF hoặc PNG; có thể kéo thả cả thư mục vào mục này.'}
 async function addOverlays(list){const media=[...list].filter(f=>/^(video|image)\//.test(f.type)||/\.(mp4|mov|webm|mkv|m4v|gif|png|webp|jpe?g)$/i.test(f.name));if(!media.length){say('Không có file overlay hợp lệ (video, GIF, PNG, JPG).');return}
  let ok=0;for(const[i,f]of media.entries()){$('dub-ov-note').textContent=`Đang thêm overlay ${i+1}/${media.length}: ${f.name}…`;try{await request('/overlays/upload',{method:'POST',headers:{'X-Filename':encodeURIComponent(f.name)},body:f});ok++}catch(e){say(f.name+': '+e.message)}}
- await loadOverlays();labels();preview();say(`Đã thêm ${ok} overlay.${$('dub-overlay').checked?'':' Tick "Thêm overlay" nếu muốn chèn vào video (không bắt buộc).'}`)}
+ await loadOverlays();if(ok&&!$('dub-overlay').checked){$('dub-overlay').checked=true;remember()}labels();preview();say(ok?`Đã thêm ${ok} overlay và bật chèn overlay vào video (bỏ tick "Thêm overlay" nếu không muốn dùng).`:'Chưa thêm được overlay nào.')}
 $('dub-ov-files').onchange=()=>{addOverlays($('dub-ov-files').files);$('dub-ov-files').value=''};$('dub-ov-folder').onchange=()=>{addOverlays($('dub-ov-folder').files);$('dub-ov-folder').value=''};
 
 // ---- frame quick tools
@@ -190,7 +195,7 @@ function preview(){const f=files[0];$('dub-frame-empty').hidden=!!f;for(const v 
  if(ov){const src=`/overlays/${ov.id}/file`,target=ov.still?ovi:ovv;if(target.dataset.src!==src){target.src=src;target.dataset.src=src;if(!ov.still)ovv.play().catch(()=>{})}Object.assign(target.style,{opacity:o.overlay_opacity/100,mixBlendMode:o.overlay_blend==='screen'?'screen':'normal'})}else ovv.pause();
  const level=o.background==='remove'?0:Math.min(1,(o.background_volume||0)/100*(o.background==='duck'?Math.max(.05,(o.duck_level||0)/100):1));fg.volume=level;fg.muted=level===0;
  if(f&&fg.duration)$('dub-preview-info').textContent=`${f.name} · ${fg.videoWidth}×${fg.videoHeight} → ${W}×${H} · ${time(Math.max(0,fg.duration-o.trim_start-o.trim_end))} sau khi cắt`;
- $('dub-preview-note').textContent=!f?'':[`Âm nền như sau khi xử lý (${BG.find(b=>b[0]===o.background)[1].toLowerCase()})`,o.overlay?(ov?`overlay mẫu: ${ov.name} (mỗi video chọn ngẫu nhiên${o.overlay_blend==='key'?'; tách nền xanh chỉ thấy khi xuất':''})`:'overlay bật nhưng thư viện trống'):''].filter(Boolean).join(' · ')+'.';
+ $('dub-preview-note').textContent=!f?'':[`Âm nền như sau khi xử lý (${BG.find(b=>b[0]===o.background)[1].toLowerCase()})`,o.overlay?(ov?`overlay mẫu: ${ov.name} (mỗi video chọn ngẫu nhiên${o.overlay_blend==='key'?'; tách nền xanh chỉ thấy khi xuất':''})`:'overlay bật nhưng thư viện trống'):overlays.length?'overlay đang TẮT (tick "Thêm overlay" ở mục ✨ để chèn)':''].filter(Boolean).join(' · ')+'.';
  if(o.trim_start&&fg.currentTime<o.trim_start&&fg.paused)fg.currentTime=o.trim_start}
 fg.onloadedmetadata=()=>{preview();$('dub-pv-seek').max=fg.duration||1};new ResizeObserver(()=>preview()).observe($('dub-frame'));
 // custom transport (the overlay layers cover the native controls); playback stays inside the trimmed range

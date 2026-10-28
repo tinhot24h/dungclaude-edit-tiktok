@@ -1,8 +1,13 @@
-# Review Studio 0.17.3
+# Review Studio 0.17.4
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.17.4
+
+- **Nhập số chính xác:** mọi thanh trượt ở tab Lồng tiếng (zoom, dịch ngang/dọc, xoay, độ đục overlay, tốc độ, âm lượng…) đều có thêm ô số bên cạnh. Gõ số rồi Enter, hoặc kéo thanh trượt; hai bên luôn khớp nhau.
+- **Sửa overlay không hiện:** thêm file overlay (chọn file, chọn thư mục hoặc kéo thả) giờ tự tick "Thêm overlay". Overlay hiện ngay trên khung xem trước và có trong video xuất. Vẫn không bắt buộc: bỏ tick là xuất không có overlay. Khi thư viện có overlay mà đang tắt, dòng ghi chú dưới khung xem trước báo rõ.
 
 ## Mới trong 0.17.3
 

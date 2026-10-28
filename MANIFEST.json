@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.17.3",
- "notes": "## Mới trong 0.17.3\n\n- **Sửa tách giọng AI (Demucs) không dùng được:**\n  - Ứng dụng tìm Demucs ở mọi nơi pip có thể cài: môi trường riêng của app, Python đang chạy app, các Python khác trên máy. Trên Windows pip hay cài lệnh `demucs` ngoài PATH nên trước đây app không thấy.\n  - **Nút \"⬇ Cài Demucs tự động\"** ở mục 🎵 Âm thanh gốc: không cần gõ lệnh. App cài vào thư mục `.local/demucs-env` của ứng dụng, không đụng tới Python hệ thống, có hiện tiến trình cài. Lần đầu tải khoảng 1–3 GB (PyTorch + mô hình). Nút **↻ Kiểm tra lại** dùng khi bạn tự cài bằng pip.\n  - Sửa lỗi Demucs dừng ở bước cuối với bản torchaudio mới (2.9+, đòi thêm gói torchcodec). App lưu kết quả bằng `soundfile` nên không cần torchcodec.\n  - Lỗi Demucs (nếu có) hiện đúng tên \"Demucs xử lý lỗi: …\", không còn ghi nhầm là FFmpeg.",
+ "version": "0.17.4",
+ "notes": "## Mới trong 0.17.4\n\n- **Nhập số chính xác:** mọi thanh trượt ở tab Lồng tiếng (zoom, dịch ngang/dọc, xoay, độ đục overlay, tốc độ, âm lượng…) đều có thêm ô số bên cạnh. Gõ số rồi Enter, hoặc kéo thanh trượt; hai bên luôn khớp nhau.\n- **Sửa overlay không hiện:** thêm file overlay (chọn file, chọn thư mục hoặc kéo thả) giờ tự tick \"Thêm overlay\". Overlay hiện ngay trên khung xem trước và có trong video xuất. Vẫn không bắt buộc: bỏ tick là xuất không có overlay. Khi thư viện có overlay mà đang tắt, dòng ghi chú dưới khung xem trước báo rõ.",
  "files": {
   "demucs_runner.py": {
    "sha256": "426b21e67e115d21426f0ba38d0febe8707c0dd6336f7891396a59ec55500c0d",
@@ -28,8 +28,8 @@
    "size": 3948
   },
   "dub_ui.js": {
-   "sha256": "90ce6276e5781d7eee3f6a4205334b69ee093b686469cd5e1881ac3b018dadc8",
-   "size": 56574
+   "sha256": "646f26ad9b870e165e24c26d50e2be28b4eb8414d062f42ba516c155ee4d1127",
+   "size": 57808
   },
   "layout_ui.js": {
    "sha256": "31474a69f54710df46c2483f9711e36d487d11437085b2b563f97b1f18ab711e",
@@ -144,8 +144,8 @@
    "size": 25305
   },
   "studio.css": {
-   "sha256": "87ddf1d786b2b98b00ca73ea89992d2f555b30e2151a8994cdb10aa79369ce71",
-   "size": 77984
+   "sha256": "20437524c572444d1b5a7ae061d800125310441e6c42cdbcf09e911ec1456e6c",
+   "size": 78164
   },
   "studio.js": {
    "sha256": "3beaa5a97b9d5bfbe350504f3f8c2f64cf31f9f5926d08a0a4e3916e61a21df9",
@@ -164,7 +164,7 @@
    "size": 2609
   },
   "index.html": {
-   "sha256": "46fafc112cdf9eada1ab6dd192ded3f203ab57b8386f29c4ffa2e12c99ffefa3",
+   "sha256": "d9cf01910289e8f4a325be276694c95e148093d0340de07f171cf507c5561042",
    "size": 33084
   },
   "launch.py": {
@@ -184,15 +184,15 @@
    "size": 230
   },
   "HUONG_DAN.txt": {
-   "sha256": "68809c2ceb6e9802413b4459687aa3c06f0f2d4a5981e32977e500dfef77ccb3",
-   "size": 32918
+   "sha256": "b0602674ffff1385dd7ceaacf0eebde1c4294d381398bd8c3fd44e212ff38046",
+   "size": 33269
   },
   "README.md": {
-   "sha256": "a093b4dccae259c7f6ec62068f711fd748a024404f97c3b319c823f3e43c8544",
-   "size": 44686
+   "sha256": "1c632fdac73138468bf58771e73fd036f9a74cbabc3bb73be98d824fd5b1110f",
+   "size": 45362
   },
   "VERSION": {
-   "sha256": "a62bd57b15af08804d58a4f79926c6cdf88f9b15aa42b35864a9a9268106da43",
+   "sha256": "68ef209c443d3f4067567f8e4d38fa7ad6f82295620e3bf89692c286dbf5ed28",
    "size": 7
   },
   ".gitignore": {
