@@ -1,8 +1,12 @@
-# Review Studio 0.17.1
+# Review Studio 0.17.2
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.17.2
+
+- **Bỏ chèn phụ đề lên video** ở tab Lồng tiếng: video xuất ra không còn chữ phụ đề trên hình. Vẫn có thể chọn file .srt đi kèm, kênh phụ đề trong MP4 (bật/tắt được trong trình phát) hoặc không phụ đề. Cấu hình cũ đang chọn "Chèn chữ lên video" tự chuyển sang file .srt đi kèm.
 
 ## Mới trong 0.17.1
 
@@ -17,7 +21,7 @@ Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI,
 - **Tab Lồng tiếng thiết kế lại cho gọn, dễ dùng:**
   - **Thanh trên cùng** (luôn hiện khi cuộn): chọn/lưu/xóa **cấu hình lồng tiếng**, trạng thái key (bấm vào để mở mục Kết nối) và nút **▶ Lồng tiếng N video**.
   - **Cột trái** chia mục theo thứ tự làm việc: 🎬 Video đầu vào → 🔑 Kết nối → ✂ Cắt & khung hình → ✨ Overlay → 🗣 Nhận diện & dịch → 🎙 Giọng đọc → 🎵 Âm thanh gốc → 📤 Xuất & phụ đề. Mỗi lần chỉ mở một mục; tiêu đề mỗi mục hiện tóm tắt thông số đang chọn.
-  - **Cột phải** là **khung xem trước** video đầu tiên và **hàng đợi gọn**. Khung xem trước có khung hình, nền mờ, xoay/lật/zoom, overlay mẫu, phụ đề mẫu và nút phát.
+  - **Cột phải** là **khung xem trước** video đầu tiên và **hàng đợi gọn**. Khung xem trước có khung hình, nền mờ, xoay/lật/zoom, overlay mẫu và nút phát.
 - **Xử lý hàng loạt không rối:**
   - Mỗi video là một dòng trong hàng đợi: trạng thái, 5 bước, tiến độ, nút chính. Bấm vào dòng để xem chi tiết và các nút khác.
   - Lọc theo Tất cả / Đang chạy / Cần xử lý / Xong.
@@ -60,7 +64,7 @@ Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI,
   - **Video khớp MP3:** tua nhanh hoặc làm chậm video (0,25–4×), nhạc nền đổi tốc độ theo.
 - **Chọn giọng ai33 ngay trên trang Lồng tiếng:** nút 🎙 Chọn giọng ai33 mở danh sách giọng (Edge, ElevenLabs, MiniMax, Vbee, Fish Audio, Kokoro, giọng clone), có tìm kiếm và lọc nam/nữ. Bấm ▶ nghe thử, bấm Chọn để dùng.
 - **Chạy tự động 1 bước:** bấm "Bắt đầu" là chạy hết từ nhận diện tới video xuất, không dừng giữa chừng để hỏi. Ô "Dừng sau bước dịch để tự duyệt câu" vẫn còn nếu bạn cần.
-- **Xem trước video đầu tiên:** trên hàng đợi hiện video đầu tiên đã chọn. Âm nền nghe như sau khi xử lý; khi chọn "Chèn chữ lên video" thì phụ đề mẫu hiện đúng vị trí và cỡ chữ lúc xuất.
+- **Xem trước video đầu tiên:** trên hàng đợi hiện video đầu tiên đã chọn. Âm nền nghe như sau khi xử lý.
 - **Khu duyệt câu dịch:** thanh tiêu đề luôn hiện trên cùng khi cuộn, gồm trạng thái, các bước và nút Tiếp tục / Dừng / Tải MP4. Ở chế độ đoạn văn: lời Trung bên trái, đoạn văn Việt sửa được bên phải (đếm số tiếng/giới hạn), phụ đề theo giọng bấm vào để tua.
 - **Mẫu văn phong dịch** (dùng chung trang Dịch AI và Lồng tiếng): Review sản phẩm, Gia dụng · nhà cửa, Trải nghiệm thực tế, Tin tức · thời sự, Chia sẻ mẹo, Giới thiệu sản phẩm, Làm đẹp · chăm sóc, Công nghệ · điện tử, Ẩm thực, Thời trang, Giải trí · hài hước. Mỗi mẫu có cách mở đầu (hook) riêng.
 - **Luôn áp dụng, không tắt được:** không nhắc giá, thương hiệu, khối lượng, kích thước, thể tích, công suất chính xác; chỉ dùng từ ngữ chung chung.
@@ -91,7 +95,7 @@ Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI,
   2. **Dịch OpenAI:** dịch tự nhiên, mỗi câu giới hạn số tiếng theo thời gian nói (mặc định 4,2 tiếng/giây), không đọc giá chính xác, có ghi chú văn phong và cách xưng hô.
   3. **Tách âm thanh gốc:** giảm tiếng gốc khi có lời (giữ nhạc nền), lọc giọng giữa (thử nghiệm), tách giọng AI bằng Demucs nếu đã cài (`pip install demucs`), giữ nguyên hoặc xóa hẳn tiếng gốc.
   4. **Lồng tiếng ai33:** gộp câu thành đoạn tự nhiên, tạo giọng Việt, tự đọc nhanh hơn (tối đa 1,3×) cho vừa chỗ trống rồi đặt đúng thời điểm.
-  5. **Xuất:** MP4 H.264 + AAC, phụ đề Việt dạng file .srt, kênh phụ đề trong MP4 hoặc chèn chữ lên hình; tự lưu vào thư mục xuất.
+  5. **Xuất:** MP4 H.264 + AAC, phụ đề Việt dạng file .srt, kênh phụ đề trong MP4 (không chèn chữ lên hình); tự lưu vào thư mục xuất.
 - Chọn 1 video, nhiều video hoặc cả thư mục (kéo thả được), hoặc lấy từ kho Media; các video chạy lần lượt trong hàng đợi.
 - Mặc định **dừng sau bước dịch để duyệt**: bảng câu Trung ↔ Việt có đếm số tiếng/giới hạn (đỏ khi quá dài), sửa xong bấm Tiếp tục. Sửa câu sau khi đã xong thì chỉ câu đó được tạo giọng lại.
 - Tiến độ và mã tác vụ ai33 được lưu lại: dừng giữa chừng hoặc tắt ứng dụng thì bấm **Tiếp tục**, không tạo trùng giọng (không mất credit hai lần). Key API chỉ giữ trong phiên.

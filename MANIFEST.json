@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.17.1",
- "notes": "## Mới trong 0.17.1\n\n- **Overlay không bắt buộc:** mặc định tắt. Thêm file overlay vào thư viện không tự bật; nếu bật mà chưa có/chưa chọn overlay nào, video vẫn xuất bình thường (không có overlay) kèm cảnh báo, không bị dừng.\n- **Overlay tự khớp thời lượng video:** overlay dài hơn video thì tự cắt bằng video; ngắn hơn thì chọn:\n  - *Suốt video · lặp 1 overlay, cắt khớp* — lặp lại một overlay rồi cắt đúng độ dài.\n  - *Suốt video · ghép nối nhiều overlay ngẫu nhiên* — nối nhiều overlay khác nhau (không trùng liền nhau) cho đến khi phủ hết video rồi cắt khớp.\n  - *Một đoạn ngẫu nhiên* — chèn overlay ở một vị trí ngẫu nhiên.",
+ "version": "0.17.2",
+ "notes": "## Mới trong 0.17.2\n\n- **Bỏ chèn phụ đề lên video** ở tab Lồng tiếng: video xuất ra không còn chữ phụ đề trên hình. Vẫn có thể chọn file .srt đi kèm, kênh phụ đề trong MP4 (bật/tắt được trong trình phát) hoặc không phụ đề. Cấu hình cũ đang chọn \"Chèn chữ lên video\" tự chuyển sang file .srt đi kèm.",
  "files": {
   "update.py": {
    "sha256": "69dea002a0cb777dc61b4f48fa2b2f4046a8181c8b9db86d8f4361d8838cac7b",
@@ -24,8 +24,8 @@
    "size": 3948
   },
   "dub_ui.js": {
-   "sha256": "f93f5b9cf9d4e4804f07632cc30421cea4699a022c16fc73e47e0535732ad38a",
-   "size": 54596
+   "sha256": "5d4d6221594943e31cbbbb5a69e215a40f2bcf25bc55982a08279a2d28ee4d8f",
+   "size": 54042
   },
   "layout_ui.js": {
    "sha256": "31474a69f54710df46c2483f9711e36d487d11437085b2b563f97b1f18ab711e",
@@ -44,12 +44,12 @@
    "size": 2135
   },
   "dubbing.py": {
-   "sha256": "8dcfafb4d37fcdc80a16af56b797bbf0e59b1394f6bc3ba05459bdaa458a2ca2",
-   "size": 76468
+   "sha256": "3d34a0845afb3bdf3e216744d3b63766e98c1526386511cb9a216829b8d7ae39",
+   "size": 75285
   },
   "tests/test_dubbing.py": {
-   "sha256": "85cb25380453ef905c5f7cd8b2a14ad0f01fb049c14a5c882d41cafaec2b82c1",
-   "size": 21710
+   "sha256": "560be745a2958c5a3e78652ebbf7bd01e32e52b84ca33086db94ef94530a6b02",
+   "size": 21950
   },
   "image_ui.js": {
    "sha256": "b8e2a905501aedea84033a7c962b180251e06dc018e6133241f0310b474ed8e9",
@@ -140,8 +140,8 @@
    "size": 25305
   },
   "studio.css": {
-   "sha256": "5e0da0a37f1c7b455e16ad15b454d7c3f2fb8e7f40eb60a5ae2d8ac114873fa1",
-   "size": 78021
+   "sha256": "b28526f346b2030da666fa857e6b23c593754535ea40774d1d0d92717ba0554c",
+   "size": 77739
   },
   "studio.js": {
    "sha256": "3beaa5a97b9d5bfbe350504f3f8c2f64cf31f9f5926d08a0a4e3916e61a21df9",
@@ -160,7 +160,7 @@
    "size": 2609
   },
   "index.html": {
-   "sha256": "112f7771357a6d194f378901d027271b8e48dab1d708c3c9e85b48bf04fa3cc3",
+   "sha256": "bb07be1e984ff55370ae352626ecf6affb71a8318ad7c3270cb094f37fbb216b",
    "size": 33084
   },
   "launch.py": {
@@ -180,15 +180,15 @@
    "size": 230
   },
   "HUONG_DAN.txt": {
-   "sha256": "84110cf5d00da8c0ad2a5443f93580b52444a87d4ac8e2c46f57e364d988fe97",
-   "size": 32142
+   "sha256": "29a323e2fa4278aa41d44c8f3a228821a60dfc880726f7bfb279e97aef9cb1d9",
+   "size": 32346
   },
   "README.md": {
-   "sha256": "115ac0dc611ef89f65bb7faaca8164887d19a2d761b5e6b9a31d5e4f7ae524ea",
-   "size": 43430
+   "sha256": "71eac9237ca09c5562671ad17a1705b5aac6b6e7b069301b5cda0f8e583a397d",
+   "size": 43682
   },
   "VERSION": {
-   "sha256": "cd81ec19767ffb807bada6d48578a18d77a29adb394e09e9cdfcd5ea9eebb6a2",
+   "sha256": "b9b88c3ba0e9b6e35ef2a4d02bc27a2c0206f1a1fcb8b8749abe90df8f9d0f0d",
    "size": 7
   },
   ".gitignore": {

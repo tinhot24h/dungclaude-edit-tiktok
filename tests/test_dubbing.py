@@ -72,8 +72,8 @@ class PipelineBase(unittest.TestCase):
         return self.store.load(key)
 
 class PipelineTests(PipelineBase):
-    def test_review_pause_then_full_dub_with_burned_subtitles(self):
-        job=self.job(subtitles='burn',background='duck',mode='lines',review=True)
+    def test_review_pause_then_full_dub_with_soft_subtitles(self):
+        job=self.job(subtitles='soft',background='duck',mode='lines',review=True)
         self.store.process(job,dict(openai='sk-test',ai33='k'),threading.Event())
         self.assertEqual(job['state'],'review');self.assertEqual([s['vi'] for s in job['segments']],['Xin chào','Cảm ơn mọi người'])
         self.assertTrue((self.data/'dub'/job['id']/'zh.srt').is_file())
@@ -152,7 +152,7 @@ class ParagraphTests(PipelineBase):
         with mock.patch.object(dubbing,'paragraph_request',return_value='Một đoạn rất dài. Hai câu.'),\
              mock.patch.object(dubbing.ai33_audio,'get_task',return_value=dict(status='done',audio_url='https://cdn.example/a.mp3')),\
              mock.patch.object(dubbing.audio_files,'download',side_effect=lambda url,target:Path(target).write_bytes(long.read_bytes())):
-            job=self.job(subtitles='burn',background='duck',review=False,align='video')
+            job=self.job(subtitles='file',background='duck',review=False,align='video')
             self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
         self.assertEqual(job['state'],'done',job['message'])
         self.assertGreater(job['video_stretch'],1.5)
@@ -235,7 +235,7 @@ class FrameOverlayTests(PipelineBase):
         logo=self.overlay('logo.png',['-f','lavfi','-i','color=c=red:s=64x64:d=0.04','-frames:v','1'])
         self.assertEqual((sparkle['still'],logo['still']),(False,True));self.assertEqual(len(self.store.overlays()),2)
         with mock.patch.object(dubbing,'paragraph_request',return_value='Xin chào.'):
-            job=self.job(background='remove',review=False,subtitles='burn',frame_canvas='9:16',frame_fit='blur',frame_zoom=120,frame_x=10,frame_rotate=8,frame_flip='h',
+            job=self.job(background='remove',review=False,subtitles='file',frame_canvas='9:16',frame_fit='blur',frame_zoom=120,frame_x=10,frame_rotate=8,frame_flip='h',
                          overlay=True,overlay_count=2,overlay_blend='screen',overlay_timing='random',overlay_opacity=50)
             self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
         self.assertEqual(job['state'],'done',job['message'])
@@ -243,7 +243,8 @@ class FrameOverlayTests(PipelineBase):
         out=self.data/'dub'/job['id']/'dubbed.mp4';info=dubbing.probe(out)
         self.assertEqual((info['video']['width'],info['video']['height']),(1080,1920));self.assertAlmostEqual(info['duration'],4,delta=.2)
         graph=(self.data/'dub'/job['id']/'export.ffgraph').read_text()
-        for part in ('hflip','boxblur','rotate=','blend=all_mode=screen','tpad=start_duration','drawtext'):self.assertIn(part,graph)
+        for part in ('hflip','boxblur','rotate=','blend=all_mode=screen','tpad=start_duration'):self.assertIn(part,graph)
+        self.assertNotIn('drawtext',graph)
         # normal blend + loop, re-export keeps the same random choice
         first=list(job['overlays'])
         job['options']=dubbing.options({**job['options'],'overlay_blend':'normal'});job['steps']['export']='pending'
@@ -268,6 +269,9 @@ class FrameOverlayTests(PipelineBase):
         self.assertEqual(job['state'],'done',job['message']);self.assertEqual(job['overlays'],[])
         self.assertTrue(any(w.startswith('Overlay') for w in job['warnings']))
         self.assertFalse(dubbing.options({})['overlay'])
+
+    def test_burned_subtitles_are_gone_and_old_settings_fall_back_to_srt(self):
+        self.assertNotIn('burn',dubbing.SUBTITLES);self.assertEqual(dubbing.options(dict(subtitles='burn'))['subtitles'],'file')
 
     def test_sequence_joins_short_overlays_and_cuts_to_video(self):
         a=self.overlay('a.mp4',['-f','lavfi','-i','testsrc2=s=160x120:r=30:d=1','-pix_fmt','yuv420p'])

@@ -4,7 +4,7 @@
 02 Dịch       OpenAI → natural Vietnamese, each line sized to the time it has on screen
 03 Tách âm    background kept by: Demucs (if installed), centre-channel cancel, ducking under speech, or removed
 04 Lồng tiếng ai33.pro TTS per sentence group → fitted (gentle speed-up) and placed at the original timestamps
-05 Xuất       MP4 H.264 + AAC, Vietnamese voice, optional Vietnamese SRT (separate file, soft track or burned in)
+05 Xuất       MP4 H.264 + AAC, Vietnamese voice, optional Vietnamese SRT (separate file or soft track; never burned into the picture)
 
 Jobs run one at a time in a worker thread. Their state (segments, translations, ai33 task ids) is saved in
 .local/dub/<id>/job.json so a restart never re-buys a TTS task; API keys are only held in memory.
@@ -29,7 +29,6 @@ import audio_files
 import output_folder
 import secrets_store
 from media_engine import tempo as tempo_filter
-from fonts import FONTS, wrap
 
 OPENAI = os.environ.get('REVIEW_OPENAI_BASE', 'https://api.openai.com/v1/').rstrip('/') + '/'
 STEPS = ('asr', 'translate', 'separate', 'tts', 'mix', 'export')
@@ -37,7 +36,7 @@ WEIGHTS = dict(asr=15, translate=10, separate=15, tts=40, mix=10, export=10)
 # Output frame for the dubbed video; 'source' keeps the original size (even-rounded).
 CANVAS = {'source': None, '9:16': (1080, 1920), '1:1': (1080, 1080), '4:5': (1080, 1350), '16:9': (1920, 1080)}
 BACKGROUND = ('duck', 'center', 'demucs', 'remove', 'keep')
-SUBTITLES = ('none', 'file', 'soft', 'burn')
+SUBTITLES = ('none', 'file', 'soft')
 VOICE_RATE = 24000
 MAX_LINES = 600
 DEFAULTS = dict(language='zh', model=ai_translate.DEFAULT_MODEL, rate=4.2, pronoun='neutral', notes='', no_price=True,
@@ -71,6 +70,8 @@ def options(raw):
     for key, lo, hi in (('frame_zoom', 25, 400), ('frame_x', -100, 100), ('frame_y', -100, 100), ('frame_rotate', -180, 180), ('overlay_opacity', 0, 100), ('trim_start', 0, 120), ('trim_end', 0, 120), ('rate', 2.5, 7), ('voice_speed', .5, 1.5), ('max_tempo', 1, 1.6), ('duck_level', 0, 100),
                         ('background_volume', 0, 200), ('voice_volume', 0, 300)):
         num(key, lo, hi)
+    if raw.get('subtitles') == 'burn':  # burned-in subtitles were removed; old saved settings get the .srt file instead
+        raw = dict(raw, subtitles='file')
     for key, allowed in (('language', ('zh', 'auto')), ('background', BACKGROUND), ('subtitles', SUBTITLES),
                          ('loudness', ('off', 'tiktok')), ('pronoun', tuple(PRONOUNS)), ('mode', ('paragraph', 'lines')), ('align', ('auto', 'voice', 'video')), ('style', tuple(ai_translate.STYLES)), ('frame_canvas', tuple(CANVAS)), ('frame_fit', ('cover', 'contain', 'blur')),
                          ('frame_flip', ('none', 'h', 'v', 'hv')), ('overlay_blend', ('normal', 'screen', 'key')), ('overlay_timing', ('loop', 'sequence', 'random'))):
@@ -488,27 +489,6 @@ def overlay_chain(source, item, W, H, settings, base, duration):
     if random_time:
         chain += f",setpts=PTS-STARTPTS+{item['start']:.3f}/TB"
     return [chain + f'[ov{k}]', f'[{base}][ov{k}]overlay=0:0:eof_action=pass:format=auto' + ('' if random_time else ':shortest=1') + f'[os{k}]'], f'os{k}'
-
-
-def burn_filters(segments, folder, width, height):
-    """drawtext per Vietnamese line, bottom centre, wrapped to 86% of the width (same fonts as the editor)."""
-    font = 'sans-bold'
-    size = max(16, round(height * .042)) if height > width else max(16, round(height * .055))
-    box = width * .86
-    # A copy of the font sits next to the graph: relative names avoid drive-letter escaping on Windows.
-    shutil.copyfile(Path(__file__).resolve().parent / 'assets' / FONTS[font][0], folder / 'subtitle.ttf')
-    out = []
-    for n, s in enumerate(segments):
-        text = (s.get('vi') or '').strip()
-        if not text:
-            continue
-        lines = wrap(text, font, size, box)[:3]
-        name = f'sub-{n}.txt'
-        (folder / name).write_text('\n'.join(lines), encoding='utf-8')
-        out.append(f"drawtext=fontfile=subtitle.ttf:textfile={name}:expansion=none:fontsize={size}:fontcolor=white:"
-                   f"borderw={max(2, size // 12)}:bordercolor=black:line_spacing={size // 5}:x=(w-text_w)/2:y=h*0.80-text_h:"
-                   f"enable='between(t,{s['start']},{s['end']})'")
-    return out
 
 
 # ---------------------------------------------------------------- job store and worker
@@ -1157,12 +1137,11 @@ class Store:
         video = info['video']
         identity = frame_identity(settings)
         chosen = self.pick_overlays(job, duration)
-        copy = subs != 'burn' and stretch == 1 and identity and not chosen and video.get('codec_name') == 'h264' and video.get('pix_fmt') in ('yuv420p', 'yuvj420p')
+        copy = stretch == 1 and identity and not chosen and video.get('codec_name') == 'h264' and video.get('pix_fmt') in ('yuv420p', 'yuvj420p')
         filters = not copy
         if filters:
             width, height = frame_size(settings, video)
-            burn = burn_filters(subtitle_rows or [], folder, width, height) if subs == 'burn' else []
-            # frame → random overlays → burned subtitles (text always stays on top)
+            # frame → random overlays
             lines, _ = frame_graph(settings, video, [f'setpts=PTS*{stretch:.6f}'] if stretch != 1 else [], [])
             lines[-1] = lines[-1][:-len('[vout]')] + '[framed]'
             graph.extend(lines)
@@ -1192,7 +1171,7 @@ class Store:
                     index += 1
                 more, base = overlay_chain(source, dict(item, k=k), width, height, settings, base, duration)
                 graph.extend(more)
-            graph.append(f'[{base}]' + ','.join(burn + ['format=yuv420p']) + '[vout]')
+            graph.append(f'[{base}]format=yuv420p[vout]')
         (folder / 'export.ffgraph').write_text(';\n'.join(graph), encoding='utf-8')
         args += ['-filter_complex_script', 'export.ffgraph', '-map', '[vout]' if filters else '0:v:0', '-map', '[aout]']
         if subs == 'soft':
@@ -1213,7 +1192,7 @@ class Store:
             if output_folder.load(self.settings_path)['auto_save']:
                 saved = output_folder.deliver(self.settings_path, folder / 'dubbed.mp4', job['name'] + '-long-tieng')
                 job['outputs']['saved_path'] = str(saved)
-                if subs in ('file', 'soft', 'burn'):
+                if subs in ('file', 'soft'):
                     shutil.copyfile(folder / 'vi.srt', saved.with_suffix('.srt'))
         except (ValueError, OSError) as exc:
             job['warnings'].append(str(exc))
