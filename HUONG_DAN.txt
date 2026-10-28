@@ -1,10 +1,13 @@
-REVIEW STUDIO 0.12.1 — VIDEO / DỊCH AI / ÂM THANH AI33
+REVIEW STUDIO 0.13 — VIDEO / DỊCH AI / ÂM THANH AI33
 
 CẬP NHẬT
-Đóng bản cũ, giải nén toàn bộ ReviewStudio-v0.12.1.zip vào thư mục mới có
-quyền ghi. Không chạy từ trong ZIP. Đã có Python/FFmpeg thì không cần
-cài lại. Thiết kế px bản 0.4 dùng lại nếu cùng trình duyệt/địa chỉ/cổng.
-PNG thuộc thư mục cũ cần tải lại khi chuyển thư mục.
+Từ bản 0.13: không cần tải lại ZIP. Trong ứng dụng bấm nút ⟳ (góc phải
+trên cùng) → Cập nhật ngay → Khởi động lại. Hoặc đóng ứng dụng rồi bấm
+đúp UPDATE_WINDOWS.bat (Mac/Linux: UPDATE_MAC_LINUX.command). Chỉ các file
+thay đổi được tải từ GitHub; video, MP3, dự án, cài đặt (.local) giữ nguyên.
+Lần đầu chuyển từ bản 0.12.1 trở về trước: đóng bản cũ, giải nén
+ReviewStudio-v0.13.zip vào thư mục mới, chép thư mục .local của bản cũ sang
+nếu muốn giữ video/MP3/dự án. Không chạy từ trong ZIP.
 
 CÀI MỘT LẦN
 Cần Python 3.11+, FFmpeg/FFprobe có libx264/drawtext và libmp3lame. Không cần pip/npm.
@@ -225,6 +228,12 @@ Mở "⚙ Tùy chỉnh câu lệnh" để sửa quy tắc viết; bấm "Lưu th
 giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh gốc. Mẫu gốc đã
 cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
 Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
+
+NÂNG CẤP 0.13 — CẬP NHẬT TỰ ĐỘNG
+--------------------------------
+- Cập nhật không cần tải lại toàn bộ: nút ⟳ ở góc phải trên cùng tự kiểm tra GitHub khi mở ứng dụng; có bản mới thì hiện ⬆ Có bản …. Bấm Cập nhật ngay: ứng dụng chỉ tải các file đã thay đổi, kiểm tra mã SHA-256 từng file, sao lưu bản cũ vào .local/update, rồi bấm Khởi động lại là dùng được bản mới. Video, MP3, dự án, kiểu chữ và cài đặt trong .local được giữ nguyên.
+- Cập nhật ngoài ứng dụng: bấm đúp UPDATE_WINDOWS.bat (Windows) hoặc UPDATE_MAC_LINUX.command, hoặc chạy python update.py (--check để chỉ xem thay đổi). Thư mục là bản git clone thì dùng git pull.
+- Từ 0.13 trở đi mới cập nhật được kiểu này: bản 0.12.1 trở về trước cần tải ZIP 0.13 một lần.
 
 NÂNG CẤP 0.12.1
 ---------------

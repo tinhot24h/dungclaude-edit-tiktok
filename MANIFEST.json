@@ -1,0 +1,227 @@
+{
+ "app": "ReviewStudio",
+ "version": "0.13",
+ "notes": "## Mới trong 0.13\n\n- **Cập nhật không cần tải lại toàn bộ:** nút **⟳** ở góc phải trên cùng tự kiểm tra GitHub khi mở ứng dụng; có bản mới thì hiện **⬆ Có bản …**. Bấm **Cập nhật ngay**: ứng dụng chỉ tải các file đã thay đổi, kiểm tra mã SHA-256 từng file, sao lưu bản cũ vào `.local/update`, rồi bấm **Khởi động lại** là dùng được bản mới. Video, MP3, dự án, kiểu chữ và cài đặt trong `.local` được giữ nguyên.\n- Cập nhật ngoài ứng dụng: bấm đúp `UPDATE_WINDOWS.bat` (Windows) hoặc `UPDATE_MAC_LINUX.command`, hoặc chạy `python update.py` (`--check` để chỉ xem thay đổi). Thư mục là bản `git clone` thì dùng `git pull`.\n- Từ 0.13 trở đi mới cập nhật được kiểu này: bản 0.12.1 trở về trước cần tải ZIP 0.13 một lần.",
+ "files": {
+  "update.py": {
+   "sha256": "69dea002a0cb777dc61b4f48fa2b2f4046a8181c8b9db86d8f4361d8838cac7b",
+   "size": 7901
+  },
+  "UPDATE_WINDOWS.bat": {
+   "sha256": "2da8f76eaae5ffbff33ca0677350853d9895523e124d6ed73050c11d99cd1d22",
+   "size": 212
+  },
+  "UPDATE_MAC_LINUX.command": {
+   "sha256": "7c9e4223bcb043f1e460ff73ac6250ec15f57811f12a03ad025bdaac2a8c7282",
+   "size": 180
+  },
+  "tests/test_update.py": {
+   "sha256": "9d27c4bb8bd6522479fd226bb6e2f4e47ebf2dd04cefc73f5482e32d1cfcd9c9",
+   "size": 4083
+  },
+  "update_ui.js": {
+   "sha256": "9c4280d3a39addeb8181a9b9662c00b57e93962de38581ac8cfa373b89544900",
+   "size": 3948
+  },
+  "image_ui.js": {
+   "sha256": "b8e2a905501aedea84033a7c962b180251e06dc018e6133241f0310b474ed8e9",
+   "size": 13416
+  },
+  "export_ui.js": {
+   "sha256": "056944886a316daacacf36b322c3fbf70744208e7f569554bec049d1b2a06a22",
+   "size": 9679
+  },
+  "style_ui.js": {
+   "sha256": "38fb4eaea0632ee304a5411f2c4ddd48c4110269146f82d8fe4d3353b7890910",
+   "size": 7809
+  },
+  "media_bin.js": {
+   "sha256": "f2e90f970f87ad891ca38e691f3e5198837c9b0eecb647f784c85472f1b6762b",
+   "size": 15169
+  },
+  "studio_shell.js": {
+   "sha256": "e5a2c956be5ec4bf24ff896dc9cdf0b6fd1b624dbdd40edbb1172dfa6eb72461",
+   "size": 18518
+  },
+  "clip_ui.js": {
+   "sha256": "e79a6df1d1d52a5f7d12701b21714817aba73a365de8e5bb7a2257b999ba27f8",
+   "size": 5346
+  },
+  "output_folder.py": {
+   "sha256": "c36e16ac6d03c0e1648d511e69dbdfd79e5f3d0d2d20d576a21a7382b8dc8f0a",
+   "size": 4835
+  },
+  "library_store.py": {
+   "sha256": "00bba837c001413d251a421a31b614e483c3ca51116887bd673de143f7ce97fc",
+   "size": 2484
+  },
+  "history_ui.js": {
+   "sha256": "a01656d6c164f613015896ae7d076c26160287b169073f2ee0937974265cec0a",
+   "size": 7832
+  },
+  "workspace_ui.js": {
+   "sha256": "1fbbf52698e8db65f141d27c53b9621ec0fef18abfc0461ef627efce2a1d8fd2",
+   "size": 17636
+  },
+  "media_preview.py": {
+   "sha256": "a9209c714103e4fefe1c562570804a3afb601ed9ca1d0339a9b9b2849f2a65c9",
+   "size": 1872
+  },
+  "timeline_ui.js": {
+   "sha256": "32522d40fffc64d17824961d31ad3a19fabdf55888072697d21a6883f5495124",
+   "size": 35271
+  },
+  "tests/test_editor_controls.py": {
+   "sha256": "376782c32b1e0a90392eadbe445304222f5fa04fd622e452bdf026a3966dbb86",
+   "size": 3640
+  },
+  "asset_store.py": {
+   "sha256": "adbcdfb545d70bbccab99488a79aa9a0a8fe5f1ef9bf380984f7de784dc83a0b",
+   "size": 2104
+  },
+  "media_engine.py": {
+   "sha256": "802cd79532f73c8085fa3f573decc92a3d5c21b9b616355b2f05ecd01b14715f",
+   "size": 19882
+  },
+  "editor_ui.js": {
+   "sha256": "c7f2a4edb22836065d660c5c1b1a9a0c7da1f45bc6a662127633e4e9b8806167",
+   "size": 37037
+  },
+  "tests/test_media_engine.py": {
+   "sha256": "636e0720dcd585690a727581534cee9c4c783c4647b4d736a5059ba2081be8a2",
+   "size": 12927
+  },
+  "app.py": {
+   "sha256": "ae50e4671cc9ee8a5340e28940cb458cb020090189ead66b8aaae230aa0f8dd1",
+   "size": 41995
+  },
+  "ai33_audio.py": {
+   "sha256": "857db392e2c1e54a915925282b2e38f590e2105ecc716ec98eb548fac90f825b",
+   "size": 22544
+  },
+  "audio_files.py": {
+   "sha256": "0a9bdf3f385a5a9627172e2930bcbd0482d59a3cf73aaae40714a54da9eed654",
+   "size": 9810
+  },
+  "audio_ui.js": {
+   "sha256": "c03d426cc6eba1a88a5c880bd529a19c2e72238b70005d7758ea29d6c74613ae",
+   "size": 28885
+  },
+  "ai_translate.py": {
+   "sha256": "59d732f046716f804c6efb4933ff26908a41612b746afaa2d6028e7645a4810d",
+   "size": 20683
+  },
+  "studio.css": {
+   "sha256": "b05bb86ffa98cf5aaa3c4c07f8cb85fff8b0d6f89c2d0a7d1a0ee360cf822367",
+   "size": 59058
+  },
+  "studio.js": {
+   "sha256": "faa6ae3aa17f7771914d140d7d75116a6a5a93239c5d70bbef425d640a2ae8ac",
+   "size": 24874
+  },
+  "ai_ui.js": {
+   "sha256": "1a67d1936a7137ab3c805a1fafb113d8f6f687c6050321ffb7cf34800e17a1f6",
+   "size": 16940
+  },
+  "design.py": {
+   "sha256": "4999f50791c564e24acc26ed7d2259b6e11975d04bc337cf8b493298bee82b3b",
+   "size": 17211
+  },
+  "fonts.py": {
+   "sha256": "4beb44c49edab3e8f8de18fbda155b941ef8869b9da67dcc138216d1c7dcc208",
+   "size": 2609
+  },
+  "index.html": {
+   "sha256": "32b5d8cf3ed55bd1c80077b6fb6e3951c08410c7b7aabd593f20342c78fcfeac",
+   "size": 31822
+  },
+  "launch.py": {
+   "sha256": "a493ab33e2db46235059df4460fd21a397ffd12880d85123d028cef9e2befa95",
+   "size": 2533
+  },
+  "build_package.py": {
+   "sha256": "2091e00436b40dfa6593105b8d66450611201517771e600eaa7392844be67da3",
+   "size": 3057
+  },
+  "START_WINDOWS.bat": {
+   "sha256": "616ecf0e4d9a41995c509f79bd5e1a01d1dce7ba76356a801417e08747847c4e",
+   "size": 212
+  },
+  "START_MAC_LINUX.command": {
+   "sha256": "21b2d87c2eac36128c3cc2b9d436f493e4e086eebfb6d55a667c6e6320a25ee8",
+   "size": 230
+  },
+  "HUONG_DAN.txt": {
+   "sha256": "099b7d583aa8985f491212ba9081624554460d46ac509f7ede49fe33824b73f4",
+   "size": 20030
+  },
+  "README.md": {
+   "sha256": "67f88e5f9abaa7f9d1c655c5cf0b963b067032641bbc0910552b8d5928809f16",
+   "size": 31006
+  },
+  "VERSION": {
+   "sha256": "342a2d9e91ecb95d736e0a0cd7540c7b4637173ebc0f3a12a09839873b863e56",
+   "size": 5
+  },
+  ".gitignore": {
+   "sha256": "0f1a2bf5537910f90c1fe49597d40905cc011718e7987d530dbc236951f7e0d7",
+   "size": 27
+  },
+  "tests/test_storage.py": {
+   "sha256": "4ff9454ea2fd064479e1d26f28d6c43db6ffa5a68234df869b14e35bf9bb75d7",
+   "size": 8536
+  },
+  "tests/test_design.py": {
+   "sha256": "f44ebb0f0dcc2a8f333acd7bd5d8edfd4eaa75b5e1f568e38fbded883f61961a",
+   "size": 5366
+  },
+  "tests/test_ai_translate.py": {
+   "sha256": "fbf4d9af70cb8419c56006de9f01d653a25641b65a4ede838abdf351ac412436",
+   "size": 4319
+  },
+  "tests/test_translation_modes.py": {
+   "sha256": "c3b9ff129d3420552acd5ddcf2d219f7a9175488daa178455d6621232deb7596",
+   "size": 10139
+  },
+  "tests/test_ai33_audio.py": {
+   "sha256": "1bc21f3eddeb8beee49eab73c862336c17147fd7cea0755d9ad7b00065c55686",
+   "size": 13134
+  },
+  "tests/test_audio_cache.py": {
+   "sha256": "c1881d2da6f33b65d9de414b7928b9f852e7f0e57267223a7e77211fda371cb3",
+   "size": 2120
+  },
+  "docs/ai33-api.md": {
+   "sha256": "f6760ad2d061bdd44f8b201b9c09a2aea3b2ea335b7901d3c1f18b2b4c64663f",
+   "size": 6863
+  },
+  "assets/DejaVuSans.ttf": {
+   "sha256": "57f73e11f51999432bf7ab22ce55b6f945d5eca1bf824404cfa9ec2e3718c84e",
+   "size": 759720
+  },
+  "assets/DejaVuSans-Bold.ttf": {
+   "sha256": "a4c5bc453ca281d90ea079e596da7ae0dfeb5777497c29ec254e76d97ff6f890",
+   "size": 708920
+  },
+  "assets/DejaVuSerif.ttf": {
+   "sha256": "8cb29f7db250ebb2551a6ce2c1e0bfd5a0eb520e9e233370db0493e82e1f36f7",
+   "size": 380660
+  },
+  "assets/DejaVuSerif-Bold.ttf": {
+   "sha256": "aac3f559445d23f0f567a243f91f3f6ad6cb4b5cafa1521a3479fffe0637f0bd",
+   "size": 356668
+  },
+  "assets/DejaVuSansMono.ttf": {
+   "sha256": "54bf827eb99404e8f430c330ad30f063334f637eba0109b6a18d4f566a8e9dd8",
+   "size": 343140
+  },
+  "assets/DejaVuSansMono-Bold.ttf": {
+   "sha256": "0d3c03d1b667192f91223660a3163325cf83132662fe4d9f7d6e596bf7a995c2",
+   "size": 334268
+  },
+  "assets/FONT_LICENSE.txt": {
+   "sha256": "63d3ba759d12804c5b31a9d5940d855c1820d1f5999e6b0872eb1c7ff045fbc9",
+   "size": 3859
+  }
+ }
+}

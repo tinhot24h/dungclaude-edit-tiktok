@@ -1,6 +1,5 @@
 """Portable launcher: checks prerequisites, then opens the local application."""
 import os
-import runpy
 import shutil
 import subprocess
 import sys
@@ -37,12 +36,18 @@ def main():
         timer = threading.Timer(1.5, lambda: webbrowser.open(f'http://127.0.0.1:{port}'))
         timer.daemon = True
         timer.start()
-    runpy.run_path(str(ROOT / 'app.py'), run_name='__main__')
+    # The app runs as a child process so "Khởi động lại" after an in-app update (exit code 75) brings it back.
+    env = {**os.environ, 'REVIEW_LAUNCHER': '1'}
+    while True:
+        code = subprocess.call([sys.executable, str(ROOT / 'app.py')], cwd=ROOT, env=env)
+        if code != 75:
+            return code
+        print('Dang khoi dong lai Review Studio sau khi cap nhat...', flush=True)
 
 
 if __name__ == '__main__':
     try:
-        main()
+        sys.exit(main() or 0)
     except KeyboardInterrupt:
         pass
     except Exception as error:

@@ -1,8 +1,14 @@
-# Review Studio 0.12.1
+# Review Studio 0.13
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.13
+
+- **Cập nhật không cần tải lại toàn bộ:** nút **⟳** ở góc phải trên cùng tự kiểm tra GitHub khi mở ứng dụng; có bản mới thì hiện **⬆ Có bản …**. Bấm **Cập nhật ngay**: ứng dụng chỉ tải các file đã thay đổi, kiểm tra mã SHA-256 từng file, sao lưu bản cũ vào `.local/update`, rồi bấm **Khởi động lại** là dùng được bản mới. Video, MP3, dự án, kiểu chữ và cài đặt trong `.local` được giữ nguyên.
+- Cập nhật ngoài ứng dụng: bấm đúp `UPDATE_WINDOWS.bat` (Windows) hoặc `UPDATE_MAC_LINUX.command`, hoặc chạy `python update.py` (`--check` để chỉ xem thay đổi). Thư mục là bản `git clone` thì dùng `git pull`.
+- Từ 0.13 trở đi mới cập nhật được kiểu này: bản 0.12.1 trở về trước cần tải ZIP 0.13 một lần.
 
 ## Mới trong 0.12.1
 
@@ -210,3 +216,10 @@ python3 build_package.py
 API thêm: `POST /translation-prompt` (source + phong cách → prompt, không gọi API), `POST /translation-import` (text JSON → hai bản + ghi chú), `/ai-status` trả cấu hình an toàn theo provider. `/translate` nhận thêm `provider: gemini|openai`; giá trị `manual` bị từ chối tại endpoint dịch để không vô tình gọi API.
 
 API cục bộ ai33: `GET /audio-config`, `POST /audio/voices`, `/audio/create`, `/audio/task`, `/audio/credits`, `/audio/history`, `/audio/cache`; `POST /audio/upload`, `GET /audio/assets`, `GET /audio/file/<asset-id>` để phát hoặc `?download=1` để tải. Không nhét API key vào query string.
+
+## Phát hành bản mới (cho người bảo trì)
+
+1. Sửa code, tăng số trong `VERSION`, thêm mục "Mới trong …" ở đầu README.
+2. Chạy `python build_package.py --manifest` để cập nhật `MANIFEST.json` (mã SHA-256 của từng file).
+3. Chạy `python -m unittest discover -s tests` (test sẽ báo lỗi nếu quên bước 2), rồi commit và push lên nhánh `main`.
+4. Người dùng bấm ⟳ trong ứng dụng hoặc chạy `UPDATE_WINDOWS.bat` để nhận bản mới.

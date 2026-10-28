@@ -462,3 +462,12 @@ kbd{display:inline-block;padding:2px 7px;border:1px solid #475569;border-bottom-
 .my-styles .group-label,.my-designs .group-label{margin-top:0}
 .my-styles select,.my-designs select{width:100%}
 .just-filled{animation:filled 1.2s ease-out}@keyframes filled{from{box-shadow:0 0 0 3px var(--accent)}to{box-shadow:0 0 0 0 transparent}}
+/* ---- 0.13: updater */
+.update-button{margin-left:auto;font:600 12px system-ui;color:#a5b5c9;border:1px solid var(--border);background:#0f151f;padding:9px 12px;border-radius:7px;cursor:pointer;white-space:nowrap}
+.update-button:hover{border-color:var(--accent);color:var(--text)}
+.update-button.has-update{background:#3fd18b;color:#0d1118;border-color:#3fd18b}
+.update-button+.export-badge{margin-left:0}
+.update-dialog{max-width:560px;width:calc(100vw - 32px);background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:18px 20px}
+.update-dialog::backdrop{background:#0009}
+.update-dialog h2{margin:0 0 8px;font-size:17px}
+.update-dialog pre{white-space:pre-wrap;font:12px/1.5 system-ui;background:var(--input);border:1px solid var(--border);border-radius:8px;padding:10px;max-height:260px;overflow:auto}

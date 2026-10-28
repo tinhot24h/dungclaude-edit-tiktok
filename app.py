@@ -24,6 +24,7 @@ import ai33_audio
 import audio_files
 import library_store
 import output_folder
+import update
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / '.local'
@@ -44,6 +45,7 @@ AUDIO_SLOTS = threading.BoundedSemaphore(3)
 ACTIVE = ('queued','rendering','cancelling')
 PROJECT = re.compile('[a-f0-9]{32}')
 VERSION = (ROOT/'VERSION').read_text(encoding='utf-8').strip()
+RESTART_CODE = 75
 
 
 def keep_days():
@@ -343,7 +345,7 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == '/':
             return self.respond(200, (ROOT / 'index.html').read_bytes(), 'text/html; charset=utf-8')
-        if path in ('/studio.css','/studio.js','/ai_ui.js','/audio_ui.js','/editor_ui.js','/timeline_ui.js','/history_ui.js','/workspace_ui.js','/clip_ui.js','/studio_shell.js','/media_bin.js','/image_ui.js','/export_ui.js','/style_ui.js'):
+        if path in ('/studio.css','/studio.js','/ai_ui.js','/audio_ui.js','/editor_ui.js','/timeline_ui.js','/history_ui.js','/workspace_ui.js','/clip_ui.js','/studio_shell.js','/media_bin.js','/image_ui.js','/export_ui.js','/style_ui.js','/update_ui.js'):
             mime = 'text/css' if path.endswith('.css') else 'text/javascript'
             return self.respond(200, (ROOT/path.lstrip('/')).read_bytes(), mime+'; charset=utf-8')
         if path in ('/assets/'+font[0] for font in FONTS.values()):
@@ -401,6 +403,12 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(200,(IMAGES/(image_match[1]+'.png')).read_bytes(),'image/png')
         if path == '/images':
             return self.respond(200,{'images':images()})
+        if path == '/update/check':
+            if (ROOT/'.git').exists():return self.respond(200,{'git':True,'current':VERSION})
+            try:
+                plan=update.check()
+                return self.respond(200,{k:v for k,v in plan.items() if k!='manifest'})
+            except update.UpdateError as exc:return self.respond(502,{'error':str(exc)})
         if path == '/frames':
             items=[{'id':f.stem,'url':'/frames/'+f.stem} for f in sorted(FRAMES.glob('*.png'),key=lambda f:f.stat().st_mtime,reverse=True) if PROJECT.fullmatch(f.stem)]
             return self.respond(200,{'frames':items})
@@ -562,6 +570,16 @@ class Handler(BaseHTTPRequestHandler):
                     return self.respond(200,{'id':key,'url':'/frames/'+key})
                 for suffix in ('.png','.json'):(IMAGES/(key+suffix)).unlink(missing_ok=True)
                 return self.respond(200,{'images':images()})
+            if path in ('/update/apply','/update/restart'):
+                if (ROOT/'.git').exists():raise ValueError('Bản git clone: cập nhật bằng lệnh git pull.')
+                with LOCK:busy=any(job.get('state') in ACTIVE for job in JOBS.values())
+                if busy:raise ValueError('Đang xuất video. Chờ xuất xong rồi cập nhật/khởi động lại.')
+                if path=='/update/restart':
+                    # launch.py restarts the app when it exits with RESTART_CODE (started directly, it just stops).
+                    threading.Timer(.6,lambda:os._exit(RESTART_CODE)).start()
+                    return self.respond(200,{'restarting':True,'launcher':os.environ.get('REVIEW_LAUNCHER')=='1'})
+                try:return self.respond(200,update.apply(log=lambda line:None))
+                except update.UpdateError as exc:return self.respond(502,{'error':str(exc)})
             if path == '/upload':
                 if not 0 < size <= 500 * 1024 * 1024:
                     return self.respond(413, {'error': 'Chọn video tối đa 500 MB.'})
