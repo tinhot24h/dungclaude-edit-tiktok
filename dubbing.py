@@ -544,6 +544,30 @@ def frame_graph(settings, video, before, after):
 OVERLAY_TYPES = ('.mp4', '.mov', '.webm', '.mkv', '.m4v', '.gif', '.png', '.webp', '.jpg', '.jpeg')
 
 
+ALPHA_FORMATS = re.compile(r'^(yuva|rgba|bgra|argb|abgr|gbrap|ya|pal8)')
+BROWSER_VIDEO = ('h264', 'vp8', 'vp9', 'av1')
+
+
+def overlay_alpha(path):
+    """(has transparency, codec) — ProRes 4444/QuickTime Animation/PNG MOV, PNG/GIF/WebP and WebM with an alpha channel."""
+    out = subprocess.run(['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=codec_name,pix_fmt:stream_tags',
+                          '-of', 'json', str(path)], capture_output=True, text=True, timeout=30)
+    try:
+        stream = (json.loads(out.stdout or '{}').get('streams') or [{}])[0]
+    except ValueError:
+        stream = {}
+    tags = {k.lower(): str(v) for k, v in (stream.get('tags') or {}).items()}
+    codec = stream.get('codec_name') or ''
+    return bool(ALPHA_FORMATS.match(stream.get('pix_fmt') or '') or tags.get('alpha_mode') == '1'), codec
+
+
+def overlay_decoder(meta):
+    """FFmpeg's own VP8/VP9 decoders drop the alpha layer of WebM; libvpx keeps it."""
+    if meta.get('alpha') and meta.get('codec') in ('vp8', 'vp9'):
+        return ['-c:v', 'libvpx' if meta['codec'] == 'vp8' else 'libvpx-vp9']
+    return []
+
+
 def overlay_fit(W, H):
     return f'fps=30,scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1'
 
@@ -551,17 +575,19 @@ def overlay_fit(W, H):
 def overlay_chain(source, item, W, H, settings, base, duration):
     """Graph lines putting an overlay stream (`source`: an input like [3:v] or a joined sequence label) on top of
     [base]; returns (lines, new label). Longer than the video → cut to the video; shorter → looped or joined
-    (decided by the inputs). normal/key: alpha overlay (key removes a green background) · screen: blend for effects on black."""
+    (decided by the inputs). normal/key: alpha overlay (key removes a green background) · screen: blend for effects on black.
+    Files with their own transparency (item['alpha']) always use the normal alpha overlay, full frame."""
     op = settings['overlay_opacity'] / 100
     k = item['k']
     random_time = settings['overlay_timing'] == 'random'
     chain = f'{source}{overlay_fit(W, H)}' + ('' if random_time else f',trim=duration={duration:.3f},setpts=PTS-STARTPTS')
-    if settings['overlay_blend'] == 'screen':
+    blend = 'normal' if item.get('alpha') else settings['overlay_blend']
+    if blend == 'screen':
         if random_time:
             chain += f",tpad=start_duration={item['start']:.3f}:stop_duration={duration + 5:.3f}:color=black"
         return [chain + f',format=gbrp[ov{k}]', f'[{base}]format=gbrp[bk{k}]',
                 f'[bk{k}][ov{k}]blend=all_mode=screen:all_opacity={op:.3f}:shortest=1[os{k}]'], f'os{k}'
-    if settings['overlay_blend'] == 'key':
+    if blend == 'key':
         chain += ',colorkey=0x00FF00:0.30:0.10'
     chain += f',format=rgba,colorchannelmixer=aa={op:.3f}'
     if random_time:
@@ -1232,7 +1258,7 @@ class Store:
                         meta = self.overlay(clip)
                         if not meta:
                             continue
-                        args += (['-loop', '1', '-t', '3'] if meta['still'] else []) + ['-i', str(self.overlay_dir / meta['file'])]
+                        args += (['-loop', '1', '-t', '3'] if meta['still'] else []) + overlay_decoder(meta) + ['-i', str(self.overlay_dir / meta['file'])]
                         graph.append(f'[{index}:v]{overlay_fit(width, height)},format=rgba[sq{k}_{n}]')
                         parts.append(f'[sq{k}_{n}]')
                         index += 1
@@ -1244,10 +1270,12 @@ class Store:
                     if meta['still']:
                         args += ['-loop', '1', '-t', str(duration if settings['overlay_timing'] == 'loop' else min(duration, 4)), '-i', path]
                     else:
-                        args += (['-stream_loop', '-1'] if settings['overlay_timing'] == 'loop' else []) + ['-i', path]
+                        args += (['-stream_loop', '-1'] if settings['overlay_timing'] == 'loop' else []) + overlay_decoder(meta) + ['-i', path]
                     source = f'[{index}:v]'
                     index += 1
-                more, base = overlay_chain(source, dict(item, k=k), width, height, settings, base, duration)
+                clips = [self.overlay(c) for c in item.get('sequence') or [item['id']]] if settings['overlay_timing'] == 'sequence' else [self.overlay(item['id'])]
+                alpha = all(c and c.get('alpha') for c in clips)
+                more, base = overlay_chain(source, dict(item, k=k, alpha=alpha), width, height, settings, base, duration)
                 graph.extend(more)
             graph.append(f'[{base}]format=yuv420p[vout]')
         (folder / 'export.ffgraph').write_text(';\n'.join(graph), encoding='utf-8')
@@ -1284,6 +1312,12 @@ class Store:
             except (OSError, ValueError):
                 continue
             if isinstance(item, dict) and item.get('id') == meta.stem and (self.overlay_dir / item.get('file', '')).is_file():
+                if 'alpha' not in item:  # imported before 0.17.6
+                    item['alpha'], item['codec'] = overlay_alpha(self.overlay_dir / item['file'])
+                    try:
+                        meta.write_text(json.dumps(item, ensure_ascii=False), encoding='utf-8')
+                    except OSError:
+                        pass
                 rows.append(item)
         return sorted(rows, key=lambda r: r.get('created', ''), reverse=True)
 
@@ -1309,17 +1343,38 @@ class Store:
                  '-frames:v', '1', '-vf', 'scale=160:-2', str(self.overlay_dir / (key + '.jpg'))], timeout=30)
         except DubError:
             pass
-        item = dict(id=key, name=re.sub(r'[\x00-\x1f<>:"/\\|?*]', '_', Path(str(name)).name)[:120], file=target.name, still=still,
+        alpha, codec = overlay_alpha(target)
+        item = dict(id=key, name=re.sub(r'[\x00-\x1f<>:"/\\|?*]', '_', Path(str(name)).name)[:120], file=target.name, still=still, alpha=alpha, codec=codec,
                     duration=0 if still else round(info['duration'], 2), width=int(info['video'].get('width') or 0), height=int(info['video'].get('height') or 0),
                     created=time.strftime('%Y-%m-%dT%H:%M:%S'))
         (self.overlay_dir / (key + '.json')).write_text(json.dumps(item, ensure_ascii=False), encoding='utf-8')
+        if not still:
+            self.overlay_preview(item)
         return item
+
+    def overlay_preview(self, item):
+        """File the browser can show: the original when Chrome plays it, else a WebM VP9 copy that keeps the
+        transparency (ProRes/QuickTime MOV with alpha cannot play in a browser). Made once, then reused."""
+        if item['still'] or (not item.get('alpha') and item.get('codec') in BROWSER_VIDEO and Path(item['file']).suffix.lower() in ('.mp4', '.m4v', '.webm')):
+            return self.overlay_dir / item['file']
+        target = self.overlay_dir / (item['id'] + '.preview.webm')
+        if not target.is_file():
+            temp = target.with_suffix('.part.webm')
+            try:
+                run(['ffmpeg', '-hide_banner', '-nostdin', '-y', *overlay_decoder(item), '-i', str(self.overlay_dir / item['file']), '-t', '120', '-an',
+                     '-vf', "fps=30,scale=-2:'min(720,ih)'", '-c:v', 'libvpx-vp9', '-pix_fmt', 'yuva420p' if item.get('alpha') else 'yuv420p',
+                     '-b:v', '0', '-crf', '36', '-deadline', 'realtime', '-cpu-used', '8', '-row-mt', '1', str(temp)], timeout=600)
+                temp.replace(target)
+            except DubError:
+                temp.unlink(missing_ok=True)
+                return self.overlay_dir / item['file']
+        return target
 
     def delete_overlay(self, key):
         item = self.overlay(key)
         if not item:
             raise DubError('Không tìm thấy overlay.', 404)
-        for path in (self.overlay_dir / item['file'], self.overlay_dir / (key + '.json'), self.overlay_dir / (key + '.jpg')):
+        for path in (self.overlay_dir / item['file'], self.overlay_dir / (key + '.json'), self.overlay_dir / (key + '.jpg'), self.overlay_dir / (key + '.preview.webm')):
             path.unlink(missing_ok=True)
 
     def pick_overlays(self, job, duration):

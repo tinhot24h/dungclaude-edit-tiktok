@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.17.5",
- "notes": "## Mới trong 0.17.5\n\n- Tab Lồng tiếng: mục **🎵 Âm thanh gốc** chuyển lên trước **🎙 Giọng đọc ai33**.",
+ "version": "0.17.6",
+ "notes": "## Mới trong 0.17.6\n\n- **Overlay nền trong suốt (MOV ProRes 4444, QuickTime Animation, WebM alpha, PNG/GIF):**\n  - App tự nhận file có nền trong suốt; danh sách overlay ghi \"· trong suốt\".\n  - Khi xuất, các file này luôn được phủ **full khung** phía trên video theo đúng nền trong suốt, dù đang chọn chế độ hòa trộn nào. Chế độ \"Sáng\" trước đây làm mất kênh trong suốt nên gần như không thấy overlay.\n  - **Xem trước:** trình duyệt không phát được MOV ProRes, nên app tự tạo một bản WebM nhỏ giữ nền trong suốt chỉ để xem trước. Overlay hiện ngay trên khung xem trước. File gốc vẫn dùng khi xuất.\n  - Overlay đã thêm từ bản trước cũng được nhận lại tự động.\n- **Xem video ngay trong hàng đợi:** bấm vào một dòng đã **Hoàn tất** (hoặc nút **▶ Xem**) là video lồng tiếng mở và phát ngay trong dòng đó. Bấm lại dòng để đóng.",
  "files": {
   "demucs_runner.py": {
    "sha256": "426b21e67e115d21426f0ba38d0febe8707c0dd6336f7891396a59ec55500c0d",
@@ -28,8 +28,8 @@
    "size": 3948
   },
   "dub_ui.js": {
-   "sha256": "be992ddb37a86ce223bcca06125bbb0ff39c247bf7c150bad3f2b01b4ded720b",
-   "size": 57808
+   "sha256": "19ae4b3881fa2baf9c3215d76b3ba7f708de724c3294ee99fb009937122072ab",
+   "size": 58907
   },
   "layout_ui.js": {
    "sha256": "31474a69f54710df46c2483f9711e36d487d11437085b2b563f97b1f18ab711e",
@@ -48,12 +48,12 @@
    "size": 2135
   },
   "dubbing.py": {
-   "sha256": "c7c9e4f323aa507a5eaba6d41589bca6a0beeece96312b240c86c8864b7aecfa",
-   "size": 79251
+   "sha256": "cdb5c6543627a2aa8209c70d2ce39b060e92c373884169753d0fc1d3207d0965",
+   "size": 82589
   },
   "tests/test_dubbing.py": {
-   "sha256": "1566d8c68b4c8398ca5229874bb8dced70f3e9bfefe507842c39d48e24073d64",
-   "size": 23843
+   "sha256": "45ce5e8a71a2524e9454d6be9e844d3b2fef16620e6fa6229ab66bdb7b243371",
+   "size": 25713
   },
   "image_ui.js": {
    "sha256": "b8e2a905501aedea84033a7c962b180251e06dc018e6133241f0310b474ed8e9",
@@ -124,8 +124,8 @@
    "size": 13961
   },
   "app.py": {
-   "sha256": "ef3097e04f9e7e86ec2a8e33a05053c21341967075c7224de12690cbf4e21a0d",
-   "size": 49535
+   "sha256": "ef5a2fe467a014095ec44fa1ab74ecd2990967073f3e2523562697b6f4a2ef7b",
+   "size": 49743
   },
   "ai33_audio.py": {
    "sha256": "3852255575e4c88a806b90fc01cd5df2551ff7e956f04f3547a87394aac4810b",
@@ -144,8 +144,8 @@
    "size": 25305
   },
   "studio.css": {
-   "sha256": "20437524c572444d1b5a7ae061d800125310441e6c42cdbcf09e911ec1456e6c",
-   "size": 78164
+   "sha256": "7eef4cc2fdd4c116a215298f3918a5b5761b80769d5504fde6a87234df497b02",
+   "size": 78296
   },
   "studio.js": {
    "sha256": "3beaa5a97b9d5bfbe350504f3f8c2f64cf31f9f5926d08a0a4e3916e61a21df9",
@@ -164,7 +164,7 @@
    "size": 2609
   },
   "index.html": {
-   "sha256": "b0f08419f469c6da559cd889442ba64aec9d00d058343b4b62a8d4ae6046fcaa",
+   "sha256": "9a30bb7a63ead6b42f0c766907facf7f63fedbaed6309d48d4a1e438e73818fa",
    "size": 33084
   },
   "launch.py": {
@@ -184,15 +184,15 @@
    "size": 230
   },
   "HUONG_DAN.txt": {
-   "sha256": "6af48d3b8aac780b6bd2560a3032ac3eb953082f6e6a0ac146e5bfb5807defa1",
-   "size": 33379
+   "sha256": "53ef7873117ef58b8e07ee5feea6074882c9ac5fc28a651fb428b66f2ba21406",
+   "size": 33874
   },
   "README.md": {
-   "sha256": "1e82ff92d2d4625ac6ef9ad4e5c0d9b9775493d3f482e8d779e4c6e417d2652a",
-   "size": 45492
+   "sha256": "1ee1b99fe484b97eab109fbd5d9a58c8d894d85cf587ab236a9ac278c566dd88",
+   "size": 46506
   },
   "VERSION": {
-   "sha256": "c023a1fcb3128ceec3c14ea262c66aabd075b94b2424a5c14bef8bc90c69e8f3",
+   "sha256": "3d4577b652bdb655f29a98530c52d2ff7d5c5d799e17d06602c4be73ebdaabb9",
    "size": 7
   },
   ".gitignore": {

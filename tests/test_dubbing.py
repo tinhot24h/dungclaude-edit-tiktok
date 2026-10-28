@@ -254,6 +254,25 @@ class FrameOverlayTests(PipelineBase):
         self.store.delete_overlay(logo['id']);self.assertEqual(len(self.store.overlays()),1)
         with self.assertRaises(dubbing.DubError):self.store.import_overlay(Path(self.tmp.name)/'x.txt','x.txt')
 
+    def test_transparent_mov_overlays_full_frame_with_its_alpha_and_gets_a_browser_preview(self):
+        # ProRes 4444 with alpha: a red square on a fully transparent background, like effect packs exported from AE/CapCut
+        mov=self.overlay('fx.mov',['-f','lavfi','-i',"color=black:s=320x320:r=30:d=1.5,format=rgba,geq=r='255':g='0':b='0':a='255*between(X,110,210)*between(Y,110,210)'",
+                                   '-c:v','prores_ks','-profile:v','4444','-pix_fmt','yuva444p10le'])
+        self.assertTrue(mov['alpha']);self.assertEqual(mov['codec'],'prores')
+        preview=self.store.overlay_preview(mov);self.assertEqual(preview.name,mov['id']+'.preview.webm')
+        self.assertEqual(dubbing.overlay_alpha(preview),(True,'vp9'))
+        with mock.patch.object(dubbing,'paragraph_request',return_value='Xin chào.'):
+            job=self.job(background='remove',review=False,subtitles='none',overlay=True,overlay_opacity=100)  # default blend is screen
+            self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
+        self.assertEqual(job['state'],'done',job['message'])
+        out=self.data/'dub'/job['id']/'dubbed.mp4';src=self.data/self.vid/'source'
+        def pixel(path,x,y,t=3.2):
+            return list(subprocess.run(['ffmpeg','-v','error','-ss',str(t),'-i',str(path),'-frames:v','1','-vf',f'crop=2:2:{x}:{y},scale=1:1','-f','rawvideo','-pix_fmt','rgb24','-'],capture_output=True).stdout)
+        r,g,b=pixel(out,'iw/2','ih/2');self.assertGreater(r,200);self.assertLess(g+b,90)   # red on top, also after the 1.5 s clip looped
+        corner,orig=pixel(out,4,4),pixel(src,4,4)
+        self.assertTrue(all(abs(a-b)<25 for a,b in zip(corner,orig)),(corner,orig))   # transparent area leaves the video untouched
+        self.assertNotIn('blend=all_mode=screen',(self.data/'dub'/job['id']/'export.ffgraph').read_text())
+
     def test_trim_start_and_end(self):
         with mock.patch.object(dubbing,'paragraph_request',return_value='Xin chào.'):
             job=self.job(background='remove',review=False,subtitles='none',trim_start=.5,trim_end=.5)

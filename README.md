@@ -1,8 +1,17 @@
-# Review Studio 0.17.5
+# Review Studio 0.17.6
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.17.6
+
+- **Overlay nền trong suốt (MOV ProRes 4444, QuickTime Animation, WebM alpha, PNG/GIF):**
+  - App tự nhận file có nền trong suốt; danh sách overlay ghi "· trong suốt".
+  - Khi xuất, các file này luôn được phủ **full khung** phía trên video theo đúng nền trong suốt, dù đang chọn chế độ hòa trộn nào. Chế độ "Sáng" trước đây làm mất kênh trong suốt nên gần như không thấy overlay.
+  - **Xem trước:** trình duyệt không phát được MOV ProRes, nên app tự tạo một bản WebM nhỏ giữ nền trong suốt chỉ để xem trước. Overlay hiện ngay trên khung xem trước. File gốc vẫn dùng khi xuất.
+  - Overlay đã thêm từ bản trước cũng được nhận lại tự động.
+- **Xem video ngay trong hàng đợi:** bấm vào một dòng đã **Hoàn tất** (hoặc nút **▶ Xem**) là video lồng tiếng mở và phát ngay trong dòng đó. Bấm lại dòng để đóng.
 
 ## Mới trong 0.17.5
 
