@@ -1,8 +1,16 @@
-# Review Studio 0.17
+# Review Studio 0.17.1
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.17.1
+
+- **Overlay không bắt buộc:** mặc định tắt. Thêm file overlay vào thư viện không tự bật; nếu bật mà chưa có/chưa chọn overlay nào, video vẫn xuất bình thường (không có overlay) kèm cảnh báo, không bị dừng.
+- **Overlay tự khớp thời lượng video:** overlay dài hơn video thì tự cắt bằng video; ngắn hơn thì chọn:
+  - *Suốt video · lặp 1 overlay, cắt khớp* — lặp lại một overlay rồi cắt đúng độ dài.
+  - *Suốt video · ghép nối nhiều overlay ngẫu nhiên* — nối nhiều overlay khác nhau (không trùng liền nhau) cho đến khi phủ hết video rồi cắt khớp.
+  - *Một đoạn ngẫu nhiên* — chèn overlay ở một vị trí ngẫu nhiên.
 
 ## Mới trong 0.17
 

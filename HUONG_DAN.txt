@@ -1,4 +1,4 @@
-REVIEW STUDIO 0.17 — VIDEO / DỊCH AI / ÂM THANH AI33
+REVIEW STUDIO 0.17.1 — VIDEO / DỊCH AI / ÂM THANH AI33
 
 CẬP NHẬT
 Từ bản 0.13: không cần tải lại ZIP. Trong ứng dụng bấm nút ⟳ (góc phải
@@ -228,6 +228,15 @@ Mở "⚙ Tùy chỉnh câu lệnh" để sửa quy tắc viết; bấm "Lưu th
 giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh gốc. Mẫu gốc đã
 cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
 Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
+
+NÂNG CẤP 0.17.1 — OVERLAY KHÔNG BẮT BUỘC, TỰ KHỚP THỜI LƯỢNG
+- Overlay mặc định TẮT. Muốn dùng thì tick "Thêm overlay ngẫu nhiên vào mỗi video".
+- Bật mà chưa có overlay nào: video vẫn xuất bình thường, chỉ hiện cảnh báo.
+- Overlay dài hơn video: tự cắt bằng video.
+- Overlay ngắn hơn video, chọn ở "Thời điểm":
+  + Lặp 1 overlay, cắt khớp.
+  + Ghép nối nhiều overlay ngẫu nhiên, cắt khớp.
+  + Một đoạn ngẫu nhiên.
 
 NÂNG CẤP 0.17 — TAB LỒNG TIẾNG MỚI, OVERLAY, KHUNG HÌNH
 ------------------------------------------------------

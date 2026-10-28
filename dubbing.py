@@ -73,7 +73,7 @@ def options(raw):
         num(key, lo, hi)
     for key, allowed in (('language', ('zh', 'auto')), ('background', BACKGROUND), ('subtitles', SUBTITLES),
                          ('loudness', ('off', 'tiktok')), ('pronoun', tuple(PRONOUNS)), ('mode', ('paragraph', 'lines')), ('align', ('auto', 'voice', 'video')), ('style', tuple(ai_translate.STYLES)), ('frame_canvas', tuple(CANVAS)), ('frame_fit', ('cover', 'contain', 'blur')),
-                         ('frame_flip', ('none', 'h', 'v', 'hv')), ('overlay_blend', ('normal', 'screen', 'key')), ('overlay_timing', ('loop', 'random'))):
+                         ('frame_flip', ('none', 'h', 'v', 'hv')), ('overlay_blend', ('normal', 'screen', 'key')), ('overlay_timing', ('loop', 'sequence', 'random'))):
         v = raw.get(key, DEFAULTS[key])
         if v not in allowed:
             raise DubError('Thông số không hợp lệ: ' + key)
@@ -465,13 +465,18 @@ def frame_graph(settings, video, before, after):
 OVERLAY_TYPES = ('.mp4', '.mov', '.webm', '.mkv', '.m4v', '.gif', '.png', '.webp', '.jpg', '.jpeg')
 
 
-def overlay_chain(index, item, W, H, settings, base, duration):
-    """Graph lines putting overlay input `index` on top of [base]; returns (lines, new label).
-    normal/key: alpha overlay (key removes a green background) · screen: brightening blend for effects on black."""
+def overlay_fit(W, H):
+    return f'fps=30,scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1'
+
+
+def overlay_chain(source, item, W, H, settings, base, duration):
+    """Graph lines putting an overlay stream (`source`: an input like [3:v] or a joined sequence label) on top of
+    [base]; returns (lines, new label). Longer than the video → cut to the video; shorter → looped or joined
+    (decided by the inputs). normal/key: alpha overlay (key removes a green background) · screen: blend for effects on black."""
     op = settings['overlay_opacity'] / 100
     k = item['k']
-    chain = f'[{index}:v]fps=30,scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1'
     random_time = settings['overlay_timing'] == 'random'
+    chain = f'{source}{overlay_fit(W, H)}' + ('' if random_time else f',trim=duration={duration:.3f},setpts=PTS-STARTPTS')
     if settings['overlay_blend'] == 'screen':
         if random_time:
             chain += f",tpad=start_duration={item['start']:.3f}:stop_duration={duration + 5:.3f}:color=black"
@@ -1163,15 +1168,30 @@ class Store:
             graph.extend(lines)
             base, index = 'framed', 2 + has_bg + (subs == 'soft')
             for k, item in enumerate(chosen):
-                meta = self.overlay(item['id'])
-                path = str(self.overlay_dir / meta['file'])
-                if meta['still']:
-                    args += ['-loop', '1', '-t', str(duration if settings['overlay_timing'] == 'loop' else min(duration, 4)), '-i', path]
+                if settings['overlay_timing'] == 'sequence' and item.get('sequence'):
+                    # joined clips: each normalised to the frame, concatenated, then cut to the video's length
+                    parts = []
+                    for n, clip in enumerate(item['sequence']):
+                        meta = self.overlay(clip)
+                        if not meta:
+                            continue
+                        args += (['-loop', '1', '-t', '3'] if meta['still'] else []) + ['-i', str(self.overlay_dir / meta['file'])]
+                        graph.append(f'[{index}:v]{overlay_fit(width, height)},format=rgba[sq{k}_{n}]')
+                        parts.append(f'[sq{k}_{n}]')
+                        index += 1
+                    graph.append(''.join(parts) + f'concat=n={len(parts)}:v=1:a=0[seq{k}]')
+                    source = f'[seq{k}]'
                 else:
-                    args += (['-stream_loop', '-1'] if settings['overlay_timing'] == 'loop' else []) + ['-i', path]
-                more, base = overlay_chain(index, dict(item, k=k), width, height, settings, base, duration)
+                    meta = self.overlay(item['id'])
+                    path = str(self.overlay_dir / meta['file'])
+                    if meta['still']:
+                        args += ['-loop', '1', '-t', str(duration if settings['overlay_timing'] == 'loop' else min(duration, 4)), '-i', path]
+                    else:
+                        args += (['-stream_loop', '-1'] if settings['overlay_timing'] == 'loop' else []) + ['-i', path]
+                    source = f'[{index}:v]'
+                    index += 1
+                more, base = overlay_chain(source, dict(item, k=k), width, height, settings, base, duration)
                 graph.extend(more)
-                index += 1
             graph.append(f'[{base}]' + ','.join(burn + ['format=yuv420p']) + '[vout]')
         (folder / 'export.ffgraph').write_text(';\n'.join(graph), encoding='utf-8')
         args += ['-filter_complex_script', 'export.ffgraph', '-map', '[vout]' if filters else '0:v:0', '-map', '[aout]']
@@ -1256,13 +1276,33 @@ class Store:
             return chosen
         library = self.overlays()
         pool = [o for o in library if not settings['overlay_ids'] or o['id'] in settings['overlay_ids']]
+        job['warnings'] = [w for w in job.get('warnings') or [] if not w.startswith('Overlay')]
         if not pool:
-            raise DubError('Chưa có overlay nào trong thư viện. Thêm file overlay hoặc tắt "Overlay ngẫu nhiên".')
+            # overlay is optional: an empty library never blocks the video, it is just exported without one
+            job['warnings'].append('Overlay đang bật nhưng thư viện overlay trống nên video được xuất không có overlay.')
+            job['overlays'], job['overlay_sign'] = [], None
+            return []
         picked = random.sample(pool, min(settings['overlay_count'], len(pool)))
         job['overlays'] = [dict(id=o['id'], name=o['name'], start=round(random.uniform(0, max(0, duration - (o['duration'] or 4))), 2)
                                 if settings['overlay_timing'] == 'random' else 0) for o in picked]
+        if settings['overlay_timing'] == 'sequence':
+            # each layer: random clips joined one after another until the video is covered (no clip twice in a row)
+            for layer in job['overlays']:
+                seq, total, last = [layer['id']], self.clip_length(layer['id']), layer['id']
+                while total < duration and len(seq) < 60:
+                    options = [o for o in pool if o['id'] != last] or pool
+                    nxt = random.choice(options)
+                    seq.append(nxt['id'])
+                    total += self.clip_length(nxt['id'])
+                    last = nxt['id']
+                layer['sequence'] = seq
+                layer['name'] = ' + '.join(self.overlay(i)['name'] for i in seq[:3]) + (f' … ({len(seq)} đoạn)' if len(seq) > 3 else '')
         job['overlay_sign'] = sign
         return job['overlays']
+
+    def clip_length(self, key):
+        item = self.overlay(key)
+        return 3.0 if not item or item['still'] else max(.2, item['duration'])
 
     def to_editor(self, key, new_video, import_audio):
         """Hand the result to the editor: video with background only + the Vietnamese voice as an MP3 asset."""

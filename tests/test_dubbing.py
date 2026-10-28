@@ -261,10 +261,26 @@ class FrameOverlayTests(PipelineBase):
         self.assertAlmostEqual(dubbing.probe(self.data/'dub'/job['id']/'dubbed.mp4')['duration'],3,delta=.15)
         with self.assertRaises(dubbing.DubError):dubbing.options(dict(trim_start=-1))
 
-    def test_overlay_on_with_empty_library_explains(self):
+    def test_overlay_is_optional_and_empty_library_does_not_block(self):
         with mock.patch.object(dubbing,'paragraph_request',return_value='Xin chào.'):
             job=self.job(background='remove',review=False,subtitles='none',overlay=True)
-            with self.assertRaises(dubbing.DubError):self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
+            self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
+        self.assertEqual(job['state'],'done',job['message']);self.assertEqual(job['overlays'],[])
+        self.assertTrue(any(w.startswith('Overlay') for w in job['warnings']))
+        self.assertFalse(dubbing.options({})['overlay'])
+
+    def test_sequence_joins_short_overlays_and_cuts_to_video(self):
+        a=self.overlay('a.mp4',['-f','lavfi','-i','testsrc2=s=160x120:r=30:d=1','-pix_fmt','yuv420p'])
+        b=self.overlay('b.mp4',['-f','lavfi','-i','testsrc2=s=160x120:r=30:d=1','-pix_fmt','yuv420p'])
+        with mock.patch.object(dubbing,'paragraph_request',return_value='Xin chào.'):
+            job=self.job(background='remove',review=False,subtitles='none',overlay=True,overlay_timing='sequence')
+            self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
+        self.assertEqual(job['state'],'done',job['message'])
+        seq=job['overlays'][0]['sequence'];self.assertGreaterEqual(len(seq),4);self.assertTrue(set(seq)<={a['id'],b['id']})
+        self.assertTrue(all(x!=y for x,y in zip(seq,seq[1:])))
+        graph=(self.data/'dub'/job['id']/'export.ffgraph').read_text()
+        self.assertIn('concat=n=',graph);self.assertIn('trim=',graph)
+        self.assertAlmostEqual(dubbing.probe(self.data/'dub'/job['id']/'dubbed.mp4')['duration'],4,delta=.2)
 
 
 class StyleTests(unittest.TestCase):
