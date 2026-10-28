@@ -59,7 +59,7 @@ function park(node,host){if(!node)return;host.append(node);node.hidden=false}
 function moveIn(){if(moved)return;moved=true;
  park($('section-background'),$('dt-bg-host'));park($('section-frame'),$('dt-bg-host'));
  for(const k of ['title','body']){park(document.querySelector(`label[for=${k}]`),$(`dt-${k}-text`));park($(k),$(`dt-${k}-text`));park($('section-'+k),$(`dt-${k}-style`));capcut(k)}
- park($('section-video'),videoHost);
+ park($('section-video'),videoHost);ccDesign();ccVideo();
  // only the 9:16 stage: the timeline's own transport, loudness meter and layer list stay behind (not used here)
  park(document.querySelector('#view-editor .preview-workspace'),stageHost);stageHost.append(transport);
  // the old editor's tab code still hides the sections that are not its current tab: keep ours shown
@@ -125,8 +125,84 @@ function capcut(k){const sec=$('section-'+k);if(sec.querySelector('.cc-panel'))r
  for(const c of [...sec.children])c.classList.add('cc-hide');sec.append(panel);panel.classList.remove('cc-hide');
  for(const id of [k+'_font',k+'_case',k+'_align',k+'_valign'])$(id).addEventListener('change',()=>refreshers.forEach(f=>f()));
  refreshers.forEach(f=>f())}
+// ---- the same CapCut layout for Nền & khung, Cắt & vị trí video, Overlay and Lớp ảnh (their own controls, regrouped)
+const ccGroup=(title,...rows)=>el('div',{className:'cc-group'},el('div',{className:'cc-head',textContent:title}),...rows.filter(Boolean));
+const ccRow=(label,...items)=>el('div',{className:'cc-row'},el('span',{className:'cc-label',textContent:label}),el('div',{className:'cc-items'},...items.filter(Boolean)));
+// an editor control without its own label, or any node of the dub page (range + number box, select, checkbox…)
+const ccBare=id=>{const e=$(id);if(!e)return null;const c=e.closest('.control');if(c){c.classList.add('cc-bare');c.querySelector(':scope>label')?.classList.add('cc-hide');return c}
+ const box=e.closest('.dub-range')||e;box.classList.add('cc-bare');return box};
+const ccSeg=(id,choices,title)=>{const box=el('div',{className:'cc-seg',title});for(const[v,t,tip]of choices){const b=el('button',{type:'button',textContent:t,title:tip||''});b.dataset.v=v;b.onclick=()=>setValue(id,v);box.append(b)}
+ const draw=()=>{for(const b of box.children)b.classList.toggle('on',b.dataset.v===$(id).value)};refreshers.push(draw);$(id).addEventListener('change',draw);$(id).addEventListener('input',draw);return box};
+const ccSwitch=(id,text)=>{const e=$(id);if(!e)return null;const lab=el('label',{className:'dt-toggle cc-switch',title:text});lab.append(e,el('i'));return el('span',{className:'cc-switch-row'},lab,el('small',{textContent:text}))};
+const ccButtons=(buttons,cls='cc-seg cc-icons')=>{const box=el('div',{className:cls});for(const b of buttons)if(b)box.append(b);return box};
+const ccHideRest=(root,keep)=>{for(const c of [...root.children])if(c!==keep)c.classList.add('cc-hide')};
+const optionList=id=>[...$(id).options].map(o=>[o.value,o.textContent.split('·')[0].split('(')[0].trim()]);
+
+// Nền & khung: Nền · Khung · Biến đổi (khung)
+function ccDesign(){const host=$('dt-bg-host');if(host.querySelector('.cc-panel'))return;
+ const tools=[...document.querySelectorAll('#section-frame .frame-tools button')],icons=tools.slice(0,6),quick=tools.slice(6);
+ const upload=el('button',{type:'button',className:'outline-action small-action',textContent:'⬆ Tải khung PNG'});upload.onclick=()=>$('frame-file').click();
+ const reset=el('button',{type:'button',className:'cc-reset',textContent:'↺',title:'Về vị trí và kích thước khung mặc định'});reset.onclick=()=>{for(const[k,v]of Object.entries({frame_x:36,frame_y:794,frame_width:648,frame_height:333}))setValue(k,v)};
+ const color2=ccRow('Màu chuyển',ccBare('color2')),gloss=ccRow('Độ bóng',ccBare('gloss'));
+ refreshers.push(()=>{color2.hidden=$('background').value!=='gradient';gloss.hidden=$('frame_style').value!=='pink'});
+ for(const id of ['background','frame_style'])$(id).addEventListener('change',()=>refreshers.forEach(f=>f()));
+ const panel=el('div',{className:'cc-panel'},
+  ccGroup('Nền',ccRow('Kiểu nền',ccSeg('background',[['solid','Một màu'],['gradient','Chuyển 2 màu'],['none','Tắt']])),ccRow('Màu chính',ccBare('color'),document.querySelector('#section-background .palette')),color2,
+   ccRow('Hòa nền từ',ccBare('fade_start')),ccRow('Vùng chuyển',ccBare('fade_height')),ccRow('Độ đục',ccBare('opacity'))),
+  ccGroup('Khung',ccRow('Kiểu khung',ccBare('frame_style')),ccRow('Khung PNG',upload,$('frame-status')),ccRow('Màu',labelled('Khung',ccBare('frame_color')),labelled('Viền',ccBare('border_color'))),ccRow('Độ mờ',ccBare('frame_opacity')),gloss),
+  ccGroup('Biến đổi khung',ccRow('Vị trí',labelled('X',ccBare('frame_x')),labelled('Y',ccBare('frame_y'))),ccRow('Kích thước',labelled('Rộng',ccBare('frame_width')),labelled('Cao',ccBare('frame_height'))),
+   ccRow('Thu phóng đồng nhất',ccSwitch('frame-lock','Giữ tỷ lệ khi kéo góc/cạnh')),ccRow('Căn khung',ccButtons(icons),reset),ccRow('Nhanh',ccButtons(quick,'cc-chips'))));
+ for(const id of ['section-background','section-frame'])ccHideRest($(id),null);host.append(panel);refreshers.forEach(f=>f())}
+
+// Cắt & vị trí video (with a design): Biến đổi · Cách đặt hình · Chuyển động
+function ccVideo(){const sec=$('section-video');if(sec.querySelector('.cc-panel'))return;
+ const group=t=>[...sec.querySelectorAll('.video-tools')].find(g=>g.textContent.startsWith(t)),buttons=t=>[...(group(t)?.querySelectorAll('button')||[])];
+ const restore=[...sec.querySelectorAll(':scope>button')].find(b=>/Khôi phục/.test(b.textContent));
+ const reset=el('button',{type:'button',className:'cc-reset',textContent:'↺',title:restore?.textContent||'Khôi phục video'});reset.onclick=()=>restore?.click();
+ const turn=buttons('XOAY').filter(b=>/°/.test(b.textContent)),slider=$('video-rotation-range');slider?.classList.add('cc-slider');
+ const panel=el('div',{className:'cc-panel'},
+  ccGroup('Biến đổi',ccRow('Tỷ lệ',ccBare('video_zoom')),ccRow('',ccButtons(buttons('ZOOM'),'cc-chips')),ccRow('Thu phóng đồng nhất',ccSwitch('video-lock','Giữ tỷ lệ 9:16 khi đổi rộng/cao')),
+   ccRow('Vị trí',labelled('X',ccBare('video_x')),labelled('Y',ccBare('video_y'))),ccRow('Kích thước',labelled('Rộng',ccBare('video_width')),labelled('Cao',ccBare('video_height'))),
+   ccRow('Xoay',slider,ccBare('video_rotation')),ccRow('',ccButtons(turn,'cc-chips')),ccRow('Lật',ccSeg('video_flip',[['none','Không'],['h','⇋ Ngang'],['v','⇵ Dọc'],['hv','Cả hai']])),
+   ccRow('Căn',ccButtons(buttons('CĂN CHỈNH')),reset)),
+  ccGroup('Cách đặt hình',ccRow('Đặt hình',ccSeg('video_fit',optionList('video_fit'))),ccRow('Nhanh',ccButtons(buttons('KÍCH THƯỚC NHANH'),'cc-chips'))),
+  ccGroup('Chuyển động',ccRow('Hiệu ứng',ccSeg('video_motion',optionList('video_motion'))),ccRow('Mức phóng',ccBare('motion_amount'))));
+ ccHideRest(sec,null);sec.append(panel);refreshers.forEach(f=>f())}
+
+// Lớp ảnh and Overlay ngẫu nhiên (dub page sections)
+function ccImage(){const body=$('sec-image').querySelector('.dub-sec-body');if(body.querySelector('.cc-panel'))return;
+ const turn=[...$('dub-img-turn').querySelectorAll('button')],pick=body.querySelector('.dub-img-pick'),on=$('dub-img').closest('label');
+ const panel=el('div',{className:'cc-panel'},
+  ccGroup('Ảnh',on,pick),
+  ccGroup('Biến đổi',ccRow('Tỷ lệ',labelled('Rộng %',ccBare('dub-img-w')),labelled('Cao %',ccBare('dub-img-h'))),ccRow('Thu phóng đồng nhất',ccSwitch('dub-img-keep','Giữ tỷ lệ ảnh')),ccRow('Vừa khung',$('dub-img-fit')),
+   ccRow('Vị trí',labelled('Ngang %',ccBare('dub-img-x')),labelled('Dọc %',ccBare('dub-img-y'))),ccRow('Căn',$('dub-img-align')),
+   ccRow('Xoay',ccBare('dub-img-rot')),ccRow('',ccButtons(turn,'cc-chips')),ccRow('Lật',ccSeg('dub-img-flip',optionList('dub-img-flip')))),
+  ccGroup('Hòa trộn',ccRow('Chế độ',ccBare('dub-img-blend')),ccRow('Độ mờ',ccBare('dub-img-op')),ccRow('Thứ tự lớp',ccBare('dub-img-layer'),$('dub-img-reset'))));
+ ccHideRest(body,null);body.append(panel);refreshers.forEach(f=>f())}
+function ccOverlay(){const body=$('sec-overlay').querySelector('.dub-sec-body');if(body.querySelector('.cc-panel'))return;
+ const panel=el('div',{className:'cc-panel'},
+  ccGroup('Thư viện overlay',$('dub-overlay').closest('label'),body.querySelector('.result-actions'),$('dub-ov-bulk'),$('dub-ov-list'),$('dub-ov-note')),
+  ccGroup('Hòa trộn',ccRow('Chế độ',ccBare('dub-ov-blend')),ccRow('Độ mờ',ccBare('dub-ov-opacity'))),
+  ccGroup('Thời gian',ccRow('Số overlay',ccBare('dub-ov-count')),ccRow('Thời gian',ccBare('dub-ov-timing'))));
+ ccHideRest(body,null);body.append(panel)}
+// Cắt đầu / cuối (used with and without a design) as the first group of "Cắt & vị trí video"
+function ccTrim(){const body=$('sec-frame').querySelector('.dub-sec-body'),first=body.firstElementChild;if(first.classList.contains('cc-group'))return;
+ const g=ccGroup('Cắt',ccRow('Cắt đầu',labelled('giây',$('dub-trim-start'))),ccRow('Cắt cuối',labelled('giây',$('dub-trim-end'))));
+ body.insertBefore(g,first);first.classList.add('cc-hide')}
+// without a design: the dub page's own frame tools (khung xuất, zoom, vị trí, xoay, lật) in the same layout
+function ccDubFrame(){const body=$('sec-frame').querySelector('.dub-sec-body');if(body.querySelector('.cc-dubframe'))return;
+ const old=[...body.children].filter((c,i)=>i>0&&c!==videoHost&&!c.classList.contains('cc-group'));
+ const panel=el('div',{className:'cc-panel cc-dubframe'},
+  ccGroup('Khung xuất',ccRow('Khung xuất',ccBare('dub-canvas')),ccRow('Đặt hình',ccBare('dub-fit'))),
+  ccGroup('Biến đổi',ccRow('Tỷ lệ',ccBare('dub-zoom')),ccRow('Vị trí',labelled('X %',ccBare('dub-x')),labelled('Y %',ccBare('dub-y'))),ccRow('Căn',$('dub-frame-align')),
+   ccRow('Xoay',ccBare('dub-rotate')),ccRow('',$('dub-frame-tools')),ccRow('Lật',ccSeg('dub-flip',[['none','Không'],['h','⇋ Ngang'],['v','⇵ Dọc'],['hv','Cả hai']]))));
+ for(const c of old)c.classList.add('cc-hide');body.insertBefore(panel,videoHost);$('dub-frame-tools').classList.add('cc-chips');refreshers.forEach(f=>f())}
+ccTrim();ccDubFrame();ccImage();ccOverlay();
+
 function labelled(text,node){return node&&el('label',{className:'cc-field'},el('small',{textContent:text}),node)}
 document.addEventListener('design-changed',()=>refreshers.forEach(f=>f()));
+// buttons that set a value without an event (rotate/flip/zoom shortcuts, templates) also update the button groups
+document.addEventListener('click',()=>setTimeout(()=>refreshers.forEach(f=>f())),true);
 
 // ---- settings: everything is saved (also the groups that are off), the server drops what is switched off
 const KEEP=new Set(['units','template','frame_id','images']);

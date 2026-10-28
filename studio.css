@@ -735,3 +735,13 @@ details.cc-group>summary.cc-head{cursor:pointer;margin:0}details.cc-group[open]>
 .cc-seg button:last-child{border-right:0}.cc-seg button.on{background:#1b3936;color:var(--accent)}.cc-seg button:hover{background:#223047}
 .cc-toggle{background:#182231;border:1px solid #344052;border-radius:7px;color:#c7d4e4;padding:6px 12px;font-size:13px}.cc-toggle.on{background:#1b3936;color:var(--accent);border-color:#2f6b62}.cc-toggle:disabled{opacity:.4;cursor:not-allowed}
 .cc-reset{background:transparent;border:1px solid #344052;border-radius:7px;color:#c7d4e4;padding:5px 10px}
+/* 0.22.4: the CapCut layout for the other sections */
+.cc-chips{display:flex;flex-wrap:wrap;gap:5px}.cc-chips button{background:#182231;border:1px solid #344052;border-radius:6px;color:#c7d4e4;padding:5px 9px;font-size:11px;width:auto;min-height:0}
+.cc-chips button:hover{background:#223047}.cc-icons button{font-size:13px;min-width:34px}
+.cc-switch-row{display:inline-flex;align-items:center;gap:8px}.cc-switch-row small{font-size:11px;color:#9fb0c4}
+.dt-toggle.cc-switch{position:relative;right:auto;top:auto;transform:none}
+.cc-panel .dub-align-grid{margin:0}.cc-panel .dub-btns{margin:0;flex-wrap:wrap}.cc-panel .palette{margin:0}
+.cc-panel .dub-img-pick,.cc-panel .result-actions,.cc-panel .dub-bulkbar{margin:6px 0}.cc-panel .check-row{margin:2px 0 6px}
+.cc-row[hidden]{display:none!important}.cc-bare.dub-range{display:flex;gap:8px;align-items:center}.cc-bare.dub-range input[type=range]{flex:1}
+.cc-bare.dub-range{display:grid!important;grid-template-columns:minmax(60px,1fr) 84px;gap:10px;align-items:center;flex:1;min-width:150px}.cc-bare.dub-range input[type=range]{width:100%}
+.cc-bare.dub-range .dub-numbox{width:84px}

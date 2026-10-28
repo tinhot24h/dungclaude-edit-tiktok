@@ -1,11 +1,11 @@
 {
  "app": "ReviewStudio",
- "version": "0.22.3",
- "notes": "## Mới trong 0.22.3\n\n- **Bảng chữ kiểu CapCut** cho Tiêu đề và Nội dung: Kiểu chữ (phông chữ, cỡ chữ có thanh trượt, **B** đậm, Aa / TT / tt / Tt chữ hoa–thường, màu sắc, độ mờ, khoảng cách ký tự, từ, dòng, căn trái/giữa/phải/đều, căn dọc, viền chữ) · Biến đổi (vị trí X/Y, rộng/cao, 6 nút căn khung về trái/giữa/phải/trên/giữa/dưới, ↺ về mặc định) · Nền chữ · Thời gian hiện.\n- Bỏ ô \"Kiểu chữ của tôi\": chỉ cần **💾 Lưu mẫu** là lưu hết mọi thông số.\n- **Bố cục:** cài đặt | xem trước | hàng đợi (xem trước nằm cạnh cột cài đặt).\n- **Tên video do AI đặt theo sản phẩm** trong cùng lần gọi dịch, dạng không dấu nối gạch ngang 15–30 ký tự (vd `quan-ao-nu-hottrend`). Dùng làm tên file xuất (kèm .srt) và tên hiện ở hàng đợi; dòng dưới vẫn ghi tên file gốc.\n- **Chống trùng tên file:** đã có thì thêm `-2`, `-3`…, không bao giờ ghi đè, kể cả khi chạy nhiều video cùng lúc.\n- **Prompt đồng nhất:** mọi kiểu gọi OpenAI (đoạn văn, từng câu, chỉ viết chữ, viết lại chữ) dùng cùng quy tắc giới hạn ký tự tiêu đề/nội dung và cùng trường tên video; quy tắc giới hạn luôn đặt sau mẫu biên tập chung nên không bị mẫu đè.\n- **Chỉnh khung chữ trên xem trước:** viền nét đứt quanh tiêu đề/nội dung; kéo để di chuyển, kéo cạnh trái/phải để đổi độ rộng (chiều cao vẫn tự động), góc/cạnh trên dưới để đổi kích thước.\n- **Xem trước nhanh hơn:** đổi nền/khung giờ cập nhật gần như tức thì (vẽ khung nhanh hơn ~35 lần, ảnh giống hệt).\n- **Chữ xuất thẳng hàng:** mọi chữ nằm trên cùng đường chân chữ như khung xem trước (trước đây chữ có dấu cao như Ỗ, À có thể lệch khi dùng khoảng cách ký tự/từ).\n- Sửa lỗi bấm phát mà video xem trước đứng hình khi bật nền/khung/chữ.",
+ "version": "0.22.4",
+ "notes": "## Mới trong 0.22.4\n\n- Mọi mục chỉnh dùng chung bố cục kiểu CapCut (nhóm có tiêu đề, nhãn bên trái, nút phân đoạn, công tắc), không còn nút trùng:\n  - **Nền & khung:** Nền (Một màu / Chuyển 2 màu / Tắt, màu chính + ô màu nhanh, màu chuyển chỉ hiện khi chuyển 2 màu, hòa nền, độ đục) · Khung (kiểu, tải PNG, màu khung/viền, độ mờ, độ bóng chỉ hiện với khung hồng) · Biến đổi khung (X/Y, rộng/cao, thu phóng đồng nhất, 6 nút căn, ↺, nhanh).\n  - **Cắt & vị trí video:** Cắt (đầu/cuối) · Biến đổi (tỷ lệ + 100–200%, thu phóng đồng nhất 9:16, X/Y, rộng/cao, xoay + 90°/180°, lật, 6 nút căn + giữa khung, ↺) · Cách đặt hình · Chuyển động. Khi tắt thiết kế: Khung xuất · Biến đổi.\n  - **Lớp ảnh:** Ảnh · Biến đổi (tỷ lệ, thu phóng đồng nhất, vừa khung, vị trí, căn 9 điểm, xoay, lật) · Hòa trộn (chế độ, độ mờ, thứ tự lớp).\n  - **Overlay:** Thư viện · Hòa trộn · Thời gian.",
  "files": {
   "design_tab.js": {
-   "sha256": "66e5de70274795c85b0a731e3f90c65d9e1f9252aa451c40126051dd6c122a6a",
-   "size": 25639
+   "sha256": "f4b6cf6d9ac28b747ba4652b2cc0f88c8627da045375d079c023d658b8591a40",
+   "size": 35096
   },
   "local_files.js": {
    "sha256": "b9a975e980db7f5f013f6046d58228fb39817b6959e8caaf9505c4ba3cc898a7",
@@ -148,8 +148,8 @@
    "size": 25305
   },
   "studio.css": {
-   "sha256": "391dc5297f9a02e03f9465fb036533e9c04977d6e92ad1bb1e1bebe1703f5862",
-   "size": 91774
+   "sha256": "592eeb4a99069e6e4ff1eda1b2a6a4a837e6dcbaf44bda56b6a20edf8a6d62b8",
+   "size": 92907
   },
   "studio.js": {
    "sha256": "5d4677cb1104adc27707b6f046bbb7c9319b39ff48c21cd480a5401756c1fc0d",
@@ -168,7 +168,7 @@
    "size": 5352
   },
   "index.html": {
-   "sha256": "ade1e1dfc6a7547d5a00868662cd989c14079219a1bc4200449170faa86112c4",
+   "sha256": "1b393dbf39488ac5af6f708b5d35c9bed107182124b45b64eef44ebe9ba00b5c",
    "size": 33161
   },
   "launch.py": {
@@ -184,15 +184,15 @@
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "61158a57f996a0489648379531d2d121a88df87d57ab3e82ca1e6bc2808f8d03",
-   "size": 43377
+   "sha256": "689baa976c9ee307ad7f3e29bc867f378b7b9629818df8b24fbb5d872c5b6f86",
+   "size": 43679
   },
   "README.md": {
-   "sha256": "cce7fc64a685712ce272e3bfce0cb23e2e6e97d7c609376cfbeab86b8ddf7344",
-   "size": 66650
+   "sha256": "7092951a37747f8d8768dbf9ab61479a0feb90c66f968bc19c7a4022b9ffc7ba",
+   "size": 67763
   },
   "VERSION": {
-   "sha256": "af76ba6061bebbaf64f9505fb4eafd30594a58db183904285c6b7e8f8c6a7701",
+   "sha256": "f9e4717709f00ca251a74fc9b8138bd1d482b8eb3457330644c042cb0458ce54",
    "size": 7
   },
   ".gitignore": {

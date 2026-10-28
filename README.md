@@ -1,8 +1,16 @@
-# Review Studio 0.22.3
+# Review Studio 0.22.4
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.22.4
+
+- Mọi mục chỉnh dùng chung bố cục kiểu CapCut (nhóm có tiêu đề, nhãn bên trái, nút phân đoạn, công tắc), không còn nút trùng:
+  - **Nền & khung:** Nền (Một màu / Chuyển 2 màu / Tắt, màu chính + ô màu nhanh, màu chuyển chỉ hiện khi chuyển 2 màu, hòa nền, độ đục) · Khung (kiểu, tải PNG, màu khung/viền, độ mờ, độ bóng chỉ hiện với khung hồng) · Biến đổi khung (X/Y, rộng/cao, thu phóng đồng nhất, 6 nút căn, ↺, nhanh).
+  - **Cắt & vị trí video:** Cắt (đầu/cuối) · Biến đổi (tỷ lệ + 100–200%, thu phóng đồng nhất 9:16, X/Y, rộng/cao, xoay + 90°/180°, lật, 6 nút căn + giữa khung, ↺) · Cách đặt hình · Chuyển động. Khi tắt thiết kế: Khung xuất · Biến đổi.
+  - **Lớp ảnh:** Ảnh · Biến đổi (tỷ lệ, thu phóng đồng nhất, vừa khung, vị trí, căn 9 điểm, xoay, lật) · Hòa trộn (chế độ, độ mờ, thứ tự lớp).
+  - **Overlay:** Thư viện · Hòa trộn · Thời gian.
 
 ## Mới trong 0.22.3
 
