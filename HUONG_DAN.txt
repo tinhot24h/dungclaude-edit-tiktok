@@ -1,4 +1,4 @@
-REVIEW STUDIO 0.16.1 — VIDEO / DỊCH AI / ÂM THANH AI33
+REVIEW STUDIO 0.16.2 — VIDEO / DỊCH AI / ÂM THANH AI33
 
 CẬP NHẬT
 Từ bản 0.13: không cần tải lại ZIP. Trong ứng dụng bấm nút ⟳ (góc phải
@@ -229,6 +229,12 @@ giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh g�
 cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
 Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
 
+NÂNG CẤP 0.16.2
+---------------
+- ai33 chỉ tạo MP3: khi lồng tiếng, ứng dụng không còn yêu cầu ai33 tạo SRT/JSON phụ đề, tránh làm lỗi tác vụ.
+  - Phụ đề tiếng Việt do ứng dụng tự tính: chia đoạn văn thành câu theo độ dài, rồi đặt điểm chuyển câu vào khoảng lặng gần nhất trong file giọng, để chữ đổi đúng lúc giọng ngắt nghỉ.
+- Bỏ khu bản dịch khỏi hàng đợi: mặc định chỉ còn danh sách tác vụ. Khi cần sửa câu, bấm ✎ Bản dịch trên tác vụ để mở, bấm ✕ Đóng bản dịch để ẩn.
+
 NÂNG CẤP 0.16.1
 ---------------
 - Sửa lỗi "ai33 đã tạo MP3 nhưng ứng dụng không tự lấy về":
@@ -240,7 +246,6 @@ NÂNG CẤP 0.16.1
 NÂNG CẤP 0.16 — LỒNG TIẾNG 1 FILE
 --------------------------------
 - Lồng tiếng thành 1 file giọng (mặc định): dịch toàn bộ lời Trung thành một đoạn văn tiếng Việt liền mạch, gửi ai33 một tác vụ, nhận một file giọng.
-  - ai33 trả kèm phụ đề theo đúng giọng đọc, nên phụ đề Việt vẫn khớp thời gian.
   - Muốn khớp khẩu hình hơn thì chọn chế độ cũ "Từng câu theo thời gian".
 - Khớp thời lượng giọng ↔ video (bước 04):
   - Giữ tốc độ giọng, chỉ đọc nhanh khi giọng dài hơn video.

@@ -286,8 +286,21 @@ def paragraph_request(key, model, segments, seconds, limit, settings):
         raise DubError('Không đọc được bản dịch OpenAI. Bấm Tiếp tục để thử lại.', 502) from None
 
 
-def sentence_lines(text, start, seconds):
-    """Subtitle lines for a paragraph without a transcript: sentences spread over the voice by length."""
+def silences(path):
+    """Mid-points (seconds) of the pauses in a voice file, for placing subtitle changes."""
+    try:
+        out = subprocess.run(['ffmpeg', '-hide_banner', '-nostdin', '-i', str(path), '-af', 'silencedetect=noise=-35dB:d=0.22', '-f', 'null', '-'],
+                             capture_output=True, text=True, timeout=120).stderr
+    except (OSError, subprocess.SubprocessError):
+        return []
+    starts = [float(x) for x in re.findall(r'silence_start: (-?[\d.]+)', out)]
+    ends = [float(x) for x in re.findall(r'silence_end: ([\d.]+)', out)]
+    return [round((a + b) / 2, 3) for a, b in zip(starts, ends) if b > a]
+
+
+def sentence_lines(text, start, seconds, pauses=()):
+    """Subtitle lines for the paragraph: sentences spread over the voice by length; each boundary moves to the
+    nearest pause (within 1.2 s) so the text changes when the voice actually breaks."""
     parts = [p.strip() for p in re.split(r'(?<=[.!?…])\s+', text) if p.strip()]
     out = []
     pieces = []
@@ -299,11 +312,16 @@ def sentence_lines(text, start, seconds):
             p = p[cut:].strip()
         pieces.append(p)
     total = sum(len(p) for p in pieces) or 1
-    at = start
-    for p in pieces:
-        length = seconds * len(p) / total
-        out.append(dict(start=round(at, 3), end=round(at + length, 3), vi=p))
-        at += length
+    cuts, done = [], 0
+    for p in pieces[:-1]:
+        done += len(p)
+        guess = seconds * done / total
+        low = (cuts[-1] if cuts else 0) + .3
+        near = [t for t in pauses if abs(t - guess) <= 1.2 and low < t < seconds - .3]
+        cuts.append(min(near, key=lambda t: abs(t - guess)) if near else max(low, guess))
+    edges = [0, *cuts, seconds]
+    for i, p in enumerate(pieces):
+        out.append(dict(start=round(start + edges[i], 3), end=round(start + edges[i + 1], 3), vi=p))
     return out
 
 
@@ -856,8 +874,7 @@ class Store:
         base = dict(api_key=keys['ai33'], voice_id=settings['voice_id'], speed=settings['voice_speed'])
         if settings['dictionary_id']:
             base['pronunciation_dictionary_id'] = settings['dictionary_id']
-        if paragraph:
-            base['with_transcript'] = True  # ai33 returns an SRT of its own audio → Vietnamese subtitles that match the voice
+        # MP3 only: no transcript/SRT is requested from ai33 (subtitles are timed locally from the voice's pauses)
         flight = []
         waited = time.monotonic()
         while todo or flight:
@@ -890,14 +907,6 @@ class Store:
                     download.unlink(missing_ok=True)
                     with wave.open(str(folder / g['file'])) as w:
                         g['clip_seconds'] = round(w.getnframes() / w.getframerate(), 3)
-                    if paragraph and detail.get('srt_url'):
-                        try:
-                            srt = folder / 'voice.srt.download'
-                            audio_files.download(detail['srt_url'], srt)
-                            g['transcript'] = [dict(start=r['start'], end=r['end'], vi=r['zh']) for r in parse_srt(srt.read_text(encoding='utf-8-sig', errors='replace'))]
-                            srt.unlink(missing_ok=True)
-                        except (DubError, ai33_audio.AudioError, OSError):
-                            g['transcript'] = []
                     flight.remove(g)
                     waited = time.monotonic()
                     self.save(job)
@@ -1005,9 +1014,9 @@ class Store:
         run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(folder / g['file']), '-af', tempo_filter(tempo) + fade,
              '-ac', '1', '-ar', str(VOICE_RATE), '-f', 's16le', str(folder / g['raw'])], cancel)
         mix_voice(job['groups'], folder, job['output_duration'])
-        # subtitles follow the voice: ai33's own transcript when it sent one, otherwise sentences spread by length
-        lines = [dict(start=round(place + r['start'] / tempo, 3), end=round(place + r['end'] / tempo, 3), vi=r['vi']) for r in g.get('transcript') or []]
-        job['vi_lines'] = [l for l in lines if l['start'] < job['output_duration']] or sentence_lines(job['paragraph'], place, length)
+        # subtitles follow the voice: sentences are spread by length, then each change snaps to the nearest pause in the audio
+        pauses = [t / tempo for t in silences(folder / g['file'])]
+        job['vi_lines'] = [l for l in sentence_lines(job.get('paragraph') or '', place, length, pauses) if l['start'] < job['output_duration']]
 
     def export(self, job, folder, source, info, cancel):
         settings = job['options']

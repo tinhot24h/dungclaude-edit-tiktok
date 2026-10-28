@@ -116,28 +116,36 @@ if __name__=='__main__':
 
 
 class ParagraphTests(PipelineBase):
-    def test_one_paragraph_one_tts_task_with_transcript_subtitles(self):
-        srt='1\n00:00:00,000 --> 00:00:01,000\nXin chào mọi người.\n\n2\n00:00:01,000 --> 00:00:02,200\nCảm ơn đã xem.\n'
-        def download(url,target):Path(target).write_text(srt,encoding='utf-8') if url.endswith('.srt') else Path(target).write_bytes(self.voice.read_bytes())
-        sent=[]
-        with mock.patch.object(dubbing,'paragraph_request',return_value='Xin chào mọi người. Cảm ơn đã xem.') as para,\
+    def test_one_paragraph_one_mp3_only_task_with_pause_timed_subtitles(self):
+        # voice: 1.0s tone, 0.6s silence, 1.0s tone → the subtitle change lands in the pause
+        voice=Path(self.tmp.name)/'speech.wav'
+        subprocess.run(['ffmpeg','-v','error','-y','-f','lavfi','-i','sine=frequency=500:duration=1','-f','lavfi','-i','anullsrc=r=44100:cl=mono:d=0.6','-f','lavfi','-i','sine=frequency=500:duration=1',
+                        '-filter_complex','[0][1][2]concat=n=3:v=0:a=1',str(voice)],check=True)
+        sent=[];fetched=[]
+        def download(url,target):fetched.append(url);Path(target).write_bytes(voice.read_bytes())
+        with mock.patch.object(dubbing,'paragraph_request',return_value='Xin chào mọi người. Cảm ơn đã xem nha.') as para,\
              mock.patch.object(dubbing.ai33_audio,'create_tts',side_effect=lambda raw:sent.append(raw) or dict(task_id='p1',state='submitted')),\
              mock.patch.object(dubbing.ai33_audio,'get_task',return_value=dict(status='done',audio_url='https://cdn.example/a.mp3',srt_url='https://cdn.example/a.srt')),\
              mock.patch.object(dubbing.audio_files,'download',side_effect=download):
             job=self.job(subtitles='file',background='remove',review=True)
             self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
-            self.assertEqual((job['state'],job['paragraph']),('review','Xin chào mọi người. Cảm ơn đã xem.'))
+            self.assertEqual((job['state'],job['paragraph']),('review','Xin chào mọi người. Cảm ơn đã xem nha.'))
             self.assertEqual(para.call_args[0][4],int((4-.2)*4.2))
             job['review_passed']=True;self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
         self.assertEqual(job['state'],'done',job['message'])
-        self.assertEqual(len(sent),1);self.assertTrue(sent[0]['with_transcript']);self.assertEqual(len(job['groups']),1)
-        # 2.2s voice in a 3.8s window: no speed-up; subtitles come from ai33's transcript, shifted to the first spoken line
+        self.assertEqual(len(sent),1);self.assertNotIn('with_transcript',sent[0]);self.assertEqual(fetched,['https://cdn.example/a.mp3'])
         self.assertEqual(job['groups'][0]['tempo'],1.0)
-        self.assertEqual([(l['start'],l['vi']) for l in job['vi_lines']],[(.2,'Xin chào mọi người.'),(1.2,'Cảm ơn đã xem.')])
-        self.assertIn('00:00:00,200 --> 00:00:01,200\nXin chào mọi người.',(self.data/'dub'/job['id']/'vi.srt').read_text())
+        lines=job['vi_lines'];self.assertEqual([l['vi'] for l in lines],['Xin chào mọi người.','Cảm ơn đã xem nha.'])
+        self.assertAlmostEqual(lines[1]['start'],.2+1.3,delta=.15)
+        self.assertIn('Xin chào mọi người.',(self.data/'dub'/job['id']/'vi.srt').read_text())
         # editing the paragraph re-voices it (one new task)
         self.store.edit_paragraph(job['id'],'Xin chào.')
         self.assertEqual((job['groups'],job['steps']['tts']),([],'pending'))
+
+    def test_sentence_lines_snap_to_pauses(self):
+        lines=dubbing.sentence_lines('Một hai ba. Bốn năm sáu bảy tám.',10,6,pauses=[2.6])
+        self.assertEqual([(l['start'],l['end']) for l in lines],[(10,12.6),(12.6,16)])
+        self.assertEqual(dubbing.sentence_lines('',0,3),[])
 
     def test_slow_video_down_when_the_voice_is_longer(self):
         long=Path(self.tmp.name)/'long.mp3';tone(long,6,600)

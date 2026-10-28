@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.16.1",
- "notes": "## Mới trong 0.16.1\n\n- **Sửa lỗi \"ai33 đã tạo MP3 nhưng ứng dụng không tự lấy về\":**\n  - Hỏi trạng thái ai33 gặp lỗi tạm thời (HTTP 5xx, mất mạng, quá nhiều yêu cầu) thì ứng dụng chờ rồi hỏi lại, tối đa khoảng 10 phút, thay vì dừng ngay. Thông báo hiện số lần thử và mã lỗi HTTP.\n  - Nếu cách hỏi theo mã tác vụ không được, ứng dụng tìm tác vụ trong lịch sử ai33 để lấy link MP3.\n  - Chỉ dừng ngay khi key sai, hết credit hoặc bị từ chối quyền.\n  - Thêm nút **⬆ Dùng MP3 đã tạo** trên tác vụ bị lỗi hoặc đang dừng: tải file MP3 lấy từ lịch sử ai33 lên, ứng dụng căn giọng và xuất video luôn, không tạo giọng lại.",
+ "version": "0.16.2",
+ "notes": "## Mới trong 0.16.2\n\n- **ai33 chỉ tạo MP3:** khi lồng tiếng, ứng dụng không còn yêu cầu ai33 tạo SRT/JSON phụ đề, tránh làm lỗi tác vụ.\n  - Phụ đề tiếng Việt do ứng dụng tự tính: chia đoạn văn thành câu theo độ dài, rồi đặt điểm chuyển câu vào khoảng lặng gần nhất trong file giọng, để chữ đổi đúng lúc giọng ngắt nghỉ.\n- **Bỏ khu bản dịch khỏi hàng đợi:** mặc định chỉ còn danh sách tác vụ. Khi cần sửa câu, bấm **✎ Bản dịch** trên tác vụ để mở, bấm **✕ Đóng bản dịch** để ẩn.",
  "files": {
   "update.py": {
    "sha256": "69dea002a0cb777dc61b4f48fa2b2f4046a8181c8b9db86d8f4361d8838cac7b",
@@ -24,8 +24,8 @@
    "size": 3948
   },
   "dub_ui.js": {
-   "sha256": "950ceac4e8dee4395a39c407b1c44e09d2874e5ebf13980f21169ea8527dd7b5",
-   "size": 39959
+   "sha256": "a0f9a352410f17029b196ba6751d08a439421e229c7f2916fcb5bae13e5383ff",
+   "size": 40302
   },
   "layout_ui.js": {
    "sha256": "31474a69f54710df46c2483f9711e36d487d11437085b2b563f97b1f18ab711e",
@@ -44,12 +44,12 @@
    "size": 2135
   },
   "dubbing.py": {
-   "sha256": "91ed19db25325d426cb9e1e2528952001931e0303245b8c14062cc0159fa4974",
-   "size": 61736
+   "sha256": "2080747558295a27b25e5d233628b659aacd1f99c869b2219e21d113741ae9a2",
+   "size": 62131
   },
   "tests/test_dubbing.py": {
-   "sha256": "730a46c73fdcb8b3c2bed47c6cacf478693a81f13226077eba5b102dae9866da",
-   "size": 16566
+   "sha256": "baf91b8e0967e5d001e1c58872cff4298bf5fee095de82461f76474ffa25f203",
+   "size": 17058
   },
   "image_ui.js": {
    "sha256": "b8e2a905501aedea84033a7c962b180251e06dc018e6133241f0310b474ed8e9",
@@ -160,7 +160,7 @@
    "size": 2609
   },
   "index.html": {
-   "sha256": "4591d778af7c08ff8c4fa60cebeb5b97c0e9bdd12ce3eff4a86b1ad784d354b5",
+   "sha256": "b9fcb5ef877b84f0b58f6b146fff3a456583c52cbff858642aa470cb79ff67e9",
    "size": 33084
   },
   "launch.py": {
@@ -180,15 +180,15 @@
    "size": 230
   },
   "HUONG_DAN.txt": {
-   "sha256": "23d152f0b6adf3363b5e10d4737d3fc2369c5408349f7ea56739addd5c9921d0",
-   "size": 28558
+   "sha256": "67dea6fbf6548098321deff30a5b8b9f5192d11b9127035a85d8632bb8a2e489",
+   "size": 29082
   },
   "README.md": {
-   "sha256": "11f77d763062b7012a43bd700d611622bde42da6b1615c13ae16d455f763d40c",
-   "size": 39596
+   "sha256": "ac90055ecab7ff5c7e729cd0a08528ddcebded1324da7e29de7fc7bfd717342b",
+   "size": 40124
   },
   "VERSION": {
-   "sha256": "e5450fc0d13e2cf93045cd5bce133d536637a2e7f2bb202d30b39eca8036e313",
+   "sha256": "0d2f4b8beffd0ba7cc705047c5e18ace93d071c55254b38da6ba39ad66e3f201",
    "size": 7
   },
   ".gitignore": {

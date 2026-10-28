@@ -1,8 +1,14 @@
-# Review Studio 0.16.1
+# Review Studio 0.16.2
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.16.2
+
+- **ai33 chỉ tạo MP3:** khi lồng tiếng, ứng dụng không còn yêu cầu ai33 tạo SRT/JSON phụ đề, tránh làm lỗi tác vụ.
+  - Phụ đề tiếng Việt do ứng dụng tự tính: chia đoạn văn thành câu theo độ dài, rồi đặt điểm chuyển câu vào khoảng lặng gần nhất trong file giọng, để chữ đổi đúng lúc giọng ngắt nghỉ.
+- **Bỏ khu bản dịch khỏi hàng đợi:** mặc định chỉ còn danh sách tác vụ. Khi cần sửa câu, bấm **✎ Bản dịch** trên tác vụ để mở, bấm **✕ Đóng bản dịch** để ẩn.
 
 ## Mới trong 0.16.1
 
@@ -15,7 +21,6 @@ Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI,
 ## Mới trong 0.16
 
 - **Lồng tiếng thành 1 file giọng (mặc định):** dịch toàn bộ lời Trung thành **một đoạn văn tiếng Việt liền mạch**, gửi ai33 **một tác vụ**, nhận **một file giọng**.
-  - ai33 trả kèm phụ đề theo đúng giọng đọc, nên phụ đề Việt vẫn khớp thời gian.
   - Muốn khớp khẩu hình hơn thì chọn chế độ cũ "Từng câu theo thời gian".
 - **Khớp thời lượng giọng ↔ video** (bước 04):
   - Giữ tốc độ giọng, chỉ đọc nhanh khi giọng dài hơn video.

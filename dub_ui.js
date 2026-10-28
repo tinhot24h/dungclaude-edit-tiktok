@@ -132,6 +132,7 @@ function actionsFor(job){const keys=()=>({openai_key:$('dub-openai').value.trim(
  if(['review','paused','error'].includes(job.state))btn(job.state==='review'?'▶ Tiếp tục lồng tiếng':'▶ Tiếp tục',()=>json(`/dub/${job.id}/continue`,{...keys(),options:settings()}),'primary-action').title='Chạy tiếp với thông số đang chọn bên trái (giọng, nền, phụ đề…)';
  // ai33 made the MP3 but the app could not fetch it: upload that file and the job goes straight to mixing/export
  if(job.mode==='paragraph'&&['error','paused','review'].includes(job.state)&&job.steps.tts!=='done'&&job.lines){const b=btn('⬆ Dùng MP3 đã tạo',()=>new Promise((resolve,reject)=>{const input=el('input',{type:'file',accept:'audio/*,.mp3,.wav,.m4a'});input.onchange=async()=>{const f=input.files[0];if(!f)return resolve();$('dub-status').textContent='Đang tải file giọng '+f.name+'…';try{await request(`/dub/${job.id}/voice`,{method:'POST',headers:{'X-Filename':encodeURIComponent(f.name)},body:f});$('dub-status').textContent='Đã nhận file giọng, đang xuất video…';resolve()}catch(e){reject(e)}};input.click()}));b.title='Tải MP3 ai33 đã tạo (từ lịch sử ai33 hoặc trang Âm thanh) để ứng dụng căn giọng và xuất video luôn'}
+ if(job.lines){const open=openDetail===job.id;btn(open?'✕ Đóng bản dịch':'✎ Bản dịch',async()=>{openDetail=open?'':job.id;current=job.id;dirty=false})}
  if(job.state==='done'){const a=el('a',{className:'primary-action small-action',href:job.outputs.video+'?download=1',textContent:'Tải MP4 ↓'});a.onclick=e=>e.stopPropagation();actions.append(a);if(job.outputs.srt){const s=el('a',{className:'outline-action small-action',href:job.outputs.srt,textContent:'SRT Việt'});s.onclick=e=>e.stopPropagation();actions.append(s)}
   if(job.outputs.saved_path)btn('Mở thư mục',()=>json('/settings/open-folder'));btn('Mở trong trình dựng',()=>toEditor(job))}
  if(!['queued','running'].includes(job.state))btn('Xóa',async()=>{if(confirm(`Xóa tác vụ lồng tiếng "${job.name}"? Video gốc trong kho vẫn giữ.`)){await json(`/dub/${job.id}/delete`);if(current===job.id){current='';detail=null}}},'outline-action danger-action');
@@ -141,11 +142,12 @@ function card(job){const actions=actionsFor(job);
   stepChips(job),el('div',{className:'export-bar'},el('i',{style:`width:${job.progress||0}%`})),el('small',{className:'dub-msg',textContent:`${job.progress||0}% · ${job.message||''}${job.lines?` · ${job.translated}/${job.lines} câu`:''}`}),...(job.warnings||[]).slice(0,3).map(w=>el('small',{className:'dub-warn',textContent:'⚠ '+w})),actions);
  box.onclick=()=>{current=job.id;refresh()};return box}
 async function refresh(){clearTimeout(poll);try{jobs=(await request('/dub/jobs')).jobs;$('dub-count').textContent=jobs.length?jobs.length+' tác vụ':'';$('dub-queue').replaceChildren(...(jobs.length?jobs.map(card):[el('div',{className:'note-empty'},el('div',{textContent:'🎙'}),el('strong',{textContent:'Chưa có video nào'}),el('p',{className:'helper',textContent:'Chọn video bên trái rồi bấm Bắt đầu lồng tiếng.'}))]));
-  if(!current&&jobs[0])current=jobs[0].id;if(current)await showDetail()}catch(e){$('dub-status').textContent=e.message}
+  if(!current&&jobs[0])current=jobs[0].id;if(current&&openDetail===current)await showDetail();else $('dub-detail').hidden=true}catch(e){$('dub-status').textContent=e.message}
  if(jobs.some(j=>['queued','running'].includes(j.state))&&!view.hidden)poll=setTimeout(refresh,1500)}
 
 // ---- detail: player + editable line table
-let dirty=false;
+// The translation panel is closed by default (the run is automatic); "✎ Bản dịch" on a job opens it.
+let dirty=false,openDetail='';
 async function showDetail(){const job=await request('/dub/'+current).catch(()=>null);const box=$('dub-detail');if(!job){box.hidden=true;return}
  const editable=!['queued','running'].includes(job.state);if(dirty&&detail?.id===job.id&&editable)return;detail=job;box.hidden=false;
  const video=job.state==='done'?el('video',{className:'dub-player',src:job.outputs.video+'?t='+Date.now(),controls:true,playsInline:true}):el('div',{className:'dub-player empty',textContent:job.state==='done'?'':'Video lồng tiếng sẽ hiện ở đây khi xong.'});
