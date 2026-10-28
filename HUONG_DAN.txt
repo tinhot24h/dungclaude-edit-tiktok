@@ -27,55 +27,11 @@ tắt bằng Ctrl+C trong cửa sổ đó hoặc nút nguồn ở góc phải th
 Trình duyệt tự mở http://127.0.0.1:8000. Mở lần nữa khi đang chạy chỉ mở lại trình duyệt. Cổng bận: đóng bản cũ hoặc chọn cổng khác:
   PowerShell: $env:PORT='8001'; python launch.py
 
-CHỌN CÁCH DỊCH
-Mở tab Dịch & biên tập AI. Nguồn hiện là VĂN BẢN tiếng Trung do bạn dán,
-tối đa 8.000 ký tự; chưa tự nghe video hoặc OCR. MP3 được tạo riêng ở tab Âm thanh ai33.
-Chọn Review / Tin tức / Mẹo / Giới thiệu, giọng văn, xưng hô và mục tiêu
-15/30/60/90 giây hoặc giữ đủ ý. Thời lượng chỉ là ước tính.
-
-A. THỦ CÔNG — MẶC ĐỊNH, KHÔNG CẦN API KEY
-1. Dán nguồn và chọn phong cách, bấm Tạo câu lệnh.
-2. Sao chép câu lệnh, mở Gemini hoặc ChatGPT web bằng nút trong tool.
-3. Bạn tự đăng nhập và dán câu lệnh trên website đó, chờ câu trả lời.
-4. Sao chép đủ JSON gồm literal/script/notes về ô kết quả thủ công,
-   bấm Nhập JSON. Có thể nhận JSON được bọc trong khối ```json.
-5. Nếu chỉ có văn bản kịch bản: dán trực tiếp vào ô Kịch bản tiếng Việt,
-   có thể nhập bản dịch sát nghĩa riêng bằng tay.
-6. Duyệt và sửa, sao chép hoặc Tải TXT để tạo MP3 bên ngoài.
-Tool không gọi API trong chế độ này. Web AI có hạn mức riêng và cần
-Internet; đây không phải AI dịch tự động offline. Không tự điều khiển
-web, lấy cookie/token hoặc dùng tài khoản web như API.
-
-B. GEMINI API — CÓ THỂ CÓ HẠN MỨC MIỄN PHÍ
-1. Chọn Gemini API. Lấy key Google AI Studio:
-   https://aistudio.google.com/apikey
-2. Nhập key tại Kết nối API trong ứng dụng, không gửi key trong chat.
-3. Model gợi ý gemini-2.5-flash; có thể đổi thành model tài khoản hỗ trợ.
-4. Kiểm tra điều kiện, quota và giá hiện hành trước khi gọi:
-   https://ai.google.dev/gemini-api/docs/pricing
-5. Bấm Dịch & viết lại, chờ hai bản và ghi chú cần kiểm chứng.
-Google quyết định hạn mức miễn phí và cước; tool không thể bảo đảm mọi
-lượt gọi đều miễn phí. Không tự retry hoặc chuyển sang OpenAI trả phí
-khi hết quota. Bạn có thể tự đổi về Thủ công.
-Key máy chủ tùy chọn: REVIEW_GEMINI_KEY / GEMINI_API_KEY / GOOGLE_API_KEY.
-Model tùy chọn: GEMINI_MODEL. Cần HTTPS tới generativelanguage.googleapis.com.
-
-C. OPENAI API — TÍNH PHÍ RIÊNG
-Chọn OpenAI API, nhập key từ https://platform.openai.com/api-keys.
-Model mặc định gpt-4.1-mini; có thể đổi nếu model có Responses API và
-Structured Outputs. Phí API riêng với ChatGPT Free/Plus.
-Key máy chủ: REVIEW_OPENAI_KEY / OPENAI_API_KEY; model: OPENAI_MODEL.
-Cần HTTPS tới api.openai.com.
-
-KEY VÀ KẾT QUẢ
-Key hai provider giữ riêng trong bộ nhớ phiên, không lưu vào file,
-localStorage hoặc ZIP. Tải lại trang cần nhập lại key. Không gửi key qua
-chat. Văn bản/cấu hình chỉ gửi tới provider API đã chọn khi bấm dịch;
-video và PNG không gửi tới các API dịch.
-Bản dịch và kịch bản cần duyệt tên riêng, giá, đơn vị, công dụng và ghi
-chú; không coi AI là xác minh sự thật. Không tự đổi giá sang tiền Việt.
-Muốn lấy đoạn lên video: bôi đen tối đa 600 ký tự trong ô kịch bản rồi
-bấm Đưa đoạn chọn lên video. Toàn bộ kịch bản vẫn giữ để tải TXT.
+DỊCH VÀ VIẾT CHỮ
+Từ 0.24 không còn tab Dịch & biên tập AI. Tab Dựng & lồng tiếng tự nhận diện lời,
+dịch, viết tiêu đề / nội dung / tên file cho từng video bằng OpenAI (1 lần gọi mỗi video).
+Sửa quy tắc viết ở mục Nhận diện, dịch & viết chữ → "Sửa mẫu ›". Nhập key OpenAI và
+ai33 ở nút API key trên thanh trên cùng. Không gửi key trong chat.
 
 DỰNG VIDEO 0.7
 1. Chọn nguồn: video tối đa 500 MB / 30 phút, MP4 H.264 khuyến nghị.
@@ -109,18 +65,12 @@ nút Dọn video cũ xóa theo số ngày bạn chọn, nút Xóa MP3 đã chọ
 từng MP3. MP3 không bao giờ tự bị xóa. Hãy tải video kết quả về máy.
 Chỉ dùng cục bộ; chưa có đăng nhập, ghép nhiều clip hoặc tự đăng TikTok.
 
-KIỂM TRA
-Thủ công đã thử qua HTTP cục bộ và Chromium: tạo prompt, nhập JSON,
-copy/TXT không cần key và không gọi API. Gemini/OpenAI kiểm tra bằng
-phản hồi giả lập, chưa gọi thật do máy không có key. Chưa xác minh
-model/tài khoản cụ thể được miễn phí. Chưa thử trực tiếp Windows/macOS.
-
 TẠO GIỌNG VỚI AI33.PRO
 1. Mở tab Âm thanh ai33, nhập AI33 API KEY trong ứng dụng. Chỉ nhập giá
    trị key, không nhập cả chuỗi xi-api-key:. Không gửi key trong chat.
-   Không dùng key Gemini/OpenAI. Có thể cấu hình biến máy chủ trước khi
+   Không dùng key OpenAI ở đây. Có thể cấu hình biến máy chủ trước khi
    chạy: REVIEW_AI33_KEY hoặc AI33_API_KEY.
-2. Lấy kịch bản tiếng Việt từ tab AI hoặc dán văn bản.
+2. Dán văn bản tiếng Việt cần đọc.
 3. Bấm Kiểm tra số dư credit để đọc số dư (tùy chọn). Tạo giọng có thể
    trừ credit ai33, không phải chức năng dịch miễn API.
 4. Chọn thư viện và Tải thư viện giọng, tự tải các trang; có bộ lọc/tìm kiếm.
@@ -219,6 +169,12 @@ Mở "⚙ Tùy chỉnh câu lệnh" để sửa quy tắc viết; bấm "Lưu th
 giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh gốc. Mẫu gốc đã
 cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
 Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
+
+NÂNG CẤP 0.24.0
+- Bỏ tab Dịch & biên tập AI (cùng chế độ Thủ công, Gemini). Thanh trên còn Dựng & lồng tiếng và Âm thanh ai33.
+- Sửa mẫu câu lệnh: mục Nhận diện, dịch & viết chữ → "Sửa mẫu ›" (lưu nhiều mẫu, khôi phục mặc định).
+- Bấm "Lưu mẫu" là lưu luôn câu lệnh; chọn mẫu là đổi cả câu lệnh.
+- Ô 💡 gợi ý chung cho cả lô ở đầu danh sách video (video có gợi ý riêng thì dùng gợi ý riêng).
 
 NÂNG CẤP 0.23.0
 - AI xem 3 khung hình của video trong cùng lần dịch để gọi đúng sản phẩm (tắt được ở mục Nhận diện & dịch).

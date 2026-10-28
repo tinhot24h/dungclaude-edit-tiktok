@@ -488,9 +488,9 @@ DROP_SECTIONS = re.compile(r'KỊCH BẢN|HOOK|CHỮ HIỂN THỊ|ĐỊNH DẠNG
 
 
 def template_rules(template):
-    """Only the content and style rules of the shared writing template. Its role line and its hook / script /
-    title / body / format sections belong to the "Dịch & biên tập AI" page; leaving them out makes the dubbing
-    prompt shorter and nothing has to be "ignored". A template without such headings is kept whole."""
+    """Only the content and style rules of the writing template. A role line and hook / script / title / body /
+    format sections (templates saved before 0.24, written for the old "Dịch & biên tập AI" page) are left out:
+    the prompt stays short and nothing has to be "ignored". A template without such headings is kept whole."""
     blocks = [b.strip() for b in re.split(r'\n\s*\n', template.strip()) if b.strip()]
     kept, dropped = [], False
     for n, block in enumerate(blocks):
@@ -508,9 +508,11 @@ def template_rules(template):
 def base_rules(settings, role, pronoun=True):
     """The shared head of every OpenAI call (voice text, title/body, file name): same rules, same order."""
     template = settings.get('instructions') or ai_translate.DEFAULT_RULES
-    shared, trimmed = template_rules(template)
-    head = ('QUY TẮC NỘI DUNG DÙNG CHUNG (từ mẫu biên tập):\n' + shared) if trimmed else \
-        ('MẪU BIÊN TẬP DÙNG CHUNG (áp dụng các quy tắc nội dung và văn phong; BỎ QUA mọi yêu cầu về hook, script, title, body hay định dạng kết quả trong mẫu này):\n' + template)
+    shared, _ = template_rules(template)
+    # a template that still talks about hooks, scripts or output formats gets told those parts do not apply here
+    other = not shared or re.search(r'\bhook\b|\bscript\b|kịch bản|định dạng kết quả|\btitle\b|\bbody\b', shared, re.I)
+    head = ('MẪU CÂU LỆNH (áp dụng các quy tắc nội dung và văn phong; BỎ QUA mọi yêu cầu về hook, script, title, body hay định dạng kết quả trong mẫu này):\n' + (shared or template)) if other else \
+        ('QUY TẮC NỘI DUNG DÙNG CHUNG (mẫu câu lệnh):\n' + shared)
     rules = (DUB_GUARD + '\n\n' + role + ('\n- Xưng hô: ' + PRONOUNS[settings['pronoun']] + '.' if pronoun else '')
              + '\n- Văn phong: ' + ai_translate.STYLES[settings.get('style', 'review')] + '\n\n' + head)
     # Always on (cannot be switched off): no exact price, brand, size, volume, weight or power.

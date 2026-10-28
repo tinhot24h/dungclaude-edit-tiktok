@@ -42,7 +42,6 @@ JOBS = {}
 CANCELS = {}
 LOCK = threading.Lock()
 RENDER_LOCK = threading.Lock()
-AI_SLOTS = threading.BoundedSemaphore(2)
 AUDIO_SLOTS = threading.BoundedSemaphore(3)
 ACTIVE = ('queued','rendering','cancelling')
 PROJECT = re.compile('[a-f0-9]{32}')
@@ -54,6 +53,7 @@ try:
     library_store.merge_build_presets(DATA/'library')   # one tab since 0.22: build templates join the dub presets
 except (OSError, ValueError):
     pass
+secrets_store.forget_removed()   # the Gemini key of the removed "Dịch & biên tập AI" page
 
 
 def keep_days():
@@ -400,7 +400,7 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == '/':
             return self.respond(200, (ROOT / 'index.html').read_bytes(), 'text/html; charset=utf-8')
-        if path in ('/studio.css','/studio.js','/local_files.js','/design_tab.js','/ai_ui.js','/audio_ui.js','/editor_ui.js','/timeline_ui.js','/history_ui.js','/workspace_ui.js','/clip_ui.js','/studio_shell.js','/media_bin.js','/image_ui.js','/export_ui.js','/style_ui.js','/update_ui.js','/dub_ui.js','/layout_ui.js','/key_ui.js','/batch_ui.js'):
+        if path in ('/studio.css','/studio.js','/local_files.js','/design_tab.js','/audio_ui.js','/editor_ui.js','/timeline_ui.js','/history_ui.js','/workspace_ui.js','/clip_ui.js','/studio_shell.js','/media_bin.js','/image_ui.js','/export_ui.js','/style_ui.js','/update_ui.js','/dub_ui.js','/layout_ui.js','/key_ui.js','/batch_ui.js'):
             mime = 'text/css' if path.endswith('.css') else 'text/javascript'
             return self.respond(200, (ROOT/path.lstrip('/')).read_bytes(), mime+'; charset=utf-8')
         if path in ('/assets/'+font[0] for font in FONTS.values()):
@@ -432,13 +432,8 @@ class Handler(BaseHTTPRequestHandler):
             record=asset_store.read(AUDIO,audio_match[1]);name=record.get('name','review-voice')
             name=re.sub(r'\.(mp3|wav|m4a|ogg|flac)$','',name,flags=re.I)+'.mp3'
             return self.serve_audio(AUDIO / (audio_match[1]+'.mp3'), 'download=1' in urlparse(self.path).query.split('&'),filename=name)
-        if path == '/translation-defaults':
-            return self.respond(200, {'rules':ai_translate.DEFAULT_RULES,'guard':ai_translate.GUARD,'contract':ai_translate.CONTRACT,'max':ai_translate.MAX_RULES,
-                                      'hooks':ai_translate.HOOKS,'styles':ai_translate.STYLES,'style_labels':ai_translate.STYLE_LABELS})
-        if path == '/ai-status':
-            return self.respond(200, {'configured':ai_translate.configured(),'model':ai_translate.default_model(),
-                                     'providers':{name:dict(configured=ai_translate.configured(name),model=ai_translate.default_model(name))
-                                                  for name in ('openai','gemini')}})
+        if path == '/dub/template-defaults':
+            return self.respond(200, {'rules':ai_translate.DEFAULT_RULES,'fixed':dubbing.DUB_GUARD+'\n\n'+ai_translate.STRICT,'max':ai_translate.MAX_RULES})
         if path == '/health':
             return self.respond(200, {'status': 'ok','version':VERSION})
         library=re.fullmatch(r'/library/(projects|templates|styles|presets|dubpresets|buildpresets)(?:/([a-f0-9]{32}))?',path)
@@ -668,23 +663,6 @@ class Handler(BaseHTTPRequestHandler):
                         asset_store.write(AUDIO,audio_files.asset_id(detail['task_id']),name=result['name'],source='ai33',task_id=detail['task_id'])
                 finally:
                     AUDIO_SLOTS.release()
-                return self.respond(200,result)
-            if path in ('/translation-prompt','/translation-import'):
-                if not 0 < size <= 196608:
-                    raise ValueError('Yêu cầu quá lớn.')
-                raw = json.loads(self.rfile.read(size))
-                result = {'prompt':ai_translate.manual_prompt(raw)} if path.endswith('prompt') else ai_translate.import_manual(raw)
-                return self.respond(200,result)
-            if path == '/translate':
-                if not 0 < size <= 196608:
-                    raise ValueError('Yêu cầu dịch quá lớn.')
-                raw = json.loads(self.rfile.read(size))
-                if not AI_SLOTS.acquire(blocking=False):
-                    return self.respond(429, {'error':'Đang xử lý các bản dịch khác. Hãy chờ rồi thử lại.'})
-                try:
-                    result = ai_translate.translate(raw)
-                finally:
-                    AI_SLOTS.release()
                 return self.respond(200,result)
             if path == '/frame-upload':
                 if not 0 < size <= 5*1024*1024:
@@ -985,8 +963,6 @@ class Handler(BaseHTTPRequestHandler):
                 return self.respond(202, {'id': key})
             self.respond(404, {'error': 'Không tìm thấy.'})
         except ai33_audio.AudioError as error:
-            self.respond(error.status, {'error':str(error)})
-        except ai_translate.AIError as error:
             self.respond(error.status, {'error':str(error)})
         except ValueError as error:
             self.respond(400, {'error': str(error)})

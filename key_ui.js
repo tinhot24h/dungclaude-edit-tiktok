@@ -4,8 +4,8 @@
 (()=>{
 const el=(tag,props={},...children)=>{const e=Object.assign(document.createElement(tag),props);e.append(...children);return e};
 const json=(url,body)=>request(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-const NAMES={openai:'OpenAI',gemini:'Gemini',ai33:'ai33.pro'};
-const FIELDS=[['ai-key',()=>['openai','gemini'].includes($('ai-provider')?.value)?$('ai-provider').value:''],['tts-key',()=>'ai33'],['dub-openai',()=>'openai'],['dub-ai33',()=>'ai33']];
+const NAMES={openai:'OpenAI',ai33:'ai33.pro'};
+const FIELDS=[['tts-key',()=>'ai33'],['dub-openai',()=>'openai'],['dub-ai33',()=>'ai33']];
 let state={},rows=[];
 for(const[id,provider]of FIELDS){const input=$(id);if(!input)continue;const placeholder=input.placeholder;
  const save=el('button',{type:'button',className:'outline-action small-action',textContent:'💾 Lưu key trên máy này'}),drop=el('button',{type:'button',className:'outline-action small-action danger-action',textContent:'Xóa key đã lưu'}),note=el('small',{className:'key-note'});
@@ -18,12 +18,11 @@ for(const[id,provider]of FIELDS){const input=$(id);if(!input)continue;const plac
  drop.onclick=async()=>{const p=provider();if(!confirm(`Xóa ${NAMES[p]} key đã lưu trên máy này?`))return;try{state=await json('/secrets/delete',{provider:p});changed()}catch(e){note.textContent=e.message}};
  rows.push(draw)}
 function changed(){for(const d of rows)d();document.dispatchEvent(new Event('keys-changed'))}
-$('ai-provider')?.addEventListener('change',()=>{for(const d of rows)d()});for(const b of $('ai-provider-tabs')?.children||[])b.addEventListener('click',()=>setTimeout(()=>{for(const d of rows)d()}));
 // ---- one place for every key since 0.22: 🔑 API in the header. The key fields of the pages are no longer shown;
 // every feature (translation, voices, dubbing) uses the keys saved here.
-const USES=[['openai','OpenAI','Nhận diện lời (Whisper), dịch, viết tiêu đề và nội dung'],['ai33','ai33.pro','Giọng đọc tiếng Việt và lồng tiếng'],['gemini','Gemini','Dịch ở trang Dịch & biên tập AI (không bắt buộc)']];
-for(const id of ['ai-connection','tts-connection','sec-keys'])$(id)?.classList.add('keys-elsewhere');
-const open=el('button',{type:'button',id:'keys-open',className:'header-key',title:'Quản lý API key (OpenAI, ai33, Gemini) cho mọi chức năng'},el('span',{className:'dot'}),document.createTextNode(' API key'));
+const USES=[['openai','OpenAI','Nhận diện lời (Whisper), dịch, viết tiêu đề và nội dung'],['ai33','ai33.pro','Giọng đọc tiếng Việt và lồng tiếng']];
+for(const id of ['tts-connection','sec-keys'])$(id)?.classList.add('keys-elsewhere');
+const open=el('button',{type:'button',id:'keys-open',className:'header-key',title:'Quản lý API key (OpenAI, ai33) cho mọi chức năng'},el('span',{className:'dot'}),document.createTextNode(' API key'));
 (document.querySelector('.header-tools')||document.querySelector('.app-header')).prepend(open);
 const dialog=el('dialog',{id:'keys-dialog',className:'dub-dialog'});document.body.append(dialog);
 function drawKeys(){const list=USES.map(([p,name,use])=>{const s=state[p]||{},input=el('input',{type:'password',autocomplete:'off',spellcheck:false,placeholder:s.saved?`Đã lưu ${s.hint} · dán key mới để thay`:'Dán API key'});

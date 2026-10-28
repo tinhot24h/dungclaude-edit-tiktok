@@ -1,8 +1,16 @@
-# Review Studio 0.23.0
+# Review Studio 0.24.0
 
-Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
+Dựng và lồng tiếng video review 9:16 hàng loạt: OpenAI nhận diện + dịch + viết chữ, ai33.pro đọc giọng, FFmpeg xuất video hoàn thiện.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.24.0
+
+- **Bỏ tab Dịch & biên tập AI** (cùng chế độ Thủ công và Gemini): việc dịch, tiêu đề, nội dung, tên file đã tự chạy cho từng video trong tab Dựng & lồng tiếng. Thanh trên còn 2 tab; hộp API key chỉ còn OpenAI và ai33 (key Gemini đã lưu được xóa khỏi máy).
+- **Sửa mẫu câu lệnh ngay trong tab Dựng:** link "Sửa mẫu ›" mở hộp sửa: chọn / lưu nhiều mẫu, xóa, khôi phục mặc định, xem phần luôn được thêm. Mẫu mặc định chỉ còn quy tắc nội dung; mẫu cũ của bạn vẫn dùng được (phần hook/kịch bản tự bỏ khi gửi).
+- **Mẫu câu lệnh lưu cùng "Lưu mẫu":** mỗi mẫu dựng nhớ luôn câu lệnh của nó, chọn mẫu là đổi cả giao diện lẫn câu lệnh.
+- **Gợi ý chung cho cả lô:** ô 💡 ở đầu danh sách video, dùng khi cả lô cùng một sản phẩm; video có gợi ý riêng thì dùng gợi ý riêng.
+- Tab Âm thanh bỏ nút "Lấy kịch bản AI" (lấy từ tab đã bỏ).
 
 ## Mới trong 0.23.0
 
@@ -433,37 +441,9 @@ Key chỉ ở bộ nhớ phiên/server environment, không lưu file/localStorag
 
 Phạm vi hiện tại là TTS một giọng, thư viện giọng, credit và lịch sử. Chưa tạo clone mới, hội thoại nhiều người, CRUD từ điển, xóa/refund tác vụ, tải transcript. API contract và nguồn ảnh tài liệu: [docs/ai33-api.md](docs/ai33-api.md).
 
-## Chọn cách dịch
+## Dịch và viết chữ
 
-| Chế độ | Cần key? | Cách hoạt động |
-| --- | --- | --- |
-| **Thủ công — mặc định** | Không | Tool ghép nguồn + phong cách thành câu lệnh. Bạn sao chép sang Gemini/ChatGPT web, lấy câu trả lời rồi dán trở lại. Tool không gọi API. Dịch vụ web có hạn mức riêng. |
-| **Gemini API** | Key Google AI Studio | Dịch ngay trong tool. Có thể dùng hạn mức miễn phí nếu dự án/model/tài khoản đủ điều kiện; quota và cước do Google quyết định. Tool không thể khóa mọi lượt gọi ở mức miễn phí. |
-| **OpenAI API** | Key OpenAI | Dịch ngay trong tool, phí API tính riêng với ChatGPT Free/Plus. |
-
-Tool không tự chuyển provider, không tự thử lại hoặc dùng OpenAI trả phí khi Gemini hết quota. Bạn có thể chủ động đổi về Thủ công. Không tự điều khiển tài khoản web hoặc lấy cookie/token của ChatGPT/Gemini.
-
-## Dùng không cần API
-
-1. Mở **Dịch & biên tập AI**, chọn **Thủ công**.
-2. Dán văn bản Trung (tối đa 8.000 ký tự), chọn Review/Tin tức/Mẹo/Giới thiệu, giọng văn, xưng hô và thời lượng.
-3. Bấm **Tạo câu lệnh** rồi sao chép sang Gemini hoặc ChatGPT web. Link chỉ mở website để bạn tự thao tác.
-4. AI được yêu cầu trả JSON gồm `literal`, `script`, `notes`. Sao chép đủ JSON vào ô kết quả thủ công, bấm nhập. Chấp nhận JSON được bọc trong khối markdown `json`.
-5. Nếu chỉ có văn bản kịch bản, dán trực tiếp vào ô **Kịch bản tiếng Việt**; có thể điền bản dịch sát nghĩa riêng bằng tay.
-6. Sửa, sao chép hoặc tải TXT UTF-8 để tạo MP3 bên ngoài. Bôi đen đoạn tối đa 600 ký tự để đưa lên khung nội dung video.
-
-Tạo câu lệnh và nhập kết quả là xử lý cục bộ, không gọi OpenAI/Gemini API. AI web vẫn cần Internet và có giới hạn do nhà cung cấp áp dụng. Đây là quy trình thủ công, không phải bản dịch tự động chạy offline.
-
-## Gemini API và OpenAI API
-
-Chọn provider trong giao diện, nhập key ở **Kết nối API**. Key của từng provider giữ riêng trong bộ nhớ phiên; chỉ khi bấm "Lưu key trên máy này" key mới được ghi vào .local/secrets.json (không bao giờ vào localStorage, ZIP hay bản cập nhật). Model được lưu riêng theo provider. Không gửi key trong chat.
-
-- Gemini: lấy key tại https://aistudio.google.com/apikey. Model gợi ý `gemini-2.5-flash`, có thể thay bằng model tài khoản hỗ trợ. Kiểm tra điều kiện, hạn mức và giá hiện hành tại https://ai.google.dev/gemini-api/docs/pricing. Biến máy chủ: `REVIEW_GEMINI_KEY`, `GEMINI_API_KEY` hoặc `GOOGLE_API_KEY`; model mặc định tùy chọn `GEMINI_MODEL`.
-- OpenAI: https://platform.openai.com/api-keys. Model mặc định `gpt-4.1-mini`, cần Responses API/Structured Outputs. Biến máy chủ: `REVIEW_OPENAI_KEY` hoặc `OPENAI_API_KEY`; model tùy chọn `OPENAI_MODEL`.
-
-Chỉ khi bấm dịch trong chế độ API, văn bản/cấu hình gửi tới provider đã chọn. Gemini dùng HTTPS `generativelanguage.googleapis.com` với header `x-goog-api-key`, không đưa key lên URL; OpenAI dùng HTTPS `api.openai.com/v1/responses`, `store:false`. Không gửi clip/PNG tới các API dịch.
-
-Nguồn hiện là văn bản dán vào. **Chưa có nhận lời nói từ video hoặc OCR. Phần dịch không tạo giọng; MP3 được tạo riêng trong tab Âm thanh ai33.** Bản dịch sát nghĩa, bản viết lại và ghi chú đều cần người dùng duyệt. Thời lượng 15/30/60/90 giây chỉ là mục tiêu; ước tính đọc 2,8 tiếng/giây. Không coi lời AI là xác minh giá, công dụng hay sự kiện.
+Từ 0.24 mọi việc dịch nằm trong tab **Dựng & lồng tiếng**: mỗi video được OpenAI nhận diện lời (Whisper), dịch và viết tiêu đề / nội dung / tên file trong một lần gọi. Mẫu câu lệnh (quy tắc nội dung, văn phong) sửa ở mục **Nhận diện, dịch & viết chữ → Sửa mẫu ›** và được lưu cùng **Lưu mẫu**. Key OpenAI và ai33 quản lý ở nút **API key** trên thanh trên. Biến máy chủ tùy chọn: `REVIEW_OPENAI_KEY` / `OPENAI_API_KEY`, `REVIEW_AI33_KEY` / `AI33_API_KEY`.
 
 ## Dựng video
 
@@ -517,12 +497,10 @@ Chỉ dùng cục bộ với Host/Origin localhost; chưa có xác thực, giớ
 
 AI33: kiểm tra HTTP giả lập đúng API v3/v1 do người dùng cung cấp; key/header/multipart, phân trang giọng, trạng thái doing/done/error, credit/history, không retry tạo, không lộ key. FFmpeg đã chuyển WAV mẫu thành MP3 thật, FFprobe xác minh, Chromium phát/tua/download MP3 qua Range 206/416, khôi phục cache sau reload và không lưu key; bố cục 390/320px. Chưa gọi ai33 thật vì không có key và mạng môi trường chặn host; cần thử synthesis thực với tài khoản có quyền/credit.
 
-Đã kiểm tra luồng thủ công thực qua HTTP và Chromium: không cần key, không gọi API, tạo/sao chép câu lệnh, nhập JSON thường/có code fence, từ chối JSON sai mà giữ bản cũ, xuất TXT. Gemini/OpenAI được kiểm tra bằng HTTP giả lập: định dạng request, provider/key tách biệt, hết quota không fallback/không retry, không lộ key trong URL/prompt/localStorage. Chưa gọi hai API thật vì máy kiểm tra không có key; chưa xác minh tài khoản/model cụ thể được miễn phí. Chưa chạy trực tiếp Windows/macOS.
 
 ```sh
 python3 -m unittest discover -s tests -v
 node --check studio.js
-node --check ai_ui.js
 node --check audio_ui.js
 node --check editor_ui.js
 node --check timeline_ui.js

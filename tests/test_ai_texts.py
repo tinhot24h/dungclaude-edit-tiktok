@@ -17,15 +17,28 @@ def reply(obj):
 
 class PromptPieceTests(unittest.TestCase):
     def test_template_keeps_only_content_rules(self):
-        kept, trimmed = dubbing.template_rules(ai_translate.DEFAULT_RULES)
-        self.assertTrue(trimmed);self.assertIn('QUY TẮC NỘI DUNG', kept)
-        for gone in ('HOOK', 'KỊCH BẢN', 'CHỮ HIỂN THỊ', 'Bạn là'):
-            self.assertNotIn(gone, kept)
-        self.assertLess(len(kept), len(ai_translate.DEFAULT_RULES) / 2)
+        old = """Bạn là biên tập viên kịch bản video ngắn.
+
+QUY TẮC NỘI DUNG
+- Giữ đúng sự thật.
+
+KỊCH BẢN ĐỌC (script)
+- Văn bản sạch.
+
+HOOK MỞ ĐẦU (3 giây đầu)
+- hook: một câu.
+
+CHỮ HIỂN THỊ TRÊN VIDEO (khác script dùng để đọc)
+- title: ngắn."""
+        kept, trimmed = dubbing.template_rules(old)            # a template saved for the old AI page
+        self.assertTrue(trimmed);self.assertEqual(kept, 'QUY TẮC NỘI DUNG\n- Giữ đúng sự thật.')
+        self.assertEqual(dubbing.template_rules(ai_translate.DEFAULT_RULES), (ai_translate.DEFAULT_RULES.strip(), False))
         own = 'Viết vui vẻ.\n- Không nói tục.'
-        self.assertEqual(dubbing.template_rules(own), (own, False))   # no headings: kept whole (with the "BỎ QUA" note)
-        self.assertIn('BỎ QUA', dubbing.base_rules(dubbing.options(dict(instructions=own)), 'Vai'))
-        self.assertNotIn('BỎ QUA', dubbing.base_rules(dubbing.options({}), 'Vai'))
+        self.assertEqual(dubbing.template_rules(own), (own, False))
+        self.assertNotIn('BỎ QUA', dubbing.base_rules(dubbing.options(dict(instructions=own)), 'Vai'))
+        self.assertIn('BỎ QUA', dubbing.base_rules(dubbing.options(dict(instructions='Viết hook thật hay rồi script.')), 'Vai'))
+        rules = dubbing.base_rules(dubbing.options({}), 'Vai')
+        self.assertNotIn('BỎ QUA', rules);self.assertIn('QUY TẮC NỘI DUNG DÙNG CHUNG', rules);self.assertIn(ai_translate.STRICT, rules)
 
     def test_title_style_variants_and_limits_in_prompt(self):
         o = dubbing.options(dict(title_style='question', title_chars=30, body_min_chars=50, body_max_chars=100))
@@ -91,20 +104,6 @@ class PromptPieceTests(unittest.TestCase):
             dubbing.texts_request('k', 'custom-model', ['你好'], dubbing.options({}), ctx)
         self.assertEqual(len(seen), 2);self.assertIsInstance(seen[1]['input'][1]['content'], str);self.assertNotIn('- Ảnh:', seen[1]['input'][0]['content'])
         self.assertTrue(ctx['dropped_images'])
-
-
-class TranslatePageTests(unittest.TestCase):
-    def test_page_uses_the_same_limits_variants_and_file_names(self):
-        answer = dict(hook='A', hook_options=['A'], script='Xin chào', title='Kệ gia vị gọn gàng cho căn bếp nhỏ xinh của bạn',
-                      title_options=['Kệ gọn', 'Kệ gia vị gọn cho bếp nhỏ', 'Kệ gia vị gọn gàng cho căn bếp nhỏ xinh của bạn'],
-                      body='Ngắn.', body_options=['Ngắn.', 'Lắp nhanh, chịu lực tốt, giúp góc bếp luôn gọn gàng và sạch sẽ mỗi ngày.'],
-                      file_name='Kệ gia vị gọn', file_name_alt='ke-gia-vi-chiu-luc')
-        got = ai_translate.import_manual(dict(text=json.dumps(answer, ensure_ascii=False), title_chars=26))
-        self.assertEqual(got['title'], 'Kệ gia vị gọn cho bếp nhỏ');self.assertEqual(len(got['title_options']), 3)
-        self.assertEqual(got['body'], 'Lắp nhanh, chịu lực tốt, giúp góc bếp luôn gọn gàng và sạch sẽ mỗi ngày.')
-        self.assertEqual((got['file_name'], got['file_name_alt']), ('ke-gia-vi-gon', 'ke-gia-vi-chiu-luc'));self.assertEqual(got['warnings'], [])
-        prompt = ai_translate.manual_prompt(dict(source='x', title_style='pain'))
-        self.assertIn('title_options', prompt);self.assertIn('file_name_alt', prompt);self.assertIn('nỗi đau – giải pháp: nêu một phiền toái', prompt)
 
 
 class RetryTests(unittest.TestCase):

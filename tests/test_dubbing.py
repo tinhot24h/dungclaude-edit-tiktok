@@ -242,10 +242,9 @@ class PromptTests(unittest.TestCase):
 
     def test_sizes_and_volumes_are_flagged(self):
         import ai_translate
-        out=ai_translate.check_fit(dict(script='Bình 500ml siêu tiện',title='',body='',hook=''),ai_translate.FIT_DEFAULTS)
-        self.assertTrue(any('kích thước/thể tích' in w for w in out['warnings']))
+        self.assertIsNotNone(ai_translate.SPEC.search('Bình 500ml siêu tiện'))
         self.assertIsNone(ai_translate.SPEC.search('dùng 5 lần mỗi ngày'))
-        self.assertIn(ai_translate.STRICT,ai_translate.system(dict(rules='x')))
+        self.assertIn('giá/thông số',dubbing.text_problems('Bình 500ml siêu tiện',60))
 
 
 class RecoveryTests(PipelineBase):
@@ -639,5 +638,5 @@ class StyleTests(unittest.TestCase):
             dubbing.paragraph_request('k','m',[dict(start=0,end=1,zh='你好')],1,4,opts)
         for rules in seen:
             self.assertIn(ai_translate.STYLES['household'],rules);self.assertIn(ai_translate.STRICT,rules)
-        self.assertEqual(set(ai_translate.STYLES),set(ai_translate.STYLE_LABELS));self.assertEqual(set(ai_translate.STYLES),set(ai_translate.HOOKS))
+        self.assertEqual(set(ai_translate.STYLES),set(ai_translate.STYLE_LABELS))
         with self.assertRaises(dubbing.DubError):dubbing.options(dict(style='x'))

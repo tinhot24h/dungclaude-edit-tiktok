@@ -1,15 +1,15 @@
 {
  "app": "ReviewStudio",
- "version": "0.23.0",
- "notes": "## Mới trong 0.23.0\n\n- **AI xem hình:** mỗi video gửi kèm 3 khung hình nhỏ ngay trong lần gọi dịch (không thêm lần gọi), AI nhận đúng sản phẩm cho tiêu đề, nội dung và tên file. Video không có lời (tab Dựng) vẫn được AI viết chữ theo hình. Model không nhận ảnh thì tự gọi lại không kèm ảnh.\n- **Gợi ý sản phẩm từng video** (nút 💡 trong danh sách video, không bắt buộc): AI dùng làm căn cứ chính; tên file gốc cũng được gửi để tham khảo.\n- **3 tiêu đề + 2 nội dung** dài ngắn khác nhau trong cùng lần gọi; app tự chọn phương án dài nhất vừa giới hạn ký tự, không có giá/thông số, không kết thúc bằng từ nối (chỉ cắt chữ khi không phương án nào vừa). Đổi phương án bằng nút số trong hàng đợi và bảng duyệt; ô có vấn đề được tô màu cảnh báo.\n- **Kiểu tiêu đề:** AI tự chọn, câu hỏi, nỗi đau → giải pháp, lợi ích chính, gây tò mò (lưu trong mẫu).\n- **Câu lệnh gọn hơn:** tab Dựng chỉ gửi phần quy tắc nội dung của mẫu (bỏ phần hook/kịch bản/định dạng), mẫu mặc định ngắn đi khoảng 60%.\n- **2 tên file:** tên chính và tên dự phòng; trùng tên thì dùng tên dự phòng trước rồi mới thêm -2, -3.\n- **Tự thử lại khi lỗi mạng:** OpenAI thử lại tối đa 3 lần (mất kết nối, quá tải, lỗi 5xx; không thử lại khi hết quota). ai33 thử lại khi đọc trạng thái; lệnh tạo giọng chỉ thử lại khi chắc chắn chưa được nhận, không bao giờ mua trùng.\n- **Dùng lại kết quả cũ:** chạy lại cùng một video (nhận diện theo nội dung file) mà chỉ đổi giao diện, màu, overlay, tốc độ… thì dùng lại lời gốc, bản dịch, chữ AI và giọng đọc, không tốn API. Đổi giọng thì giữ bản dịch, chỉ tạo lại giọng; đổi giới hạn chữ thì chỉ viết lại chữ. Tắt được ở mục Nhận diện & dịch.\n- **Ước tính chi phí chính xác hơn:** hộp kiểm tra trước khi chạy tính theo độ dài câu lệnh thật, ảnh khung hình và phần được dùng lại.\n- **Nghe thử giọng:** nút ▶ Nghe thử đọc một câu (câu mẫu hoặc câu tự gõ) bằng giọng, tốc độ, từ điển đang chọn; lưu lại nên nghe lại không tốn credit.\n- **Tab Dịch & biên tập AI thiết kế lại:** 3 cột (cài đặt kiểu CapCut · nguồn · kết quả), dùng cùng giới hạn ký tự, kiểu tiêu đề, 3 tiêu đề / 2 nội dung và tên file như tab Dựng; có ô gợi ý sản phẩm và nút \"Lấy theo tab Dựng\".",
+ "version": "0.24.0",
+ "notes": "## Mới trong 0.24.0\n\n- **Bỏ tab Dịch & biên tập AI** (cùng chế độ Thủ công và Gemini): việc dịch, tiêu đề, nội dung, tên file đã tự chạy cho từng video trong tab Dựng & lồng tiếng. Thanh trên còn 2 tab; hộp API key chỉ còn OpenAI và ai33 (key Gemini đã lưu được xóa khỏi máy).\n- **Sửa mẫu câu lệnh ngay trong tab Dựng:** link \"Sửa mẫu ›\" mở hộp sửa: chọn / lưu nhiều mẫu, xóa, khôi phục mặc định, xem phần luôn được thêm. Mẫu mặc định chỉ còn quy tắc nội dung; mẫu cũ của bạn vẫn dùng được (phần hook/kịch bản tự bỏ khi gửi).\n- **Mẫu câu lệnh lưu cùng \"Lưu mẫu\":** mỗi mẫu dựng nhớ luôn câu lệnh của nó, chọn mẫu là đổi cả giao diện lẫn câu lệnh.\n- **Gợi ý chung cho cả lô:** ô 💡 ở đầu danh sách video, dùng khi cả lô cùng một sản phẩm; video có gợi ý riêng thì dùng gợi ý riêng.\n- Tab Âm thanh bỏ nút \"Lấy kịch bản AI\" (lấy từ tab đã bỏ).",
  "files": {
   "ai_texts.py": {
    "sha256": "5b5eb191c3435a43e72a0d89191fb9f418c1dec561b62ad41fd489740881ed9f",
    "size": 4901
   },
   "tests/test_ai_texts.py": {
-   "sha256": "26404b656ac472f48484f2802dc116b0366ca6fdacecca3026717e89622894f5",
-   "size": 15357
+   "sha256": "4c04b1cba3f06717c9ab818bf1632ab1284e48a8a7122e5070209740aff19b2e",
+   "size": 14425
   },
   "design_tab.js": {
    "sha256": "01dfd065c454e70d19ef87f81cd6ff196ae6b2bf54a59c713bfc2964210581cd",
@@ -40,32 +40,32 @@
    "size": 5181
   },
   "dub_ui.js": {
-   "sha256": "d43fd36848d35aa42c93cf78d2e4b3728de0c131af0d6695a7c5386e492d1843",
-   "size": 109680
+   "sha256": "1b8797cf3223cec189ee35bb8c5392704eac5f0bcd7883bc858b9b733ff429c8",
+   "size": 114408
   },
   "layout_ui.js": {
    "sha256": "31474a69f54710df46c2483f9711e36d487d11437085b2b563f97b1f18ab711e",
    "size": 14902
   },
   "key_ui.js": {
-   "sha256": "734fb17fd83af74c8952ca15cadbf493520626c8de2cc81417fe16b8776c5983",
-   "size": 6088
+   "sha256": "4c1833943a21476f6e515115af555c36a4d763bbc5c1122f111cad0a5065574d",
+   "size": 5667
   },
   "batch_ui.js": {
    "sha256": "445a53eb9368ba07349ec73b51e6c3e1d8ac5316889ae06b2b8b12d38243bfbf",
    "size": 11057
   },
   "secrets_store.py": {
-   "sha256": "7b92e76b91759f5fdbc4d8d81042c8e1d08cedc73f4144cdcd5b75044d5b8838",
-   "size": 2135
+   "sha256": "fce1367bbdd2c6103533bc3d3a61242b3093b253655bd29597bca79f1c517b23",
+   "size": 2610
   },
   "dubbing.py": {
-   "sha256": "2d4536d2eb0bc1ba04729d0f27447ec2de6d83ab0456ffb3993a3eb306c7be5c",
-   "size": 160460
+   "sha256": "27e90041aac5c6ebf531f88eae1ce89a8b0bc24940cdc726877380f68f63da85",
+   "size": 160703
   },
   "tests/test_dubbing.py": {
-   "sha256": "5731b4b91a9b2448da8c0e43699a487fbb1b5610aba2892a304b344dc88b0ba8",
-   "size": 51105
+   "sha256": "c33c7af1f9899e53fa7a5fdc67c4f49eb01e4b839552d8d61a37e114f410af0f",
+   "size": 50920
   },
   "image_ui.js": {
    "sha256": "b8e2a905501aedea84033a7c962b180251e06dc018e6133241f0310b474ed8e9",
@@ -136,8 +136,8 @@
    "size": 13961
   },
   "app.py": {
-   "sha256": "a50e1fdf1cc8c90a7fb39f96251572c0cfff0c34aa8e096b6dec12e945935b4a",
-   "size": 62260
+   "sha256": "2b1b0e80c0ec45650099b7f099e5334759d242c94476985bce9ddac8e2a417a3",
+   "size": 60687
   },
   "ai33_audio.py": {
    "sha256": "bf91eee837ea08e1b3e96495f68f87b621f0d68abfeedfdbc4a53f8a13b21b7d",
@@ -148,24 +148,20 @@
    "size": 9810
   },
   "audio_ui.js": {
-   "sha256": "e7bc440cae2e5dfd3507818001ab7c4841c81b338ebf30110a847e1ac6b0d914",
-   "size": 29000
+   "sha256": "1ae37dd08231eb6f8612e9098bc23b381d64555dcabf223e4911a9eb2f54bac3",
+   "size": 28722
   },
   "ai_translate.py": {
-   "sha256": "ff7d05324228ad84afec6e05a9dd1bd558a5f6c122bd97a48ab0eeff1a42a99f",
-   "size": 29381
+   "sha256": "a902837b027201e394cd4f6464e203f555c881ef0c62edea9a2e89ba3c4bbb4a",
+   "size": 5241
   },
   "studio.css": {
-   "sha256": "ebd99366685f4fd91d543cb532df14c7cdb872f547eb584078ddfa5e285f1ce6",
-   "size": 95774
+   "sha256": "ce6caab97bcefb7163cfb5e36576c260f24e5b990aa7cd2a9bf4bbd7c5306248",
+   "size": 92053
   },
   "studio.js": {
-   "sha256": "5d4677cb1104adc27707b6f046bbb7c9319b39ff48c21cd480a5401756c1fc0d",
-   "size": 30225
-  },
-  "ai_ui.js": {
-   "sha256": "a4c6d513565dce8f313985480c3f1d40a7d3435ed48158a6478a8bde837b104b",
-   "size": 20226
+   "sha256": "88660710a1bdbc6d29b18e06a4464c1111d0de7db68e6e74bd8d1963e0e76c22",
+   "size": 30179
   },
   "design.py": {
    "sha256": "0ce1d7d212774d94cc8f7cfe4f651f0c4db68e32d0f11a1527c2547d1b0e5ab9",
@@ -176,31 +172,31 @@
    "size": 5352
   },
   "index.html": {
-   "sha256": "66ab509bec8444c53e7175d7877c97893fe3f42c2352fc31da608308f79a9f21",
-   "size": 36638
+   "sha256": "5e72eacd15500331ccc3bd0de3a32aa5581b8d9c5938c33d3e367833801f9df1",
+   "size": 24340
   },
   "launch.py": {
    "sha256": "283210c4d7b6b1485fa3443ef11b2d51dc3a00a67384b18efb169e391e7522f3",
    "size": 5006
   },
   "build_package.py": {
-   "sha256": "8de28dcf4e6915e34b264e029637c79a98b43e63426075a49239e3e01474307b",
-   "size": 3368
+   "sha256": "f30d62f9a490c2d08e2267364086aebf6d9085654dc30e0134de0a5cda3c36b7",
+   "size": 3291
   },
   "START_WINDOWS.bat": {
    "sha256": "616ecf0e4d9a41995c509f79bd5e1a01d1dce7ba76356a801417e08747847c4e",
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "769d6d32e76099736db2b3ab3adbc9361147187ebbaed78227049dee9298a59f",
-   "size": 44978
+   "sha256": "022778c24efeffcdac91222594e8a7d99e97e50e861c01a2d0320d763bf7f0d6",
+   "size": 42196
   },
   "README.md": {
-   "sha256": "9406c3437e5acd41b33f8a15f6076d11344b93eeae48fd805a5b243ea56a36f9",
-   "size": 71164
+   "sha256": "52328644d83b96e1d82b2b30abe3ea70fd6c0cea8c7f2c819a1209f5554182d9",
+   "size": 68336
   },
   "VERSION": {
-   "sha256": "d1994e4942b06ec398ed7d9fa91ecce4079cd3f85ffe9e04588866291263149c",
+   "sha256": "dbf81d3754264f6dce22444d551ef30913c3959a2ecc784a786162df068d5435",
    "size": 7
   },
   ".gitignore": {
@@ -214,14 +210,6 @@
   "tests/test_design.py": {
    "sha256": "29161e458165e193ac53dce779eb99f3a64d5216847d53a820b6d866adf728d9",
    "size": 6286
-  },
-  "tests/test_ai_translate.py": {
-   "sha256": "fbf4d9af70cb8419c56006de9f01d653a25641b65a4ede838abdf351ac412436",
-   "size": 4319
-  },
-  "tests/test_translation_modes.py": {
-   "sha256": "b441c8366c3b82a048abb36836543eba1456fbe9630d82a72d6503dc4381b1e9",
-   "size": 10544
   },
   "tests/test_ai33_audio.py": {
    "sha256": "1bc21f3eddeb8beee49eab73c862336c17147fd7cea0755d9ad7b00065c55686",

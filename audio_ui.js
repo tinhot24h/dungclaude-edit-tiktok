@@ -138,9 +138,8 @@ config();document.addEventListener('keys-changed',config);
 
 // ---- text sources and reset
 function useText(source){const text=$(source).value.trim();if(!text){status('Chưa có văn bản để lấy.');return}$('tts-text').value=text;save();status('Đã lấy văn bản. Kiểm tra giọng và bấm Tạo audio.')}
-$('tts-from-script').onclick=()=>useText('ai-script');$('tts-from-body').onclick=()=>useText('body');
+$('tts-from-body').onclick=()=>useText('body');
 $('tts-clear-text').onclick=()=>{if($('tts-text').value&&!confirm('Xóa toàn bộ văn bản trong ô?'))return;$('tts-text').value='';save()};
-$('ai-to-audio').onclick=()=>{if(!$('ai-script').value.trim()){$('ai-status').textContent='Chưa có kịch bản tiếng Việt. Tạo hoặc nhập kịch bản trước.';return}switchView('audio');useText('ai-script')};
 $('tts-reset').onclick=()=>{$('tts-speed').value=1;$('tts-delay').value=.4;$('tts-transcript').checked=false;$('tts-dictionary').value='';$('tts-file-name').value='';for(const s of speakers)s.speed=1;$('tts-speed').oninput();$('tts-delay').oninput();renderSpeakers();save();status('Đã đặt lại tốc độ, khoảng nghỉ, từ điển và phụ đề.')};
 document.addEventListener('view-change',e=>{if(e.detail==='audio'){if(ready()&&Date.now()-lastHistory>30000&&!$('tts-pane-history').hidden)history(1)}else $('tts-voice-preview').pause()});
 
