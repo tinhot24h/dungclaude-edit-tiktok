@@ -1,8 +1,27 @@
-# Review Studio 0.14
+# Review Studio 0.15
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.15
+
+- **Lưu API key:** bên dưới mỗi ô key (OpenAI, Gemini, ai33) có nút **💾 Lưu key trên máy này**, nên lần sau không phải nhập lại.
+  - Không bấm lưu thì key chỉ giữ trong phiên như trước.
+  - Key được lưu trong `.local/secrets.json` trên máy bạn, không nằm trong ZIP hay bản cập nhật. Giao diện chỉ hiện 4 ký tự cuối.
+  - Có nút **Xóa key đã lưu**. Người dùng chung máy hoặc chung tài khoản Windows cũng dùng được key đã lưu.
+- **Câu lệnh dịch dùng chung:** trang Lồng tiếng dùng luôn mẫu câu lệnh đã sửa ở trang Dịch & biên tập AI (phần quy tắc nội dung và văn phong).
+  - Quy tắc cố định cho mọi mẫu: tuyệt đối không nêu giá, tên thương hiệu, tên shop, mã model, kích thước, thể tích, dung tích, khối lượng, công suất chính xác; chỉ dùng từ chung chung ("giá mềm", "nhỏ gọn", "dung tích lớn"…).
+  - Câu có con số kèm cm, ml, lít, kg, W, mAh… sẽ hiện cảnh báo.
+- **Chỉnh video gốc** (tab Khung hình):
+  - Căn trái/giữa/phải, trên/giữa/dưới, đặt giữa khung.
+  - Kích thước nhanh: Lấp đầy 9:16, Giữ toàn bộ hình, Vừa chiều ngang/dọc theo đúng tỷ lệ video gốc.
+  - Zoom 100–200%, thanh xoay kèm nút ↺90° ↻90° 180° 0°, **lật ngang/lật dọc**. Bản xuất giống bản xem trước.
+- **MP3:** bảng Giọng đọc và Nhạc nền có thanh và nút nhanh cho tốc độ (0.75×–1.5×) và âm lượng (Tắt/50/100/150/200%). Nhạc nền có thêm tốc độ riêng.
+- **Tự khớp thời lượng** (bảng Giọng đọc): "MP3 khớp video" hoặc "Video khớp MP3". Ứng dụng tự đổi tốc độ sau mỗi lần cắt/sửa để hai track kết thúc cùng lúc.
+- **Mục Xuất sắp xếp theo thứ tự:** ① Thông số xuất → ② Cấu hình đã lưu → ③ Xuất video đang dựng → ④ Xuất hàng loạt.
+  - **Cấu hình đã lưu:** lưu cả thiết kế, âm thanh, tốc độ, tự khớp, nhạc nền và độ phân giải để dùng lại.
+  - **Xuất hàng loạt:** tích nhiều video trong kho. Chọn MP3 (tự tìm MP3 cùng tên / không dùng / dùng MP3 đang chọn) và chữ (giữ chữ / tiêu đề = tên video / không chữ). Mỗi video xuất đủ độ dài với cùng thông số, tự khớp MP3 nếu bật, có tiến độ từng video và nút Dừng tất cả.
 
 ## Mới trong 0.14
 
@@ -159,7 +178,7 @@ Tạo câu lệnh và nhập kết quả là xử lý cục bộ, không gọi O
 
 ## Gemini API và OpenAI API
 
-Chọn provider trong giao diện, nhập key ở **Kết nối API**. Key của từng provider giữ riêng trong bộ nhớ phiên; không lưu key trong localStorage, file hay ZIP. Tải lại trang cần nhập lại. Model được lưu riêng theo provider. Không gửi key trong chat.
+Chọn provider trong giao diện, nhập key ở **Kết nối API**. Key của từng provider giữ riêng trong bộ nhớ phiên; chỉ khi bấm "Lưu key trên máy này" key mới được ghi vào .local/secrets.json (không bao giờ vào localStorage, ZIP hay bản cập nhật). Model được lưu riêng theo provider. Không gửi key trong chat.
 
 - Gemini: lấy key tại https://aistudio.google.com/apikey. Model gợi ý `gemini-2.5-flash`, có thể thay bằng model tài khoản hỗ trợ. Kiểm tra điều kiện, hạn mức và giá hiện hành tại https://ai.google.dev/gemini-api/docs/pricing. Biến máy chủ: `REVIEW_GEMINI_KEY`, `GEMINI_API_KEY` hoặc `GOOGLE_API_KEY`; model mặc định tùy chọn `GEMINI_MODEL`.
 - OpenAI: https://platform.openai.com/api-keys. Model mặc định `gpt-4.1-mini`, cần Responses API/Structured Outputs. Biến máy chủ: `REVIEW_OPENAI_KEY` hoặc `OPENAI_API_KEY`; model tùy chọn `OPENAI_MODEL`.

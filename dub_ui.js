@@ -16,16 +16,16 @@ view.innerHTML=`<div class="dub-top"><div><div class="eyebrow">TỰ ĐỘNG LỒ
   <div class="result-actions"><label class="outline-action small-action file-button">＋ Chọn video<input id="dub-files" type="file" accept="video/*,.srt" multiple hidden></label><label class="outline-action small-action file-button">📁 Chọn thư mục<input id="dub-folder" type="file" webkitdirectory multiple hidden></label><button type="button" id="dub-from-bin" class="outline-action small-action">Từ kho Media</button><button type="button" id="dub-clear" class="outline-action small-action">Bỏ chọn</button></div>
   <div id="dub-bin" class="dub-bin" hidden></div><div id="dub-list" class="dub-list"></div></div>
  <details class="dub-card" id="dub-keys" open><summary><span class="dub-icon">🔑</span><strong>Kết nối API</strong><small id="dub-key-state"></small></summary>
-  <label for="dub-openai">OpenAI API key · nhận diện + dịch</label><input id="dub-openai" type="password" autocomplete="off" spellcheck="false" placeholder="sk-… (chỉ giữ trong phiên này)">
+  <label for="dub-openai">OpenAI API key · nhận diện + dịch</label><input id="dub-openai" type="password" autocomplete="off" spellcheck="false" placeholder="sk-…">
   <label for="dub-ai33">ai33.pro API key · tạo giọng</label><input id="dub-ai33" type="password" autocomplete="off" spellcheck="false" placeholder="Lấy từ trang Âm thanh nếu đã nhập">
-  <p class="helper">Key chỉ nằm trong trang này và gửi cho máy chủ cục bộ khi chạy; không lưu vào file. Có thể đặt biến môi trường REVIEW_OPENAI_KEY / REVIEW_AI33_KEY.</p></details>
+  <p class="helper">Key dùng chung với trang Dịch AI và trang Âm thanh. Bấm “Lưu key trên máy này” để lần sau không phải nhập lại; không lưu thì key chỉ giữ trong phiên.</p></details>
  <div class="dub-card step-asr"><div class="dub-card-head"><span class="dub-num">01</span><div><strong>Nhận diện</strong><small>OpenAI Whisper · xuất SRT gốc + thời gian (~0,006 USD/phút)</small></div></div>
   <label for="dub-language">Ngôn ngữ nói trong video</label><select id="dub-language"><option value="zh">Tiếng Trung (phổ thông)</option><option value="auto">Tự nhận diện</option></select></div>
  <div class="dub-card step-translate"><div class="dub-card-head"><span class="dub-num">02</span><div><strong>Dịch OpenAI</strong><small>Trung → Việt tự nhiên · tối ưu thời lượng lời đọc</small></div></div>
   <div class="two-col"><div><label for="dub-model">Model</label><input id="dub-model" type="text" spellcheck="false"></div><div><label for="dub-pronoun">Xưng hô</label><select id="dub-pronoun"></select></div></div>
   <label for="dub-rate">Tốc độ nói mục tiêu <output id="dub-rate-value"></output></label><input id="dub-rate" type="range" min="3" max="6" step="0.1">
   <label for="dub-notes">Ghi chú văn phong (tùy chọn)</label><textarea id="dub-notes" rows="2" maxlength="2000" placeholder="Ví dụ: giọng vui vẻ, gọi sản phẩm là “máy hút bụi mini”"></textarea>
-  <label class="check-row"><input id="dub-no-price" type="checkbox"> Không đọc giá bán chính xác</label>
+  <label class="check-row"><input id="dub-no-price" type="checkbox"> Tuyệt đối không nhắc giá, thương hiệu, kích thước/thể tích chính xác (dùng từ chung chung)</label><p class="helper dub-template">Mẫu câu lệnh: <b id="dub-template">Mẫu mặc định</b> · dùng chung với trang Dịch &amp; biên tập AI · <a href="#" id="dub-template-edit">Sửa mẫu ›</a></p>
   <label class="check-row"><input id="dub-review" type="checkbox"> Dừng sau khi dịch để duyệt câu (khuyên dùng, tránh tốn credit giọng)</label></div>
  <div class="dub-card step-separate"><div class="dub-card-head"><span class="dub-num">03</span><div><strong>Tách âm thanh gốc</strong><small>Loại giọng Trung · tùy chọn giữ hoặc xóa nhạc nền</small></div></div>
   <div class="dub-radios" id="dub-background"></div>
@@ -47,7 +47,7 @@ $('dub-background').replaceChildren(...BG.map(([v,t,h])=>el('label',{className:'
 
 // ---- settings (no keys) remembered per browser
 const S={language:'dub-language',model:'dub-model',pronoun:'dub-pronoun',rate:'dub-rate',notes:'dub-notes',no_price:'dub-no-price',review:'dub-review',duck_level:'dub-duck',background_volume:'dub-bg-volume',voice_id:'dub-voice',voice_speed:'dub-speed',max_tempo:'dub-tempo',voice_volume:'dub-voice-volume',dictionary_id:'dub-dict',subtitles:'dub-subs',loudness:'dub-loud'};
-function settings(){const o={};for(const[k,id]of Object.entries(S)){const e=$(id);o[k]=e.type==='checkbox'?e.checked:e.type==='range'||k==='dictionary_id'?(e.value===''?null:Number(e.value)):e.value.trim()}o.background=view.querySelector('[name=dub-bg]:checked')?.value||'duck';const enc=$('encoder')?.value;o.encoder=enc==='auto'?(window.hardwareEncoder||'cpu'):(enc||'cpu');return o}
+function settings(){const o={};for(const[k,id]of Object.entries(S)){const e=$(id);o[k]=e.type==='checkbox'?e.checked:e.type==='range'||k==='dictionary_id'?(e.value===''?null:Number(e.value)):e.value.trim()}o.background=view.querySelector('[name=dub-bg]:checked')?.value||'duck';o.instructions=template();const enc=$('encoder')?.value;o.encoder=enc==='auto'?(window.hardwareEncoder||'cpu'):(enc||'cpu');return o}
 function apply(o){for(const[k,id]of Object.entries(S)){if(o[k]==null)continue;const e=$(id);if(e.type==='checkbox')e.checked=!!o[k];else e.value=o[k]}const r=view.querySelector(`[name=dub-bg][value="${o.background}"]`);if(r)r.checked=true;labels()}
 function remember(){try{localStorage.setItem(STORE,JSON.stringify(settings()))}catch{}labels()}
 function labels(){$('dub-rate-value').textContent=$('dub-rate').value+' tiếng/giây';$('dub-duck-value').textContent=$('dub-duck').value+'%';$('dub-bg-value').textContent=$('dub-bg-volume').value+'%';$('dub-speed-value').textContent=$('dub-speed').value+'×';$('dub-tempo-value').textContent=$('dub-tempo').value+'×';$('dub-voice-value').textContent=$('dub-voice-volume').value+'%';
@@ -55,11 +55,17 @@ function labels(){$('dub-rate-value').textContent=$('dub-rate').value+' tiếng/
 view.addEventListener('input',e=>{if(e.target.closest('.dub-setup')&&!['dub-openai','dub-ai33'].includes(e.target.id))remember()});view.addEventListener('change',e=>{if(e.target.closest('.dub-setup'))remember()});
 function keyState(){const o=$('dub-openai').value||caps.openai,a=$('dub-ai33').value||$('tts-key')?.value||caps.ai33;$('dub-key-state').textContent=`OpenAI ${o?'✓':'✗'} · ai33 ${a?'✓':'✗'}`;$('dub-keys').open=!(o&&a)}
 for(const id of ['dub-openai','dub-ai33'])$(id).addEventListener('input',keyState);
+document.addEventListener('keys-changed',()=>request('/dub/capabilities').then(d=>{caps=d;keyState()}).catch(()=>{}));
 request('/dub/capabilities').then(d=>{caps=d;$('dub-pronoun').replaceChildren(...Object.entries(d.pronouns).map(([k,v])=>new Option(v[0].toUpperCase()+v.slice(1),k)));let saved={};try{saved=JSON.parse(localStorage.getItem(STORE)||'{}')}catch{}apply({...d.defaults,...saved});
  const dm=view.querySelector('[name=dub-bg][value=demucs]');dm.disabled=!d.demucs;dm.closest('label').classList.toggle('disabled',!d.demucs);if(!d.demucs&&dm.checked)view.querySelector('[name=dub-bg][value=duck]').checked=true;if(!$('dub-voice').value)pickVoice(true);labels()}).catch(e=>{$('dub-status').textContent=e.message});
 function pickVoice(quiet){try{const a=JSON.parse(localStorage.getItem('review-audio-v7')||'{}');if(a.voice?.voice_id){$('dub-voice').value=a.voice.voice_id;$('dub-voice-note').textContent='Giọng: '+(a.voice.name||a.voice.voice_id);remember();return}}catch{}if(!quiet)$('dub-voice-note').textContent='Chưa chọn giọng ở trang Âm thanh. Mở trang Âm thanh → Chọn giọng, rồi bấm lại.'}
 $('dub-voice-pick').onclick=()=>pickVoice(false);$('dub-voice-open').onclick=e=>{e.preventDefault();switchView('audio')};
 document.addEventListener('view-change',e=>{if(e.detail==='dub'){if(!$('dub-ai33').value&&$('tts-key')?.value)$('dub-ai33').value=$('tts-key').value;if(!$('dub-openai').value&&$('ai-provider')?.value==='openai'&&$('ai-key')?.value)$('dub-openai').value=$('ai-key').value;keyState();refresh()}});
+
+// ---- the writing template is the one edited on the AI page (saved there per browser)
+function template(){const page=$('ai-rules');let saved='';try{saved=localStorage.getItem('review-ai-rules')||''}catch{}return (page&&page.value.trim()&&$('ai-rules-badge')?.textContent!=='Mẫu mặc định'?page.value:saved).trim()}
+function showTemplate(){$('dub-template').textContent=template()?($('ai-rules-badge')?.textContent||'Đã tùy chỉnh'):'Mẫu mặc định'}
+$('dub-template-edit').onclick=e=>{e.preventDefault();switchView('ai');const box=$('ai-prompt-editor');if(box)box.open=true};document.addEventListener('view-change',e=>{if(e.detail==='dub')showTemplate()});showTemplate();
 
 // ---- input files: picked files, a folder (with matching .srt) or videos already in the media bin
 const isVideo=f=>f.type.startsWith('video/')||/\.(mp4|mov|m4v|mkv|webm)$/i.test(f.name),stem=n=>n.replace(/^.*[\\/]/,'').replace(/\.[^.]+$/,'').toLowerCase();

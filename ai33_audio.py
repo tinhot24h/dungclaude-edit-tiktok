@@ -1,4 +1,5 @@
 """ai33.pro v3 TTS and voice library, based on the supplied API screenshots."""
+import secrets_store
 import json
 import math
 import os
@@ -20,13 +21,13 @@ class AudioError(Exception):
 
 
 def configured():
-    return bool(os.environ.get('REVIEW_AI33_KEY') or os.environ.get('AI33_API_KEY'))
+    return bool(secrets_store.get('ai33') or os.environ.get('REVIEW_AI33_KEY') or os.environ.get('AI33_API_KEY'))
 
 
 def api_key(raw):
     if not isinstance(raw,dict):
         raise ValueError('Yêu cầu âm thanh không hợp lệ.')
-    key=raw.get('api_key') or os.environ.get('REVIEW_AI33_KEY') or os.environ.get('AI33_API_KEY')
+    key=raw.get('api_key') or secrets_store.get('ai33') or os.environ.get('REVIEW_AI33_KEY') or os.environ.get('AI33_API_KEY')
     if not key:
         raise AudioError('Nhập ai33.pro API key trong mục Âm thanh. Không gửi key trong chat.',400)
     if not isinstance(key,str) or len(key)>1024 or any(ord(c)<33 or ord(c)>126 for c in key):

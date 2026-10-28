@@ -133,7 +133,8 @@ function connect(){if(!ready()){$('tts-connection').open=true;return}loadCredits
 $('tts-credits').onclick=()=>loadCredits(false);
 let keyTimer;$('tts-key').addEventListener('input',()=>{account++;voices=[];dictionaries=[];dictOptions();$('tts-history-cards').replaceChildren();$('tts-key-status').textContent=$('tts-key').value?'Đã nhập key cho phiên này.':configured?'Đang dùng key trên máy chủ.':'Chưa nhập key ai33.pro.';clearTimeout(keyTimer);keyTimer=setTimeout(connect,800)});
 $('tts-clear-key').onclick=()=>{$('tts-key').value='';$('tts-key').dispatchEvent(new Event('input'));stop(false)};
-request('/audio-config').then(d=>{configured=d.configured;if(configured){$('tts-key-status').textContent='Đang dùng key ai33 đặt trên máy chủ; có thể để trống ô key.';connect()}else $('tts-connection').open=true}).catch(()=>{});
+function config(){return request('/audio-config').then(d=>{const was=configured;configured=d.configured;if(configured){$('tts-key-status').textContent='Đang dùng key ai33 đã lưu trên máy này; có thể để trống ô key.';if(!was)connect()}else $('tts-connection').open=true}).catch(()=>{})}
+config();document.addEventListener('keys-changed',config);
 
 // ---- text sources and reset
 function useText(source){const text=$(source).value.trim();if(!text){status('Chưa có văn bản để lấy.');return}$('tts-text').value=text;save();status('Đã lấy văn bản. Kiểm tra giọng và bấm Tạo audio.')}

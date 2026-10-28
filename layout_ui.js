@@ -49,6 +49,48 @@ speedRow.append(length);$('video-speed').closest('.edit-grid')?.after(speedRow);
 function speeds(){const v=Number($('video-speed').value)||1,p=api.state().plan;for(const b of speedRow.querySelectorAll('button'))b.setAttribute('aria-pressed',String(Math.abs(Number(b.dataset.speed)-v)<1e-3));const t=p?.vd||0;length.textContent=`Dài ${Math.floor(t/60)}:${String(Math.floor(t%60)).padStart(2,'0')}.${String(Math.floor(t%1*100)).padStart(2,'0')}`}
 document.addEventListener('timeline-refresh',speeds);speeds();
 
+// ---- source video: align on the 720×1280 frame, fill/fit presets, zoom and rotation shortcuts (Khung hình tab)
+{const sec=$('section-video'),N=id=>Number($(id).value)||0,design=window.studioApi;
+ const set=values=>{for(const[k,v]of Object.entries(values)){const e=$(k);if(!e)continue;e.value=typeof v==='number'?Math.round(Math.max(Number(e.min||-1e9),Math.min(Number(e.max||1e9),v))*10)/10:v}design.schedule();window.appHistory?.checkpoint()};
+ // what is drawn: W×H scaled by zoom around the box centre; aligning moves the box so the drawn video touches the edge
+ const shown=()=>{const z=N('video_zoom')/100||1,w=N('video_width'),h=N('video_height');return {z,w,h,dw:w*z,dh:h*z,ox:w*(1-z)/2,oy:h*(1-z)/2}};
+ const source=()=>{const v=edit.current();return v&&v.width&&v.height?v.width/v.height:9/16};
+ const group=(title,...buttons)=>el('div',{className:'video-tools'},el('div',{className:'group-label',textContent:title}),el('div',{className:'frame-tools'},...buttons));
+ const btn=(text,title,fn)=>{const b=el('button',{type:'button',textContent:text,title,ariaLabel:title});b.onclick=fn;return b};
+ const align=group('CĂN CHỈNH TRÊN KHUNG HÌNH',
+  btn('⇤','Căn trái',()=>{const s=shown();set({video_x:-s.ox})}),btn('↔','Căn giữa ngang',()=>{const s=shown();set({video_x:(720-s.dw)/2-s.ox})}),btn('⇥','Căn phải',()=>{const s=shown();set({video_x:720-s.dw-s.ox})}),
+  btn('⤒','Căn trên',()=>{const s=shown();set({video_y:-s.oy})}),btn('↕','Căn giữa dọc',()=>{const s=shown();set({video_y:(1280-s.dh)/2-s.oy})}),btn('⤓','Căn dưới',()=>{const s=shown();set({video_y:1280-s.dh-s.oy})}),
+  btn('⊕ Giữa khung','Đặt video vào chính giữa khung hình',()=>{const s=shown();set({video_x:(720-s.dw)/2-s.ox,video_y:(1280-s.dh)/2-s.oy})}));
+ const fit=group('KÍCH THƯỚC NHANH',
+  btn('Lấp đầy 9:16','Phủ kín khung 720×1280, cắt phần thừa',()=>{$('video-lock').checked=true;set({video_x:0,video_y:0,video_width:720,video_height:1280,video_zoom:100,video_fit:'cover'})}),
+  btn('Giữ toàn bộ hình','Hiện đủ khung hình gốc, viền trống nếu khác tỷ lệ',()=>set({video_x:0,video_y:0,video_width:720,video_height:1280,video_zoom:100,video_fit:'contain'})),
+  btn('Vừa chiều ngang','Rộng bằng khung hình theo đúng tỷ lệ video gốc, đặt giữa dọc',()=>{$('video-lock').checked=false;const h=Math.round(720/source());set({video_width:720,video_height:Math.min(3840,Math.max(320,h)),video_x:0,video_y:(1280-h)/2,video_zoom:100,video_fit:'cover'})}),
+  btn('Vừa chiều dọc','Cao bằng khung hình theo đúng tỷ lệ video gốc, đặt giữa ngang',()=>{$('video-lock').checked=false;const w=Math.round(1280*source());set({video_width:Math.min(2160,Math.max(180,w)),video_height:1280,video_x:(720-w)/2,video_y:0,video_zoom:100,video_fit:'cover'})}));
+ const zoom=group('ZOOM',...[100,110,125,150,200].map(z=>btn(z+'%','Zoom '+z+'% quanh tâm video',()=>set({video_zoom:z}))));
+ const rot=el('div',{className:'video-tools'},el('div',{className:'group-label',textContent:'XOAY'}));
+ const slider=el('input',{type:'range',min:-180,max:180,step:1,id:'video-rotation-range',ariaLabel:'Góc xoay'});slider.oninput=()=>{$('video_rotation').value=slider.value;design.schedule()};slider.onchange=()=>window.appHistory?.checkpoint();
+ const turn=d=>{let v=N('video_rotation')+d;while(v>180)v-=360;while(v<-180)v+=360;set({video_rotation:v})};
+ rot.append(el('div',{className:'range-row'},slider),el('div',{className:'frame-tools'},btn('↺ 90°','Xoay trái 90°',()=>turn(-90)),btn('↻ 90°','Xoay phải 90°',()=>turn(90)),btn('180°','Xoay 180°',()=>turn(180)),btn('0°','Bỏ xoay',()=>set({video_rotation:0})),
+  btn('⇋ Lật ngang','Lật ngang (soi gương)',()=>{const f=$('video_flip').value;set({video_flip:f==='h'?'none':f==='v'?'hv':f==='hv'?'v':'h'})}),btn('⇵ Lật dọc','Lật dọc',()=>{const f=$('video_flip').value;set({video_flip:f==='v'?'none':f==='h'?'hv':f==='hv'?'h':'v'})})));
+ const at=$('video_zoom').closest('.control');at.before(align,fit,zoom);$('video_rotation').closest('.control').after(rot);
+ const syncRot=()=>{slider.value=N('video_rotation')};document.addEventListener('design-changed',syncRot);syncRot()}
+
+// ---- MP3 tracks: speed chips + slider and volume slider + quick levels (voice A1, music A2)
+function audioControls(sectionId,speedId,volumeId,speeds,anchor){const sec=$(sectionId);if(!sec||!$(speedId)||!$(volumeId))return;
+ const fire=(id,v)=>{$(id).value=v;$(id).dispatchEvent(new Event('input',{bubbles:true}))};
+ const box=el('div',{className:'audio-tools'});
+ const sp=el('input',{type:'range',min:.5,max:2,step:.05,ariaLabel:'Tốc độ'}),spOut=el('output'),vol=el('input',{type:'range',min:0,max:300,step:1,ariaLabel:'Âm lượng'}),volOut=el('output');
+ sp.oninput=()=>fire(speedId,sp.value);vol.oninput=()=>fire(volumeId,vol.value);for(const e of [sp,vol])e.onchange=()=>window.appHistory?.checkpoint();
+ const chips=(values,id,suffix)=>el('div',{className:'speed-chips'},...values.map(v=>{const b=el('button',{type:'button',className:'chip-button',textContent:(v===0&&suffix==='%')?'Tắt':v+suffix});b.dataset.value=v;b.onclick=()=>{fire(id,v);window.appHistory?.checkpoint()};return b}));
+ const speedChips=chips(speeds,speedId,'×'),volChips=chips([0,50,100,150,200],volumeId,'%');
+ box.append(el('div',{className:'group-label',textContent:'TỐC ĐỘ'}),el('div',{className:'range-row'},sp,spOut),speedChips,el('div',{className:'group-label',textContent:'ÂM LƯỢNG'}),el('div',{className:'range-row'},vol,volOut),volChips);
+ (anchor?.()||sec.querySelector('.group-label'))?.before(box);
+ const draw=()=>{const k=Number($(speedId).value)||1,v=Number($(volumeId).value)||0;sp.value=k;vol.value=v;spOut.textContent=k.toFixed(2)+'×';volOut.textContent=v+'%';
+  for(const b of speedChips.children)b.setAttribute('aria-pressed',String(Math.abs(Number(b.dataset.value)-k)<1e-3));for(const b of volChips.children)b.setAttribute('aria-pressed',String(Number(b.dataset.value)===v))};
+ for(const id of [speedId,volumeId])$(id).addEventListener('input',draw);document.addEventListener('timeline-refresh',draw);document.addEventListener('history-applied',draw);draw()}
+audioControls('section-clip-audio','audio-speed','audio-volume',[.75,.9,1,1.1,1.25,1.5]);
+audioControls('section-clip-music','music-speed','music-volume',[.75,.9,1,1.1,1.25,1.5],()=>$('music-select')?.nextElementSibling);
+
 // ---- one-row transport: loop + preview volume next to the play buttons
 const loop=el('button',{type:'button',id:'tp-loop',title:'Phát lặp lại',textContent:'⟲'});loop.setAttribute('aria-pressed','false');$('tp-next').after(loop);
 loop.onclick=()=>{window.editorPlayback.loop=!window.editorPlayback.loop;loop.setAttribute('aria-pressed',String(window.editorPlayback.loop));store('review-loop',window.editorPlayback.loop?'1':'0')};

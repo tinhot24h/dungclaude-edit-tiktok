@@ -145,6 +145,19 @@ class NativeRenderTests(unittest.TestCase):
         r,g,b=pixel(1.5);self.assertFalse(r>200 and g<60 and b<60,(r,g,b))
         with self.assertRaises(ValueError):build(self.folder,opts,self.video,self.vi,images_dir=self.folder/'missing')
 
+    def test_flip_and_music_speed(self):
+        opts=settings(dict(units='px',title='',body='',audio_mode='original',video_end=1,video_flip='h'))
+        build(self.folder,opts,self.video,self.vi)
+        self.assertIn('hflip,rotate',(self.folder/'render.ffgraph').read_text())
+        with self.assertRaises(ValueError):settings(dict(units='px',video_flip='x'))
+        music=dict(duration=3,has_audio=True)
+        self.assertEqual(plan(dict(music_speed=1.5),self.vi,None,music)['music']['speed'],1.5)
+        with self.assertRaises(ValueError):plan(dict(music_speed=3),self.vi,None,music)
+        cmd,_=build(self.folder,settings(dict(units='px',title='',body='',audio_mode='original',video_end=1,music_speed=1.5)),self.video,self.vi,music_path=self.audio,music=probe(self.audio))
+        self.assertIn('atempo=1.500000000',(self.folder/'render.ffgraph').read_text())
+        result=subprocess.run(cmd,cwd=self.folder,capture_output=True,text=True,timeout=180)
+        self.assertEqual(result.returncode,0,result.stderr[-2000:])
+
     def test_image_layer_validation(self):
         key='cd'*16
         self.assertEqual(image_layers([dict(id=key,width=50,height=60)])[0]['opacity'],100)

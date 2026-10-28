@@ -112,3 +112,25 @@ class PipelineTests(unittest.TestCase):
 
 if __name__=='__main__':
     unittest.main()
+
+
+class PromptTests(unittest.TestCase):
+    def test_dub_uses_the_shared_template_and_the_strict_rule(self):
+        import ai_translate
+        seen={}
+        def call(path,key,body,ctype,timeout=0):
+            seen['body']=json.loads(body);return dict(status='completed',output=[dict(type='message',content=[dict(type='output_text',text='{"lines":[{"id":0,"vi":"Xin chào"}]}')])])
+        with mock.patch.object(dubbing,'openai_call',side_effect=call):
+            got=dubbing.translate_request('k','gpt-4.1-mini',[dict(id=0,zh='你好')],dubbing.options(dict(instructions='QUY TẮC RIÊNG: giọng hài hước')))
+        rules=seen['body']['input'][0]['content']
+        self.assertEqual(got,{0:'Xin chào'});self.assertIn('QUY TẮC RIÊNG: giọng hài hước',rules);self.assertIn(ai_translate.STRICT,rules)
+        with mock.patch.object(dubbing,'openai_call',side_effect=call):
+            dubbing.translate_request('k','m',[dict(id=0,zh='你好')],dubbing.options({}))
+        self.assertIn('THƯƠNG HIỆU & THÔNG SỐ',seen['body']['input'][0]['content'])
+
+    def test_sizes_and_volumes_are_flagged(self):
+        import ai_translate
+        out=ai_translate.check_fit(dict(script='Bình 500ml siêu tiện',title='',body='',hook=''),ai_translate.FIT_DEFAULTS)
+        self.assertTrue(any('kích thước/thể tích' in w for w in out['warnings']))
+        self.assertIsNone(ai_translate.SPEC.search('dùng 5 lần mỗi ngày'))
+        self.assertIn(ai_translate.STRICT,ai_translate.system(dict(rules='x')))

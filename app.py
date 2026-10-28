@@ -26,6 +26,7 @@ import library_store
 import output_folder
 import update
 import dubbing
+import secrets_store
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / '.local'
@@ -347,7 +348,7 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == '/':
             return self.respond(200, (ROOT / 'index.html').read_bytes(), 'text/html; charset=utf-8')
-        if path in ('/studio.css','/studio.js','/ai_ui.js','/audio_ui.js','/editor_ui.js','/timeline_ui.js','/history_ui.js','/workspace_ui.js','/clip_ui.js','/studio_shell.js','/media_bin.js','/image_ui.js','/export_ui.js','/style_ui.js','/update_ui.js','/dub_ui.js','/layout_ui.js'):
+        if path in ('/studio.css','/studio.js','/ai_ui.js','/audio_ui.js','/editor_ui.js','/timeline_ui.js','/history_ui.js','/workspace_ui.js','/clip_ui.js','/studio_shell.js','/media_bin.js','/image_ui.js','/export_ui.js','/style_ui.js','/update_ui.js','/dub_ui.js','/layout_ui.js','/key_ui.js','/batch_ui.js'):
             mime = 'text/css' if path.endswith('.css') else 'text/javascript'
             return self.respond(200, (ROOT/path.lstrip('/')).read_bytes(), mime+'; charset=utf-8')
         if path in ('/assets/'+font[0] for font in FONTS.values()):
@@ -388,7 +389,7 @@ class Handler(BaseHTTPRequestHandler):
                                                   for name in ('openai','gemini')}})
         if path == '/health':
             return self.respond(200, {'status': 'ok','version':VERSION})
-        library=re.fullmatch(r'/library/(projects|templates|styles)(?:/([a-f0-9]{32}))?',path)
+        library=re.fullmatch(r'/library/(projects|templates|styles|presets)(?:/([a-f0-9]{32}))?',path)
         if library:
             try:
                 if library[2]:return self.respond(200,library_store.read(DATA/'library',library[1],library[2]))
@@ -405,6 +406,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(200,(IMAGES/(image_match[1]+'.png')).read_bytes(),'image/png')
         if path == '/images':
             return self.respond(200,{'images':images()})
+        if path == '/secrets':
+            return self.respond(200,secrets_store.status())
         if path == '/dub/jobs':
             return self.respond(200,{'jobs':DUB.jobs()})
         if path == '/dub/capabilities':
@@ -593,6 +596,10 @@ class Handler(BaseHTTPRequestHandler):
                     return self.respond(200,{'id':key,'url':'/frames/'+key})
                 for suffix in ('.png','.json'):(IMAGES/(key+suffix)).unlink(missing_ok=True)
                 return self.respond(200,{'images':images()})
+            if path in ('/secrets/save','/secrets/delete'):
+                raw=json.loads(self.rfile.read(size)) if 0<size<=4096 else {}
+                if not isinstance(raw,dict):raise ValueError('Yêu cầu không hợp lệ.')
+                return self.respond(200,secrets_store.save(raw.get('provider'),raw.get('key')) if path.endswith('save') else secrets_store.delete(raw.get('provider')))
             dub=re.fullmatch(r'/dub/(start|([a-f0-9]{32})/(continue|lines|cancel|delete|editor))',path)
             if dub:
                 if not 0 <= size <= 4*1024*1024:raise ValueError('Yêu cầu lồng tiếng quá lớn.')
@@ -656,7 +663,7 @@ class Handler(BaseHTTPRequestHandler):
                 if isinstance(days,bool) or not isinstance(days,int) or not 1 <= days <= 3650:
                     raise ValueError('Số ngày phải từ 1 đến 3650.')
                 return self.respond(200, cleanup(days))
-            library=re.fullmatch(r'/library/(projects|templates|styles)/(save|([a-f0-9]{32})/delete)',path)
+            library=re.fullmatch(r'/library/(projects|templates|styles|presets)/(save|([a-f0-9]{32})/delete)',path)
             if library:
                 if library[3]:
                     library_store.delete(DATA/'library',library[1],library[3])

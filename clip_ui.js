@@ -34,7 +34,7 @@ note(voice,'Bấm thanh MP3 trên timeline để mở bảng này. Kéo thân MP
 voice.append(heads[1],$('audio-track'));
 group(voice,'CẮT & TỐC ĐỘ');grid(voice,['audio-start','audio-end','audio-speed','audio-offset']);
 group(voice,'ÂM LƯỢNG & CÁCH XUẤT');grid(voice,['audio-volume']);
-voice.append(details.querySelector('.two-col'));
+group(voice,'KHỚP THỜI LƯỢNG VỚI VIDEO');voice.append(details.querySelector('.fit-mode-box'),details.querySelector('.two-col'));
 const fitAudio=document.createElement('div');fitAudio.className='result-actions';fitAudio.append($('fit-audio-to-video'));voice.append(fitAudio);
 
 note(music,'Bấm thanh nhạc nền trên timeline để mở bảng này. Nhạc chạy suốt video xuất và tự lặp nếu bật.');

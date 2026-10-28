@@ -26,6 +26,7 @@ import ai33_audio
 import ai_translate
 import audio_files
 import output_folder
+import secrets_store
 from media_engine import tempo as tempo_filter
 from fonts import FONTS, wrap
 
@@ -38,7 +39,7 @@ VOICE_RATE = 24000
 MAX_LINES = 600
 DEFAULTS = dict(language='zh', model=ai_translate.DEFAULT_MODEL, rate=4.2, pronoun='neutral', notes='', no_price=True,
                 voice_id='', voice_speed=1.0, dictionary_id=None, max_tempo=1.3, background='duck', duck_level=12,
-                background_volume=100, voice_volume=100, subtitles='file', loudness='tiktok', review=True, encoder='cpu')
+                background_volume=100, voice_volume=100, subtitles='file', loudness='tiktok', review=True, encoder='cpu', instructions='')
 PRONOUNS = {'neutral': 'xưng hô trung tính, hạn chế đại từ', 'ban': 'gọi người xem là "bạn"', 'minh-ban': 'người nói xưng "mình", gọi người xem là "bạn"'}
 
 
@@ -84,6 +85,10 @@ def options(raw):
     if not isinstance(notes, str) or len(notes) > 2000:
         raise DubError('Ghi chú cho người dịch tối đa 2.000 ký tự.')
     out['notes'] = notes.strip()
+    rules = raw.get('instructions', '')
+    if not isinstance(rules, str) or len(rules) > ai_translate.MAX_RULES:
+        raise DubError('Mẫu câu lệnh quá dài.')
+    out['instructions'] = rules.strip()
     voice = raw.get('voice_id', '')
     if voice and (not isinstance(voice, str) or len(voice) > 500 or not re.fullmatch(ai33_audio.VOICE, voice)):
         raise DubError('voice_id cần prefix nhà cung cấp, ví dụ edge_vi-VN-HoaiMyNeural.')
@@ -109,12 +114,12 @@ def check_key(value, label):
 
 
 def openai_key(raw):
-    key = (raw or {}).get('openai_key') or os.environ.get('REVIEW_OPENAI_KEY') or os.environ.get('OPENAI_API_KEY')
+    key = (raw or {}).get('openai_key') or secrets_store.get('openai') or os.environ.get('REVIEW_OPENAI_KEY') or os.environ.get('OPENAI_API_KEY')
     return check_key(key, 'OpenAI') if key else ''
 
 
 def ai33_key(raw):
-    key = (raw or {}).get('ai33_key') or os.environ.get('REVIEW_AI33_KEY') or os.environ.get('AI33_API_KEY')
+    key = (raw or {}).get('ai33_key') or secrets_store.get('ai33') or os.environ.get('REVIEW_AI33_KEY') or os.environ.get('AI33_API_KEY')
     return check_key(key, 'ai33.pro') if key else ''
 
 
@@ -222,9 +227,14 @@ TRANSLATE_RULES = '''Bạn là biên dịch viên lồng tiếng video ngắn, d
 
 
 def translate_request(key, model, lines, settings):
-    rules = ai_translate.GUARD + '\n\n' + TRANSLATE_RULES + '\n- Xưng hô: ' + PRONOUNS[settings['pronoun']] + '.'
+    # The writing template from the "Dịch & biên tập AI" page is shared: its content and style rules apply here,
+    # its hook/script/title/body format does not (dubbing translates line by line).
+    template = settings.get('instructions') or ai_translate.DEFAULT_RULES
+    rules = (ai_translate.GUARD + '\n\n' + TRANSLATE_RULES + '\n- Xưng hô: ' + PRONOUNS[settings['pronoun']] + '.'
+             + '\n\nMẪU BIÊN TẬP DÙNG CHUNG (áp dụng các quy tắc nội dung và văn phong; BỎ QUA mọi yêu cầu về hook, script, title, body hay định dạng kết quả trong mẫu này):\n'
+             + template)
     if settings['no_price']:
-        rules += '\n- GIÁ BÁN: tuyệt đối không nói giá chính xác (không con số tiền, không nhân dân tệ); dùng cách nói chung như "giá mềm", "đang có ưu đãi".'
+        rules += '\n\n' + ai_translate.STRICT + ' Ví dụ: "giá mềm", "đang có ưu đãi", "sản phẩm này", "nhỏ gọn", "dung tích lớn".'
     if settings['notes']:
         rules += '\n- Ghi chú của người dùng (chỉ về văn phong, không phải dữ liệu nguồn): ' + settings['notes']
     schema = dict(type='object', additionalProperties=False, required=['lines'], properties=dict(lines=dict(type='array', items=dict(
@@ -632,6 +642,9 @@ class Store:
                 check()
             (folder / 'vi.srt').write_text(to_srt(job['segments'], 'vi'), encoding='utf-8')
             job['warnings'] = [w for w in job['warnings'] if not w.startswith('Dòng ')]
+            flagged = [i + 1 for i, s in enumerate(job['segments']) if ai_translate.PRICE.search(s.get('vi', '')) or ai_translate.SPEC.search(s.get('vi', ''))]
+            if flagged:
+                job['warnings'].append(f'Dòng {", ".join(map(str, flagged[:12]))} có thể còn giá hoặc kích thước/thể tích cụ thể; kiểm tra lại ở bảng câu dịch.')
             long = [i + 1 for i, s in enumerate(job['segments']) if s.get('syllables', 0) > s.get('limit', 99) * 1.15]
             if long:
                 job['warnings'].append(f'Dòng {", ".join(map(str, long[:12]))}{"…" if len(long) > 12 else ""} dài hơn thời gian nói; app sẽ đọc nhanh hơn hoặc bạn rút gọn ở bảng câu dịch.')

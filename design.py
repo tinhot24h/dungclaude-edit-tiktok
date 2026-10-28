@@ -48,6 +48,8 @@ def settings(raw):
                     video_x=(0,-2160,720),video_y=(0,-3840,1280),
                     video_width=(720,180,2160),video_height=(1280,320,3840))
     out.setdefault('video_fit','cover')
+    out.setdefault('video_flip','none')
+    if out['video_flip'] not in ('none','h','v','hv'):raise ValueError('Kiểu lật video không hợp lệ.')
     if out['video_fit'] not in ('cover','contain','stretch'):raise ValueError('Cách đặt video không hợp lệ.')
     for index,name in enumerate(TEXT_KEYS):
         extra=index-2

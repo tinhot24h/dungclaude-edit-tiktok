@@ -550,3 +550,19 @@ kbd{display:inline-block;padding:2px 7px;border:1px solid #475569;border-bottom-
 .tl-toolbar{flex-wrap:nowrap;overflow-x:auto}.tl-toolbar .tl-tip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 0}
 @media (max-width:1500px){.tl-toolbar .tl-tip{display:none}}
 #tabs{display:flex}
+.key-save{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0 4px}.key-note{color:var(--muted);font-size:11px;flex-basis:100%}
+.audio-tools{border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:8px 0 12px;background:#121a25}.audio-tools .group-label{margin-top:4px}.audio-tools .range-row{display:flex;gap:10px;align-items:center}.audio-tools .range-row input{flex:1}.audio-tools output{font:600 11px ui-monospace,monospace;color:var(--muted);min-width:44px;text-align:right}
+.video-tools .frame-tools{flex-wrap:wrap}.video-tools .range-row input{width:100%}
+/* ---- 0.15: export pane steps, presets, batch, fit mode */
+.export-step{display:flex;align-items:center;gap:8px;margin:14px 0 8px}.export-step span{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#22324a;color:#bcd2f0;font:700 11px system-ui}.export-step strong{font-size:12px;letter-spacing:.02em}
+.preset-box select{width:100%}
+.batch-head{display:flex;justify-content:space-between;align-items:center}
+.batch-videos{display:flex;flex-direction:column;gap:4px;max-height:260px;overflow:auto;margin:6px 0}
+.batch-video{display:grid;grid-template-columns:auto 34px 1fr;grid-template-rows:auto auto;column-gap:8px;align-items:center;background:var(--input);border:1px solid var(--border);border-radius:8px;padding:5px 7px;margin:0;cursor:pointer}
+.batch-video input{grid-row:1/3;width:auto}.batch-video img{grid-row:1/3;width:34px;height:52px;object-fit:cover;border-radius:4px}
+.batch-video-name{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.batch-video small{color:var(--muted);font-size:10.5px}
+.batch-video:has(input:checked){border-color:var(--accent)}
+.batch-jobs{display:flex;flex-direction:column;gap:6px;padding-left:18px}.batch-jobs li{font-size:12px}.batch-jobs li small{display:block;color:var(--muted);word-break:break-all}.batch-jobs li.error small{color:#ff8892}.batch-jobs li.done small{color:#3fd18b}
+.batch-name{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fit-mode-box select{width:100%}
+.batch-box .two-col,.preset-box .two-col{grid-template-columns:1fr}

@@ -116,7 +116,7 @@ def plan(opts,video,audio=None,music=None):
         mstart=number(opts,'music_start',0,0,music['duration'])
         if music['duration']-mstart<.05:raise ValueError('Đoạn nhạc nền cần dài ít nhất 0,05 giây.')
         if not isinstance(opts.get('music_loop',True),bool) or not isinstance(opts.get('music_duck',True),bool):raise ValueError('Tùy chọn nhạc nền không hợp lệ.')
-        track=dict(start=mstart,volume=number(opts,'music_volume',30,0,300),fade_in=number(opts,'music_fade_in',1,0,10),
+        track=dict(start=mstart,speed=number(opts,'music_speed',1,.5,2),volume=number(opts,'music_volume',30,0,300),fade_in=number(opts,'music_fade_in',1,0,10),
                    fade_out=number(opts,'music_fade_out',2,0,10),loop=opts.get('music_loop',True),duck=opts.get('music_duck',True))
     preview=opts.get('preview_at')
     if preview is not None:
@@ -193,6 +193,8 @@ def build(folder,opts,video_path,video,audio_path=None,audio=None,frame_path=Non
         f=f'(1+{k}*t/{duration})' if p['motion']=='zoom_in' else f'(1+{k}*(1-t/{duration}))'
         source+=(f"scale=w='trunc({vw}*{f}/2)*2':h='trunc({vh}*{f}/2)*2':eval=frame,"
                  f"crop={vw}:{vh}:x='(trunc({vw}*{f}/2)*2-{vw})/2':y='(trunc({vh}*{f}/2)*2-{vh})/2',")
+    flip=opts.get('video_flip','none')
+    source+=('hflip,' if 'h' in flip else '')+('vflip,' if 'v' in flip else '')
     source+=f'rotate={rad:.12f}:ow=rotw({rad:.12f}):oh=roth({rad:.12f}):c=none,setsar=1,tpad=stop_mode=clone:stop_duration={duration},trim=duration={duration}[clip]'
     graph.append(source)
     graph.append(f'color=c={"0x000000" if opts.get("background")=="none" else opts["color"].replace("#","0x")}:s={ow}x{oh}:r={fps}:d={duration},format=rgba[base]')
@@ -251,7 +253,7 @@ def build(folder,opts,video_path,video,audio_path=None,audio=None,frame_path=Non
         labels.append('voice');next_input+=1
     if music_track:
         args+=(['-stream_loop','-1'] if music_track['loop'] else [])+['-ss',str(music_track['start']),'-i',str(music_path)]
-        chain=f'[{next_input}:a:0]asetpts=PTS-STARTPTS,aresample=48000,aformat=channel_layouts=stereo,volume={music_track["volume"]/100},apad,atrim=duration={duration}'
+        chain=f'[{next_input}:a:0]asetpts=PTS-STARTPTS,{tempo(music_track["speed"])},aresample=48000,aformat=channel_layouts=stereo,volume={music_track["volume"]/100},apad,atrim=duration={duration}'
         if music_track['fade_in']>0:chain+=f',afade=t=in:st=0:d={min(music_track["fade_in"],duration)}'
         if music_track['fade_out']>0:
             fade=min(music_track['fade_out'],duration);chain+=f',afade=t=out:st={duration-fade}:d={fade}'
