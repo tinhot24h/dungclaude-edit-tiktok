@@ -17,6 +17,7 @@ import re
 import shutil
 import socket
 import subprocess
+import sys
 import threading
 import time
 import uuid
@@ -138,10 +139,87 @@ def ai33_key(raw):
     return check_key(key, 'ai33.pro') if key else ''
 
 
-def demucs_command():
-    """Demucs (optional, `pip install demucs`) gives real AI vocal separation; otherwise FFmpeg modes are used."""
-    found = shutil.which('demucs')
-    return [found] if found else None
+DEMUCS_RUNNER = Path(__file__).resolve().parent / 'demucs_runner.py'
+DEMUCS_ENV = Path(__file__).resolve().parent / '.local' / 'demucs-env'   # the app's own Python environment for Demucs
+DEMUCS_PACKAGES = ['demucs', 'soundfile']
+_demucs = {}
+INSTALL = dict(state='idle', log='', error='')
+_install_lock = threading.Lock()
+
+
+def env_python(env):
+    return env / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
+
+
+def demucs_command(refresh=False):
+    """Demucs (optional) gives real AI vocal separation; otherwise FFmpeg modes are used.
+
+    Looks in the app's own environment first, then the Python running the app and the other Pythons on PATH (pip
+    often installs the `demucs` command outside PATH on Windows). Demucs runs through demucs_runner.py, which saves
+    the result without torchaudio's new torchcodec dependency. Falls back to a plain `demucs` command."""
+    if refresh or 'cmd' not in _demucs:
+        candidates = [[str(env_python(DEMUCS_ENV))]] if env_python(DEMUCS_ENV).is_file() else []
+        candidates.append([sys.executable])
+        for name in ('python', 'python3'):
+            found = shutil.which(name)
+            if found:
+                candidates.append([found])
+        if os.name == 'nt' and shutil.which('py'):
+            candidates.append([shutil.which('py'), '-3'])
+        cmd = None
+        for python in candidates:
+            try:
+                check = subprocess.run(python + ['-c', "import importlib.util,sys;sys.exit(importlib.util.find_spec('demucs') is None)"],
+                                       capture_output=True, timeout=30)
+            except (OSError, subprocess.SubprocessError):
+                continue
+            if check.returncode == 0:
+                cmd = python + [str(DEMUCS_RUNNER)]
+                break
+        if not cmd and shutil.which('demucs'):
+            cmd = [shutil.which('demucs')]
+        _demucs['cmd'] = cmd
+    return _demucs['cmd']
+
+
+def demucs_status(refresh=False):
+    return dict(INSTALL, available=bool(demucs_command(refresh)))
+
+
+def install_demucs():
+    """pip install Demucs in the background, into .local/demucs-env (no admin rights, nothing changes in the system
+    Python). If that environment cannot be created, installs for the current user instead."""
+    with _install_lock:
+        if INSTALL['state'] == 'running':
+            return demucs_status()
+        INSTALL.update(state='running', log='Đang chuẩn bị…', error='')
+    def work():
+        lines = []
+        def step(cmd):
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8', errors='replace')
+            for line in proc.stdout:
+                if line.strip():
+                    lines.append(line.rstrip()[:300])
+                    INSTALL['log'] = '\n'.join(lines[-8:])
+            return proc.wait()
+        try:
+            python = env_python(DEMUCS_ENV)
+            if not python.is_file():
+                lines.append('Tạo môi trường riêng cho Demucs…')
+                if step([sys.executable, '-m', 'venv', str(DEMUCS_ENV)]) or not python.is_file():
+                    shutil.rmtree(DEMUCS_ENV, ignore_errors=True)
+            if python.is_file():
+                step([str(python), '-m', 'pip', 'install', '--upgrade', 'pip'])
+                code = step([str(python), '-m', 'pip', 'install', '--upgrade', *DEMUCS_PACKAGES])
+            else:
+                code = step([sys.executable, '-m', 'pip', 'install', '--user', '--upgrade', *DEMUCS_PACKAGES])
+            ok = code == 0 and demucs_command(True)
+            INSTALL.update(state='done' if ok else 'error',
+                           error='' if ok else 'Cài Demucs chưa thành công. Xem vài dòng cuối bên dưới (thường do mạng hoặc phiên bản Python quá mới/cũ).')
+        except Exception as exc:  # noqa: BLE001 — shown to the user, never fatal for the app
+            INSTALL.update(state='error', error='Không chạy được pip: ' + str(exc)[:200])
+    threading.Thread(target=work, daemon=True).start()
+    return demucs_status()
 
 
 # ---------------------------------------------------------------- SRT
@@ -348,7 +426,7 @@ def paragraph_window(job):
 
 # ---------------------------------------------------------------- media helpers
 
-def run(cmd, cancel=None, timeout=7200, cwd=None):
+def run(cmd, cancel=None, timeout=7200, cwd=None, name='FFmpeg'):
     """FFmpeg/Demucs with cancel support; returns stderr tail on failure."""
     with subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE) as proc:
         deadline = time.monotonic() + timeout
@@ -364,7 +442,7 @@ def run(cmd, cancel=None, timeout=7200, cwd=None):
                         raise Cancelled()
                     raise DubError('Xử lý quá lâu, đã dừng.')
         if proc.returncode:
-            raise DubError('FFmpeg xử lý lỗi: ' + err.decode('utf-8', 'replace').strip()[-300:])
+            raise DubError(name + ' xử lý lỗi: ' + err.decode('utf-8', 'replace').strip()[-300:])
 
 
 def probe(path):
@@ -885,11 +963,11 @@ class Store:
         if mode == 'demucs':
             command = demucs_command()
             if not command:
-                raise DubError('Chưa cài Demucs. Cài bằng lệnh  pip install demucs  hoặc chọn cách xử lý nền khác.')
+                raise DubError('Chưa cài Demucs. Bấm "Cài Demucs tự động" ở mục 🎵 Âm thanh gốc hoặc chọn cách xử lý nền khác.')
             run(base + [str(folder / 'original.wav')], cancel)
             self.progress(job, 'separate', .3, 'Đang tách giọng bằng Demucs (có thể mất vài phút)…')
             self.save(job)
-            run(command + ['--two-stems=vocals', '-o', str(folder / 'demucs'), str(folder / 'original.wav')], cancel)
+            run(command + ['--two-stems=vocals', '-o', str(folder / 'demucs'), str(folder / 'original.wav')], cancel, name='Demucs')
             found = next((folder / 'demucs').rglob('no_vocals.wav'), None)
             if not found:
                 raise DubError('Demucs không tạo được nhạc nền.')

@@ -637,3 +637,4 @@ kbd{display:inline-block;padding:2px 7px;border:1px solid #475569;border-bottom-
 .dub-ov .icon-button{position:absolute;top:4px;right:4px;padding:0 5px}
 #dub-frame-tools{flex-wrap:wrap;margin-top:6px}
 #dub-start{width:auto;flex:none}.dub-bar-tools{justify-content:flex-end}
+.dub-demucs{margin:8px 0 12px;padding:10px 12px;border:1px dashed var(--border);border-radius:10px}.dub-demucs .helper{margin:0 0 8px}.dub-demucs-log{margin:8px 0 0;max-height:140px;overflow:auto;white-space:pre-wrap;font-size:11px;opacity:.75}

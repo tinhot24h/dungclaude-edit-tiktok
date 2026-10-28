@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import tempfile
 import threading
@@ -285,6 +286,30 @@ class FrameOverlayTests(PipelineBase):
         graph=(self.data/'dub'/job['id']/'export.ffgraph').read_text()
         self.assertIn('concat=n=',graph);self.assertIn('trim=',graph)
         self.assertAlmostEqual(dubbing.probe(self.data/'dub'/job['id']/'dubbed.mp4')['duration'],4,delta=.2)
+
+
+class DemucsTests(PipelineBase):
+    def test_demucs_found_via_python_module_runs_through_the_runner(self):
+        fake=Path(self.tmp.name)/'pkgs'/'demucs';fake.mkdir(parents=True)
+        (fake/'__init__.py').write_text('')
+        (fake/'audio.py').write_text('def prevent_clip(wav,mode=None):return wav\n')
+        # stand-in for demucs.separate: "separates" by copying the input to <out>/htdemucs/<name>/no_vocals.wav
+        (fake/'separate.py').write_text("import shutil,sys\nfrom pathlib import Path\nsave_audio=None\ndef main(argv):\n"
+            "    out=Path(argv[argv.index('-o')+1]);src=Path(argv[-1]);d=out/'htdemucs'/src.stem;d.mkdir(parents=True)\n"
+            "    shutil.copyfile(src,d/'no_vocals.wav');(d/'vocals.wav').write_bytes(b'')\n")
+        env=dict(os.environ,PYTHONPATH=str(fake.parent))
+        with mock.patch.dict(os.environ,env),mock.patch.object(dubbing,'DEMUCS_ENV',Path(self.tmp.name)/'none'),mock.patch.object(dubbing.shutil,'which',return_value=None):
+            cmd=dubbing.demucs_command(True)
+            self.assertEqual(cmd[-1],str(dubbing.DEMUCS_RUNNER));self.assertTrue(dubbing.demucs_status()['available'])
+            with mock.patch.object(dubbing,'paragraph_request',return_value='Xin chào.'):
+                job=self.job(background='demucs',review=False,subtitles='none')
+                self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
+        self.assertEqual(job['state'],'done',job['message'])
+        self.assertTrue((self.data/'dub'/job['id']/'background.wav').is_file())
+        with mock.patch.object(dubbing,'DEMUCS_ENV',Path(self.tmp.name)/'none'),mock.patch.object(dubbing.shutil,'which',return_value=None),\
+             mock.patch.object(dubbing.subprocess,'run',return_value=mock.Mock(returncode=1)):
+            self.assertIsNone(dubbing.demucs_command(True))
+        dubbing._demucs.clear()
 
 
 class StyleTests(unittest.TestCase):

@@ -1,8 +1,16 @@
-# Review Studio 0.17.2
+# Review Studio 0.17.3
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.17.3
+
+- **Sửa tách giọng AI (Demucs) không dùng được:**
+  - Ứng dụng tìm Demucs ở mọi nơi pip có thể cài: môi trường riêng của app, Python đang chạy app, các Python khác trên máy. Trên Windows pip hay cài lệnh `demucs` ngoài PATH nên trước đây app không thấy.
+  - **Nút "⬇ Cài Demucs tự động"** ở mục 🎵 Âm thanh gốc: không cần gõ lệnh. App cài vào thư mục `.local/demucs-env` của ứng dụng, không đụng tới Python hệ thống, có hiện tiến trình cài. Lần đầu tải khoảng 1–3 GB (PyTorch + mô hình). Nút **↻ Kiểm tra lại** dùng khi bạn tự cài bằng pip.
+  - Sửa lỗi Demucs dừng ở bước cuối với bản torchaudio mới (2.9+, đòi thêm gói torchcodec). App lưu kết quả bằng `soundfile` nên không cần torchcodec.
+  - Lỗi Demucs (nếu có) hiện đúng tên "Demucs xử lý lỗi: …", không còn ghi nhầm là FFmpeg.
 
 ## Mới trong 0.17.2
 
@@ -93,7 +101,7 @@ Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI,
 - **Trang Lồng tiếng (mới):** tự động lồng tiếng video tiếng Trung sang tiếng Việt theo 5 bước:
   1. **Nhận diện:** OpenAI Whisper nhận lời nói, xuất SRT tiếng Trung có thời gian (khoảng 0,006 USD/phút). Có sẵn file .srt cùng tên thì bỏ qua bước này.
   2. **Dịch OpenAI:** dịch tự nhiên, mỗi câu giới hạn số tiếng theo thời gian nói (mặc định 4,2 tiếng/giây), không đọc giá chính xác, có ghi chú văn phong và cách xưng hô.
-  3. **Tách âm thanh gốc:** giảm tiếng gốc khi có lời (giữ nhạc nền), lọc giọng giữa (thử nghiệm), tách giọng AI bằng Demucs nếu đã cài (`pip install demucs`), giữ nguyên hoặc xóa hẳn tiếng gốc.
+  3. **Tách âm thanh gốc:** giảm tiếng gốc khi có lời (giữ nhạc nền), lọc giọng giữa (thử nghiệm), tách giọng AI bằng Demucs (bấm "Cài Demucs tự động" một lần), giữ nguyên hoặc xóa hẳn tiếng gốc.
   4. **Lồng tiếng ai33:** gộp câu thành đoạn tự nhiên, tạo giọng Việt, tự đọc nhanh hơn (tối đa 1,3×) cho vừa chỗ trống rồi đặt đúng thời điểm.
   5. **Xuất:** MP4 H.264 + AAC, phụ đề Việt dạng file .srt, kênh phụ đề trong MP4 (không chèn chữ lên hình); tự lưu vào thư mục xuất.
 - Chọn 1 video, nhiều video hoặc cả thư mục (kéo thả được), hoặc lấy từ kho Media; các video chạy lần lượt trong hàng đợi.

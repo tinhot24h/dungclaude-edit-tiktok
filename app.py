@@ -16,7 +16,7 @@ import media_engine
 import media_preview
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 from design import settings, layout, artwork, frame_box, video_box, artwork_layers, TEXT_LIMITS
 from fonts import FONTS
 import ai_translate
@@ -422,6 +422,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.serve_audio(DATA/'overlays'/item['file'],False,mime,item['name'])
         if path == '/dub/jobs':
             return self.respond(200,{'jobs':DUB.jobs()})
+        if path == '/dub/demucs':
+            return self.respond(200,dubbing.demucs_status('refresh' in parse_qs(urlparse(self.path).query)))
         if path == '/dub/capabilities':
             return self.respond(200,{'demucs':bool(dubbing.demucs_command()),'openai':bool(dubbing.openai_key({})),'ai33':bool(dubbing.ai33_key({})),
                                      'defaults':dubbing.DEFAULTS,'pronouns':dubbing.PRONOUNS,'styles':ai_translate.STYLE_LABELS})
@@ -646,6 +648,7 @@ class Handler(BaseHTTPRequestHandler):
                     try:return self.respond(200,DUB.use_voice(voice[1],temp))
                     except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
                 finally:temp.unlink(missing_ok=True)
+            if path=='/dub/demucs/install':return self.respond(200,dubbing.install_demucs())
             dub=re.fullmatch(r'/dub/(start|([a-f0-9]{32})/(continue|lines|cancel|delete|editor))',path)
             if dub:
                 if not 0 <= size <= 4*1024*1024:raise ValueError('Yêu cầu lồng tiếng quá lớn.')

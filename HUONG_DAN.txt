@@ -1,4 +1,4 @@
-REVIEW STUDIO 0.17.2 — VIDEO / DỊCH AI / ÂM THANH AI33
+REVIEW STUDIO 0.17.3 — VIDEO / DỊCH AI / ÂM THANH AI33
 
 CẬP NHẬT
 Từ bản 0.13: không cần tải lại ZIP. Trong ứng dụng bấm nút ⟳ (góc phải
@@ -229,6 +229,12 @@ giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh g�
 cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
 Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
 
+NÂNG CẤP 0.17.3 — SỬA TÁCH GIỌNG AI (DEMUCS)
+- Mục 🎵 Âm thanh gốc có nút "⬇ Cài Demucs tự động". Bấm một lần, chờ vài phút; lần đầu tải khoảng 1–3 GB.
+  App cài vào thư mục .local/demucs-env của ứng dụng, không đụng tới Python của máy.
+- Nếu đã tự cài bằng pip: bấm "↻ Kiểm tra lại". App tự tìm cả khi lệnh demucs không nằm trong PATH.
+- Sửa lỗi Demucs dừng ở bước cuối với torchaudio mới (cần torchcodec). App lưu kết quả bằng soundfile.
+
 NÂNG CẤP 0.17.2 — BỎ CHÈN PHỤ ĐỀ LÊN VIDEO
 - Tab Lồng tiếng không còn chèn chữ phụ đề lên hình. Mục "Xuất & file phụ đề" chỉ còn: file .srt đi kèm, kênh phụ đề trong MP4, hoặc không.
 - Cấu hình cũ đang chọn "Chèn chữ lên video" tự chuyển sang file .srt đi kèm.
@@ -319,7 +325,7 @@ NÂNG CẤP 0.14 — LỒNG TIẾNG + GIAO DIỆN MỚI
 - Trang Lồng tiếng (mới): tự động lồng tiếng video tiếng Trung sang tiếng Việt theo 5 bước:
   1. Nhận diện: OpenAI Whisper nhận lời nói, xuất SRT tiếng Trung có thời gian (khoảng 0,006 USD/phút). Có sẵn file .srt cùng tên thì bỏ qua bước này.
   2. Dịch OpenAI: dịch tự nhiên, mỗi câu giới hạn số tiếng theo thời gian nói (mặc định 4,2 tiếng/giây), không đọc giá chính xác, có ghi chú văn phong và cách xưng hô.
-  3. Tách âm thanh gốc: giảm tiếng gốc khi có lời (giữ nhạc nền), lọc giọng giữa (thử nghiệm), tách giọng AI bằng Demucs nếu đã cài (pip install demucs), giữ nguyên hoặc xóa hẳn tiếng gốc.
+  3. Tách âm thanh gốc: giảm tiếng gốc khi có lời (giữ nhạc nền), lọc giọng giữa (thử nghiệm), tách giọng AI bằng Demucs (bấm "Cài Demucs tự động" một lần), giữ nguyên hoặc xóa hẳn tiếng gốc.
   4. Lồng tiếng ai33: gộp câu thành đoạn tự nhiên, tạo giọng Việt, tự đọc nhanh hơn (tối đa 1,3×) cho vừa chỗ trống rồi đặt đúng thời điểm.
   5. Xuất: MP4 H.264 + AAC, phụ đề Việt dạng file .srt, kênh phụ đề trong MP4 (không chèn chữ lên hình); tự lưu vào thư mục xuất.
 - Chọn 1 video, nhiều video hoặc cả thư mục (kéo thả được), hoặc lấy từ kho Media; các video chạy lần lượt trong hàng đợi.
