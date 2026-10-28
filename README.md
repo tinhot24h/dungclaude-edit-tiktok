@@ -1,8 +1,16 @@
-# Review Studio 0.19.2
+# Review Studio 0.19.3
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.19.3
+
+- **Mọi file thêm vào ứng dụng đều lấy thẳng từ máy, không tải lên:**
+  - Các nút thêm video, MP3/âm thanh, ảnh, logo, khung PNG, overlay, lớp ảnh, SRT, MP3 giọng có sẵn, file dự án… giờ mở **hộp chọn file của Windows**.
+  - Ứng dụng đọc file ngay tại chỗ: video và overlay dùng hardlink (tức thì, không tốn thêm dung lượng), các file khác chép trên ổ đĩa. Video xem trước phát thẳng từ file gốc.
+  - Chỉ kéo thả từ cửa sổ thư mục vào trình duyệt là còn tải lên, vì trình duyệt không cho biết đường dẫn của file kéo vào. Muốn nhanh hãy dùng nút thêm file hoặc "📂 Thư mục trên máy".
+  - Đã bỏ các nút "⬆ Tải thư mục lên" ở tab Lồng tiếng.
 
 ## Mới trong 0.19.2
 

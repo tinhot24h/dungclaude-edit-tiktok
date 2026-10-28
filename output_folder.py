@@ -78,6 +78,30 @@ def deliver(path,source,name):
     return target
 
 
+FILE_PICKER='''import json,sys
+sys.stdout.reconfigure(encoding="utf-8")
+import tkinter as tk
+from tkinter import filedialog
+root=tk.Tk();root.withdraw();root.attributes("-topmost",True)
+types=json.loads(sys.argv[3])
+ask=filedialog.askopenfilenames if sys.argv[2]=="1" else filedialog.askopenfilename
+got=ask(title=sys.argv[1],filetypes=[(name,pattern) for name,pattern in types]+[("Tất cả file","*.*")])
+got=[got] if isinstance(got,str) else list(got or [])
+print(json.dumps([g for g in got if g]))
+'''
+
+
+def pick_files(title,types,multiple=True):
+    """Native file dialog (child process, like pick): returns the chosen paths on this computer."""
+    try:
+        run=subprocess.run([sys.executable,'-c',FILE_PICKER,title,'1' if multiple else '0',json.dumps(types)],capture_output=True,timeout=900)
+    except (OSError,subprocess.SubprocessError):
+        raise ValueError('Không mở được hộp chọn file.') from None
+    if run.returncode:raise ValueError('Máy này chưa có hộp chọn file (tkinter).')
+    try:return [p for p in json.loads(run.stdout.decode('utf-8','replace').strip() or '[]') if isinstance(p,str)]
+    except ValueError:return []
+
+
 def pick(initial,title='Chọn thư mục lưu video xuất'):
     """Native folder dialog in a child process (Tk must own its own main thread)."""
     try:

@@ -57,6 +57,17 @@ def keep_days():
 
 
 VIDEO_EXT=('.mp4','.mov','.m4v','.mkv','.webm','.avi','.flv','.ts')
+AUDIO_EXT=('.mp3','.wav','.m4a','.aac','.flac','.ogg','.opus','.wma')
+IMAGE_EXT=('.png','.jpg','.jpeg','.webp','.gif')
+MEDIA_EXT=VIDEO_EXT+AUDIO_EXT+IMAGE_EXT
+MIME={'.mp4':'video/mp4','.m4v':'video/mp4','.mov':'video/quicktime','.mkv':'video/x-matroska','.webm':'video/webm','.avi':'video/x-msvideo','.flv':'video/x-flv','.ts':'video/mp2t',
+      '.mp3':'audio/mpeg','.wav':'audio/wav','.m4a':'audio/mp4','.aac':'audio/aac','.flac':'audio/flac','.ogg':'audio/ogg','.opus':'audio/ogg','.wma':'audio/x-ms-wma',
+      '.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.gif':'image/gif','.srt':'application/x-subrip'}
+# every "add file" endpoint also accepts X-Local-Path: the file is read where it is on this computer, nothing uploaded
+LOCAL_UPLOADS={'/upload':VIDEO_EXT,'/audio/upload':AUDIO_EXT+VIDEO_EXT,'/frame-upload':('.png',),'/image-upload':IMAGE_EXT,
+               '/dub/images/upload':IMAGE_EXT,'/overlays/upload':VIDEO_EXT+IMAGE_EXT}
+PICK_TYPES={'video':[('Video','*.mp4 *.mov *.m4v *.mkv *.webm *.avi *.flv *.ts')],'audio':[('Âm thanh','*.mp3 *.wav *.m4a *.aac *.flac *.ogg *.opus')],
+            'image':[('Ảnh','*.png *.jpg *.jpeg *.webp *.gif')],'srt':[('Phụ đề SRT','*.srt')],'json':[('JSON','*.json')]}
 
 
 def link_or_copy(src,target):
@@ -382,7 +393,7 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == '/':
             return self.respond(200, (ROOT / 'index.html').read_bytes(), 'text/html; charset=utf-8')
-        if path in ('/studio.css','/studio.js','/ai_ui.js','/audio_ui.js','/editor_ui.js','/timeline_ui.js','/history_ui.js','/workspace_ui.js','/clip_ui.js','/studio_shell.js','/media_bin.js','/image_ui.js','/export_ui.js','/style_ui.js','/update_ui.js','/dub_ui.js','/layout_ui.js','/key_ui.js','/batch_ui.js'):
+        if path in ('/studio.css','/studio.js','/local_files.js','/ai_ui.js','/audio_ui.js','/editor_ui.js','/timeline_ui.js','/history_ui.js','/workspace_ui.js','/clip_ui.js','/studio_shell.js','/media_bin.js','/image_ui.js','/export_ui.js','/style_ui.js','/update_ui.js','/dub_ui.js','/layout_ui.js','/key_ui.js','/batch_ui.js'):
             mime = 'text/css' if path.endswith('.css') else 'text/javascript'
             return self.respond(200, (ROOT/path.lstrip('/')).read_bytes(), mime+'; charset=utf-8')
         if path in ('/assets/'+font[0] for font in FONTS.values()):
@@ -442,6 +453,12 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(200,{'images':images()})
         if path == '/secrets':
             return self.respond(200,secrets_store.status())
+        if path == '/local/file':
+            # previews of files picked on this computer; only this app's own pages may load them
+            if self.headers.get('Sec-Fetch-Site') not in (None,'same-origin','none'):return self.respond(403,{'error':'Không cho phép.'})
+            try:src=local_file({'path':parse_qs(urlparse(self.path).query).get('path',[''])[0]},MEDIA_EXT)
+            except ValueError as exc:return self.respond(404,{'error':str(exc)})
+            return self.serve_audio(src,False,MIME[src.suffix.lower()],src.name)
         if path == '/dub/images':
             return self.respond(200,{'images':DUB.images()})
         dimg=re.fullmatch(r'/dub/images/([a-f0-9]{32})/file',path)
@@ -531,6 +548,42 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         try:
             size = int(self.headers.get('Content-Length', '0'))
+            local=self.headers.get('X-Local-Path')
+            if local and (path in LOCAL_UPLOADS or re.fullmatch(r'/dub/[a-f0-9]{32}/voice',path)):
+                src=local_file({'path':unquote(local)},LOCAL_UPLOADS.get(path,AUDIO_EXT))
+                if path=='/upload':
+                    # videos are hard-linked (instant, no extra space) instead of copied into the library
+                    key=uuid.uuid4().hex;folder=DATA/key;folder.mkdir()
+                    try:
+                        how=link_or_copy(src,folder/'source')
+                        data=dict(id=key,name=asset_store.clean_name(src.name),url='/media/video/'+key,local=how,**probe(folder/'source'))
+                        (folder/'source.json').write_text(json.dumps(data,ensure_ascii=False),encoding='utf-8')
+                    except BaseException:
+                        shutil.rmtree(folder,ignore_errors=True);raise
+                    return self.respond(200,data)
+                if path=='/overlays/upload':
+                    temp=DATA/'overlays'/(uuid.uuid4().hex+'.upload');link_or_copy(src,temp)
+                    try:return self.respond(200,DUB.import_overlay(temp,src.name))
+                    except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
+                    finally:temp.unlink(missing_ok=True)
+                # the other handlers read the request body: they read the local file instead (disk to disk)
+                self.rfile=src.open('rb');size=src.stat().st_size
+                self.headers.replace_header('X-Filename',quote(src.name)) if self.headers.get('X-Filename') else self.headers.add_header('X-Filename',quote(src.name))
+            if path=='/local/pick-files':
+                raw=json.loads(self.rfile.read(size)) if 0<size<=4096 else {}
+                kinds=[k for k in raw.get('kinds',[]) if k in PICK_TYPES] or ['video']
+                types=[t for k in kinds for t in PICK_TYPES[k]]
+                chosen=output_folder.pick_files(str(raw.get('title') or 'Chọn file')[:120],types,raw.get('multiple') is not False)
+                out=[]
+                for p in chosen:
+                    f=Path(p)
+                    if f.is_file():out.append(dict(path=str(f),name=f.name,size=f.stat().st_size,type=MIME.get(f.suffix.lower(),'application/octet-stream')))
+                return self.respond(200,{'files':out})
+            if path=='/local/read-text':
+                raw=json.loads(self.rfile.read(size)) if 0<size<=4096 else {}
+                src=local_file(raw,('.srt','.txt','.json'))
+                if src.stat().st_size>5*1024*1024:raise ValueError('File quá lớn.')
+                return self.respond(200,{'text':src.read_text(encoding='utf-8-sig',errors='replace')})
             if path=='/audio/upload':
                 if not 0<size<=100*1024*1024:raise ValueError('MP3 nhập tối đa 100 MB.')
                 original=asset_store.clean_name(unquote(self.headers.get('X-Filename','audio.mp3')))

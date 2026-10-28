@@ -1,8 +1,12 @@
 {
  "app": "ReviewStudio",
- "version": "0.19.2",
- "notes": "## Mới trong 0.19.2\n\n- **Sửa lỗi bấm ⟳ cập nhật không thấy bản mới:** ứng dụng đang chạy nhớ phiên bản GitHub lúc khởi động. Giờ mỗi lần kiểm tra đều hỏi lại phiên bản mới nhất.\n- **Sửa thanh trên cùng:** nút cập nhật, nút tắt và thông số xuất gom về góc phải. Nút tắt vẽ bằng biểu tượng nên không còn hiện ô vuông trên Windows.\n- **Ảnh nhỏ overlay nền trong suốt** hiện trên nền caro (trước đây toàn màu đen), dễ nhận ra overlay bình luận live.",
+ "version": "0.19.3",
+ "notes": "## Mới trong 0.19.3\n\n- **Mọi file thêm vào ứng dụng đều lấy thẳng từ máy, không tải lên:**\n  - Các nút thêm video, MP3/âm thanh, ảnh, logo, khung PNG, overlay, lớp ảnh, SRT, MP3 giọng có sẵn, file dự án… giờ mở **hộp chọn file của Windows**.\n  - Ứng dụng đọc file ngay tại chỗ: video và overlay dùng hardlink (tức thì, không tốn thêm dung lượng), các file khác chép trên ổ đĩa. Video xem trước phát thẳng từ file gốc.\n  - Chỉ kéo thả từ cửa sổ thư mục vào trình duyệt là còn tải lên, vì trình duyệt không cho biết đường dẫn của file kéo vào. Muốn nhanh hãy dùng nút thêm file hoặc \"📂 Thư mục trên máy\".\n  - Đã bỏ các nút \"⬆ Tải thư mục lên\" ở tab Lồng tiếng.",
  "files": {
+  "local_files.js": {
+   "sha256": "b9a975e980db7f5f013f6046d58228fb39817b6959e8caaf9505c4ba3cc898a7",
+   "size": 3453
+  },
   "MO_REVIEW_STUDIO.vbs": {
    "sha256": "4a581ad2ce49c314e8cf63fe10178413d90b5b904eb38bae0685d2db1ab27b18",
    "size": 624
@@ -32,8 +36,8 @@
    "size": 5256
   },
   "dub_ui.js": {
-   "sha256": "9023e7da6df19dc68830d1a7fc066e3a36661642b679105b8901f87e2b7bd5ae",
-   "size": 87084
+   "sha256": "957f76d81dcf2396e8f27db82e67f67c4aff1f56edf41dd7d75332d4851d4695",
+   "size": 87098
   },
   "layout_ui.js": {
    "sha256": "31474a69f54710df46c2483f9711e36d487d11437085b2b563f97b1f18ab711e",
@@ -84,8 +88,8 @@
    "size": 5435
   },
   "output_folder.py": {
-   "sha256": "2e34c4a6edcf12cb64b3affc752ff27467399933c6ebe426aeb2e08de13b49d5",
-   "size": 4921
+   "sha256": "07a967329864ae980994763a0c7678c6c32232e6ad446b676ba93d40d40c8843",
+   "size": 6091
   },
   "library_store.py": {
    "sha256": "0a0c6a2d79658f9470f5447b67423b141a9e9cfac7c023fa19edd6c95b501502",
@@ -128,8 +132,8 @@
    "size": 13961
   },
   "app.py": {
-   "sha256": "080e3fbbf78a5aea425b23d0034778b0f859eaf03c06f2ea3797fc5f8dc3e7a0",
-   "size": 55826
+   "sha256": "90dc9ff77d40cfbfb5d729973de1b61bf572947ff8bc51b5b91cbccddd456506",
+   "size": 60390
   },
   "ai33_audio.py": {
    "sha256": "c68d977365a3cd9698ab931194f3021f535cc836cf0113383743b5441f4d30b4",
@@ -168,31 +172,31 @@
    "size": 2609
   },
   "index.html": {
-   "sha256": "521821bd055dfca2d3540a0932e72b7bcaff29df91f426e47ee628b301b2a006",
-   "size": 33084
+   "sha256": "69d4fba461e99ada38c9b9d861ead8538f0d09597028441b94f14f2b89b9a1b2",
+   "size": 33123
   },
   "launch.py": {
    "sha256": "f22804abece2a62383da1386cecc216dcda743ba3fe4df74ea9110dc483d4196",
    "size": 3551
   },
   "build_package.py": {
-   "sha256": "b2e880128525c4c64138420c6acf4a7c23fe0d92c3bf11f1941b8f1fd71fbd7c",
-   "size": 3189
+   "sha256": "cfabf581654ae9b0e1790c3629aea0ab352ed3629269ef579d700b2bbe0f1e30",
+   "size": 3207
   },
   "START_WINDOWS.bat": {
    "sha256": "616ecf0e4d9a41995c509f79bd5e1a01d1dce7ba76356a801417e08747847c4e",
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "4983980c5a777f9c943129150fb5cf4b08b376ef5df9e710b622011284454073",
-   "size": 37480
+   "sha256": "86c4e0da7fedb72a21335e9a425b3b7029aae68e79ef2eb19584bb4fed2b5677",
+   "size": 37730
   },
   "README.md": {
-   "sha256": "5d8a813dc2dc0d82dad8772f9355cd074f2ca4b37b988175fbf52f43a90f5428",
-   "size": 55137
+   "sha256": "82f4db523524b615636a14d02ea6c2e17f6a6c8f7bc1f3f89cbc74f59c461d8f",
+   "size": 55968
   },
   "VERSION": {
-   "sha256": "9fc9c42fbefeb8bfb6b8af04b16b43cac75033d4a2f9383ec2ac1b33bf9034a4",
+   "sha256": "6f15c2bfbd4fb58b7b84f0a8f8036f4d6f3112cd3f0cb759dffe86cdd696b650",
    "size": 7
   },
   ".gitignore": {
