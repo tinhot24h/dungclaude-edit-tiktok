@@ -220,6 +220,10 @@ giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh g�
 cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
 Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
 
+NÂNG CẤP 0.22.5
+- Mục mới "Điều chỉnh màu": độ sáng, độ tương phản, độ bão hòa, độ sắc nét cho video gốc (xem trước ngay, video xuất giống vậy).
+  Bật/tắt bằng công tắc ở tiêu đề mục; tắt thì giữ số đã chỉnh nhưng video không bị chỉnh.
+
 NÂNG CẤP 0.22.4
 - Các mục Nền & khung, Cắt & vị trí video, Lớp ảnh, Overlay dùng chung bố cục kiểu CapCut như Tiêu đề / Nội dung
   (Biến đổi: vị trí, kích thước, xoay, lật, nút căn, ↺; Hòa trộn: chế độ, độ mờ). Bỏ các nút trùng nhau.

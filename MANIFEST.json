@@ -1,11 +1,11 @@
 {
  "app": "ReviewStudio",
- "version": "0.22.4",
- "notes": "## Mới trong 0.22.4\n\n- Mọi mục chỉnh dùng chung bố cục kiểu CapCut (nhóm có tiêu đề, nhãn bên trái, nút phân đoạn, công tắc), không còn nút trùng:\n  - **Nền & khung:** Nền (Một màu / Chuyển 2 màu / Tắt, màu chính + ô màu nhanh, màu chuyển chỉ hiện khi chuyển 2 màu, hòa nền, độ đục) · Khung (kiểu, tải PNG, màu khung/viền, độ mờ, độ bóng chỉ hiện với khung hồng) · Biến đổi khung (X/Y, rộng/cao, thu phóng đồng nhất, 6 nút căn, ↺, nhanh).\n  - **Cắt & vị trí video:** Cắt (đầu/cuối) · Biến đổi (tỷ lệ + 100–200%, thu phóng đồng nhất 9:16, X/Y, rộng/cao, xoay + 90°/180°, lật, 6 nút căn + giữa khung, ↺) · Cách đặt hình · Chuyển động. Khi tắt thiết kế: Khung xuất · Biến đổi.\n  - **Lớp ảnh:** Ảnh · Biến đổi (tỷ lệ, thu phóng đồng nhất, vừa khung, vị trí, căn 9 điểm, xoay, lật) · Hòa trộn (chế độ, độ mờ, thứ tự lớp).\n  - **Overlay:** Thư viện · Hòa trộn · Thời gian.",
+ "version": "0.22.5",
+ "notes": "## Mới trong 0.22.5\n\n- **Mục \"Điều chỉnh màu\"** (kiểu CapCut) cho video gốc: Độ sáng, Độ tương phản, Độ bão hòa (−100…100) và Độ sắc nét (0…100), nút ↺ đặt lại, **công tắc bật/tắt** ở tiêu đề mục như các nhóm khác (tắt thì giữ nguyên số đã chỉnh nhưng không áp dụng; kéo thanh khi đang tắt thì tự bật). Chỉ chỉnh video, không ảnh hưởng nền, khung, chữ, overlay. Khung xem trước cập nhật ngay; video xuất dùng cùng mức chỉnh (FFmpeg eq + unsharp). Lưu trong mẫu.",
  "files": {
   "design_tab.js": {
-   "sha256": "f4b6cf6d9ac28b747ba4652b2cc0f88c8627da045375d079c023d658b8591a40",
-   "size": 35096
+   "sha256": "844418a90a1384643697a2c22eea448b0bed504032385528a8765f6648d93a9c",
+   "size": 36416
   },
   "local_files.js": {
    "sha256": "b9a975e980db7f5f013f6046d58228fb39817b6959e8caaf9505c4ba3cc898a7",
@@ -32,8 +32,8 @@
    "size": 5181
   },
   "dub_ui.js": {
-   "sha256": "f6ba5c15f31c6de9183dc703d4eaf0213191c6d0ef5876f036477dcb437627ea",
-   "size": 101550
+   "sha256": "1c99694c5c5fa33ed68eea89343f562263173101065ab0dcfa438837fcdaa239",
+   "size": 104433
   },
   "layout_ui.js": {
    "sha256": "31474a69f54710df46c2483f9711e36d487d11437085b2b563f97b1f18ab711e",
@@ -52,12 +52,12 @@
    "size": 2135
   },
   "dubbing.py": {
-   "sha256": "3afdcdebe97b2647dbc5a71b9e8bff981e5bfd9f4180091de484fcb16e96796e",
-   "size": 137788
+   "sha256": "044b165e72034a9c96d0cdfa25fe335ea51bcea963a4ab4a04bb1c9e3a3a33df",
+   "size": 138918
   },
   "tests/test_dubbing.py": {
-   "sha256": "d778335d09ae25912a3bc0d9d7deccd18233437e625595f0491fea43f73fb711",
-   "size": 49317
+   "sha256": "9a7d5b8beccc8bb818fa5e02b5f9e00d88cc1e45c07db88f2c0cf3fb0db9ee24",
+   "size": 51049
   },
   "image_ui.js": {
    "sha256": "b8e2a905501aedea84033a7c962b180251e06dc018e6133241f0310b474ed8e9",
@@ -168,7 +168,7 @@
    "size": 5352
   },
   "index.html": {
-   "sha256": "1b393dbf39488ac5af6f708b5d35c9bed107182124b45b64eef44ebe9ba00b5c",
+   "sha256": "105bf49ad60e07b2624ee9c9a8007f9f404616960b17d584dec7926600224329",
    "size": 33161
   },
   "launch.py": {
@@ -184,15 +184,15 @@
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "689baa976c9ee307ad7f3e29bc867f378b7b9629818df8b24fbb5d872c5b6f86",
-   "size": 43679
+   "sha256": "f622c913d1ab8e4e0e135d6f9ad24d66c5bd89c8c9a666063ae7e45e2fbbdf4e",
+   "size": 43996
   },
   "README.md": {
-   "sha256": "7092951a37747f8d8768dbf9ab61479a0feb90c66f968bc19c7a4022b9ffc7ba",
-   "size": 67763
+   "sha256": "afd231e12c350fbf5620450af8aed8d349c63f39e5f60269a3f21f752e298747",
+   "size": 68354
   },
   "VERSION": {
-   "sha256": "f9e4717709f00ca251a74fc9b8138bd1d482b8eb3457330644c042cb0458ce54",
+   "sha256": "d7fd8f6bb23a6e7015adcc63ae2a69e0592831ec872d095dc7cb82ee5d8c8b14",
    "size": 7
   },
   ".gitignore": {

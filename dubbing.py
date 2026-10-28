@@ -52,7 +52,8 @@ DEFAULTS = dict(language='zh', model=ai_translate.DEFAULT_MODEL, rate=4.2, prono
                 overlay=False, overlay_ids=[], overlay_count=1, overlay_blend='screen', overlay_opacity=60, overlay_timing='loop', end_with_voice=True,
                 image=False, image_id='', image_x=0, image_y=0, image_w=60, image_h=0, image_rotate=0, image_flip='none', image_blend='normal',
                 image_opacity=100, image_layer='below',
-                design=None, title_source='ai', body_source='ai', title_chars=30, body_min_chars=50, body_max_chars=100, review_texts=False, design_bg=True, design_title=True, design_body=True)
+                design=None, title_source='ai', body_source='ai', title_chars=30, body_min_chars=50, body_max_chars=100, review_texts=False, design_bg=True, design_title=True, design_body=True,
+                adjust=False, adjust_brightness=0, adjust_contrast=0, adjust_saturation=0, adjust_sharpen=0)
 TEXT_SOURCES = ('ai', 'fixed', 'file', 'none')
 PRONOUNS = {'neutral': 'xưng hô trung tính, hạn chế đại từ', 'ban': 'gọi người xem là "bạn"', 'minh-ban': 'người nói xưng "mình", gọi người xem là "bạn"'}
 
@@ -79,7 +80,8 @@ def options(raw):
         out[key] = float(v)
     for key, lo, hi in (('frame_zoom', 25, 400), ('frame_x', -400, 400), ('frame_y', -400, 400), ('frame_rotate', -180, 180), ('overlay_opacity', 0, 100), ('trim_start', 0, 120), ('trim_end', 0, 120), ('rate', 2.5, 7), ('voice_speed', .5, 1.5), ('max_tempo', 1, 1.6), ('min_tempo', .5, 1), ('video_speed_min', .25, 1), ('video_speed_max', 1, 4), ('duck_level', 0, 100),
                         ('background_volume', 0, 200), ('voice_volume', 0, 300),
-                        ('image_x', -150, 150), ('image_y', -150, 150), ('image_w', 1, 400), ('image_h', 0, 400), ('image_rotate', -180, 180), ('image_opacity', 0, 100)):
+                        ('image_x', -150, 150), ('image_y', -150, 150), ('image_w', 1, 400), ('image_h', 0, 400), ('image_rotate', -180, 180), ('image_opacity', 0, 100),
+                        ('adjust_brightness', -100, 100), ('adjust_contrast', -100, 100), ('adjust_saturation', -100, 100), ('adjust_sharpen', 0, 100)):
         num(key, lo, hi)
     if raw.get('subtitles') == 'burn':  # burned-in subtitles were removed; old saved settings get the .srt file instead
         raw = dict(raw, subtitles='file')
@@ -120,7 +122,7 @@ def options(raw):
     if not isinstance(image_id, str) or (image_id and not re.fullmatch('[a-f0-9]{32}', image_id)):
         raise DubError('Ảnh overlay không hợp lệ.')
     out['image_id'] = image_id
-    for key in ('no_price', 'review', 'overlay', 'end_with_voice', 'image', 'review_texts', 'design_bg', 'design_title', 'design_body'):
+    for key in ('no_price', 'review', 'overlay', 'end_with_voice', 'image', 'review_texts', 'design_bg', 'design_title', 'design_body', 'adjust'):
         v = raw.get(key, DEFAULTS[key])
         if not isinstance(v, bool):
             raise DubError('Thông số không hợp lệ: ' + key)
@@ -796,14 +798,14 @@ def frame_size(settings, video):
     return CANVAS.get(settings.get('frame_canvas', 'source')) or (w // 2 * 2, h // 2 * 2)
 
 
-def design_video(design, W, H, stretch=1, duration=0):
+def design_video(design, W, H, stretch=1, duration=0, adjust=()):
     """With a design the video sits in the design's video box exactly as in the editor (x/y/width/height/zoom in
     720×1280 design pixels, cover/contain/stretch, camera zoom in/out over the video, flip, rotation) on the
     background colour → [framed]."""
     scale = W / design_mod.W
     box = design_mod.video_box(design)
     vw, vh = max(2, round(box['width'] * scale / 2) * 2), max(2, round(box['height'] * scale / 2) * 2)
-    chain = '[0:v:0]' + (f'setpts=PTS*{stretch:.6f},' if stretch != 1 else '') + 'fps=30,format=rgba,'
+    chain = '[0:v:0]' + (f'setpts=PTS*{stretch:.6f},' if stretch != 1 else '') + 'fps=30,' + ''.join(a + ',' for a in adjust) + 'format=rgba,'
     fit = design.get('video_fit', 'cover')
     if fit == 'cover':
         chain += f'scale={vw}:{vh}:force_original_aspect_ratio=increase,crop={vw}:{vh},'
@@ -831,6 +833,20 @@ def design_video(design, W, H, stretch=1, duration=0):
 def frame_identity(settings):
     return (settings.get('frame_canvas', 'source') == 'source' and settings.get('frame_zoom', 100) == 100 and not settings.get('frame_x')
             and not settings.get('frame_y') and not settings.get('frame_rotate') and settings.get('frame_flip', 'none') == 'none')
+
+
+def adjust_filters(settings):
+    """"Điều chỉnh" of the source video (like CapCut): brightness, contrast, saturation (eq) and sharpen (unsharp).
+    -100..100 (sharpen 0..100); 0 = unchanged. The CSS preview uses the same scale."""
+    if not settings.get('adjust'):   # the switch of the section is off: the values are kept for later
+        return []
+    b, c, sat, sharp = (settings.get('adjust_' + k, 0) or 0 for k in ('brightness', 'contrast', 'saturation', 'sharpen'))
+    out = []
+    if b or c or sat:
+        out.append(f'eq=brightness={b / 100 * .25:.4f}:contrast={1 + c / 100 * .5:.4f}:saturation={1 + sat / 100:.4f}')
+    if sharp:
+        out.append(f'unsharp=5:5:{sharp / 100 * 1.5:.3f}:5:5:0')
+    return out
 
 
 def frame_graph(settings, video, before, after):
@@ -2016,15 +2032,16 @@ class Store:
         if settings['image'] and not image:
             job['warnings'] = [w for w in job['warnings'] if not w.startswith('Lớp ảnh')] + ['Lớp ảnh đang bật nhưng chưa chọn ảnh nên video xuất không có lớp ảnh.']
         design = self.design_for(job, folder) if settings.get('design') else None
-        copy = stretch == 1 and identity and not chosen and not image and not design and video.get('codec_name') == 'h264' and video.get('pix_fmt') in ('yuv420p', 'yuvj420p')
+        adjust = adjust_filters(settings)
+        copy = stretch == 1 and identity and not chosen and not image and not design and not adjust and video.get('codec_name') == 'h264' and video.get('pix_fmt') in ('yuv420p', 'yuvj420p')
         filters = not copy
         if filters:
             width, height = frame_size(settings, video)
             # frame → random overlays
             if design:
-                lines = design_video(design, width, height, stretch, duration)
+                lines = design_video(design, width, height, stretch, duration, adjust)
             else:
-                lines, _ = frame_graph(settings, video, [f'setpts=PTS*{stretch:.6f}'] if stretch != 1 else [], [])
+                lines, _ = frame_graph(settings, video, ([f'setpts=PTS*{stretch:.6f}'] if stretch != 1 else []) + adjust, [])
                 lines[-1] = lines[-1][:-len('[vout]')] + '[framed]'
             graph.extend(lines)
             base, index = 'framed', 2 + has_bg + (subs == 'soft')

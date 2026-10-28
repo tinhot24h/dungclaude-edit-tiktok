@@ -41,7 +41,7 @@ $('dub-frame').closest('.dub-frame-wrap').after(stageHost);
 $('sec-keys').hidden=true;
 
 // ---- order and visibility
-const ORDER=['input','design','title','body','frame','overlay','image','translate','voice','audio','export'];
+const ORDER=['input','design','title','body','frame','adjust','overlay','image','translate','voice','audio','export'];
 const bgOn=()=>$('dt-design-on').checked,titleOn=()=>$('dt-title-on').checked,bodyOn=()=>$('dt-body-on').checked;
 const on=()=>bgOn()||titleOn()||bodyOn();
 // with a design the editor's video box places the video; without it the dub frame tools do
@@ -197,7 +197,16 @@ function ccDubFrame(){const body=$('sec-frame').querySelector('.dub-sec-body');i
   ccGroup('Biến đổi',ccRow('Tỷ lệ',ccBare('dub-zoom')),ccRow('Vị trí',labelled('X %',ccBare('dub-x')),labelled('Y %',ccBare('dub-y'))),ccRow('Căn',$('dub-frame-align')),
    ccRow('Xoay',ccBare('dub-rotate')),ccRow('',$('dub-frame-tools')),ccRow('Lật',ccSeg('dub-flip',[['none','Không'],['h','⇋ Ngang'],['v','⇵ Dọc'],['hv','Cả hai']]))));
  for(const c of old)c.classList.add('cc-hide');body.insertBefore(panel,videoHost);$('dub-frame-tools').classList.add('cc-chips');refreshers.forEach(f=>f())}
-ccTrim();ccDubFrame();ccImage();ccOverlay();
+// Điều chỉnh màu: one CapCut group
+function ccAdjust(){const sec=$('sec-adjust'),body=sec.querySelector('.dub-sec-body');if(body.querySelector('.cc-panel'))return;
+ // the same header switch as Nền & khung / Tiêu đề / Nội dung (off: the values stay, nothing is applied)
+ const box=$('dub-adj-on'),sw=el('label',{className:'dt-toggle',title:'Bật/tắt điều chỉnh màu'});box.hidden=false;sw.append(box,el('i'));sec.classList.add('dt-group');sec.querySelector('summary').append(sw);
+ sw.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();box.checked=!box.checked;box.dispatchEvent(new Event('change',{bubbles:true}))});
+ const mark=()=>sec.classList.toggle('off',!box.checked);box.addEventListener('change',mark);refreshers.push(mark);
+ const reset=el('button',{type:'button',className:'cc-reset',textContent:'↺',title:'Đặt lại điều chỉnh'});reset.onclick=()=>$('dub-adj-reset').click();
+ const panel=el('div',{className:'cc-panel'},ccGroup('Điều chỉnh',ccRow('Độ sáng',ccBare('dub-adj-bright')),ccRow('Độ tương phản',ccBare('dub-adj-contrast')),ccRow('Độ bão hòa',ccBare('dub-adj-sat')),ccRow('Độ sắc nét',ccBare('dub-adj-sharp')),ccRow('',reset)),body.querySelector('.helper'));
+ ccHideRest(body,null);body.append(panel)}
+ccTrim();ccDubFrame();ccAdjust();ccImage();ccOverlay();
 
 function labelled(text,node){return node&&el('label',{className:'cc-field'},el('small',{textContent:text}),node)}
 document.addEventListener('design-changed',()=>refreshers.forEach(f=>f()));

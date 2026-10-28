@@ -1,8 +1,12 @@
-# Review Studio 0.22.4
+# Review Studio 0.22.5
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.22.5
+
+- **Mục "Điều chỉnh màu"** (kiểu CapCut) cho video gốc: Độ sáng, Độ tương phản, Độ bão hòa (−100…100) và Độ sắc nét (0…100), nút ↺ đặt lại, **công tắc bật/tắt** ở tiêu đề mục như các nhóm khác (tắt thì giữ nguyên số đã chỉnh nhưng không áp dụng; kéo thanh khi đang tắt thì tự bật). Chỉ chỉnh video, không ảnh hưởng nền, khung, chữ, overlay. Khung xem trước cập nhật ngay; video xuất dùng cùng mức chỉnh (FFmpeg eq + unsharp). Lưu trong mẫu.
 
 ## Mới trong 0.22.4
 

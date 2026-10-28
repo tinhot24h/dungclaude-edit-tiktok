@@ -472,6 +472,24 @@ class DesignTests(PipelineBase):
         self.assertTrue(opts['lenient_text']);self.assertTrue(any(w.startswith('Chữ không vừa ô') for w in job['warnings']))
         self.assertTrue(dubbing.design_mod.layout(opts,strict=False)[0]['text'])
 
+    def test_colour_adjustments_reach_both_export_graphs(self):
+        o=dubbing.options(dict(adjust=True,adjust_brightness=40,adjust_contrast=-20,adjust_saturation=50,adjust_sharpen=60))
+        self.assertEqual(dubbing.adjust_filters(dict(o,adjust=False)),[])   # switched off: values kept, nothing applied
+        self.assertEqual(dubbing.adjust_filters(o),['eq=brightness=0.1000:contrast=0.9000:saturation=1.5000','unsharp=5:5:0.900:5:5:0'])
+        self.assertEqual(dubbing.adjust_filters(dubbing.options({})),[])
+        for bad in (dict(adjust_brightness=101),dict(adjust_sharpen=-1),dict(adjust_contrast='x')):
+            with self.assertRaises(dubbing.DubError):dubbing.options(bad)
+        d=dubbing.design_mod.settings(dict(self.DESIGN))
+        self.assertIn('eq=brightness=0.1000',dubbing.design_video(d,360,640,1,4,dubbing.adjust_filters(o))[0])
+        lines,_=dubbing.frame_graph(dict(o,frame_canvas='9:16'),dict(width=180,height=320),dubbing.adjust_filters(o),[])
+        self.assertIn('unsharp=5:5:0.900',lines[0])
+        # rendered: a brighter picture than without the adjustment
+        out=Path(self.tmp.name)/'adj.mp4'
+        for name,adj in (('plain',[]),('bright',dubbing.adjust_filters(dubbing.options(dict(adjust=True,adjust_brightness=80))))):
+            subprocess.run(['ffmpeg','-v','error','-y','-i',str(self.data/self.vid/'source'),'-filter_complex',';'.join(dubbing.design_video(d,180,320,1,4,adj)),'-map','[framed]','-frames:v','1','-f','rawvideo','-pix_fmt','gray',str(out.with_name(name+'.raw'))],check=True)
+        plain,bright=(out.with_name(n+'.raw').read_bytes() for n in ('plain','bright'))
+        self.assertGreater(sum(bright[:180*100])/(180*100),sum(plain[:180*100])/(180*100)+10)
+
     def test_camera_zoom_of_the_design_is_in_the_export_graph(self):
         d=dubbing.design_mod.settings(dict(self.DESIGN,video_motion='zoom_in',motion_amount=20))
         chain=dubbing.design_video(d,1080,1920,1,8)[0]
