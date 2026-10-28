@@ -1,5 +1,6 @@
 """Portable launcher: checks prerequisites, then opens the local application."""
 import os
+import socket
 import shutil
 import subprocess
 import sys
@@ -8,6 +9,32 @@ import webbrowser
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
+
+
+HIDDEN = '--hidden' in sys.argv   # started by MO_REVIEW_STUDIO.vbs: no console window, errors go to a dialog
+
+
+def already_running(port):
+    try:
+        with socket.create_connection(('127.0.0.1', port), timeout=.5):
+            return True
+    except OSError:
+        return False
+
+
+def tell(message):
+    """Startup error: a Windows message box when there is no console, otherwise the terminal."""
+    log = ROOT / '.local' / 'launch.log'
+    try:
+        log.parent.mkdir(exist_ok=True)
+        log.write_text(message + '\n', encoding='utf-8')
+    except OSError:
+        pass
+    if HIDDEN and os.name == 'nt':
+        import ctypes
+        ctypes.windll.user32.MessageBoxW(None, message + '\n\nMở START_WINDOWS.bat để xem chi tiết.', 'Review Studio', 0x10)
+    else:
+        print(f'Khong khoi dong duoc: {message}', file=sys.stderr)
 
 
 def main():
@@ -30,6 +57,10 @@ def main():
         if not (ROOT / 'assets' / font).is_file():
             raise RuntimeError('Thieu phong chu. Hay giai nen toan bo ZIP vao mot thu muc.')
     port = int(os.environ.get('PORT', '8000'))
+    if already_running(port):
+        # opened twice (e.g. the desktop shortcut): just bring the browser to the running app
+        webbrowser.open(f'http://127.0.0.1:{port}')
+        return 0
     print(f'Mo trinh duyet: http://127.0.0.1:{port}', flush=True)
     print('Giu cua so nay mo khi dung. Nhan Ctrl+C de dung.', flush=True)
     if '--no-browser' not in sys.argv:
@@ -51,5 +82,5 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         pass
     except Exception as error:
-        print(f'Khong khoi dong duoc: {error}', file=sys.stderr)
+        tell(str(error))
         sys.exit(1)

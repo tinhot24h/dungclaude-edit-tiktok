@@ -5,6 +5,10 @@
 const el=(tag,props={},...children)=>{const e=Object.assign(document.createElement(tag),props);e.append(...children);return e};
 const button=el('button',{type:'button',id:'update-button',className:'update-button',textContent:'⟳',title:'Kiểm tra cập nhật'});
 const badge=$('export-badge');if(badge)badge.before(button);else document.querySelector('.app-header').append(button);
+// ⏻ quit: the only way to stop the app when it runs without a console window
+const quit=el('button',{type:'button',id:'quit-button',className:'update-button',textContent:'⏻',title:'Tắt Review Studio'});button.after(quit);
+quit.onclick=async()=>{if(!confirm('Tắt Review Studio?\n\nVideo đang xuất hoặc đang lồng tiếng sẽ dừng (lần sau bấm Tiếp tục để chạy tiếp). Mở lại bằng MO_REVIEW_STUDIO.vbs hoặc START_WINDOWS.bat.'))return;
+ try{await request('/app/quit',{method:'POST'})}catch{}document.body.innerHTML='<main style="padding:60px;text-align:center;font:15px system-ui;color:#c8d4e3"><h1>Đã tắt Review Studio</h1><p>Có thể đóng tab này. Mở lại bằng MO_REVIEW_STUDIO.vbs (không hiện cửa sổ cmd) hoặc START_WINDOWS.bat.</p></main>'};
 const box=el('dialog',{id:'update-dialog',className:'update-dialog'});
 box.innerHTML='<h2>Cập nhật Review Studio</h2><p id="update-text" class="helper"></p><pre id="update-notes" hidden></pre><div class="result-actions"><button type="button" id="update-run" class="primary-action small-action" hidden>Cập nhật ngay</button><button type="button" id="update-restart" class="primary-action small-action" hidden>Khởi động lại</button><button type="button" id="update-close" class="outline-action small-action">Đóng</button></div><p class="helper">Chỉ tải các file thay đổi từ GitHub và kiểm tra mã SHA-256 từng file. Video, MP3, dự án và cài đặt trong thư mục .local được giữ nguyên; bản cũ được sao lưu trong .local/update.</p>';
 document.body.append(box);

@@ -66,3 +66,13 @@ Key input tự tải giọng/lịch sử sau debounce 800 ms hoặc blur. Phản
 - **Voice Library** thêm bộ lọc `tags, locale, age, accent, category, use_case, descriptive`, riêng vbee `voice_ownership`, riêng fishaudio `sort`, `tag`.
 - **Phụ đề**: khi bật `with_transcript`, `metadata.srt_url` của tác vụ được tải qua cùng kiểm tra HTTPS/địa chỉ công khai như audio và trả về file `.srt` cho người dùng; không lưu link có chữ ký.
 - Không gửi `receive_url` (ứng dụng cục bộ dùng polling `GET /v1/task/:id`).
+
+## Dubbing v1 (timestamp mode, from the user's documentation screenshots)
+
+`POST /v1/task/dubbing`, multipart: `file` (audio.mp3 or audio.m4a), `num_speakers` (0 = auto), `disable_voice_cloning`,
+`source_lang` (`auto`, `zh`, `en`…), `target_lang`, optional `voice_id` (v3 prefixed, Kokoro not supported), `receive_url`
+(required). Review Studio polls `GET /v1/task/{id}` instead of a webhook and sends a reserved `.invalid` callback address,
+so the result payload is delivered nowhere. Done task metadata: `audio_url` (default dubbed audio, keeps the original
+background), `srt_url` (translated SRT), `replacement_audio_url` (voice-only track synthesized from the SRT with
+`voice_id`, +25% credits), `replacement_status`. The app uses the replacement track over its own separated background, and
+falls back to the default track (without adding the background again) when the replacement failed.

@@ -375,6 +375,34 @@ class DemucsTests(PipelineBase):
         dubbing._demucs.clear()
 
 
+class Ai33DubbingTests(PipelineBase):
+    def test_ai33_timestamp_dubbing_uses_the_replacement_voice_and_srt(self):
+        sent={}
+        def create(key,audio,source,target,voice):
+            sent.update(source=source,target=target,voice=voice,size=len(audio));return dict(task_id='dub1',state='submitted')
+        srt='1\n00:00:00,300 --> 00:00:01,500\nXin chào cả nhà\n\n2\n00:00:02,000 --> 00:00:03,200\nCảm ơn đã xem\n'
+        def download(url,target):
+            Path(target).write_bytes(srt.encode() if url.endswith('.srt') else self.voice.read_bytes())
+        done=dict(status='done',progress=100,audio_url='https://cdn.example/default.m4a',srt_url='https://cdn.example/vi.srt',replacement_audio_url='https://cdn.example/voice.mp3',replacement_status='done')
+        with mock.patch.object(dubbing.ai33_audio,'create_dubbing',side_effect=create),mock.patch.object(dubbing.ai33_audio,'get_task',return_value=done),\
+             mock.patch.object(dubbing.audio_files,'download',side_effect=download),mock.patch.object(dubbing,'transcribe_request') as asr:
+            job=self.job(background='duck',review=False,subtitles='file',mode='ai33',language='en')
+            self.store.process(job,dict(openai='',ai33='k'),threading.Event())
+        self.assertEqual(job['state'],'done',job['message']);asr.assert_not_called()
+        self.assertEqual((sent['source'],sent['target'],sent['voice']),('en','vi','edge_vi-VN-HoaiMyNeural'));self.assertGreater(sent['size'],1000)
+        self.assertEqual((job['steps']['asr'],job['steps']['translate']),('skipped','skipped'))
+        self.assertEqual([s['vi'] for s in job['segments']],['Xin chào cả nhà','Cảm ơn đã xem'])
+        self.assertIn('Cảm ơn đã xem',(self.data/'dub'/job['id']/'vi.srt').read_text())
+        self.assertAlmostEqual(dubbing.probe(self.data/'dub'/job['id']/'dubbed.mp4')['duration'],4,delta=.2)
+        self.assertTrue((self.data/'dub'/job['id']/'background.wav').is_file())
+
+    def test_ai33_mode_needs_no_openai_key_and_rejects_kokoro(self):
+        with mock.patch.object(self.store,'enqueue'):pass
+        key=self.store.create(dict(video_ids=[self.vid],options=dict(voice_id='edge_vi-VN-HoaiMyNeural',mode='ai33'),ai33_key='k'))[0]
+        self.assertTrue(key)
+        with self.assertRaises(ValueError):dubbing.ai33_audio.create_dubbing('k',b'x',voice_id='kokoro_af_bella')
+
+
 class StyleTests(unittest.TestCase):
     def test_style_presets_reach_both_prompts_and_strict_rule_is_always_on(self):
         import ai_translate

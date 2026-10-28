@@ -35,11 +35,11 @@ def api_key(raw):
     return key
 
 
-def json_request(path,key,data=None,content_type=None,method=None):
+def json_request(path,key,data=None,content_type=None,method=None,timeout=80):
     # Only documented paths are constructed by this module. Never put keys in URLs.
     req=request.Request(ROOT+path,data=data,headers={'xi-api-key':key,**({'Content-Type':content_type} if content_type else {})},method=method)
     try:
-        with request.urlopen(req,timeout=80) as response:
+        with request.urlopen(req,timeout=timeout) as response:
             body=response.read(8*1024*1024+1)
         if len(body)>8*1024*1024:
             raise AudioError('Phản hồi ai33.pro quá lớn.')
@@ -203,7 +203,12 @@ def get_task(raw):
     srt=metadata.get('srt_url') or ''
     try:srt=https_url(srt) if srt else ''
     except AudioError:srt=''
+    # /v1/task/dubbing: the SRT re-voiced with the chosen voice (voice only, timed like the source)
+    replacement=metadata.get('replacement_audio_url') or ''
+    try:replacement=https_url(replacement) if replacement else ''
+    except AudioError:replacement=''
     return dict(task_id=task,status=status,progress=max(0,min(100,progress)),audio_url=audio,srt_url=srt,
+                replacement_audio_url=replacement,replacement_status=str(metadata.get('replacement_status') or '')[:40],
                 credit_cost=cost,type=str(result.get('type',''))[:80],
                 text=str(result.get('text',''))[:1000],name=str(result.get('file_name') or metadata.get('file_name') or metadata.get('filename') or result.get('name') or '')[:120],
                 error='ai33.pro báo lỗi tác vụ. Xem chi tiết trong lịch sử ai33.pro; không tạo lại tự động.' if status=='error' else '')
@@ -311,6 +316,30 @@ def dialogue_fields(raw):
         raise ValueError('Khoảng nghỉ giữa người nói phải từ 0 đến 5 giây.')
     fields=dict(text=text.strip(),speakers=json.dumps(rows,ensure_ascii=False),delay=str(delay))
     return common_fields(raw,fields)
+
+
+DUB_LANGS=('auto','zh','en','vi','ja','ko','fr','de','es','th','id')
+# /v1/task/dubbing requires receive_url, but this local app polls GET /v1/task instead. The callback goes to a
+# reserved .invalid name that never resolves, so the result payload is not delivered anywhere.
+RECEIVE_URL='https://review-studio.invalid/ai33-callback'
+
+
+def create_dubbing(key,audio,source_lang='auto',target_lang='vi',voice_id='',num_speakers=0):
+    """Dub an MP3 (ai33 transcribes, translates and returns a timed SRT); with voice_id the SRT is synthesized once
+    more with that voice as a voice-only track (replacement_audio_url). Sent once; never retried automatically."""
+    key=api_key(dict(api_key=key))
+    if source_lang not in DUB_LANGS or target_lang not in DUB_LANGS or target_lang=='auto':
+        raise ValueError('Ngôn ngữ lồng tiếng ai33 không hợp lệ.')
+    if voice_id and (not isinstance(voice_id,str) or not re.fullmatch(r'(elevenlabs|minimax|clone|edge|vbee|fishaudio)_[A-Za-z0-9_.:-]{1,180}',voice_id)):
+        raise ValueError('Giọng này không dùng được cho lồng tiếng ai33 (Kokoro không hỗ trợ).')
+    fields=dict(num_speakers=str(int(num_speakers)),disable_voice_cloning='true',source_lang=source_lang,target_lang=target_lang,receive_url=RECEIVE_URL)
+    if voice_id:fields['voice_id']=voice_id
+    boundary='ReviewStudio'+uuid.uuid4().hex
+    pieces=[]
+    for name,value in fields.items():
+        pieces.extend([f'--{boundary}\r\nContent-Disposition: form-data; name="{name}"\r\n\r\n'.encode(),value.encode('utf-8'),b'\r\n'])
+    pieces.extend([f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="audio.mp3"\r\nContent-Type: audio/mpeg\r\n\r\n'.encode(),audio,b'\r\n',f'--{boundary}--\r\n'.encode()])
+    return submitted(json_request('/v1/task/dubbing',key,b''.join(pieces),'multipart/form-data; boundary='+boundary,timeout=300))
 
 
 def submitted(result):

@@ -1,8 +1,28 @@
-# Review Studio 0.18.0
+# Review Studio 0.19.0
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.19.0
+
+- **Chỉ chạy trên Windows:** bỏ các file chạy và cập nhật cho Mac/Linux khỏi bản đóng gói.
+- **Mở ứng dụng không hiện cửa sổ cmd:**
+  - Nhấp đúp `MO_REVIEW_STUDIO.vbs`. Python và FFmpeg chạy ẩn, không nháy cửa sổ đen khi xuất.
+  - `TAO_LOI_TAT_DESKTOP.vbs` tạo lối tắt "Review Studio" trên Desktop.
+  - Tắt bằng nút **⏻** trên thanh trên cùng. Mở lần nữa khi đang chạy chỉ mở lại trình duyệt.
+  - Lỗi khởi động hiện thành hộp thông báo. `START_WINDOWS.bat` vẫn dùng được khi cần xem log.
+- **Lồng tiếng hàng loạt rất nhiều video/overlay:**
+  - Bỏ giới hạn 50 video mỗi lần. Trước đây chọn thư mục hơn 50 video sẽ báo lỗi.
+  - Mỗi video được tải lên và xếp hàng ngay, nên video đầu chạy luôn; một file lỗi không chặn các file khác và lý do lỗi hiện ngay trên dòng của file đó.
+  - Danh sách chỉ hiện 150 video đầu, hàng đợi hiện 60 tác vụ và có nút "Hiện thêm", nên giao diện không bị chậm.
+  - Thanh tiến độ tải không còn vẽ lại cả danh sách. Danh sách hàng đợi được đọc nhanh hơn ở phía máy chủ.
+  - Thêm overlay từ thư mục: bỏ qua file đã có (cùng tên và dung lượng), gom lỗi một chỗ. Bản xem trước MOV chỉ tạo khi cần xem, nên thêm hàng trăm file vẫn nhanh.
+- **Chọn model dịch có gợi ý giá:** danh sách gpt-4.1-nano, gpt-4o-mini, gpt-4.1-mini (khuyên dùng), gpt-5-mini, gpt-4.1, gpt-4o, gpt-5, hoặc tự nhập tên. Mỗi model ghi mục đích dùng hợp lý và ước tính chi phí mỗi phút video (USD và VNĐ, kèm Whisper). Giá chỉ để tham khảo theo bảng giá OpenAI.
+- **Ngôn ngữ nói: tiếng Anh** (cùng tiếng Trung và tự nhận diện). Lời nhắc dịch tự đổi theo ngôn ngữ nguồn.
+- **Lồng tiếng theo timestamp:**
+  - *Theo timestamp (SRT):* app dịch từng dòng, giữ đúng mốc thời gian (từ Whisper hoặc SRT bạn đính kèm); mỗi dòng đọc và đặt đúng mốc. Áp dụng đủ quy tắc không nhắc giá/thương hiệu.
+  - *ai33 lồng tiếng theo timestamp:* dùng API `/v1/task/dubbing` của ai33. ai33 tự nhận diện, dịch, tạo SRT có timestamp rồi đọc lại bằng giọng bạn chọn; nền gốc do app tách. Không cần OpenAI key. Lưu ý: ai33 tự dịch nên quy tắc và văn phong của app không áp dụng; app vẫn cảnh báo dòng có giá/thông số.
 
 ## Mới trong 0.18.0
 
@@ -171,7 +191,7 @@ Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI,
 ## Mới trong 0.13
 
 - **Cập nhật không cần tải lại toàn bộ:** nút **⟳** ở góc phải trên cùng tự kiểm tra GitHub khi mở ứng dụng; có bản mới thì hiện **⬆ Có bản …**. Bấm **Cập nhật ngay**: ứng dụng chỉ tải các file đã thay đổi, kiểm tra mã SHA-256 từng file, sao lưu bản cũ vào `.local/update`, rồi bấm **Khởi động lại** là dùng được bản mới. Video, MP3, dự án, kiểu chữ và cài đặt trong `.local` được giữ nguyên.
-- Cập nhật ngoài ứng dụng: bấm đúp `UPDATE_WINDOWS.bat` (Windows) hoặc `UPDATE_MAC_LINUX.command`, hoặc chạy `python update.py` (`--check` để chỉ xem thay đổi). Thư mục là bản `git clone` thì dùng `git pull`.
+- Cập nhật ngoài ứng dụng: bấm đúp `UPDATE_WINDOWS.bat`, hoặc chạy `python update.py` (`--check` để chỉ xem thay đổi). Thư mục là bản `git clone` thì dùng `git pull`.
 - Từ 0.13 trở đi mới cập nhật được kiểu này: bản 0.12.1 trở về trước cần tải ZIP 0.13 một lần.
 
 ## Mới trong 0.12.1
@@ -349,7 +369,7 @@ Cần Python 3.11+, FFmpeg/FFprobe với libx264/drawtext, libmp3lame cho MP3. K
 python3 launch.py
 ```
 
-Windows mở `START_WINDOWS.bat`; macOS/Linux chạy lệnh trong thư mục giải nén. Cổng loopback mặc định 8000; đặt `PORT` để đổi, `--no-browser` không tự mở trình duyệt. Health: `curl --fail http://127.0.0.1:8000/health`.
+Windows mở `MO_REVIEW_STUDIO.vbs` (không hiện cmd) hoặc `START_WINDOWS.bat`. Cổng loopback mặc định 8000; đặt `PORT` để đổi, `--no-browser` không tự mở trình duyệt. Health: `curl --fail http://127.0.0.1:8000/health`.
 
 Dừng bản cũ, giải nén thư mục mới rồi chạy; không cần cài lại Python/FFmpeg. Thiết kế px 0.4 được giữ cùng khóa trình duyệt. Nếu cùng trình duyệt/địa chỉ/cổng và chưa có thiết kế px, có thể chuyển bản lưu 0.3 từ % sang px. PNG ở thư mục cũ cần tải lại.
 

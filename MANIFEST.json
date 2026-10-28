@@ -1,8 +1,16 @@
 {
  "app": "ReviewStudio",
- "version": "0.18.0",
- "notes": "## Mới trong 0.18.0\n\n- **Bố cục tab Lồng tiếng 3 cột:** thông số bên trái (rộng hơn) · **Hàng đợi** ở giữa · **Xem trước** bên phải (luôn hiện khi cuộn). Màn hình hẹp tự xếp lại.\n- **Lớp ảnh (image overlay), không bắt buộc**: một ảnh PNG/JPG/WebP đặt lên mọi video, ví dụ khối đen che chữ gốc, khung, logo, sticker. Đầy đủ thuộc tính:\n  - **Kích thước:** rộng/cao theo % khung, giữ hoặc bỏ tỷ lệ ảnh. Nút nhanh: *Vừa khung*, *Lấp đầy khung*, *Kéo giãn full khung*, *Cỡ gốc*.\n  - **Vị trí:** ngang/dọc theo %, lưới căn 9 điểm, **kéo ảnh ngay trên khung xem trước**, kéo góc dưới phải để đổi cỡ.\n  - **Xoay** (số thập phân, nút ±90°) và **lật** ngang/dọc.\n  - **Hòa trộn** kiểu CapCut: Mặc định, Làm tối, Nhân, Cháy màu, Làm sáng, Màn hình, Né màu, Cộng sáng, Lớp phủ, Ánh sáng dịu/tán xạ, Ánh sáng mạnh, Khác biệt, Loại trừ.\n  - **Độ đục** và **thứ tự lớp** (dưới hoặc trên overlay video). Khung xem trước hiện đúng như khi xuất.\n- **Xem trước:** cập nhật ngay khi đổi thông số, thêm **vùng an toàn TikTok** (thanh trên, cột nút bên phải, tên/mô tả phía dưới) và nút tắt tiếng.\n- **Cắt video theo giọng:** sau khi đã chỉnh tốc độ trong giới hạn mà video vẫn dài hơn giọng, video kết thúc sau câu cuối khoảng 0.4s. Có thể tắt ở mục 🎙. Giọng dài hơn video thì vẫn cắt giọng theo video như trước.",
+ "version": "0.19.0",
+ "notes": "## Mới trong 0.19.0\n\n- **Chỉ chạy trên Windows:** bỏ các file chạy và cập nhật cho Mac/Linux khỏi bản đóng gói.\n- **Mở ứng dụng không hiện cửa sổ cmd:**\n  - Nhấp đúp `MO_REVIEW_STUDIO.vbs`. Python và FFmpeg chạy ẩn, không nháy cửa sổ đen khi xuất.\n  - `TAO_LOI_TAT_DESKTOP.vbs` tạo lối tắt \"Review Studio\" trên Desktop.\n  - Tắt bằng nút **⏻** trên thanh trên cùng. Mở lần nữa khi đang chạy chỉ mở lại trình duyệt.\n  - Lỗi khởi động hiện thành hộp thông báo. `START_WINDOWS.bat` vẫn dùng được khi cần xem log.\n- **Lồng tiếng hàng loạt rất nhiều video/overlay:**\n  - Bỏ giới hạn 50 video mỗi lần. Trước đây chọn thư mục hơn 50 video sẽ báo lỗi.\n  - Mỗi video được tải lên và xếp hàng ngay, nên video đầu chạy luôn; một file lỗi không chặn các file khác và lý do lỗi hiện ngay trên dòng của file đó.\n  - Danh sách chỉ hiện 150 video đầu, hàng đợi hiện 60 tác vụ và có nút \"Hiện thêm\", nên giao diện không bị chậm.\n  - Thanh tiến độ tải không còn vẽ lại cả danh sách. Danh sách hàng đợi được đọc nhanh hơn ở phía máy chủ.\n  - Thêm overlay từ thư mục: bỏ qua file đã có (cùng tên và dung lượng), gom lỗi một chỗ. Bản xem trước MOV chỉ tạo khi cần xem, nên thêm hàng trăm file vẫn nhanh.\n- **Chọn model dịch có gợi ý giá:** danh sách gpt-4.1-nano, gpt-4o-mini, gpt-4.1-mini (khuyên dùng), gpt-5-mini, gpt-4.1, gpt-4o, gpt-5, hoặc tự nhập tên. Mỗi model ghi mục đích dùng hợp lý và ước tính chi phí mỗi phút video (USD và VNĐ, kèm Whisper). Giá chỉ để tham khảo theo bảng giá OpenAI.\n- **Ngôn ngữ nói: tiếng Anh** (cùng tiếng Trung và tự nhận diện). Lời nhắc dịch tự đổi theo ngôn ngữ nguồn.\n- **Lồng tiếng theo timestamp:**\n  - *Theo timestamp (SRT):* app dịch từng dòng, giữ đúng mốc thời gian (từ Whisper hoặc SRT bạn đính kèm); mỗi dòng đọc và đặt đúng mốc. Áp dụng đủ quy tắc không nhắc giá/thương hiệu.\n  - *ai33 lồng tiếng theo timestamp:* dùng API `/v1/task/dubbing` của ai33. ai33 tự nhận diện, dịch, tạo SRT có timestamp rồi đọc lại bằng giọng bạn chọn; nền gốc do app tách. Không cần OpenAI key. Lưu ý: ai33 tự dịch nên quy tắc và văn phong của app không áp dụng; app vẫn cảnh báo dòng có giá/thông số.",
  "files": {
+  "MO_REVIEW_STUDIO.vbs": {
+   "sha256": "4a581ad2ce49c314e8cf63fe10178413d90b5b904eb38bae0685d2db1ab27b18",
+   "size": 624
+  },
+  "TAO_LOI_TAT_DESKTOP.vbs": {
+   "sha256": "d9266e914b70de07c6e94b13e359fe80f4617e28ed032453fcb7551b26617ca3",
+   "size": 843
+  },
   "demucs_runner.py": {
    "sha256": "426b21e67e115d21426f0ba38d0febe8707c0dd6336f7891396a59ec55500c0d",
    "size": 1050
@@ -15,21 +23,17 @@
    "sha256": "2da8f76eaae5ffbff33ca0677350853d9895523e124d6ed73050c11d99cd1d22",
    "size": 212
   },
-  "UPDATE_MAC_LINUX.command": {
-   "sha256": "7c9e4223bcb043f1e460ff73ac6250ec15f57811f12a03ad025bdaac2a8c7282",
-   "size": 180
-  },
   "tests/test_update.py": {
    "sha256": "4b4c65c9bf995d7c77fe0df350e23c119cc7f16e58873bc1162e39cc099b5618",
    "size": 5491
   },
   "update_ui.js": {
-   "sha256": "9c4280d3a39addeb8181a9b9662c00b57e93962de38581ac8cfa373b89544900",
-   "size": 3948
+   "sha256": "e18f94db5d8cb7feb16d5efeb90a59b0c3f86e75f80fefce377f64ad0b9743f9",
+   "size": 4755
   },
   "dub_ui.js": {
-   "sha256": "9eddc87e0f721f9262e84bb70cf4c3c9c5fe21df932a8431bc1468682992ea5f",
-   "size": 72756
+   "sha256": "a83117165d4be41c53f1fffe6d5bf2677b131852939aaec29fb89e1591d55b70",
+   "size": 77869
   },
   "layout_ui.js": {
    "sha256": "31474a69f54710df46c2483f9711e36d487d11437085b2b563f97b1f18ab711e",
@@ -48,12 +52,12 @@
    "size": 2135
   },
   "dubbing.py": {
-   "sha256": "1eba86d3ed52954dbbb7d24fa659add7bfcbdb44d3e034976e2293566b735af5",
-   "size": 89911
+   "sha256": "46ed63e20fcf7267fbe30765050338d21b3ec40cd42dc2157141ea2ac70b6bf7",
+   "size": 98459
   },
   "tests/test_dubbing.py": {
-   "sha256": "cb81f0740ab1044c2bfc7a4c15c62aa0372a4eeef38643c414d6dd9b3f6129f1",
-   "size": 29513
+   "sha256": "8ed1fca9740bf983e55d38f1b303c13ac0b04e1fd1b293769e4ecccc7622827a",
+   "size": 31894
   },
   "image_ui.js": {
    "sha256": "b8e2a905501aedea84033a7c962b180251e06dc018e6133241f0310b474ed8e9",
@@ -124,12 +128,12 @@
    "size": 13961
   },
   "app.py": {
-   "sha256": "fe8be45436fff51a2ec557d617fdd28dbd3633a72cf4e6567254562860f4f8df",
-   "size": 51195
+   "sha256": "71e6924cb03f65d01d2e2b1e1767bb1342c8658616b3a728fbdb2576cab46f66",
+   "size": 51547
   },
   "ai33_audio.py": {
-   "sha256": "3852255575e4c88a806b90fc01cd5df2551ff7e956f04f3547a87394aac4810b",
-   "size": 23838
+   "sha256": "c68d977365a3cd9698ab931194f3021f535cc836cf0113383743b5441f4d30b4",
+   "size": 26134
   },
   "audio_files.py": {
    "sha256": "0a9bdf3f385a5a9627172e2930bcbd0482d59a3cf73aaae40714a54da9eed654",
@@ -164,35 +168,31 @@
    "size": 2609
   },
   "index.html": {
-   "sha256": "6d18c553cbd850ccca0d63335a839dff97fff645bb83ff8f7428f5b61e657a6c",
+   "sha256": "db654f71dc7cb1c1cfdadbf71ad0e4585146ede49d0211a9ab522b183f6c801f",
    "size": 33084
   },
   "launch.py": {
-   "sha256": "a493ab33e2db46235059df4460fd21a397ffd12880d85123d028cef9e2befa95",
-   "size": 2533
+   "sha256": "f22804abece2a62383da1386cecc216dcda743ba3fe4df74ea9110dc483d4196",
+   "size": 3551
   },
   "build_package.py": {
-   "sha256": "529e9bb8d6a9faa8df69b1edd37175632abddc0391216ee600db2efb93c32551",
-   "size": 3193
+   "sha256": "b2e880128525c4c64138420c6acf4a7c23fe0d92c3bf11f1941b8f1fd71fbd7c",
+   "size": 3189
   },
   "START_WINDOWS.bat": {
    "sha256": "616ecf0e4d9a41995c509f79bd5e1a01d1dce7ba76356a801417e08747847c4e",
    "size": 212
   },
-  "START_MAC_LINUX.command": {
-   "sha256": "21b2d87c2eac36128c3cc2b9d436f493e4e086eebfb6d55a667c6e6320a25ee8",
-   "size": 230
-  },
   "HUONG_DAN.txt": {
-   "sha256": "be3a2e415c3fa561f6e41736429f4bfac69b32d42a4a91fd8fc2957a5f66255b",
-   "size": 35611
+   "sha256": "09bbc9fbbf3a811856fa403d2d26e9bceb70c83e170670296c4ee612a7c5f8ab",
+   "size": 36413
   },
   "README.md": {
-   "sha256": "ddaf79b5a9928f7da7893de7fc0cde9db166c81eb747d160b61077d9bd1d7e86",
-   "size": 50332
+   "sha256": "dff42ece733bc996b590cde97bca75b5c0297ace31d853c38825704511197a49",
+   "size": 52896
   },
   "VERSION": {
-   "sha256": "f5e9382967c9833066a55808829f3750fc8e1181b170cafd222c37048bb49a77",
+   "sha256": "06c53dd4f22b2e0038ca2bb9af32cc1ab7e69898d99cc3bfa22bd965f21aac8f",
    "size": 7
   },
   ".gitignore": {
@@ -224,8 +224,8 @@
    "size": 2120
   },
   "docs/ai33-api.md": {
-   "sha256": "f6760ad2d061bdd44f8b201b9c09a2aea3b2ea335b7901d3c1f18b2b4c64663f",
-   "size": 6863
+   "sha256": "89c19bca37101b46b26f08694f2900e142b6708ecb15c0b3ca34a8a7c947e9c5",
+   "size": 7761
   },
   "assets/DejaVuSans.ttf": {
    "sha256": "57f73e11f51999432bf7ab22ce55b6f945d5eca1bf824404cfa9ec2e3718c84e",

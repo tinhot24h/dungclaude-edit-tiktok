@@ -437,7 +437,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(200,dubbing.demucs_status('refresh' in parse_qs(urlparse(self.path).query)))
         if path == '/dub/capabilities':
             return self.respond(200,{'demucs':bool(dubbing.demucs_command()),'openai':bool(dubbing.openai_key({})),'ai33':bool(dubbing.ai33_key({})),
-                                     'defaults':dubbing.DEFAULTS,'pronouns':dubbing.PRONOUNS,'styles':ai_translate.STYLE_LABELS})
+                                     'defaults':dubbing.DEFAULTS,'models':dubbing.MODELS,'whisper_per_minute':dubbing.WHISPER_PER_MINUTE,'pronouns':dubbing.PRONOUNS,'styles':ai_translate.STYLE_LABELS})
         dub=re.fullmatch(r'/dub/([a-f0-9]{32})(?:/(download|srt/vi|srt/zh))?',path)
         if dub:
             try:job=DUB.load(dub[1])
@@ -695,6 +695,10 @@ class Handler(BaseHTTPRequestHandler):
                         shutil.rmtree(folder,ignore_errors=True);raise
                     return self.respond(200,{**result,'video_id':vid})
                 except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
+            if path=='/app/quit':
+                # "⏻ Tắt" in the header: needed when the app was opened without a console window (MO_REVIEW_STUDIO.vbs)
+                threading.Timer(.6,lambda:os._exit(0)).start()
+                return self.respond(200,{'quitting':True})
             if path in ('/update/apply','/update/restart'):
                 if (ROOT/'.git').exists():raise ValueError('Bản git clone: cập nhật bằng lệnh git pull.')
                 with LOCK:busy=any(job.get('state') in ACTIVE for job in JOBS.values())

@@ -76,8 +76,8 @@ def options(raw):
         num(key, lo, hi)
     if raw.get('subtitles') == 'burn':  # burned-in subtitles were removed; old saved settings get the .srt file instead
         raw = dict(raw, subtitles='file')
-    for key, allowed in (('language', ('zh', 'auto')), ('background', BACKGROUND), ('subtitles', SUBTITLES),
-                         ('loudness', ('off', 'tiktok')), ('pronoun', tuple(PRONOUNS)), ('mode', ('paragraph', 'lines')), ('align', ('auto', 'voice', 'video')), ('style', tuple(ai_translate.STYLES)), ('frame_canvas', tuple(CANVAS)), ('frame_fit', ('cover', 'contain', 'blur')),
+    for key, allowed in (('language', ('zh', 'en', 'auto')), ('background', BACKGROUND), ('subtitles', SUBTITLES),
+                         ('loudness', ('off', 'tiktok')), ('pronoun', tuple(PRONOUNS)), ('mode', ('paragraph', 'lines', 'ai33')), ('align', ('auto', 'voice', 'video')), ('style', tuple(ai_translate.STYLES)), ('frame_canvas', tuple(CANVAS)), ('frame_fit', ('cover', 'contain', 'blur')),
                          ('frame_flip', ('none', 'h', 'v', 'hv')), ('overlay_blend', ('normal', 'screen', 'key')), ('overlay_timing', ('loop', 'sequence', 'random')),
                          ('image_flip', ('none', 'h', 'v', 'hv')), ('image_blend', tuple(IMAGE_BLENDS)), ('image_layer', ('below', 'above'))):
         v = raw.get(key, DEFAULTS[key])
@@ -311,16 +311,39 @@ def openai_call(path, key, body, content_type, timeout=300):
         raise DubError('Không đọc được phản hồi OpenAI.', 502) from None
 
 
+SOURCE_NAMES = {'zh': 'tiếng Trung', 'en': 'tiếng Anh', 'auto': 'tiếng nước ngoài (tiếng Trung, tiếng Anh…)'}
+
+# Translation models shown in the app: USD per 1M tokens (input, output) from OpenAI's public price list, for an
+# estimate only — the real bill follows OpenAI's current prices. `think` = reasoning model (extra hidden output tokens).
+MODELS = [
+    dict(id='gpt-4.1-nano', price=(0.10, 0.40), think=False, use='Rẻ nhất · video ngắn, lời đơn giản; văn phong kém tự nhiên hơn'),
+    dict(id='gpt-4o-mini', price=(0.15, 0.60), think=False, use='Rất rẻ · dịch nhanh, ổn định cho số lượng lớn'),
+    dict(id='gpt-4.1-mini', price=(0.40, 1.60), think=False, use='Khuyên dùng · cân bằng giá và chất lượng, giữ quy tắc tốt'),
+    dict(id='gpt-5-mini', price=(0.25, 2.00), think=True, use='Có suy luận · hiểu ý tốt hơn, chậm hơn một chút'),
+    dict(id='gpt-4.1', price=(2.00, 8.00), think=False, use='Văn phong hay · review bán hàng, cần lời mượt'),
+    dict(id='gpt-4o', price=(2.50, 10.00), think=False, use='Chất lượng cao · đắt hơn gpt-4.1, ít khác biệt'),
+    dict(id='gpt-5', price=(1.25, 10.00), think=True, use='Tốt nhất · nội dung khó, nhiều thuật ngữ; chậm và đắt nhất'),
+]
+WHISPER_PER_MINUTE = 0.006
+
+
+def reasoning(model):
+    """Reasoning models get a low effort: translation needs little thinking and it keeps cost and wait down."""
+    return dict(reasoning=dict(effort='low')) if re.match(r'(gpt-5|o\d)', model) else {}
+
+
 def transcribe_request(path, key, language):
     """OpenAI speech-to-text with segment timestamps."""
     fields = [('model', 'whisper-1'), ('response_format', 'verbose_json'), ('timestamp_granularities[]', 'segment')]
     if language == 'zh':
         fields += [('language', 'zh'), ('prompt', '以下是普通话的句子，使用简体中文和标点符号。')]
+    elif language == 'en':
+        fields += [('language', 'en')]
     body, content_type = multipart(fields, 'file', 'audio.mp3', Path(path).read_bytes(), 'audio/mpeg')
     return openai_call('audio/transcriptions', key, body, content_type, timeout=600)
 
 
-TRANSLATE_RULES = '''Bạn là biên dịch viên lồng tiếng video ngắn, dịch lời thoại tiếng Trung sang tiếng Việt để đọc thành giọng nói khớp với hình.
+TRANSLATE_RULES = '''Bạn là biên dịch viên lồng tiếng video ngắn, dịch lời thoại {src} sang tiếng Việt để đọc thành giọng nói khớp với hình.
 - Dịch tự nhiên, khẩu ngữ, dễ nghe như người Việt nói; giữ đúng nghĩa, sự thật, tên riêng, đơn vị. Không thêm thông tin, không bình luận.
 - MỖI DÒNG chỉ dịch dòng đó (giữ đúng id), đọc vừa trong thời gian của dòng: không vượt max_syllables tiếng (âm tiết). Nếu dòng gốc dài, lược ý phụ, giữ ý chính; câu bị cắt ngang giữa hai dòng thì dịch sao cho nối liền mạch.
 - Viết số, đơn vị theo cách đọc được; không dùng ký hiệu khó đọc, không emoji, không markdown, không ghi chú trong ngoặc.
@@ -331,7 +354,7 @@ def translate_request(key, model, lines, settings):
     # The writing template from the "Dịch & biên tập AI" page is shared: its content and style rules apply here,
     # its hook/script/title/body format does not (dubbing translates line by line).
     template = settings.get('instructions') or ai_translate.DEFAULT_RULES
-    rules = (ai_translate.GUARD + '\n\n' + TRANSLATE_RULES + '\n- Xưng hô: ' + PRONOUNS[settings['pronoun']] + '.' + '\n- Văn phong: ' + ai_translate.STYLES[settings.get('style', 'review')]
+    rules = (ai_translate.GUARD + '\n\n' + TRANSLATE_RULES.replace('{src}', SOURCE_NAMES[settings.get('language', 'zh')]) + '\n- Xưng hô: ' + PRONOUNS[settings['pronoun']] + '.' + '\n- Văn phong: ' + ai_translate.STYLES[settings.get('style', 'review')]
              + '\n\nMẪU BIÊN TẬP DÙNG CHUNG (áp dụng các quy tắc nội dung và văn phong; BỎ QUA mọi yêu cầu về hook, script, title, body hay định dạng kết quả trong mẫu này):\n'
              + template)
     # Always on (cannot be switched off): no exact price, brand, size, volume, weight or power.
@@ -340,7 +363,7 @@ def translate_request(key, model, lines, settings):
         rules += '\n- Ghi chú của người dùng (chỉ về văn phong, không phải dữ liệu nguồn): ' + settings['notes']
     schema = dict(type='object', additionalProperties=False, required=['lines'], properties=dict(lines=dict(type='array', items=dict(
         type='object', additionalProperties=False, required=['id', 'vi'], properties=dict(id=dict(type='integer'), vi=dict(type='string'))))))
-    body = dict(model=model, store=False, max_output_tokens=12000,
+    body = dict(model=model, store=False, max_output_tokens=12000, **reasoning(model),
                 input=[dict(role='developer', content=rules), dict(role='user', content=json.dumps(dict(lines=lines), ensure_ascii=False))],
                 text=dict(format=dict(type='json_schema', name='dub_lines', strict=True, schema=schema)))
     raw = openai_call('responses', key, json.dumps(body, ensure_ascii=False).encode(), 'application/json', timeout=180)
@@ -355,7 +378,7 @@ def translate_request(key, model, lines, settings):
         raise DubError('Không đọc được bản dịch OpenAI. Bấm Tiếp tục để thử lại.', 502) from None
 
 
-PARAGRAPH_RULES = '''Bạn là biên tập viên lồng tiếng video ngắn: chuyển toàn bộ lời thoại tiếng Trung (đã chia dòng theo thời gian) thành MỘT đoạn văn tiếng Việt liền mạch để đọc thành một file giọng duy nhất phủ suốt video.
+PARAGRAPH_RULES = '''Bạn là biên tập viên lồng tiếng video ngắn: chuyển toàn bộ lời thoại {src} (đã chia dòng theo thời gian) thành MỘT đoạn văn tiếng Việt liền mạch để đọc thành một file giọng duy nhất phủ suốt video.
 - Viết tự nhiên, khẩu ngữ, mạch lạc như người Việt kể; giữ đúng ý và thứ tự ý của nguồn, nối câu bằng từ chuyển ý; có thể gộp hoặc lược ý phụ, không thêm thông tin.
 - Độ dài: không vượt max_syllables tiếng (âm tiết) để đọc vừa thời gian seconds; ưu tiên giữ ý chính khi phải rút gọn.
 - Chia câu rõ ràng bằng dấu chấm/phẩy để giọng đọc ngắt nghỉ tự nhiên; không xuống dòng, không đánh số, không markdown, không emoji, không chú thích trong ngoặc; số và đơn vị viết theo cách đọc được.'''
@@ -364,7 +387,7 @@ PARAGRAPH_RULES = '''Bạn là biên tập viên lồng tiếng video ngắn: ch
 def paragraph_request(key, model, segments, seconds, limit, settings):
     """Whole video → one natural Vietnamese paragraph (one ai33 file)."""
     template = settings.get('instructions') or ai_translate.DEFAULT_RULES
-    rules = (ai_translate.GUARD + '\n\n' + PARAGRAPH_RULES + '\n- Xưng hô: ' + PRONOUNS[settings['pronoun']] + '.' + '\n- Văn phong: ' + ai_translate.STYLES[settings.get('style', 'review')]
+    rules = (ai_translate.GUARD + '\n\n' + PARAGRAPH_RULES.replace('{src}', SOURCE_NAMES[settings.get('language', 'zh')]) + '\n- Xưng hô: ' + PRONOUNS[settings['pronoun']] + '.' + '\n- Văn phong: ' + ai_translate.STYLES[settings.get('style', 'review')]
              + '\n\nMẪU BIÊN TẬP DÙNG CHUNG (áp dụng các quy tắc nội dung và văn phong; BỎ QUA mọi yêu cầu về hook, script, title, body hay định dạng kết quả trong mẫu này):\n'
              + template)
     # Always on (cannot be switched off): no exact price, brand, size, volume, weight or power.
@@ -373,7 +396,7 @@ def paragraph_request(key, model, segments, seconds, limit, settings):
         rules += '\n- Ghi chú của người dùng (chỉ về văn phong, không phải dữ liệu nguồn): ' + settings['notes']
     data = dict(seconds=round(seconds, 1), max_syllables=limit, lines=[dict(start=round(s['start'], 1), end=round(s['end'], 1), zh=s['zh']) for s in segments])
     schema = dict(type='object', additionalProperties=False, required=['text'], properties=dict(text=dict(type='string')))
-    body = dict(model=model, store=False, max_output_tokens=12000,
+    body = dict(model=model, store=False, max_output_tokens=12000, **reasoning(model),
                 input=[dict(role='developer', content=rules), dict(role='user', content=json.dumps(data, ensure_ascii=False))],
                 text=dict(format=dict(type='json_schema', name='dub_paragraph', strict=True, schema=schema)))
     raw = openai_call('responses', key, json.dumps(body, ensure_ascii=False).encode(), 'application/json', timeout=180)
@@ -686,20 +709,25 @@ class Store:
                dict(mode=job.get('options', {}).get('mode', 'lines'), lines=len(job.get('segments') or []), translated=len(job.get('segments') or []) if job.get('paragraph') else sum(1 for s in job.get('segments') or [] if s.get('vi')))
 
     def jobs(self):
-        rows = []
+        # summaries are cached by job.json's modification time: hundreds of finished jobs stay cheap to list
+        rows, cache = [], self.__dict__.setdefault('_summaries', {})
         for folder in self.root.iterdir():
-            if folder.is_dir() and re.fullmatch('[a-f0-9]{32}', folder.name) and (folder / 'job.json').is_file():
+            meta = folder / 'job.json'
+            if folder.is_dir() and re.fullmatch('[a-f0-9]{32}', folder.name) and meta.is_file():
                 try:
-                    rows.append(self.summary(self.load(folder.name)))
-                except DubError:
+                    stamp = meta.stat().st_mtime_ns
+                    if folder.name in self.live or cache.get(folder.name, (None,))[0] != stamp:
+                        cache[folder.name] = (stamp, self.summary(self.load(folder.name)))
+                    rows.append(cache[folder.name][1])
+                except (DubError, OSError):
                     pass
         return sorted(rows, key=lambda r: r.get('created') or '', reverse=True)
 
     # -- commands
     def create(self, raw):
         ids = raw.get('video_ids')
-        if not isinstance(ids, list) or not 1 <= len(ids) <= 50:
-            raise DubError('Chọn từ 1 đến 50 video để lồng tiếng.')
+        if not isinstance(ids, list) or not 1 <= len(ids) <= 1000:
+            raise DubError('Chọn từ 1 đến 1000 video để lồng tiếng.')
         settings = options(raw.get('options'))
         srts = raw.get('srt') if isinstance(raw.get('srt'), dict) else {}
         made = []
@@ -728,7 +756,7 @@ class Store:
         job = self.load(key)
         settings = job['options']
         keys = dict(openai=openai_key(raw), ai33=ai33_key(raw))
-        need_openai = any(job['steps'][s] not in ('done', 'skipped') for s in ('asr', 'translate'))
+        need_openai = settings['mode'] != 'ai33' and any(job['steps'][s] not in ('done', 'skipped') for s in ('asr', 'translate'))
         if need_openai and not keys['openai']:
             raise DubError('Nhập OpenAI API key (dùng cho nhận diện giọng và dịch). Không gửi key trong chat.')
         if not keys['ai33'] and job['steps']['tts'] != 'done':
@@ -898,9 +926,14 @@ class Store:
             if cancel.is_set():
                 raise Cancelled()
 
+        if settings['mode'] == 'ai33':
+            # ai33.pro /v1/task/dubbing recognises, translates and times the voice itself
+            for step in ('asr', 'translate'):
+                if job['steps'][step] != 'done':
+                    job['steps'][step] = 'skipped'
         if job['steps']['asr'] not in ('done', 'skipped'):
             if not info['audio']:
-                raise DubError('Video không có âm thanh để nhận diện. Hãy nhập SRT tiếng Trung có sẵn.')
+                raise DubError('Video không có âm thanh để nhận diện. Hãy nhập SRT lời gốc có sẵn.')
             self.progress(job, 'asr', .1, 'Đang tách âm thanh để nhận diện…')
             run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(source), '-vn', '-map', '0:a:0', '-ac', '1', '-ar', '16000',
                  '-c:a', 'libmp3lame', '-b:a', '48k', str(folder / 'asr.mp3')], cancel)
@@ -943,7 +976,7 @@ class Store:
                 job['message'] = 'Đã dịch xong đoạn văn. Đọc/sửa lại rồi bấm Tiếp tục để tạo một file giọng ai33.'
                 job['progress'] = WEIGHTS['asr'] + WEIGHTS['translate']
                 return
-        if job['steps']['translate'] != 'done':
+        if job['steps']['translate'] not in ('done', 'skipped'):
             pending = [i for i, s in enumerate(job['segments']) if 'vi' not in s]
             for n in range(0, len(pending), 40):
                 batch = pending[n:n + 40]
@@ -986,10 +1019,22 @@ class Store:
         check()
 
         if job['steps']['tts'] != 'done':
-            self.tts(job, folder, keys, cancel)
+            if settings['mode'] == 'ai33':
+                self.dub_ai33(job, folder, source, info, keys, cancel)
+            else:
+                self.tts(job, folder, keys, cancel)
             self.finish(job, 'tts')
         check()
 
+        if job['steps']['mix'] != 'done' and settings['mode'] == 'ai33':
+            # already timed like the source: copied in at 0, the tail past the video is cut
+            self.progress(job, 'mix', .2, 'Đang ghép giọng lồng tiếng ai33…')
+            g = job['groups'][0]
+            g.update(tempo=1.0, place=0, overflow=round(max(0.0, g['clip_seconds'] - job['duration']), 2), raw=g['file'].replace('.wav', '.pcm'))
+            run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(folder / g['file']), '-t', f"{job['duration']:.3f}",
+                 '-ac', '1', '-ar', str(VOICE_RATE), '-f', 's16le', str(folder / g['raw'])], cancel)
+            mix_voice(job['groups'], folder, job['duration'])
+            self.finish(job, 'mix')
         if job['steps']['mix'] != 'done' and settings['mode'] == 'paragraph':
             self.progress(job, 'mix', .2, 'Đang căn giọng theo thời gian video…')
             self.place_paragraph(job, folder, cancel)
@@ -1119,6 +1164,77 @@ class Store:
                 job['message'] = retrying['poll_message']
             if time.monotonic() - waited > 900:
                 raise DubError('ai33.pro chưa trả giọng sau 15 phút. Bấm Tiếp tục để kiểm tra lại (không tạo trùng).')
+
+    def dub_ai33(self, job, folder, source, info, keys, cancel):
+        """Timestamp dubbing by ai33.pro (/v1/task/dubbing): the source audio goes up once, ai33 returns a timed
+        Vietnamese SRT and, with the chosen voice, a voice-only track synthesized from that SRT. The task id is saved
+        before polling, so a restart or Tiếp tục never pays twice."""
+        settings = job['options']
+        if not info['audio']:
+            raise DubError('Video không có âm thanh để lồng tiếng.')
+        g = (job.get('groups') or [None])[0]
+        if not g:
+            g = dict(start=0, end=job['duration'], text='', lines=[])
+            job['groups'] = [g]
+        if not g.get('task_id'):
+            self.progress(job, 'tts', .05, 'Đang gửi âm thanh gốc lên ai33.pro để lồng tiếng theo timestamp…')
+            self.save(job)
+            upload = folder / 'dub-source.mp3'
+            run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(source), '-vn', '-map', '0:a:0', '-ac', '2', '-ar', '44100',
+                 '-c:a', 'libmp3lame', '-b:a', '128k', str(upload)], cancel)
+            try:
+                g['task_id'] = ai33_audio.create_dubbing(keys['ai33'], upload.read_bytes(), settings['language'], 'vi', settings['voice_id'])['task_id']
+            except ValueError as exc:
+                raise DubError(str(exc)) from None
+            except ai33_audio.AudioError as exc:
+                raise DubError(str(exc), exc.status) from None
+            finally:
+                upload.unlink(missing_ok=True)
+            self.save(job)
+        waited = time.monotonic()
+        while True:
+            if cancel.is_set():
+                raise Cancelled()
+            time.sleep(4)
+            detail = self.poll(g, keys, job)
+            if detail is None:
+                continue
+            if detail['status'] == 'error':
+                raise DubError('ai33.pro báo lỗi khi lồng tiếng. Kiểm tra credit, giọng đọc và lịch sử tác vụ ai33.pro.')
+            self.progress(job, 'tts', max(.05, detail.get('progress', 0) / 100), f'ai33.pro đang lồng tiếng theo timestamp ({detail.get("progress", 0)}%)…')
+            if detail['status'] == 'done' and (detail.get('replacement_audio_url') or detail['audio_url']):
+                break
+            if time.monotonic() - waited > 3600:
+                raise DubError('ai33.pro chưa lồng tiếng xong sau 60 phút. Bấm Tiếp tục để kiểm tra lại (không tạo trùng).')
+        url = detail.get('replacement_audio_url')
+        job['warnings'] = [w for w in job['warnings'] if not w.startswith('ai33')]
+        if not url:
+            # only the default dubbed track came back (it keeps the original background): do not add ours on top
+            url = detail['audio_url']
+            (folder / 'background.wav').unlink(missing_ok=True)
+            job['warnings'].append('ai33 không tạo được giọng thay thế' + (f' ({detail["replacement_status"]})' if detail.get('replacement_status') else '')
+                                   + '; dùng bản lồng tiếng mặc định của ai33 (giọng ai33 tự chọn, đã kèm nền gốc).')
+        download = folder / 'g0.download'
+        audio_files.download(url, download)
+        g['file'] = 'g0.wav'
+        run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(download), '-ac', '1', '-ar', str(VOICE_RATE), str(folder / g['file'])], cancel)
+        download.unlink(missing_ok=True)
+        with wave.open(str(folder / g['file'])) as w:
+            g['clip_seconds'] = round(w.getnframes() / w.getframerate(), 3)
+        # ai33's translated SRT becomes the Vietnamese lines (timestamps kept), shown in the job and exported as .srt
+        if detail.get('srt_url'):
+            try:
+                srt = folder / 'ai33.srt'
+                audio_files.download(detail['srt_url'], srt)
+                rows = parse_srt(srt.read_text(encoding='utf-8-sig', errors='replace'))
+                job['segments'] = [dict(start=r['start'], end=r['end'], zh='', vi=r['zh']) for r in rows]
+                (folder / 'vi.srt').write_text(to_srt(job['segments'], 'vi'), encoding='utf-8')
+            except (DubError, OSError, ai33_audio.AudioError, ValueError):
+                job['warnings'].append('ai33 không trả được file SRT tiếng Việt; video vẫn có giọng lồng tiếng.')
+        flagged = [i + 1 for i, s in enumerate(job['segments']) if ai_translate.PRICE.search(s.get('vi', '')) or ai_translate.SPEC.search(s.get('vi', ''))]
+        if flagged:
+            job['warnings'].append(f'ai33 tự dịch: dòng {", ".join(map(str, flagged[:12]))} có thể còn giá/thông số cụ thể (quy tắc không nhắc giá chỉ áp dụng khi app tự dịch).')
+        self.save(job)
 
     def poll(self, g, keys, job):
         """Task status; a failing /v1/task call falls back to the task history, transient errors are retried
@@ -1456,9 +1572,9 @@ class Store:
         item = dict(id=key, name=re.sub(r'[\x00-\x1f<>:"/\\|?*]', '_', Path(str(name)).name)[:120], file=target.name, still=still, alpha=alpha, codec=codec,
                     duration=0 if still else round(info['duration'], 2), width=int(info['video'].get('width') or 0), height=int(info['video'].get('height') or 0),
                     created=time.strftime('%Y-%m-%dT%H:%M:%S'))
+        item['size'] = target.stat().st_size
         (self.overlay_dir / (key + '.json')).write_text(json.dumps(item, ensure_ascii=False), encoding='utf-8')
-        if not still:
-            self.overlay_preview(item)
+        # the browser preview copy is made on first view, so importing a folder of big MOV files stays fast
         return item
 
     def overlay_preview(self, item):
@@ -1467,6 +1583,10 @@ class Store:
         if item['still'] or (not item.get('alpha') and item.get('codec') in BROWSER_VIDEO and Path(item['file']).suffix.lower() in ('.mp4', '.m4v', '.webm')):
             return self.overlay_dir / item['file']
         target = self.overlay_dir / (item['id'] + '.preview.webm')
+        with self.__dict__.setdefault('_preview_locks', {}).setdefault(item['id'], threading.Lock()):
+            return self._overlay_preview(item, target)
+
+    def _overlay_preview(self, item, target):
         if not target.is_file():
             temp = target.with_suffix('.part.webm')
             try:
