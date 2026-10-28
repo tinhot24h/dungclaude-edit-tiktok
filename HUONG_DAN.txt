@@ -1,4 +1,4 @@
-REVIEW STUDIO 0.17.8 — VIDEO / DỊCH AI / ÂM THANH AI33
+REVIEW STUDIO 0.17.9 — VIDEO / DỊCH AI / ÂM THANH AI33
 
 CẬP NHẬT
 Từ bản 0.13: không cần tải lại ZIP. Trong ứng dụng bấm nút ⟳ (góc phải
@@ -228,6 +228,10 @@ Mở "⚙ Tùy chỉnh câu lệnh" để sửa quy tắc viết; bấm "Lưu th
 giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh gốc. Mẫu gốc đã
 cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
 Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
+
+NÂNG CẤP 0.17.9 — OVERLAY KIỂU CAPCUT
+- Nhận file overlay tới 4 GB (MOV ProRes nền trong suốt thường rất nặng).
+- Thêm overlay nền trong suốt thì độ đục tự lên 100%, chữ bình luận hiện rõ như CapCut.
 
 NÂNG CẤP 0.17.8 — SỬA LỖI CẬP NHẬT
 - Sửa lỗi "HUONG_DAN.txt lớn bất thường; dừng cập nhật" (bộ nhớ đệm GitHub chưa đồng bộ ngay sau khi có bản mới).

@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.17.8",
- "notes": "## Mới trong 0.17.8\n\n- **Sửa lỗi cập nhật \"… lớn bất thường; dừng cập nhật\":** ngay sau khi có bản mới, bộ nhớ đệm của GitHub có thể trả file mới lẫn file cũ. Trình cập nhật giờ tải mọi file theo đúng một commit nên các file luôn khớp nhau. Nếu vẫn gặp lệch tạm thời, app chỉ báo \"chạy lại sau 1 phút\" và không thay file nào.",
+ "version": "0.17.9",
+ "notes": "## Mới trong 0.17.9\n\n- **Overlay kiểu CapCut (bình luận live, khung, sticker… nền trong suốt):**\n  - Nhận file overlay tới **4 GB** (trước đây 300 MB). MOV ProRes 4444 dài 30–60 giây thường nặng 0.5–2 GB nên trước đây bị từ chối.\n  - Khi thêm overlay nền trong suốt, độ đục tự lên **100%** (nếu đang để mặc định 60%), nên chữ hiện rõ như trong CapCut.\n  - Đã kiểm tra đủ các dạng MOV ProRes 4444, QuickTime Animation, PNG trong MOV và WebM alpha: overlay phủ full khung phía trên video, phần trong suốt giữ nguyên video.",
  "files": {
   "demucs_runner.py": {
    "sha256": "426b21e67e115d21426f0ba38d0febe8707c0dd6336f7891396a59ec55500c0d",
@@ -28,8 +28,8 @@
    "size": 3948
   },
   "dub_ui.js": {
-   "sha256": "e9e4e3ecb52853e50dff045b2349b540262c9fd5c114614713e3e56e3aeb4f84",
-   "size": 59990
+   "sha256": "e90c30af30af3b92e96e97fcad6d8fc80b75eccef2e2b9538c019a5b7f40837a",
+   "size": 60413
   },
   "layout_ui.js": {
    "sha256": "31474a69f54710df46c2483f9711e36d487d11437085b2b563f97b1f18ab711e",
@@ -124,8 +124,8 @@
    "size": 13961
   },
   "app.py": {
-   "sha256": "ef5a2fe467a014095ec44fa1ab74ecd2990967073f3e2523562697b6f4a2ef7b",
-   "size": 49743
+   "sha256": "296db40ff31f4ebd7130f6aa18fbb56c06586275f7214ff1b0aa344278ecfba7",
+   "size": 49737
   },
   "ai33_audio.py": {
    "sha256": "3852255575e4c88a806b90fc01cd5df2551ff7e956f04f3547a87394aac4810b",
@@ -164,7 +164,7 @@
    "size": 2609
   },
   "index.html": {
-   "sha256": "e0024157431f4ade87b1bc6e79d8f870d4ca292175299a0fef45bce3efee8915",
+   "sha256": "aede44a0c591b9fae48e62a56414e457520e642f9a64f79cb613399e679cc7ee",
    "size": 33084
   },
   "launch.py": {
@@ -184,15 +184,15 @@
    "size": 230
   },
   "HUONG_DAN.txt": {
-   "sha256": "11ee92320e7c4ae3fbec174462f9d4b12e3c8a7676daa1cf7de2edbf72392795",
-   "size": 34697
+   "sha256": "84525c504a17d3ea3f257a06831b2b28b0320254f895a5456d35959949eee227",
+   "size": 34944
   },
   "README.md": {
-   "sha256": "00e4ea1924b4ec87ddf793743699ae269db4706c1ebfef689e0b655b20f093db",
-   "size": 48077
+   "sha256": "8f64138dcdc27bbcd71d93354c0cf4fd35d556d827217a2860dc22fc87b04e29",
+   "size": 48698
   },
   "VERSION": {
-   "sha256": "65788648870a94c46195759cba6a5c9c7407492190ac31f76af8afb1d520c23e",
+   "sha256": "e3c413040fb633e597e99fa704e3eecf709aee4c9421c740b2105bce7448654a",
    "size": 7
   },
   ".gitignore": {

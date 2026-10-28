@@ -1,8 +1,15 @@
-# Review Studio 0.17.8
+# Review Studio 0.17.9
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.17.9
+
+- **Overlay kiểu CapCut (bình luận live, khung, sticker… nền trong suốt):**
+  - Nhận file overlay tới **4 GB** (trước đây 300 MB). MOV ProRes 4444 dài 30–60 giây thường nặng 0.5–2 GB nên trước đây bị từ chối.
+  - Khi thêm overlay nền trong suốt, độ đục tự lên **100%** (nếu đang để mặc định 60%), nên chữ hiện rõ như trong CapCut.
+  - Đã kiểm tra đủ các dạng MOV ProRes 4444, QuickTime Animation, PNG trong MOV và WebM alpha: overlay phủ full khung phía trên video, phần trong suốt giữ nguyên video.
 
 ## Mới trong 0.17.8
 

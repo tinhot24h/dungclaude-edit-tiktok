@@ -618,7 +618,7 @@ class Handler(BaseHTTPRequestHandler):
                 if not isinstance(raw,dict):raise ValueError('Yêu cầu không hợp lệ.')
                 return self.respond(200,secrets_store.save(raw.get('provider'),raw.get('key')) if path.endswith('save') else secrets_store.delete(raw.get('provider')))
             if path == '/overlays/upload':
-                if not 0 < size <= 300*1024*1024:raise ValueError('File overlay tối đa 300 MB.')
+                if not 0 < size <= 4*1024**3:raise ValueError('File overlay tối đa 4 GB.')
                 name=asset_store.clean_name(unquote(self.headers.get('X-Filename','overlay.mp4')),'overlay.mp4')
                 temp=DATA/'overlays'/(uuid.uuid4().hex+'.upload')
                 try:
