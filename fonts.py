@@ -9,12 +9,37 @@ FONTS = {
     'sans-bold': ('DejaVuSans-Bold.ttf', 'SansBold', 'Sans đậm'),
     'serif': ('DejaVuSerif.ttf', 'Serif', 'Serif thanh lịch'),
     'serif-bold': ('DejaVuSerif-Bold.ttf', 'SerifBold', 'Serif đậm'),
-    'mono': ('DejaVuSansMono.ttf', 'Mono', 'Mono đều nét'),
-    'mono-bold': ('DejaVuSansMono-Bold.ttf', 'MonoBold', 'Mono đậm'),
+    # Vietnamese-ready fonts (SIL Open Font License, see assets/FONT_LICENSE_OFL.txt)
+    'bvp': ('BeVietnamPro-Regular.ttf', 'BeVietnam', 'Be Vietnam Pro'),
+    'bvp-bold': ('BeVietnamPro-Bold.ttf', 'BeVietnamBold', 'Be Vietnam Pro đậm'),
+    'bvp-black': ('BeVietnamPro-Black.ttf', 'BeVietnamBlack', 'Be Vietnam Pro rất đậm'),
+    'barlow': ('Barlow-Medium.ttf', 'BarlowMedium', 'Barlow'),
+    'barlow-xbold': ('Barlow-ExtraBold.ttf', 'BarlowXBold', 'Barlow đậm'),
+    'kanit': ('Kanit-Medium.ttf', 'KanitMedium', 'Kanit'),
+    'kanit-bold': ('Kanit-Bold.ttf', 'KanitBold', 'Kanit đậm'),
+    'prompt': ('Prompt-SemiBold.ttf', 'PromptSemi', 'Prompt'),
+    'mitr': ('Mitr-Medium.ttf', 'MitrMedium', 'Mitr tròn'),
+    'chakra': ('ChakraPetch-Bold.ttf', 'ChakraBold', 'Chakra Petch · công nghệ'),
+    'anton': ('Anton-Regular.ttf', 'Anton', 'Anton · cao, nổi bật'),
+    'bungee': ('Bungee-Regular.ttf', 'Bungee', 'Bungee · khối đậm'),
+    'paytone': ('PaytoneOne-Regular.ttf', 'PaytoneOne', 'Paytone One · tròn đậm'),
+    'coiny': ('Coiny-Regular.ttf', 'Coiny', 'Coiny · vui nhộn'),
+    'bangers': ('Bangers-Regular.ttf', 'Bangers', 'Bangers · truyện tranh'),
+    'lobster': ('Lobster-Regular.ttf', 'Lobster', 'Lobster · viết tay đậm'),
+    'pacifico': ('Pacifico-Regular.ttf', 'Pacifico', 'Pacifico · viết tay'),
+    'charm': ('Charm-Bold.ttf', 'CharmBold', 'Charm · thư pháp'),
+    'sriracha': ('Sriracha-Regular.ttf', 'Sriracha', 'Sriracha · bút lông'),
+    'patrick': ('PatrickHand-Regular.ttf', 'PatrickHand', 'Patrick Hand · viết tay'),
+    'itim': ('Itim-Regular.ttf', 'Itim', 'Itim · dễ thương'),
+    'mali': ('Mali-Bold.ttf', 'MaliBold', 'Mali · dễ thương đậm'),
+    'krub': ('Krub-Bold.ttf', 'KrubBold', 'Krub · hiện đại'),
+    # kept for older templates: DejaVu Sans Mono lacks some Vietnamese letters (ẳ ế ố ở ử…)
+    'mono': ('DejaVuSansMono.ttf', 'Mono', 'Mono đều nét · thiếu vài dấu'),
+    'mono-bold': ('DejaVuSansMono-Bold.ttf', 'MonoBold', 'Mono đậm · thiếu vài dấu'),
 }
 
 
-@lru_cache(maxsize=6)
+@lru_cache(maxsize=64)
 def metrics(font):
     raw = (ROOT / 'assets' / FONTS[font][0]).read_bytes()
     u16 = lambda p: struct.unpack_from('>H', raw, p)[0]
@@ -56,13 +81,14 @@ def width(text, font, size):
     return sum(advances.get(ord(c), missing) for c in text)*size
 
 
-def wrap(text, font, size, max_width):
+def wrap(text, font, size, max_width, spacing=0):
+    """Lines that fit max_width; spacing = extra width added at every space between words."""
     result = []
     for paragraph in text.split('\n'):
         line = ''
         for word in paragraph.split():
             candidate = (line+' '+word).strip()
-            if width(candidate,font,size)<=max_width:
+            if width(candidate,font,size)+spacing*candidate.count(' ')<=max_width:
                 line = candidate
                 continue
             if line:

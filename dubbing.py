@@ -51,7 +51,7 @@ DEFAULTS = dict(language='zh', model=ai_translate.DEFAULT_MODEL, rate=4.2, prono
                 overlay=False, overlay_ids=[], overlay_count=1, overlay_blend='screen', overlay_opacity=60, overlay_timing='loop', end_with_voice=True,
                 image=False, image_id='', image_x=0, image_y=0, image_w=60, image_h=0, image_rotate=0, image_flip='none', image_blend='normal',
                 image_opacity=100, image_layer='below',
-                design=None, title_source='ai', body_source='ai', title_words=6, body_min=10, body_max=20, review_texts=False)
+                design=None, title_source='ai', body_source='ai', title_chars=30, body_min_chars=50, body_max_chars=100, review_texts=False, design_bg=True, design_title=True, design_body=True)
 TEXT_SOURCES = ('ai', 'fixed', 'file', 'none')
 PRONOUNS = {'neutral': 'xưng hô trung tính, hạn chế đại từ', 'ban': 'gọi người xem là "bạn"', 'minh-ban': 'người nói xưng "mình", gọi người xem là "bạn"'}
 
@@ -99,13 +99,13 @@ def options(raw):
     if isinstance(count, bool) or not isinstance(count, int) or not 1 <= count <= 3:
         raise DubError('Số overlay mỗi video phải từ 1 đến 3.')
     out['overlay_count'] = count
-    for key, lo, hi in (('title_words', 1, 30), ('body_min', 0, 120), ('body_max', 1, 120)):
+    for key, lo, hi in (('title_chars', 5, 160), ('body_min_chars', 0, 600), ('body_max_chars', 10, 600)):
         v = raw.get(key, DEFAULTS[key])
         if isinstance(v, bool) or not isinstance(v, int) or not lo <= v <= hi:
             raise DubError('Thông số không hợp lệ: ' + key)
         out[key] = v
-    if out['body_min'] > out['body_max']:
-        raise DubError('Số từ nội dung: tối thiểu phải nhỏ hơn tối đa.')
+    if out['body_min_chars'] > out['body_max_chars']:
+        raise DubError('Số ký tự nội dung: tối thiểu phải nhỏ hơn tối đa.')
     # nền + khung + tiêu đề + nội dung: the editor's design settings (720×1280 design pixels), validated the same way
     if raw.get('design') not in (None, {}):
         if not isinstance(raw['design'], dict) or len(json.dumps(raw['design'])) > 60000:
@@ -119,11 +119,22 @@ def options(raw):
     if not isinstance(image_id, str) or (image_id and not re.fullmatch('[a-f0-9]{32}', image_id)):
         raise DubError('Ảnh overlay không hợp lệ.')
     out['image_id'] = image_id
-    for key in ('no_price', 'review', 'overlay', 'end_with_voice', 'image', 'review_texts'):
+    for key in ('no_price', 'review', 'overlay', 'end_with_voice', 'image', 'review_texts', 'design_bg', 'design_title', 'design_body'):
         v = raw.get(key, DEFAULTS[key])
         if not isinstance(v, bool):
             raise DubError('Thông số không hợp lệ: ' + key)
         out[key] = v
+    # the three groups of the tab, each with its switch: background + frame, title, body (all off = plain video)
+    if raw.get('design_text') is False:   # one "chữ" switch before 0.22
+        out['design_title'] = out['design_body'] = False
+    if out.get('design') and not out['design_bg']:
+        out['design'] = dict(out['design'], background='none', frame_style='none')
+    if out.get('design') and not out['design_title']:
+        out['title_source'] = 'none'
+    if out.get('design') and not out['design_body']:
+        out['body_source'] = 'none'
+    if not (out['design_bg'] or out['design_title'] or out['design_body']):
+        out['design'] = None
     model = raw.get('model') or DEFAULTS['model']
     if not isinstance(model, str) or not re.fullmatch('[A-Za-z0-9][A-Za-z0-9._:-]{0,99}', model):
         raise DubError('Tên model OpenAI không hợp lệ.')
@@ -362,8 +373,8 @@ def ai_texts_wanted(settings):
 
 def text_rules(settings):
     """Title/body rules for the same OpenAI call that writes the voice text (no extra request)."""
-    return (f'\n- Ngoài lời đọc, viết thêm TIÊU ĐỀ (title) tối đa {settings["title_words"]} từ và NỘI DUNG (body) '
-            f'từ {settings["body_min"]} đến {settings["body_max"]} từ để hiện chữ trên khung video: tiếng Việt tự nhiên, hấp dẫn, '
+    return (f'\n- Ngoài lời đọc, viết thêm TIÊU ĐỀ (title) tối đa {settings["title_chars"]} ký tự và NỘI DUNG (body) '
+            f'từ {settings["body_min_chars"]} đến {settings["body_max_chars"]} ký tự (tính cả dấu cách) để hiện chữ trên khung video: tiếng Việt tự nhiên, hấp dẫn, '
             'nêu lợi ích chính; không hashtag, không emoji, không ngoặc kép, không xuống dòng. Áp dụng đúng các quy tắc nội dung bên trên.')
 
 
@@ -371,30 +382,33 @@ def text_schema(settings):
     return dict(title=dict(type='string'), body=dict(type='string'))
 
 
-def limit_words(text, most):
-    words = ' '.join(str(text or '').split()).split(' ')
-    words = [w for w in words if w]
-    cut = len(words) > most
-    out = ' '.join(words[:most]).rstrip(',;:–-')
-    return out, cut
+def limit_chars(text, most):
+    """At most `most` characters (spaces included), cut at the last space so no word is split."""
+    text = ' '.join(str(text or '').split())
+    if len(text) <= most:
+        return text, False
+    head = text[:most + 1]
+    space = head.rfind(' ')
+    out = (head[:space] if space >= most // 2 else text[:most]).rstrip(' ,;:–-')
+    return out, True
 
 
 def finish_texts(job, raw):
-    """AI title/body → job['texts'], cut to the word limits at a word boundary (never a second request)."""
+    """AI title/body → job['texts'], cut to the character limits at a word boundary (never a second request)."""
     settings = job['options']
     texts = dict(job.get('texts') or {})
     job['warnings'] = [w for w in job['warnings'] if not w.startswith(('Tiêu đề', 'Nội dung AI'))]
-    for key, most, label in (('title', settings['title_words'], 'Tiêu đề'), ('body', settings['body_max'], 'Nội dung AI')):
+    for key, most, label in (('title', settings['title_chars'], 'Tiêu đề'), ('body', settings['body_max_chars'], 'Nội dung AI')):
         if settings[key + '_source'] != 'ai' or not isinstance(raw, dict):
             continue
-        value, cut = limit_words(raw.get(key, ''), most)
+        value, cut = limit_chars(raw.get(key, ''), most)
         texts[key] = value[:design_mod.TEXT_LIMITS[key]]
         if cut:
-            job['warnings'].append(f'{label} dài hơn {most} từ nên đã được cắt bớt.')
+            job['warnings'].append(f'{label} dài hơn {most} ký tự nên đã được cắt bớt.')
         if ai_translate.PRICE.search(value) or ai_translate.SPEC.search(value):
             job['warnings'].append(f'{label} có thể còn giá hoặc thông số cụ thể; kiểm tra lại trước khi xuất.')
-    if settings['body_source'] == 'ai' and texts.get('body') and len(texts['body'].split()) < settings['body_min']:
-        job['warnings'].append(f'Nội dung AI ngắn hơn {settings["body_min"]} từ.')
+    if settings['body_source'] == 'ai' and texts.get('body') and len(texts['body']) < settings['body_min_chars']:
+        job['warnings'].append(f'Nội dung AI ngắn hơn {settings["body_min_chars"]} ký tự.')
     job['texts'] = texts
 
 
@@ -726,9 +740,10 @@ def frame_size(settings, video):
     return CANVAS.get(settings.get('frame_canvas', 'source')) or (w // 2 * 2, h // 2 * 2)
 
 
-def design_video(design, W, H, stretch=1):
+def design_video(design, W, H, stretch=1, duration=0):
     """With a design the video sits in the design's video box exactly as in the editor (x/y/width/height/zoom in
-    720×1280 design pixels, cover/contain/stretch, flip, rotation) on the background colour → [framed]."""
+    720×1280 design pixels, cover/contain/stretch, camera zoom in/out over the video, flip, rotation) on the
+    background colour → [framed]."""
     scale = W / design_mod.W
     box = design_mod.video_box(design)
     vw, vh = max(2, round(box['width'] * scale / 2) * 2), max(2, round(box['height'] * scale / 2) * 2)
@@ -740,6 +755,13 @@ def design_video(design, W, H, stretch=1):
         chain += f'scale={vw}:{vh}:force_original_aspect_ratio=decrease,pad={vw}:{vh}:(ow-iw)/2:(oh-ih)/2:color=0x00000000,'
     else:
         chain += f'scale={vw}:{vh},'
+    motion, amount = design.get('video_motion', 'none'), design.get('motion_amount', 12)
+    if motion in ('zoom_in', 'zoom_out') and isinstance(amount, (int, float)) and 0 < amount <= 50 and duration > 0:
+        # "Hiệu ứng máy quay": the picture grows (or shrinks back) by amount % over the video, cropped to its box
+        k = amount / 100
+        grow = f'(1+{k}*t/{duration:.3f})' if motion == 'zoom_in' else f'(1+{k}*(1-t/{duration:.3f}))'
+        chain += (f"scale=w='trunc({vw}*{grow}/2)*2':h='trunc({vh}*{grow}/2)*2':eval=frame,"
+                  f"crop={vw}:{vh}:x='(iw-{vw})/2':y='(ih-{vh})/2',")
     flip = design.get('video_flip', 'none')
     chain += ('hflip,' if 'h' in flip else '') + ('vflip,' if 'v' in flip else '')
     rad = math.radians(float(design.get('video_rotation', 0)))
@@ -1923,7 +1945,7 @@ class Store:
             width, height = frame_size(settings, video)
             # frame → random overlays
             if design:
-                lines = design_video(design, width, height, stretch)
+                lines = design_video(design, width, height, stretch, duration)
             else:
                 lines, _ = frame_graph(settings, video, [f'setpts=PTS*{stretch:.6f}'] if stretch != 1 else [], [])
                 lines[-1] = lines[-1][:-len('[vout]')] + '[framed]'

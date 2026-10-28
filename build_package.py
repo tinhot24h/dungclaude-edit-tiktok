@@ -10,6 +10,7 @@ import re
 import shutil
 import sys
 import zipfile
+from fonts import FONTS
 
 ROOT = Path(__file__).resolve().parent
 FILES = ['design_tab.js', 'local_files.js', 'demucs_runner.py', 'update.py', 'UPDATE_WINDOWS.bat', 'tests/test_update.py', 'update_ui.js', 'dub_ui.js', 'layout_ui.js', 'key_ui.js', 'batch_ui.js', 'secrets_store.py', 'dubbing.py', 'tests/test_dubbing.py', 'MANIFEST.json', 'image_ui.js', 'export_ui.js', 'style_ui.js', 'media_bin.js', 'studio_shell.js', 'clip_ui.js', 'output_folder.py', 'library_store.py', 'history_ui.js', 'workspace_ui.js', 'media_preview.py', 'timeline_ui.js', 'tests/test_editor_controls.py', 'asset_store.py', 'media_engine.py', 'editor_ui.js', 'tests/test_media_engine.py', 'app.py', 'ai33_audio.py', 'audio_files.py', 'audio_ui.js', 'ai_translate.py', 'studio.css', 'studio.js', 'ai_ui.js', 'design.py', 'fonts.py', 'index.html', 'launch.py', 'build_package.py',
@@ -17,7 +18,8 @@ FILES = ['design_tab.js', 'local_files.js', 'demucs_runner.py', 'update.py', 'UP
          'README.md', 'VERSION', '.gitignore', 'tests/test_storage.py', 'tests/test_design.py', 'tests/test_ai_translate.py', 'tests/test_translation_modes.py', 'tests/test_ai33_audio.py', 'tests/test_audio_cache.py', 'docs/ai33-api.md',
          'assets/DejaVuSans.ttf', 'assets/DejaVuSans-Bold.ttf',
          'assets/DejaVuSerif.ttf', 'assets/DejaVuSerif-Bold.ttf',
-         'assets/DejaVuSansMono.ttf', 'assets/DejaVuSansMono-Bold.ttf', 'assets/FONT_LICENSE.txt']
+         'assets/DejaVuSansMono.ttf', 'assets/DejaVuSansMono-Bold.ttf', 'assets/FONT_LICENSE.txt', 'assets/FONT_LICENSE_OFL.txt']
+FILES += sorted({'assets/' + f for f, _, _ in FONTS.values()} - set(FILES))   # every bundled font
 
 
 

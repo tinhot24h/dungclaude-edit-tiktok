@@ -105,3 +105,18 @@ class DesignTests(unittest.TestCase):
 
 
 if __name__=='__main__':unittest.main()
+
+
+class FontListTests(unittest.TestCase):
+    def test_page_font_list_matches_the_bundled_fonts_and_every_font_has_vietnamese(self):
+        import re
+        from pathlib import Path
+        from fonts import FONTS, metrics
+        page = (Path(__file__).resolve().parent.parent / 'studio.js').read_text(encoding='utf-8')
+        listed = re.findall(r"\['([a-z0-9-]+)','(\w+)','([\w.-]+\.ttf)'", page.split('const FONT_LIST=')[1].split(';')[0])
+        self.assertEqual([(k, fam, file) for k, fam, file in listed], [(k, v[1], v[0]) for k, v in FONTS.items()])
+        for key in FONTS:
+            if 'thiếu' in FONTS[key][2]:
+                continue   # labelled as missing some letters (old templates only)
+            advances, _ = metrics(key)
+            self.assertFalse([c for c in 'ăâđêôơưắằẳẵặếềểễệốồổỗộớờởỡợứừửữựĐ' if ord(c) not in advances], key)

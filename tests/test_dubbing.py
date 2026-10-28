@@ -406,12 +406,12 @@ class DesignTests(PipelineBase):
         def texts(key,model,lines,settings):
             calls.append(lines);return dict(title='Nồi chiên gọn cho bếp nhỏ thật tiện',body='Chiên giòn ít dầu vệ sinh dễ dàng')
         with mock.patch.object(self.store,'enqueue'):
-            key=self.store.create(dict(video_ids=[self.vid],mp3={self.vid:str(mp3)},options=dict(mode='design',background='remove',subtitles='none',design=self.DESIGN,title_source='ai',body_source='ai',title_words=6,end_with_voice=False)))[0]
+            key=self.store.create(dict(video_ids=[self.vid],mp3={self.vid:str(mp3)},options=dict(mode='design',background='remove',subtitles='none',design=self.DESIGN,title_source='ai',body_source='ai',title_chars=26,end_with_voice=False)))[0]
         job=self.store.load(key);self.assertEqual(job['mp3'],'voice-src.mp3')
         with mock.patch.object(dubbing,'texts_request',side_effect=texts):
             self.store.process(job,dict(openai='sk',ai33=''),threading.Event())
         self.assertEqual(job['state'],'done',job['message']);self.assertEqual(len(calls),1)   # Whisper + ONE OpenAI call
-        self.assertEqual(job['texts']['title'],'Nồi chiên gọn cho bếp nhỏ');self.assertTrue(any('Tiêu đề dài hơn 6 từ' in w for w in job['warnings']))
+        self.assertEqual(job['texts']['title'],'Nồi chiên gọn cho bếp nhỏ');self.assertTrue(any('Tiêu đề dài hơn 26 ký tự' in w for w in job['warnings']))
         out=self.data/'dub'/job['id']/'dubbed.mp4';info=dubbing.probe(out)
         self.assertEqual((info['video']['width'],info['video']['height']),(1080,1920));self.assertAlmostEqual(info['duration'],4,delta=.2)
         graph=(self.data/'dub'/job['id']/'export.ffgraph').read_text()
@@ -432,7 +432,38 @@ class DesignTests(PipelineBase):
         self.assertEqual(self.store.texts_for(job),dict(title='clip',body=''))
         self.assertEqual(job['options']['frame_canvas'],'9:16')
         with self.assertRaises(dubbing.DubError):dubbing.options(dict(design=dict(background='bad')))
-        with self.assertRaises(dubbing.DubError):dubbing.options(dict(body_min=30,body_max=10))
+        with self.assertRaises(dubbing.DubError):dubbing.options(dict(body_min_chars=300,body_max_chars=100))
+
+    def test_camera_zoom_of_the_design_is_in_the_export_graph(self):
+        d=dubbing.design_mod.settings(dict(self.DESIGN,video_motion='zoom_in',motion_amount=20))
+        chain=dubbing.design_video(d,1080,1920,1,8)[0]
+        self.assertIn("eval=frame",chain);self.assertIn('0.2*t/8.000',chain)
+        self.assertNotIn('eval=frame',dubbing.design_video(dict(d,video_motion='none'),1080,1920,1,8)[0])
+        out=Path(self.tmp.name)/'zoom.mp4'
+        subprocess.run(['ffmpeg','-v','error','-y','-i',str(self.data/self.vid/'source'),'-filter_complex',';'.join(dubbing.design_video(d,360,640,1,4)),'-map','[framed]','-t','1','-f','mp4',str(out)],check=True)
+        self.assertEqual((dubbing.probe(out)['video']['width'],dubbing.probe(out)['video']['height']),(360,640))
+
+    def test_design_switches_and_build_presets_join_the_dub_list(self):
+        both=dubbing.options(dict(design=self.DESIGN,design_bg=True,design_text=True))
+        self.assertEqual(both['design']['background'],'solid')
+        nobg=dubbing.options(dict(design=self.DESIGN,design_bg=False))
+        self.assertEqual((nobg['design']['background'],nobg['design']['frame_style'],nobg['title_source']),('none','none','ai'))
+        notext=dubbing.options(dict(design=self.DESIGN,design_text=False))   # the one switch of 0.21
+        self.assertEqual((notext['title_source'],notext['body_source'],notext['design']['background']),('none','none','solid'))
+        nobody=dubbing.options(dict(design=self.DESIGN,design_body=False))
+        self.assertEqual((nobody['title_source'],nobody['body_source']),('ai','none'))
+        self.assertIsNone(dubbing.options(dict(design=self.DESIGN,design_bg=False,design_title=False,design_body=False))['design'])
+        self.assertIsNone(dubbing.options(dict(design=self.DESIGN,design_bg=False,design_text=False))['design'])
+        with self.assertRaises(dubbing.DubError):dubbing.options(dict(design_bg='yes'))
+        import library_store
+        root=Path(self.tmp.name)/'library'
+        old=library_store.save(root,'buildpresets',dict(name='Nền hồng',data=dict(settings=dict(mode='design',design=self.DESIGN))))
+        library_store.save(root,'dubpresets',dict(name='Lồng tiếng',data=dict(settings=dict(mode='paragraph'))))
+        self.assertEqual(library_store.merge_build_presets(root),1);self.assertEqual(library_store.merge_build_presets(root),0)
+        self.assertEqual(library_store.items(root,'buildpresets'),[])
+        moved=library_store.read(root,'dubpresets',old['id'])
+        self.assertEqual((moved['name'],moved['kind'],moved['data']['settings']['voice_source']),('Mẫu dựng · Nền hồng','dubpresets','mp3'))
+        self.assertEqual(len(library_store.items(root,'dubpresets')),2)
 
     def test_same_name_mp3_keeps_its_own_sample_rate(self):
         mp3=Path(self.tmp.name)/'clip.mp3'

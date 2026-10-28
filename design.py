@@ -55,7 +55,7 @@ def settings(raw):
         extra=index-2
         spec.update({name+'_size':(30 if name=='title' else 22 if name=='body' else 28,12,144),
                      name+'_x':(50,0,100),name+'_y':(64 if name=='title' else 73 if name=='body' else 25+5*extra,0,98),
-                     name+'_width':(76,20,100),name+'_height':(0,0,1280),name+'_outline':(1 if extra<0 else 2,0,5),name+'_gap':(4,0,24),
+                     name+'_width':(76,20,100),name+'_height':(0,0,1280),name+'_outline':(1 if extra<0 else 2,0,5),name+'_gap':(4,0,24),name+'_word':(0,0,60),
                      name+'_start':(0,0,1800),name+'_end':(0,0,1800),
                      name+'_box_opacity':(70,0,100),name+'_box_pad':(14,0,60),name+'_box_radius':(12,0,60)})
         if px:
@@ -134,11 +134,12 @@ def layout(opts,strict=True):
         text=opts.get(key,'')
         if not isinstance(text,str) or not text.strip():continue
         font,size=opts[key+'_font'],opts[key+'_size']
+        spacing=opts.get(key+'_word',0) or 0   # extra design px between words
         px=opts.get('units')=='px'
         box_width=round(opts[key+'_width'] if px else W*opts[key+'_width']/100)
         lines=[];paragraph_ends=[]
         for paragraph in text.split('\n'):
-            wrapped=wrap(paragraph,font,size,box_width-2*opts[key+'_outline']-4)
+            wrapped=wrap(paragraph,font,size,box_width-2*opts[key+'_outline']-4,spacing)
             lines.extend(wrapped);paragraph_ends.extend([False]*(len(wrapped)-1)+[True])
         step=size+opts[key+'_gap'];natural=len(lines)*step
         height=opts.get(key+'_height',0) or natural
@@ -154,9 +155,15 @@ def layout(opts,strict=True):
         offsets=[];line_runs=[]
         for li,line in enumerate(lines):
             factor={'left':0,'center':.5,'right':1,'justify':0}[opts[key+'_align']]
-            at=round(x+(box_width-width(line,font,size))*factor,2);offsets.append(at)
             words=line.split()
-            if opts[key+'_align']=='justify' and not paragraph_ends[li] and len(words)>1:
+            line_width=width(line,font,size)+spacing*max(0,len(words)-1)
+            at=round(x+(box_width-line_width)*factor,2);offsets.append(at)
+            if spacing and not (opts[key+'_align']=='justify' and not paragraph_ends[li]) and len(words)>1:
+                runs=[];pos=at;space=width(' ',font,size)+spacing
+                for word in words:
+                    runs.append(dict(text=word,x=round(pos,3)));pos+=width(word,font,size)+space
+                line_runs.append(runs)
+            elif opts[key+'_align']=='justify' and not paragraph_ends[li] and len(words)>1:
                 gap=(box_width-sum(width(w,font,size) for w in words))/(len(words)-1)
                 runs=[];pos=x
                 for word in words:

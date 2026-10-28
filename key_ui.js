@@ -19,5 +19,23 @@ for(const[id,provider]of FIELDS){const input=$(id);if(!input)continue;const plac
  rows.push(draw)}
 function changed(){for(const d of rows)d();document.dispatchEvent(new Event('keys-changed'))}
 $('ai-provider')?.addEventListener('change',()=>{for(const d of rows)d()});for(const b of $('ai-provider-tabs')?.children||[])b.addEventListener('click',()=>setTimeout(()=>{for(const d of rows)d()}));
-request('/secrets').then(d=>{state=d;for(const r of rows)r()}).catch(()=>{});
+// ---- one place for every key since 0.22: 🔑 API in the header. The key fields of the pages are no longer shown;
+// every feature (translation, voices, dubbing) uses the keys saved here.
+const USES=[['openai','OpenAI','Nhận diện lời (Whisper), dịch, viết tiêu đề và nội dung'],['ai33','ai33.pro','Giọng đọc tiếng Việt và lồng tiếng'],['gemini','Gemini','Dịch ở trang Dịch & biên tập AI (không bắt buộc)']];
+for(const id of ['ai-connection','tts-connection','sec-keys'])$(id)?.classList.add('keys-elsewhere');
+const open=el('button',{type:'button',id:'keys-open',className:'header-key',title:'Quản lý API key (OpenAI, ai33, Gemini) cho mọi chức năng'},el('span',{className:'dot'}),document.createTextNode(' API key'));
+(document.querySelector('.header-tools')||document.querySelector('.app-header')).prepend(open);
+const dialog=el('dialog',{id:'keys-dialog',className:'dub-dialog'});document.body.append(dialog);
+function drawKeys(){const list=USES.map(([p,name,use])=>{const s=state[p]||{},input=el('input',{type:'password',autocomplete:'off',spellcheck:false,placeholder:s.saved?`Đã lưu ${s.hint} · dán key mới để thay`:'Dán API key'});
+  const save=el('button',{type:'button',className:'primary-action small-action',textContent:s.saved?'Lưu key mới':'Lưu'}),drop=el('button',{type:'button',className:'outline-action small-action danger-action',textContent:'Xóa',hidden:!s.saved}),note=el('small',{className:'key-note',textContent:s.saved?`✓ Đã lưu ${s.hint}`:'Chưa có key'});
+  save.onclick=async()=>{const key=input.value.trim();if(!key){note.textContent='Dán key vào ô trước rồi bấm Lưu.';input.focus();return}
+   try{state=await json('/secrets/save',{provider:p,key});changed();drawKeys()}catch(e){note.textContent=e.message}};
+  drop.onclick=async()=>{if(!confirm(`Xóa ${name} key đã lưu trên máy này?`))return;try{state=await json('/secrets/delete',{provider:p});changed();drawKeys()}catch(e){note.textContent=e.message}};
+  return el('div',{className:'keys-row'+(s.saved?' ok':'')},el('div',{className:'keys-name'},el('strong',{textContent:name}),el('small',{textContent:use})),el('div',{className:'keys-edit'},input,save,drop),note)});
+ const close=el('button',{type:'button',className:'outline-action small-action',textContent:'Đóng'});close.onclick=()=>dialog.close();
+ dialog.replaceChildren(el('h2',{textContent:'🔑 API key'}),el('p',{className:'helper',textContent:'Key lưu trong thư mục .local của ứng dụng trên máy này (không đưa vào ZIP hay bản cập nhật), dùng chung cho mọi chức năng. Không gửi key trong chat.'}),...list,el('div',{className:'dub-actions'},close))}
+function badge(){const ok=state.openai?.saved&&state.ai33?.saved;open.classList.toggle('ok',!!ok);open.title=ok?'OpenAI ✓ · ai33 ✓ · bấm để quản lý key':'Còn thiếu key: bấm để nhập OpenAI / ai33 key'}
+window.openKeys=()=>{drawKeys();dialog.showModal()};open.onclick=()=>window.openKeys();
+document.addEventListener('keys-changed',badge);
+request('/secrets').then(d=>{state=d;for(const r of rows)r();badge()}).catch(()=>{});
 })();

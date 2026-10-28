@@ -220,6 +220,16 @@ giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh g�
 cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
 Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
 
+NÂNG CẤP 0.22.0 — MỘT TAB "DỰNG & LỒNG TIẾNG"
+- Chỉ còn 1 tab cho cả dựng và lồng tiếng (bỏ tab Lồng tiếng riêng và tab Timeline).
+  Chọn thư mục video → bấm "Lồng tiếng N video": app tự nhận diện, dịch (OpenAI), đọc giọng Việt (ai33),
+  thêm nền, khung, tiêu đề, nội dung và xuất file hoàn thiện. Không cần file MP3.
+- API key: bấm "API key" trên thanh trên, dán key OpenAI và ai33 rồi bấm Lưu. Mọi chức năng dùng chung.
+- Nền & khung, Tiêu đề, Nội dung là 3 mục riêng; công tắc ở tiêu đề mục để bật/tắt cả nhóm.
+- Giới hạn chữ AI tính theo số ký tự: tiêu đề tối đa 30, nội dung 50–100 (đổi được).
+- Mục Tiêu đề/Nội dung có "Khoảng cách giữa các từ" và ô chọn font hiện mẫu chữ (nhiều font tiếng Việt mới).
+- "💾 Lưu mẫu" lưu mọi thông số bên trái; chọn mẫu trong ô "Mẫu" để dùng lại cho cả lô.
+
 NÂNG CẤP 0.21.1
 - Khớp thời lượng "Tự động": giọng và video cùng đổi tốc độ một chút (trong giới hạn giọng 0.98–1.1×, video 0.85–1.2×).
   Vẫn không khớp: video dài hơn thì cắt bớt video; giọng dài hơn thì cắt bớt cuối giọng. Không lặp video/MP3.

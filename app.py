@@ -50,6 +50,10 @@ VERSION = (ROOT/'VERSION').read_text(encoding='utf-8').strip()
 RESTART_CODE = 75
 DUB = dubbing.Store(DATA, SETTINGS, DATA, AUDIO, media_engine.encoder_args)
 DUB.frames_dir, DUB.images_dir = FRAMES, IMAGES   # custom frames and logo layers of the design templates
+try:
+    library_store.merge_build_presets(DATA/'library')   # one tab since 0.22: build templates join the dub presets
+except (OSError, ValueError):
+    pass
 
 
 def keep_days():

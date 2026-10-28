@@ -1,8 +1,21 @@
-# Review Studio 0.21.1
+# Review Studio 0.22.0
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.22.0
+
+- **Một tab "Dựng & lồng tiếng"** thay cho 2 tab Dựng video và Lồng tiếng; bỏ tab Timeline. Mọi video chạy tự động từ MP4 tới file hoàn thiện: OpenAI nhận diện và dịch, ai33 đọc giọng Việt, thêm nền, khung, chữ. Bỏ chức năng MP3 cùng tên.
+- **3 nhóm riêng có công tắc ở tiêu đề mục:** Nền & khung · Tiêu đề · Nội dung. Tắt nhóm nào thì video xuất và khung xem trước không có phần đó.
+- **Mẫu lưu đủ mọi thuộc tính** (nền, khung, vị trí/cỡ/màu/font chữ, video, overlay, lớp ảnh, giọng, xuất, cả nhóm đang tắt); chọn lại mẫu là trả về đúng như lúc lưu. Cấu hình lồng tiếng và mẫu dựng cũ gộp vào một danh sách "Mẫu".
+- **Giới hạn chữ theo số ký tự** (tiêu đề mặc định ≤ 30, nội dung 50–100 ký tự), cắt ở ranh giới từ.
+- **Khoảng cách giữa các từ** cho tiêu đề và nội dung.
+- **23 font mới hỗ trợ đủ dấu tiếng Việt** (Be Vietnam Pro, Barlow, Kanit, Prompt, Mitr, Chakra Petch, Anton, Bungee, Paytone One, Coiny, Bangers, Lobster, Pacifico, Charm, Sriracha, Patrick Hand, Itim, Mali, Krub). Ô chọn font hiện mẫu chữ của từng font. Font Mono cũ thiếu vài dấu (ẳ, ế, ố…) nên được ghi rõ.
+- **API key quản lý một chỗ:** nút "API key" trên thanh trên (OpenAI, ai33, Gemini), dùng chung cho mọi chức năng; bỏ các ô nhập key rải rác.
+- Khung xem trước gọn lại: chỉ khung hình và thanh phát (bỏ danh sách lớp Chữ 1–6, thanh âm lượng, nút đo của Timeline cũ). Vùng an toàn TikTok bật được. Overlay (video và ảnh), lớp ảnh, cắt đầu/cuối, hiệu ứng máy quay cập nhật ngay trên khung xem trước.
+- Sửa: nền & khung bị mất khi tắt/bật hoặc chuyển tab; màu nền/khung bị khóa khi chọn "Tắt nền"/"Không dùng khung" (giờ sửa màu là tự bật lại).
+- "Hiệu ứng máy quay" (phóng to/thu nhỏ dần) nay có trong video xuất.
 
 ## Mới trong 0.21.1
 

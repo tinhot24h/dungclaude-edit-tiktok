@@ -58,3 +58,23 @@ def delete(root,kind,key):
     path=folder(root,kind)/(valid_id(key)+'.json')
     if not path.is_file():raise ValueError('Không tìm thấy dự án đã lưu.')
     path.unlink()
+
+
+def merge_build_presets(root):
+    """0.22: "Dựng video" and "Lồng tiếng" share one tab and one list. Saved build templates move into the
+    dub list (same id) as MP3-voice presets; nothing is copied twice."""
+    moved=0
+    for path in sorted(folder(root,'buildpresets').glob('*.json')):
+        try:record=json.loads(path.read_text(encoding='utf-8'))
+        except (OSError,ValueError):continue
+        if not isinstance(record,dict) or not isinstance(record.get('data'),dict) or record.get('id')!=path.stem:continue
+        target=folder(root,'dubpresets')/path.name
+        if not target.exists():
+            settings=record['data'].get('settings')
+            if isinstance(settings,dict):settings.setdefault('voice_source','mp3' if settings.get('mode')=='design' else 'ai33')
+            record['kind']='dubpresets';record['name']=('Mẫu dựng · '+str(record.get('name','')))[:120]
+            with LOCK:
+                tmp=target.with_suffix('.json.tmp');tmp.write_text(json.dumps(record,ensure_ascii=False),encoding='utf-8');tmp.replace(target)
+            moved+=1
+        path.unlink(missing_ok=True)
+    return moved
