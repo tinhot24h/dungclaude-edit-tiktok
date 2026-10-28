@@ -23,8 +23,8 @@ class HelperTests(unittest.TestCase):
         body='Mặt nạ tạo V giúp nâng cơ, thu gọn cằm rõ rệt nếu bạn kiên trì dùng đều đặn mỗi ngày. Thiết kế thoáng, dễ đeo cả khi ngủ.'
         self.assertEqual(dubbing.limit_chars(body,100,sentences=True)[0],'Mặt nạ tạo V giúp nâng cơ, thu gọn cằm rõ rệt nếu bạn kiên trì dùng đều đặn mỗi ngày.')
         rules=dubbing.text_rules(dict(title_chars=30,body_min_chars=50,body_max_chars=100))
-        self.assertIn('TỐI ĐA 30 ký tự',rules);self.assertIn('khoảng 5 từ',rules);self.assertIn('tự đếm số ký tự',rules)
-        self.assertIn('30 ký tự',dubbing.text_schema(dict(title_chars=30,body_min_chars=50,body_max_chars=100))['title']['description'])
+        self.assertIn('TỐI ĐA 30 ký tự',rules);self.assertIn('khoảng 5 từ',rules);self.assertIn('Tự đếm ký tự',rules)
+        self.assertIn('30 ký tự',dubbing.text_schema(dict(title_chars=30,body_min_chars=50,body_max_chars=100))['title_options']['description'])
 
     def test_balance_splits_the_speed_between_voice_and_video(self):
         lo,hi,fast,slow=.98,1.1,1/1.2,1/.85
@@ -92,7 +92,7 @@ class PipelineBase(unittest.TestCase):
     def job(self,**opts):
         key=uuid=None
         with mock.patch.object(self.store,'enqueue'):
-            key=self.store.create(dict(video_ids=[self.vid],options=dict(voice_id='edge_vi-VN-HoaiMyNeural',**opts)))[0]
+            key=self.store.create(dict(video_ids=[self.vid],options=dict(voice_id='edge_vi-VN-HoaiMyNeural',**{'reuse':False,**opts})))[0]
         return self.store.load(key)
 
 class PipelineTests(PipelineBase):
@@ -432,7 +432,7 @@ class DesignTests(PipelineBase):
     def test_design_mode_with_same_name_mp3_and_ai_texts_in_one_call(self):
         mp3=Path(self.tmp.name)/'clip.mp3';tone(mp3,3,500)
         calls=[]
-        def texts(key,model,lines,settings):
+        def texts(key,model,lines,settings,context=None):
             calls.append(lines);return dict(title='Nồi chiên gọn cho bếp nhỏ thật tiện',body='Chiên giòn ít dầu vệ sinh dễ dàng')
         with mock.patch.object(self.store,'enqueue'):
             key=self.store.create(dict(video_ids=[self.vid],mp3={self.vid:str(mp3)},options=dict(mode='design',background='remove',subtitles='none',design=self.DESIGN,title_source='ai',body_source='ai',title_chars=26,end_with_voice=False)))[0]
@@ -440,7 +440,7 @@ class DesignTests(PipelineBase):
         with mock.patch.object(dubbing,'texts_request',side_effect=texts):
             self.store.process(job,dict(openai='sk',ai33=''),threading.Event())
         self.assertEqual(job['state'],'done',job['message']);self.assertEqual(len(calls),1)   # Whisper + ONE OpenAI call
-        self.assertEqual(job['texts']['title'],'Nồi chiên gọn cho bếp nhỏ');self.assertTrue(any('Tiêu đề dài hơn 26 ký tự' in w for w in job['warnings']))
+        self.assertEqual(job['texts']['title'],'Nồi chiên gọn cho bếp nhỏ');self.assertTrue(any('không phương án nào vừa 26 ký tự' in w for w in job['warnings']))
         out=self.data/'dub'/job['id']/'dubbed.mp4';info=dubbing.probe(out)
         self.assertEqual((info['video']['width'],info['video']['height']),(1080,1920));self.assertAlmostEqual(info['duration'],4,delta=.2)
         graph=(self.data/'dub'/job['id']/'export.ffgraph').read_text()
@@ -450,7 +450,7 @@ class DesignTests(PipelineBase):
 
     def test_fixed_and_file_texts_and_dub_with_design_in_the_same_call(self):
         seen={}
-        def para(key,model,segments,seconds,limit,settings):
+        def para(key,model,segments,seconds,limit,settings,context=None):
             seen['want']=dubbing.ai_texts_wanted(settings);return dict(text='Xin chào.',title='Tiêu đề AI',body='nội dung ngắn gọn')
         with mock.patch.object(dubbing,'paragraph_request',side_effect=para):
             job=self.job(background='remove',review=False,subtitles='none',design=self.DESIGN,title_source='fixed',body_source='ai')

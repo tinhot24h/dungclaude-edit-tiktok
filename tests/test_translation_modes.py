@@ -96,20 +96,22 @@ class VideoTextTests(unittest.TestCase):
         prompt=ai.manual_prompt(dict(source='这款香薰很好用',layout=dict(title_font='sans-bold',title_size=40,title_width=400,body_font='sans',body_size=22,body_width=548)))
         config=json.loads(prompt[prompt.index('{',prompt.index('CẤU HÌNH')):prompt.rindex('}')+1])
         self.assertIn('title, body',prompt)
-        self.assertLess(config['video_text']['title_max_chars'],ai.capacity(ai.fit_layout({}))['title']['max_chars'])
-        self.assertEqual(config['video_text']['body_max_lines'],5)
+        self.assertEqual(config['video_text']['title_max_chars'],30);self.assertEqual(config['video_text']['title_targets'],[18,24,28])
+        small=ai.manual_prompt(dict(source='x',title_chars=20,body_min_chars=40,body_max_chars=80,title_style='question',hint='tinh dầu'))
+        small=json.loads(small[small.index('{',small.index('CẤU HÌNH')):small.rindex('}')+1])
+        self.assertEqual((small['video_text']['title_max_chars'],small['video_text']['body_max_chars'],small['hint']),(20,80,'tinh dầu'))
         self.assertNotIn('layout',config)
         with self.assertRaises(ValueError):ai.manual_prompt(dict(source='x',layout=dict(title_font='comic')))
         schema=ai.payload(ai.parameters(dict(source='x',provider='openai')))['text']['format']['schema']
-        self.assertEqual(schema['required'],['hook','hook_options','script','title','body'])
+        self.assertEqual(schema['required'],list(ai.OUTPUT_FIELDS))
 
     def test_import_keeps_title_body_and_warns_on_overflow(self):
         text=json.dumps({**RESULT,'title':'  Tinh dầu   thơm phòng ','body':'Mùi dịu nhẹ.\n\nDùng cho phòng ngủ.'})
-        result=ai.import_manual(dict(text=text))
+        result=ai.import_manual(dict(text=text,body_min_chars=0))
         self.assertEqual((result['title'],result['body']),('Tinh dầu thơm phòng','Mùi dịu nhẹ.\nDùng cho phòng ngủ.'))
         self.assertEqual(result['fit']['title']['lines'],1);self.assertEqual(result['warnings'],[]);self.assertNotIn('notes',result)
         long=ai.import_manual(dict(text=json.dumps({**RESULT,'title':'TIÊU ĐỀ RẤT DÀI '*8,'body':''})))
-        self.assertTrue(any('Tiêu đề dài' in n for n in long['warnings']))
+        self.assertTrue(any('Tiêu đề: không phương án nào vừa 30' in n for n in long['warnings']));self.assertLessEqual(len(long['title']),30)
         old=ai.import_manual(dict(text=json.dumps(RESULT)))
         self.assertEqual((old['title'],old['body']),('',''))
 
@@ -141,7 +143,7 @@ class CustomPromptTests(unittest.TestCase):
     def test_concrete_prices_are_flagged(self):
         result=ai.import_manual(dict(text=json.dumps(dict(script='Chỉ 99k là có ngay.',hook='Giá mềm bất ngờ?',title='GIÁ 150.000Đ',body='Đang có ưu đãi.'))))
         labels=' '.join(result['warnings'])
-        self.assertIn('Kịch bản',labels);self.assertIn('Tiêu đề',labels);self.assertNotIn('Hook',labels);self.assertNotIn('Nội dung video',labels)
+        self.assertIn('Kịch bản',labels);self.assertIn('Tiêu đề',labels);self.assertNotIn('Hook',labels);self.assertNotIn('Nội dung video có thể',labels)
 
 
 class LooseImportTests(unittest.TestCase):

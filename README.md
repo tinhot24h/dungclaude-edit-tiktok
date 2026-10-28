@@ -1,8 +1,22 @@
-# Review Studio 0.22.5
+# Review Studio 0.23.0
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.23.0
+
+- **AI xem hình:** mỗi video gửi kèm 3 khung hình nhỏ ngay trong lần gọi dịch (không thêm lần gọi), AI nhận đúng sản phẩm cho tiêu đề, nội dung và tên file. Video không có lời (tab Dựng) vẫn được AI viết chữ theo hình. Model không nhận ảnh thì tự gọi lại không kèm ảnh.
+- **Gợi ý sản phẩm từng video** (nút 💡 trong danh sách video, không bắt buộc): AI dùng làm căn cứ chính; tên file gốc cũng được gửi để tham khảo.
+- **3 tiêu đề + 2 nội dung** dài ngắn khác nhau trong cùng lần gọi; app tự chọn phương án dài nhất vừa giới hạn ký tự, không có giá/thông số, không kết thúc bằng từ nối (chỉ cắt chữ khi không phương án nào vừa). Đổi phương án bằng nút số trong hàng đợi và bảng duyệt; ô có vấn đề được tô màu cảnh báo.
+- **Kiểu tiêu đề:** AI tự chọn, câu hỏi, nỗi đau → giải pháp, lợi ích chính, gây tò mò (lưu trong mẫu).
+- **Câu lệnh gọn hơn:** tab Dựng chỉ gửi phần quy tắc nội dung của mẫu (bỏ phần hook/kịch bản/định dạng), mẫu mặc định ngắn đi khoảng 60%.
+- **2 tên file:** tên chính và tên dự phòng; trùng tên thì dùng tên dự phòng trước rồi mới thêm -2, -3.
+- **Tự thử lại khi lỗi mạng:** OpenAI thử lại tối đa 3 lần (mất kết nối, quá tải, lỗi 5xx; không thử lại khi hết quota). ai33 thử lại khi đọc trạng thái; lệnh tạo giọng chỉ thử lại khi chắc chắn chưa được nhận, không bao giờ mua trùng.
+- **Dùng lại kết quả cũ:** chạy lại cùng một video (nhận diện theo nội dung file) mà chỉ đổi giao diện, màu, overlay, tốc độ… thì dùng lại lời gốc, bản dịch, chữ AI và giọng đọc, không tốn API. Đổi giọng thì giữ bản dịch, chỉ tạo lại giọng; đổi giới hạn chữ thì chỉ viết lại chữ. Tắt được ở mục Nhận diện & dịch.
+- **Ước tính chi phí chính xác hơn:** hộp kiểm tra trước khi chạy tính theo độ dài câu lệnh thật, ảnh khung hình và phần được dùng lại.
+- **Nghe thử giọng:** nút ▶ Nghe thử đọc một câu (câu mẫu hoặc câu tự gõ) bằng giọng, tốc độ, từ điển đang chọn; lưu lại nên nghe lại không tốn credit.
+- **Tab Dịch & biên tập AI thiết kế lại:** 3 cột (cài đặt kiểu CapCut · nguồn · kết quả), dùng cùng giới hạn ký tự, kiểu tiêu đề, 3 tiêu đề / 2 nội dung và tên file như tab Dựng; có ô gợi ý sản phẩm và nút "Lấy theo tab Dựng".
 
 ## Mới trong 0.22.5
 

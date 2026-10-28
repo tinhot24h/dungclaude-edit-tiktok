@@ -745,3 +745,29 @@ details.cc-group>summary.cc-head{cursor:pointer;margin:0}details.cc-group[open]>
 .cc-row[hidden]{display:none!important}.cc-bare.dub-range{display:flex;gap:8px;align-items:center}.cc-bare.dub-range input[type=range]{flex:1}
 .cc-bare.dub-range{display:grid!important;grid-template-columns:minmax(60px,1fr) 84px;gap:10px;align-items:center;flex:1;min-width:150px}.cc-bare.dub-range input[type=range]{width:100%}
 .cc-bare.dub-range .dub-numbox{width:84px}
+/* 0.23: gợi ý sản phẩm per video, AI title/body variants, flags, voice sample */
+.dub-file{grid-template-columns:1fr auto auto auto auto}
+.dub-file-wrap{display:flex;flex-direction:column;gap:4px}
+.dub-hint{width:100%;padding:6px 9px;font-size:12px;border-radius:7px}
+.chip-button.on{border-color:#5aa2ff;color:#cfe3ff}
+.dub-opts{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:3px}.dub-opts small{font-size:10.5px;color:var(--muted)}
+.dub-opts .chip-button{padding:2px 8px;font-size:10.5px;max-width:100%}
+.dub-flag{color:#ffb36b;font-size:10.5px}.dub-review-cell.flagged input,.dub-review-cell.flagged textarea{border-color:#c0603a}
+.dub-sample{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;margin-top:6px}
+/* 0.23: Dịch & biên tập AI — settings | source | results, grouped like the other tabs */
+#view-ai .ai-layout{grid-template-columns:340px minmax(0,1fr) minmax(0,1.1fr);grid-template-areas:"set in out"}
+#view-ai .ai-settings{grid-area:set;padding:12px;position:sticky;top:8px;max-height:calc(100vh - 140px);overflow:auto}#view-ai .ai-input{grid-area:in}#view-ai .ai-output{grid-area:out}
+#view-ai .ai-settings select,#view-ai .ai-settings input[type=text]{width:100%;padding:7px 9px;font-size:12px}
+#view-ai .ai-settings input[type=number]{width:70px;padding:6px 8px;font-size:12px}
+#view-ai .ai-settings .cc-row{grid-template-columns:84px minmax(0,1fr)}
+#view-ai .ai-settings details.cc-group summary{list-style:none;cursor:pointer;display:flex;gap:6px;align-items:center}#view-ai .ai-settings details.cc-group textarea{min-height:220px;font-size:11.5px}
+#view-ai .ai-hint-label{display:block;margin:10px 0 4px;font-size:12px}#view-ai .ai-hint-label small{color:var(--muted);font-weight:400}#view-ai #ai-hint{width:100%;margin-bottom:10px}
+#view-ai #ai-source{min-height:220px}
+#view-ai .ai-card label{display:block;margin:8px 0 4px}#view-ai .dub-opts{margin:4px 0 6px}
+#view-ai .ai-names{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:center}#view-ai .ai-names input{font-family:ui-monospace,Consolas,monospace;font-size:12px}
+#view-ai .helper.warn{color:#ffb36b}
+@media(max-width:1380px){#view-ai .ai-layout{grid-template-columns:340px minmax(0,1fr);grid-template-areas:"set in" "set out"}}
+@media(max-width:1000px){#view-ai .ai-layout{grid-template-columns:1fr;grid-template-areas:"set" "in" "out"}#view-ai .ai-settings{position:static;max-height:none}}
+#view-ai .ai-settings .cc-items{flex-wrap:nowrap}#view-ai .ai-settings .cc-items input[type=number]{width:62px;flex:0 0 62px}
+#view-ai .ai-settings .cc-items .badge,#view-ai .ai-settings .cc-items .helper,#view-ai .ai-settings .cc-toggle,#view-ai .ai-settings .cc-reset{white-space:nowrap}#view-ai .ai-settings .cc-toggle{padding:6px 10px;font-size:12px}
+#view-ai .ai-settings .cc-row:has(#ai-keys) .cc-items{flex-wrap:wrap}

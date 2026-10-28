@@ -220,6 +220,16 @@ giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh g�
 cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
 Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
 
+NÂNG CẤP 0.23.0
+- AI xem 3 khung hình của video trong cùng lần dịch để gọi đúng sản phẩm (tắt được ở mục Nhận diện & dịch).
+- Nút 💡 cạnh mỗi video: gõ gợi ý sản phẩm (ví dụ "kệ gia vị nhà bếp"), không bắt buộc.
+- AI viết 3 tiêu đề + 2 nội dung, app chọn cái vừa giới hạn; đổi phương án bằng nút số trong hàng đợi / bảng duyệt.
+- Mục Tiêu đề có "Kiểu tiêu đề": câu hỏi, nỗi đau → giải pháp, lợi ích, gây tò mò hoặc để AI tự chọn.
+- Tên file có tên dự phòng khi trùng. Lỗi mạng tạm thời tự thử lại 3 lần.
+- Chạy lại cùng video chỉ đổi giao diện thì dùng lại bản dịch và giọng cũ, không tốn API (tắt được).
+- Mục Giọng đọc có nút ▶ Nghe thử một câu bằng giọng đang chọn.
+- Tab Dịch & biên tập AI làm lại 3 cột, cùng quy tắc chữ với tab Dựng.
+
 NÂNG CẤP 0.22.5
 - Mục mới "Điều chỉnh màu": độ sáng, độ tương phản, độ bão hòa, độ sắc nét cho video gốc (xem trước ngay, video xuất giống vậy).
   Bật/tắt bằng công tắc ở tiêu đề mục; tắt thì giữ số đã chỉnh nhưng video không bị chỉnh.

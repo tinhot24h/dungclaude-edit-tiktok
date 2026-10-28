@@ -20,6 +20,8 @@ const sec=(id,icon,title,body)=>{const d=el('details',{className:'dub-sec dt-gro
 const SRC=`<option value="ai">AI viết (cùng lần dịch)</option><option value="fixed">Cố định (ô bên dưới)</option><option value="file">Tên file video</option>`;
 const design=sec('design','🎨','Nền &amp; khung',`<div id="dt-bg-host"></div><p class="helper">Kiểu nền, màu chính/màu chuyển, vùng hòa nền (vị trí bắt đầu, chiều cao vùng chuyển, độ đục), khung có sẵn hoặc PNG. Kéo khung trên khung xem trước.</p>`);
 const title=sec('title','🅣','Tiêu đề',`<div class="dt-src"><label for="dt-title-src">Nguồn chữ</label><select id="dt-title-src">${SRC}</select><span>tối đa</span><input id="dt-title-chars" type="number" min="5" max="160" value="30" aria-label="Số ký tự tối đa của tiêu đề"><span>ký tự</span></div>
+ <div class="dt-src" id="dt-title-kind-row"><label for="dt-title-kind">Kiểu tiêu đề</label><select id="dt-title-kind"><option value="auto">AI tự chọn · 3 phương án 3 kiểu</option><option value="question">Câu hỏi · "Da khô mùa lạnh?"</option><option value="pain">Nỗi đau → giải pháp</option><option value="benefit">Lợi ích chính</option><option value="curious">Gây tò mò</option></select></div>
+ <p class="helper" id="dt-title-kind-note">AI viết 3 tiêu đề và 2 nội dung dài ngắn khác nhau trong cùng lần dịch; app chọn phương án dài nhất vừa giới hạn, không có giá/thông số. Đổi phương án trong bảng duyệt.</p>
  <div class="group-label">CHỮ CỐ ĐỊNH / CHỮ MẪU TRÊN KHUNG XEM TRƯỚC</div><div id="dt-title-text"></div>
  <div class="group-label">THUỘC TÍNH CHỮ · CŨNG CHỈNH ĐƯỢC TRÊN KHUNG XEM TRƯỚC</div><div id="dt-title-style"></div>`);
 const body=sec('body','¶','Nội dung',`<div class="dt-src"><label for="dt-body-src">Nguồn chữ</label><select id="dt-body-src">${SRC}</select><span>từ</span><input id="dt-body-min" type="number" min="0" max="600" value="50" aria-label="Số ký tự tối thiểu của nội dung"><span>–</span><input id="dt-body-max" type="number" min="10" max="600" value="100" aria-label="Số ký tự tối đa của nội dung"><span>ký tự</span></div>
@@ -219,12 +221,13 @@ function designOptions(){const o=options(),keep=new Set([...studio.fields,...win
 const num=(id,d)=>{const v=parseInt($(id).value,10);return Number.isFinite(v)?v:d};
 function extend(o){try{o.design=designOptions()}catch(e){o.design=null;o.design_error=e.message}
  Object.assign(o,{design_bg:bgOn(),design_title:titleOn(),design_body:bodyOn(),title_source:$('dt-title-src').value,body_source:$('dt-body-src').value,
-  title_chars:num('dt-title-chars',30),body_min_chars:num('dt-body-min',50),body_max_chars:num('dt-body-max',100),review_texts:$('dt-review').checked})}
+  title_chars:num('dt-title-chars',30),body_min_chars:num('dt-body-min',50),body_max_chars:num('dt-body-max',100),review_texts:$('dt-review').checked,title_style:$('dt-title-kind').value})}
 function apply(o){const had=!!o.design;
  // older settings: one "chữ" switch (design_text) or the design itself meaning on
  $('dt-design-on').checked=o.design_bg??had;$('dt-title-on').checked=o.design_title??o.design_text??(had&&o.title_source!=='none');$('dt-body-on').checked=o.design_body??o.design_text??(had&&o.body_source!=='none');
  for(const[id,k]of [['dt-title-src','title_source'],['dt-body-src','body_source']])if(['ai','fixed','file'].includes(o[k]))$(id).value=o[k];
  if(o.review_texts!=null)$('dt-review').checked=!!o.review_texts;
+ if(['auto','question','pain','benefit','curious'].includes(o.title_style))$('dt-title-kind').value=o.title_style;
  for(const[id,k]of [['dt-title-chars','title_chars'],['dt-body-min','body_min_chars'],['dt-body-max','body_max_chars']])if(o[k]!=null)$(id).value=o[k];
  if(o.design&&typeof o.design==='object'){studio.apply({...o.design,images:o.design.images||[]})}
  layout();moveIn();designPreview()}
@@ -275,8 +278,9 @@ function labels(){const bg=({solid:'một màu',gradient:'chuyển hai màu',non
  $('dub-export-note').textContent='Video lưu vào thư mục xuất (nút thông số xuất ở góc trên) với tên “…-long-tieng.mp4”.';
  $('dub-drop').textContent='Kéo thả video hoặc cả thư mục vào đây · .srt cùng tên sẽ bỏ qua bước nhận diện';
  const ai=(titleOn()&&$('dt-title-src').value==='ai')||(bodyOn()&&$('dt-body-src').value==='ai');aiBox.hidden=!ai;
+ $('dt-title-kind-row').hidden=$('dt-title-kind-note').hidden=$('dt-title-src').value!=='ai';
  $('dt-ai-note').textContent=ai?'Tiêu đề và nội dung do AI viết trong cùng lần gọi dịch (không thêm lượt gọi). Chế độ "ai33 tự lồng tiếng" cần thêm 1 lần gọi ngắn.':''}
-for(const id of ['dt-title-src','dt-body-src','dt-title-chars','dt-body-min','dt-body-max','dt-design-on','dt-title-on','dt-body-on','dt-review'])$(id).addEventListener('change',()=>{layout();designPreview();api.remember();api.labels();labels();api.preview()});
+for(const id of ['dt-title-kind','dt-title-src','dt-body-src','dt-title-chars','dt-body-min','dt-body-max','dt-design-on','dt-title-on','dt-body-on','dt-review'])$(id).addEventListener('change',()=>{layout();designPreview();api.remember();api.labels();labels();api.preview()});
 document.addEventListener('design-changed',()=>{if(!$('view-dub').hidden){labels();clearTimeout(labels.t);labels.t=setTimeout(()=>api.remember(),400)}});
 
 // ---- one tab: the old "Lồng tiếng" and timeline entries are gone; anything that opened the editor opens this page

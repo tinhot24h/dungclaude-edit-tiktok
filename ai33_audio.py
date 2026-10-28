@@ -5,6 +5,7 @@ import math
 import os
 import re
 import socket
+import time
 import uuid
 from urllib import request, error, parse
 
@@ -35,7 +36,27 @@ def api_key(raw):
     return key
 
 
+RETRY_WAITS=(3,10)
+
+
 def json_request(path,key,data=None,content_type=None,method=None,timeout=80):
+    """One ai33 request, tried again up to twice for a passing failure. Reading (GET) retries any network error,
+    429 or 5xx. Creating (POST) retries only what proves nothing was created: the connection never opened, or
+    429/503 (refused before work started), so a voice is never bought twice."""
+    read=data is None and method in (None,'GET')
+    for attempt in range(len(RETRY_WAITS)+1):
+        try:return _request(path,key,data,content_type,method,timeout)
+        except _Retry as retry:
+            if attempt>=len(RETRY_WAITS) or not (read or retry.safe):raise retry.error from None
+            time.sleep(RETRY_WAITS[attempt])
+
+
+class _Retry(Exception):
+    def __init__(self,error,safe):
+        self.error=error;self.safe=safe
+
+
+def _request(path,key,data=None,content_type=None,method=None,timeout=80):
     # Only documented paths are constructed by this module. Never put keys in URLs.
     req=request.Request(ROOT+path,data=data,headers={'xi-api-key':key,**({'Content-Type':content_type} if content_type else {})},method=method)
     try:
@@ -58,11 +79,14 @@ def json_request(path,key,data=None,content_type=None,method=None,timeout=80):
                   404:('Không tìm thấy tài nguyên ai33.pro. Kiểm tra giọng hoặc task_id.',404),
                   429:('ai33.pro báo quá nhiều yêu cầu. Chờ rồi kiểm tra lại, không tạo thêm tác vụ trùng.',429)}
         message,status=messages.get(exc.code,(f'Dịch vụ ai33.pro đang gặp lỗi (HTTP {exc.code}). Kiểm tra lịch sử tác vụ trước khi gửi lại yêu cầu tạo audio.',502))
+        if exc.code==429 or exc.code>=500:raise _Retry(AudioError(message,status),exc.code in (429,503)) from None
         raise AudioError(message,status) from None
-    except (error.URLError,socket.timeout,TimeoutError):
+    except (error.URLError,socket.timeout,TimeoutError) as exc:
         message=('Không kết nối được ai33.pro hoặc hết thời gian chờ. Nếu vừa tạo audio, tác vụ có thể đã được nhận; '
                  'kiểm tra lịch sử ai33.pro trước khi bấm tạo lại để tránh trừ credit hai lần.')
-        raise AudioError(message,504) from None
+        reason=getattr(exc,'reason',exc)
+        refused=isinstance(exc,error.URLError) and isinstance(reason,(ConnectionRefusedError,socket.gaierror))
+        raise _Retry(AudioError(message,504),refused) from None
     except (json.JSONDecodeError,ValueError,TypeError):
         raise AudioError('Không đọc được phản hồi ai33.pro. Nếu đã gửi tạo audio, kiểm tra lịch sử tác vụ trước khi tạo lại.') from None
 

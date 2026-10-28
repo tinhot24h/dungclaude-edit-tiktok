@@ -56,8 +56,16 @@ def save(path,raw):
     return load(path)
 
 
-def unique(folder,name):
-    stem=''.join('_' if c in '<>:"/\\|?*' or ord(c)<32 else c for c in name).strip(' .') or 'review-video'
+def clean(name):
+    return ''.join('_' if c in '<>:"/\\|?*' or ord(c)<32 else c for c in name).strip(' .') or 'review-video'
+
+
+def unique(folder,name,alts=()):
+    stem=clean(name)
+    if not (folder/(stem+'.mp4')).exists():return folder/(stem+'.mp4')
+    # the AI's second name is used before numbering: vay-maxi-hoa-nhi taken → vay-maxi-di-bien, then vay-maxi-hoa-nhi-2…
+    for alt in alts:
+        if alt and not (folder/(clean(alt)+'.mp4')).exists():return folder/(clean(alt)+'.mp4')
     # a name the AI gave (quan-ao-nu-hottrend) gets -2, -3…; other names " (2)", " (3)"… — an existing file is never overwritten
     slug='-' in stem and all(c.islower() or c.isdigit() or c=='-' for c in stem)
     target=folder/(stem+'.mp4');index=2
@@ -65,12 +73,12 @@ def unique(folder,name):
     return target
 
 
-def deliver(path,source,name):
+def deliver(path,source,name,alts=()):
     """Copy a finished MP4 into the chosen folder without overwriting older exports."""
     settings=load(path)
     folder=check_dir(settings['output_dir'])
     with LOCK:
-        target=unique(folder,name)
+        target=unique(folder,name,alts)
         partial=target.with_name('.'+target.name+'.part')
         try:
             shutil.copyfile(source,partial);partial.replace(target)
