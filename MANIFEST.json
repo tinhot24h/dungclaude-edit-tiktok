@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.17.4",
- "notes": "## Mới trong 0.17.4\n\n- **Nhập số chính xác:** mọi thanh trượt ở tab Lồng tiếng (zoom, dịch ngang/dọc, xoay, độ đục overlay, tốc độ, âm lượng…) đều có thêm ô số bên cạnh. Gõ số rồi Enter, hoặc kéo thanh trượt; hai bên luôn khớp nhau.\n- **Sửa overlay không hiện:** thêm file overlay (chọn file, chọn thư mục hoặc kéo thả) giờ tự tick \"Thêm overlay\". Overlay hiện ngay trên khung xem trước và có trong video xuất. Vẫn không bắt buộc: bỏ tick là xuất không có overlay. Khi thư viện có overlay mà đang tắt, dòng ghi chú dưới khung xem trước báo rõ.",
+ "version": "0.17.5",
+ "notes": "## Mới trong 0.17.5\n\n- Tab Lồng tiếng: mục **🎵 Âm thanh gốc** chuyển lên trước **🎙 Giọng đọc ai33**.",
  "files": {
   "demucs_runner.py": {
    "sha256": "426b21e67e115d21426f0ba38d0febe8707c0dd6336f7891396a59ec55500c0d",
@@ -28,7 +28,7 @@
    "size": 3948
   },
   "dub_ui.js": {
-   "sha256": "646f26ad9b870e165e24c26d50e2be28b4eb8414d062f42ba516c155ee4d1127",
+   "sha256": "be992ddb37a86ce223bcca06125bbb0ff39c247bf7c150bad3f2b01b4ded720b",
    "size": 57808
   },
   "layout_ui.js": {
@@ -164,7 +164,7 @@
    "size": 2609
   },
   "index.html": {
-   "sha256": "d9cf01910289e8f4a325be276694c95e148093d0340de07f171cf507c5561042",
+   "sha256": "b0f08419f469c6da559cd889442ba64aec9d00d058343b4b62a8d4ae6046fcaa",
    "size": 33084
   },
   "launch.py": {
@@ -184,15 +184,15 @@
    "size": 230
   },
   "HUONG_DAN.txt": {
-   "sha256": "b0602674ffff1385dd7ceaacf0eebde1c4294d381398bd8c3fd44e212ff38046",
-   "size": 33269
+   "sha256": "6af48d3b8aac780b6bd2560a3032ac3eb953082f6e6a0ac146e5bfb5807defa1",
+   "size": 33379
   },
   "README.md": {
-   "sha256": "1c632fdac73138468bf58771e73fd036f9a74cbabc3bb73be98d824fd5b1110f",
-   "size": 45362
+   "sha256": "1e82ff92d2d4625ac6ef9ad4e5c0d9b9775493d3f482e8d779e4c6e417d2652a",
+   "size": 45492
   },
   "VERSION": {
-   "sha256": "68ef209c443d3f4067567f8e4d38fa7ad6f82295620e3bf89692c286dbf5ed28",
+   "sha256": "c023a1fcb3128ceec3c14ea262c66aabd075b94b2424a5c14bef8bc90c69e8f3",
    "size": 7
   },
   ".gitignore": {

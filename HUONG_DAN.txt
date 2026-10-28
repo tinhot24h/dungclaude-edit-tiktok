@@ -1,4 +1,4 @@
-REVIEW STUDIO 0.17.4 — VIDEO / DỊCH AI / ÂM THANH AI33
+REVIEW STUDIO 0.17.5 — VIDEO / DỊCH AI / ÂM THANH AI33
 
 CẬP NHẬT
 Từ bản 0.13: không cần tải lại ZIP. Trong ứng dụng bấm nút ⟳ (góc phải
@@ -229,6 +229,9 @@ giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh g�
 cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
 Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
 
+NÂNG CẤP 0.17.5
+- Tab Lồng tiếng: mục 🎵 Âm thanh gốc nằm trước 🎙 Giọng đọc ai33.
+
 NÂNG CẤP 0.17.4 — NHẬP SỐ, SỬA OVERLAY KHÔNG HIỆN
 - Mỗi thanh trượt ở tab Lồng tiếng có ô số bên cạnh: gõ số rồi Enter để đặt đúng giá trị.
 - Thêm file overlay giờ tự bật "Thêm overlay": overlay hiện trên khung xem trước và có trong video xuất.
@@ -257,7 +260,7 @@ NÂNG CẤP 0.17 — TAB LỒNG TIẾNG MỚI, OVERLAY, KHUNG HÌNH
 ------------------------------------------------------
 - Tab Lồng tiếng thiết kế lại cho gọn, dễ dùng:
   - Thanh trên cùng (luôn hiện khi cuộn): chọn/lưu/xóa cấu hình lồng tiếng, trạng thái key (bấm vào để mở mục Kết nối) và nút ▶ Lồng tiếng N video.
-  - Cột trái chia mục theo thứ tự làm việc: 🎬 Video đầu vào → 🔑 Kết nối → ✂ Cắt & khung hình → ✨ Overlay → 🗣 Nhận diện & dịch → 🎙 Giọng đọc → 🎵 Âm thanh gốc → 📤 Xuất & phụ đề. Mỗi lần chỉ mở một mục; tiêu đề mỗi mục hiện tóm tắt thông số đang chọn.
+  - Cột trái chia mục theo thứ tự làm việc: 🎬 Video đầu vào → 🔑 Kết nối → ✂ Cắt & khung hình → ✨ Overlay → 🗣 Nhận diện & dịch → 🎵 Âm thanh gốc → 🎙 Giọng đọc → 📤 Xuất & phụ đề. Mỗi lần chỉ mở một mục; tiêu đề mỗi mục hiện tóm tắt thông số đang chọn.
   - Cột phải là khung xem trước video đầu tiên và hàng đợi gọn. Khung xem trước có khung hình, nền mờ, xoay/lật/zoom, overlay mẫu và nút phát.
 - Xử lý hàng loạt không rối:
   - Mỗi video là một dòng trong hàng đợi: trạng thái, 5 bước, tiến độ, nút chính. Bấm vào dòng để xem chi tiết và các nút khác.
