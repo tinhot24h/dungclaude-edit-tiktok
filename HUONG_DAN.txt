@@ -220,6 +220,10 @@ giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh g�
 cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
 Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
 
+NÂNG CẤP 0.20.1
+- Tab "Dựng video", mục "Lớp ảnh": ảnh hiện ngay trên khung xem trước. Kéo ảnh để đặt vị trí, kéo ô vuông
+  góc dưới phải để đổi cỡ. Ảnh nằm dưới khung và chữ, giống video xuất ra.
+
 NÂNG CẤP 0.20.0 — GỘP DỰNG VIDEO VÀ LỒNG TIẾNG
 - Tab "Dựng video" nay giống tab "Lồng tiếng": cột trái cài đặt, giữa hàng đợi, phải xem trước.
   1) Chọn mẫu dựng (hoặc tự chỉnh Nền & khung, Tiêu đề & nội dung).

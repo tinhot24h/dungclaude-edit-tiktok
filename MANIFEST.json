@@ -1,11 +1,11 @@
 {
  "app": "ReviewStudio",
- "version": "0.20.0",
- "notes": "## Mới trong 0.20.0\n\n- **Gộp tab \"Dựng video\" vào cùng cấu trúc với \"Lồng tiếng\"** (cột cài đặt | hàng đợi | xem trước). Dựng hàng loạt video có nền, khung, tiêu đề và nội dung; chạy chung hàng đợi, tiếp tục được khi tắt app giữa chừng.\n- Giữ đủ công cụ thiết kế cũ: kiểu nền (một màu / chuyển hai màu / tắt), màu chính, màu chuyển, hòa nền (vị trí bắt đầu, chiều cao vùng chuyển, độ đục), khung PNG, ô video. Kéo, đổi cỡ, căn chỉnh, đổi màu chữ ngay trên khung xem trước hoặc nhập số.\n- **Tiêu đề + nội dung do AI viết trong cùng lần gọi dịch** (không tốn thêm lần gọi). Giới hạn số từ: tiêu đề mặc định ≤ 6 từ, nội dung 10–20 từ; dài hơn thì tự cắt và báo. Nguồn chữ: AI / cố định / file .txt cùng tên / không có.\n- **MP3 cùng tên** với video được ghép sẵn làm giọng đọc (không tốn credit ai33), vẫn áp dụng giới hạn tốc độ.\n- Sửa chữ từng video trong hàng đợi: \"Lưu chữ & xuất lại\", hoặc \"Viết lại chữ AI\" (giữ nguyên giọng đã tạo).\n- **Mẫu dựng**: lưu trọn nền, khung, chữ, lớp phủ, thông số video để chạy hàng loạt; mẫu ở tab Dựng video cũ vẫn chọn được.\n- Tab \"Lồng tiếng\" có thể bật \"kết hợp nền & khung\" để thêm thiết kế vào video lồng tiếng.\n- Tab **\"Timeline · chỉnh 1 video\"** giữ trình dựng chi tiết cũ.",
+ "version": "0.20.1",
+ "notes": "## Mới trong 0.20.1\n\n- Tab \"Dựng video\": **lớp ảnh hiện trên khung xem trước** như tab Lồng tiếng: kéo để di chuyển, kéo ô góc dưới phải để đổi cỡ; nằm dưới khung và chữ giống video xuất.\n- Sửa chữ tab Dựng video: \"2 video sẽ dựng\", gợi ý MP3 cùng tên ở ô kéo thả, ô chọn mẫu ghi \"Mẫu dựng\".",
  "files": {
   "design_tab.js": {
-   "sha256": "3d98036253ce24c4d9ea1e5f4627a943abdef71d2aca64430c8b3b944f017329",
-   "size": 16379
+   "sha256": "e6ae14cf3033fdabdd827a614227d0411f0c8870dc7f2c2f5b5f71fc6a19b70a",
+   "size": 17152
   },
   "local_files.js": {
    "sha256": "b9a975e980db7f5f013f6046d58228fb39817b6959e8caaf9505c4ba3cc898a7",
@@ -32,8 +32,8 @@
    "size": 5181
   },
   "dub_ui.js": {
-   "sha256": "7de6c721fcb9ae4c1ab9e1017b572f1aaf6f8d1c1016681cb9e9f8c8b6b456d3",
-   "size": 90201
+   "sha256": "eadbff0b26939575329f9efc5cf11e2bdf6fbafbc0f4812997656725975c20d9",
+   "size": 90464
   },
   "layout_ui.js": {
    "sha256": "31474a69f54710df46c2483f9711e36d487d11437085b2b563f97b1f18ab711e",
@@ -148,8 +148,8 @@
    "size": 25305
   },
   "studio.css": {
-   "sha256": "79e6b45fe3b57eb3aae18fe70f26df6ff526cce2915255d3d86d44a7ca4a8e27",
-   "size": 83775
+   "sha256": "5e7e56129eea0052a26c37144a7062fa376fa04195f636a45486008d54b20cb8",
+   "size": 83901
   },
   "studio.js": {
    "sha256": "3beaa5a97b9d5bfbe350504f3f8c2f64cf31f9f5926d08a0a4e3916e61a21df9",
@@ -168,7 +168,7 @@
    "size": 2609
   },
   "index.html": {
-   "sha256": "b2ea4de2504aa304958f4f19a57698165ec6c51bd8c9ef0d48aa3192930a299a",
+   "sha256": "41638c8af977af4a84f50292e3e50e458712b4bd424b768b45dbf5b08407ab54",
    "size": 33161
   },
   "launch.py": {
@@ -184,15 +184,15 @@
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "5cb0513a595189e47c396e26ade6650be7ff79ae3ba11593cf36af037f11130e",
-   "size": 39266
+   "sha256": "e7f2a43d4dc4256be1d024139dcd1a36cecea726f5fc404a508de1059a7a6109",
+   "size": 39526
   },
   "README.md": {
-   "sha256": "db52204d2301084b8e88b3eacc09167e6aaed7cc16b1791dfa565c498319efe7",
-   "size": 58332
+   "sha256": "15792b717030a4d1dbbbc78789b915381d97eb7959c96c22a9459ac2fbd01cb6",
+   "size": 58708
   },
   "VERSION": {
-   "sha256": "8da6a2ee5c36bb2770de645cbcd689209f5935b380d68729e107d0250a633b53",
+   "sha256": "356c9c9f099da7f9b380c6fedc51077ee98de22402b378bc0f431fdc57aac757",
    "size": 7
   },
   ".gitignore": {

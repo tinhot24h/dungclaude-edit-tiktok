@@ -1,8 +1,13 @@
-# Review Studio 0.20.0
+# Review Studio 0.20.1
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.20.1
+
+- Tab "Dựng video": **lớp ảnh hiện trên khung xem trước** như tab Lồng tiếng: kéo để di chuyển, kéo ô góc dưới phải để đổi cỡ; nằm dưới khung và chữ giống video xuất.
+- Sửa chữ tab Dựng video: "2 video sẽ dựng", gợi ý MP3 cùng tên ở ô kéo thả, ô chọn mẫu ghi "Mẫu dựng".
 
 ## Mới trong 0.20.0
 

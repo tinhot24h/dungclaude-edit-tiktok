@@ -102,10 +102,14 @@ function overlayLayer(){const src=$('dub-ovv'),on=!src.hidden&&src.dataset.src,s
  Object.assign(v.style,{opacity:src.style.opacity,mixBlendMode:src.style.mixBlendMode,objectFit:'cover',width:'720px',height:'1280px',left:0,top:0});
  const main=$('video');if(main.paused)v.pause();else v.play().catch(()=>{});
  if(v.duration&&Math.abs(v.currentTime-(main.currentTime%v.duration))>.3)v.currentTime=main.currentTime%v.duration}
+// image layer: the dub page's box moves onto the stage, under the frame and text like the export
+function imageLayer(){const box=$('dub-imgbox'),scene=$('scene'),o=api.settings();if(!places.has(box))places.set(box,[box.parentNode,box.nextSibling]);
+ const anchor=o.image_layer==='above'||!$('dt-ovv')?$('frame-art'):$('dt-ovv');if(box.parentNode!==scene||box.nextSibling!==anchor)scene.insertBefore(box,anchor);
+ api.drawImage(o,720,1280);box.style.zIndex='auto'}
 for(const ev of ['play','pause','seeked'])$('video').addEventListener(ev,()=>on()&&overlayLayer());
 function preview(f){const use=on();stageHost.hidden=!use;$('dub-frame').closest('.dub-frame-wrap').hidden=use;$('dub-transport')&&($('dub-transport').hidden=use);
  document.querySelector('#view-dub .dub-transport')?.toggleAttribute('hidden',use);
- if(!use)return false;moveIn();showVideo(f);setTimeout(overlayLayer,50);
+ if(!use)return false;moveIn();showVideo(f);imageLayer();setTimeout(()=>{overlayLayer();imageLayer()},50);
  $('dub-preview-info').textContent=f?`${f.name} · thiết kế 720×1280 → xuất 1080×1920`:'Chọn video ở mục 🎬 để xem trước';
  $('dub-preview-note').textContent='Kéo video, khung, chữ trên khung hình; nhấp đúp chữ để sửa. Chữ AI của từng video thay cho chữ mẫu khi xuất.';return true}
 
@@ -116,6 +120,7 @@ function labels(){const o={};extend(o);const bg=({solid:'một màu',gradient:'c
  $('sum-text').textContent=`tiêu đề: ${src($('dt-title-src').value)}${$('dt-title-src').value==='ai'?' ≤ '+$('dt-title-words').value+' từ':''} · nội dung: ${src($('dt-body-src').value)}${$('dt-body-src').value==='ai'?' '+$('dt-body-min').value+'–'+$('dt-body-max').value+' từ':''}`;
  if(name==='design'){const n=v=>Number($(v)?.value)||0;$('sum-frame').textContent=[n('dub-trim-start')||n('dub-trim-end')?`cắt ${n('dub-trim-start')}s đầu · ${n('dub-trim-end')}s cuối`:'không cắt',`video ${$('video_width').value}×${$('video_height').value}`].join(' · ');
   const files=api.files(),m=files.filter(f=>f.mp3).length;$('sum-voice').textContent=files.length?`${m}/${files.length} video có MP3 cùng tên · ${({auto:'tự khớp',voice:'MP3 khớp video',video:'video khớp MP3'})[$('dub-align').value]||''}`:'MP3 cùng tên tự nhận khi chọn video'}
+ $('dub-drop').textContent=name==='design'?'Kéo thả video hoặc cả thư mục vào đây · MP3 cùng tên (vd: a.mp4 + a.mp3) tự ghép làm giọng đọc':'Kéo thả video hoặc cả thư mục vào đây · .srt cùng tên sẽ bỏ qua bước nhận diện';
  const ai=on()&&[$('dt-title-src').value,$('dt-body-src').value].includes('ai');
  $('dt-ai-note').textContent=!ai?'Không dùng AI cho chữ.':name==='design'?'Dựng video: OpenAI nhận diện lời trong video (Whisper) rồi viết tiêu đề + nội dung trong 1 lần gọi. Video không có tiếng hoặc không có key: tiêu đề lấy theo tên file.':'Lồng tiếng: tiêu đề + nội dung được viết cùng lần dịch (không thêm lượt gọi). Chế độ ai33 tự lồng tiếng cần thêm 1 lần gọi ngắn.'}
 for(const id of ['dt-title-src','dt-body-src','dt-title-words','dt-body-min','dt-body-max','dt-on'])$(id).addEventListener('change',()=>{layout();if(on())moveIn();api.remember();labels();api.preview()});
