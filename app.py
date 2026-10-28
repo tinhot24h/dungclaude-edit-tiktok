@@ -332,6 +332,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', mime)
         self.send_header('Content-Length', str(len(content)))
         self.send_header('X-Content-Type-Options', 'nosniff')
+        # pages and scripts are always re-checked, so an update is visible without clearing the browser cache
+        self.send_header('Cache-Control', 'no-cache')
         self.end_headers()
         self.wfile.write(content)
 
@@ -453,6 +455,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(200,{'images':images()})
         if path == '/secrets':
             return self.respond(200,secrets_store.status())
+        if path == '/app/info':
+            return self.respond(200,{'version':VERSION,'root':str(ROOT)})
         if path == '/local/file':
             # previews of files picked on this computer; only this app's own pages may load them
             if self.headers.get('Sec-Fetch-Site') not in (None,'same-origin','none'):return self.respond(403,{'error':'Không cho phép.'})

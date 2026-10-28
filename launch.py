@@ -5,7 +5,10 @@ import shutil
 import subprocess
 import sys
 import threading
+import json
+import time
 import webbrowser
+from urllib import request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -20,6 +23,38 @@ def already_running(port):
             return True
     except OSError:
         return False
+
+
+def version():
+    try:
+        return (ROOT / 'VERSION').read_text(encoding='utf-8').strip()
+    except OSError:
+        return ''
+
+
+def same_app(port):
+    """True when the app on this port is this folder at this version (0.19.0 and older have no /app/info)."""
+    try:
+        with request.urlopen(f'http://127.0.0.1:{port}/app/info', timeout=3) as response:
+            info = json.loads(response.read(4096))
+        return info.get('version') == version() and os.path.normcase(info.get('root', '')) == os.path.normcase(str(ROOT))
+    except (OSError, ValueError):
+        return False
+
+
+def stop_other(port):
+    try:
+        req = request.Request(f'http://127.0.0.1:{port}/app/quit', data=b'{}', method='POST',
+                              headers={'Content-Type': 'application/json', 'Origin': f'http://127.0.0.1:{port}'})
+        request.urlopen(req, timeout=5).read()
+    except OSError:
+        pass
+    for _ in range(40):
+        if not already_running(port):
+            time.sleep(.5)
+            return
+        time.sleep(.25)
+    raise RuntimeError(f'Cong {port} dang bi mot ung dung khac dung. Tat Review Studio cu (nut nguon) hoac khoi dong lai may roi mo lai.')
 
 
 def tell(message):
@@ -58,9 +93,13 @@ def main():
             raise RuntimeError('Thieu phong chu. Hay giai nen toan bo ZIP vao mot thu muc.')
     port = int(os.environ.get('PORT', '8000'))
     if already_running(port):
-        # opened twice (e.g. the desktop shortcut): just bring the browser to the running app
-        webbrowser.open(f'http://127.0.0.1:{port}')
-        return 0
+        if same_app(port):
+            # opened twice (e.g. the desktop shortcut): just bring the browser to the running app
+            webbrowser.open(f'http://127.0.0.1:{port}')
+            return 0
+        # another version or another folder is still running (often hidden, from MO_REVIEW_STUDIO.vbs): stop it
+        print('Dang tat ban Review Studio cu dang chay...', flush=True)
+        stop_other(port)
     print(f'Mo trinh duyet: http://127.0.0.1:{port}', flush=True)
     print('Giu cua so nay mo khi dung. Nhan Ctrl+C de dung.', flush=True)
     if '--no-browser' not in sys.argv:

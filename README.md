@@ -1,8 +1,13 @@
-# Review Studio 0.19.3
+# Review Studio 0.19.4
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.19.4
+
+- **Sửa lỗi mở bản mới nhưng vẫn thấy bản cũ:** bản cũ chạy ẩn (mở bằng `MO_REVIEW_STUDIO.vbs`) vẫn giữ cổng 8000, nên khi mở bản mới thì trình duyệt vào bản cũ. Giờ trình mở kiểm tra phiên bản và thư mục của ứng dụng đang chạy; nếu khác thì tự tắt bản cũ rồi chạy bản mới.
+- Trang và script luôn được trình duyệt tải lại, không giữ bản cũ trong bộ nhớ đệm.
 
 ## Mới trong 0.19.3
 
