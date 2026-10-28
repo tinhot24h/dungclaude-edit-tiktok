@@ -382,7 +382,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.serve_audio(AUDIO / (audio_match[1]+'.mp3'), 'download=1' in urlparse(self.path).query.split('&'),filename=name)
         if path == '/translation-defaults':
             return self.respond(200, {'rules':ai_translate.DEFAULT_RULES,'guard':ai_translate.GUARD,'contract':ai_translate.CONTRACT,'max':ai_translate.MAX_RULES,
-                                      'hooks':ai_translate.HOOKS,'styles':ai_translate.STYLES})
+                                      'hooks':ai_translate.HOOKS,'styles':ai_translate.STYLES,'style_labels':ai_translate.STYLE_LABELS})
         if path == '/ai-status':
             return self.respond(200, {'configured':ai_translate.configured(),'model':ai_translate.default_model(),
                                      'providers':{name:dict(configured=ai_translate.configured(name),model=ai_translate.default_model(name))
@@ -412,7 +412,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(200,{'jobs':DUB.jobs()})
         if path == '/dub/capabilities':
             return self.respond(200,{'demucs':bool(dubbing.demucs_command()),'openai':bool(dubbing.openai_key({})),'ai33':bool(dubbing.ai33_key({})),
-                                     'defaults':dubbing.DEFAULTS,'pronouns':dubbing.PRONOUNS})
+                                     'defaults':dubbing.DEFAULTS,'pronouns':dubbing.PRONOUNS,'styles':ai_translate.STYLE_LABELS})
         dub=re.fullmatch(r'/dub/([a-f0-9]{32})(?:/(download|srt/vi|srt/zh))?',path)
         if dub:
             try:job=DUB.load(dub[1])
@@ -609,7 +609,7 @@ class Handler(BaseHTTPRequestHandler):
                     if dub[1]=='start':return self.respond(200,{'jobs':DUB.create(raw)})
                     key,action=dub[2],dub[3]
                     if action=='continue':return self.respond(200,DUB.proceed(key,raw))
-                    if action=='lines':return self.respond(200,DUB.edit_lines(key,raw.get('lines')))
+                    if action=='lines':return self.respond(200,DUB.edit_paragraph(key,raw['paragraph']) if 'paragraph' in raw else DUB.edit_lines(key,raw.get('lines')))
                     if action=='cancel':return self.respond(200,DUB.cancel(key))
                     if action=='delete':DUB.delete(key);return self.respond(200,{'jobs':DUB.jobs()})
                     vid=uuid.uuid4().hex;folder=DATA/vid;folder.mkdir()

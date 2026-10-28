@@ -39,7 +39,7 @@ class HelperTests(unittest.TestCase):
             with self.assertRaises(dubbing.DubError,msg=bad):dubbing.options(bad)
 
 
-class PipelineTests(unittest.TestCase):
+class PipelineBase(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();root=Path(self.tmp.name)
         self.data=root/'data';self.audio=root/'audio';self.out=root/'out';self.data.mkdir();self.audio.mkdir()
@@ -71,8 +71,9 @@ class PipelineTests(unittest.TestCase):
             key=self.store.create(dict(video_ids=[self.vid],options=dict(voice_id='edge_vi-VN-HoaiMyNeural',**opts)))[0]
         return self.store.load(key)
 
+class PipelineTests(PipelineBase):
     def test_review_pause_then_full_dub_with_burned_subtitles(self):
-        job=self.job(subtitles='burn',background='duck')
+        job=self.job(subtitles='burn',background='duck',mode='lines',review=True)
         self.store.process(job,dict(openai='sk-test',ai33='k'),threading.Event())
         self.assertEqual(job['state'],'review');self.assertEqual([s['vi'] for s in job['segments']],['Xin chào','Cảm ơn mọi người'])
         self.assertTrue((self.data/'dub'/job['id']/'zh.srt').is_file())
@@ -92,7 +93,7 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(job['state'],'done');self.assertEqual(len(self.tasks),3)
 
     def test_soft_subtitles_remove_background_and_editor_handoff(self):
-        job=self.job(subtitles='soft',background='remove',review=False)
+        job=self.job(subtitles='soft',background='remove',review=False,mode='lines')
         self.store.process(job,dict(openai='sk-test',ai33='k'),threading.Event())
         self.assertEqual(job['state'],'done',job['message'])
         streams=subprocess.check_output(['ffprobe','-v','error','-show_entries','stream=codec_type','-of','csv=p=0',str(self.data/'dub'/job['id']/'dubbed.mp4')],text=True).split()
@@ -112,6 +113,51 @@ class PipelineTests(unittest.TestCase):
 
 if __name__=='__main__':
     unittest.main()
+
+
+class ParagraphTests(PipelineBase):
+    def test_one_paragraph_one_tts_task_with_transcript_subtitles(self):
+        srt='1\n00:00:00,000 --> 00:00:01,000\nXin chào mọi người.\n\n2\n00:00:01,000 --> 00:00:02,200\nCảm ơn đã xem.\n'
+        def download(url,target):Path(target).write_text(srt,encoding='utf-8') if url.endswith('.srt') else Path(target).write_bytes(self.voice.read_bytes())
+        sent=[]
+        with mock.patch.object(dubbing,'paragraph_request',return_value='Xin chào mọi người. Cảm ơn đã xem.') as para,\
+             mock.patch.object(dubbing.ai33_audio,'create_tts',side_effect=lambda raw:sent.append(raw) or dict(task_id='p1',state='submitted')),\
+             mock.patch.object(dubbing.ai33_audio,'get_task',return_value=dict(status='done',audio_url='https://cdn.example/a.mp3',srt_url='https://cdn.example/a.srt')),\
+             mock.patch.object(dubbing.audio_files,'download',side_effect=download):
+            job=self.job(subtitles='file',background='remove',review=True)
+            self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
+            self.assertEqual((job['state'],job['paragraph']),('review','Xin chào mọi người. Cảm ơn đã xem.'))
+            self.assertEqual(para.call_args[0][4],int((4-.2)*4.2))
+            job['review_passed']=True;self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
+        self.assertEqual(job['state'],'done',job['message'])
+        self.assertEqual(len(sent),1);self.assertTrue(sent[0]['with_transcript']);self.assertEqual(len(job['groups']),1)
+        # 2.2s voice in a 3.8s window: no speed-up; subtitles come from ai33's transcript, shifted to the first spoken line
+        self.assertEqual(job['groups'][0]['tempo'],1.0)
+        self.assertEqual([(l['start'],l['vi']) for l in job['vi_lines']],[(.2,'Xin chào mọi người.'),(1.2,'Cảm ơn đã xem.')])
+        self.assertIn('00:00:00,200 --> 00:00:01,200\nXin chào mọi người.',(self.data/'dub'/job['id']/'vi.srt').read_text())
+        # editing the paragraph re-voices it (one new task)
+        self.store.edit_paragraph(job['id'],'Xin chào.')
+        self.assertEqual((job['groups'],job['steps']['tts']),([],'pending'))
+
+    def test_slow_video_down_when_the_voice_is_longer(self):
+        long=Path(self.tmp.name)/'long.mp3';tone(long,6,600)
+        with mock.patch.object(dubbing,'paragraph_request',return_value='Một đoạn rất dài. Hai câu.'),\
+             mock.patch.object(dubbing.ai33_audio,'get_task',return_value=dict(status='done',audio_url='https://cdn.example/a.mp3')),\
+             mock.patch.object(dubbing.audio_files,'download',side_effect=lambda url,target:Path(target).write_bytes(long.read_bytes())):
+            job=self.job(subtitles='burn',background='duck',review=False,align='video')
+            self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
+        self.assertEqual(job['state'],'done',job['message'])
+        self.assertGreater(job['video_stretch'],1.5)
+        self.assertAlmostEqual(dubbing.probe(self.data/'dub'/job['id']/'dubbed.mp4')['duration'],job['output_duration'],delta=.2)
+        self.assertEqual(len(job['vi_lines']),2)
+        self.assertAlmostEqual(job['output_duration'],.2*job['video_stretch']+6+.3,delta=.1)
+
+    def test_mp3_follows_video_both_ways(self):
+        with mock.patch.object(dubbing,'paragraph_request',return_value='Ngắn.'):
+            job=self.job(background='remove',review=False,align='voice',subtitles='none')
+            self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
+        # 2.2s voice in a 3.75s window is slowed down to the natural floor of 0.8×
+        self.assertEqual(job['state'],'done',job['message']);self.assertEqual(job['groups'][0]['tempo'],.8);self.assertEqual(job['video_stretch'],1)
 
 
 class PromptTests(unittest.TestCase):
@@ -134,3 +180,21 @@ class PromptTests(unittest.TestCase):
         self.assertTrue(any('kích thước/thể tích' in w for w in out['warnings']))
         self.assertIsNone(ai_translate.SPEC.search('dùng 5 lần mỗi ngày'))
         self.assertIn(ai_translate.STRICT,ai_translate.system(dict(rules='x')))
+
+
+class StyleTests(unittest.TestCase):
+    def test_style_presets_reach_both_prompts_and_strict_rule_is_always_on(self):
+        import ai_translate
+        seen=[]
+        def call(path,key,body,ctype,timeout=0):
+            seen.append(json.loads(body)['input'][0]['content'])
+            text='{"text":"Xin chào"}' if 'dub_paragraph' in body.decode() else '{"lines":[{"id":0,"vi":"Xin chào"}]}'
+            return dict(status='completed',output=[dict(type='message',content=[dict(type='output_text',text=text)])])
+        opts=dubbing.options(dict(style='household',no_price=False))
+        with mock.patch.object(dubbing,'openai_call',side_effect=call):
+            dubbing.translate_request('k','m',[dict(id=0,zh='你好')],opts)
+            dubbing.paragraph_request('k','m',[dict(start=0,end=1,zh='你好')],1,4,opts)
+        for rules in seen:
+            self.assertIn(ai_translate.STYLES['household'],rules);self.assertIn(ai_translate.STRICT,rules)
+        self.assertEqual(set(ai_translate.STYLES),set(ai_translate.STYLE_LABELS));self.assertEqual(set(ai_translate.STYLES),set(ai_translate.HOOKS))
+        with self.assertRaises(dubbing.DubError):dubbing.options(dict(style='x'))

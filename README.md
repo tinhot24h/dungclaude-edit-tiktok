@@ -1,8 +1,24 @@
-# Review Studio 0.15
+# Review Studio 0.16
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.16
+
+- **Lồng tiếng thành 1 file giọng (mặc định):** dịch toàn bộ lời Trung thành **một đoạn văn tiếng Việt liền mạch**, gửi ai33 **một tác vụ**, nhận **một file giọng**.
+  - ai33 trả kèm phụ đề theo đúng giọng đọc, nên phụ đề Việt vẫn khớp thời gian.
+  - Muốn khớp khẩu hình hơn thì chọn chế độ cũ "Từng câu theo thời gian".
+- **Khớp thời lượng giọng ↔ video** (bước 04):
+  - Giữ tốc độ giọng, chỉ đọc nhanh khi giọng dài hơn video.
+  - **MP3 khớp video:** co giãn giọng (0,8× đến mức tối đa) để kết thúc cùng video.
+  - **Video khớp MP3:** tua nhanh hoặc làm chậm video (0,25–4×), nhạc nền đổi tốc độ theo.
+- **Chọn giọng ai33 ngay trên trang Lồng tiếng:** nút 🎙 Chọn giọng ai33 mở danh sách giọng (Edge, ElevenLabs, MiniMax, Vbee, Fish Audio, Kokoro, giọng clone), có tìm kiếm và lọc nam/nữ. Bấm ▶ nghe thử, bấm Chọn để dùng.
+- **Chạy tự động 1 bước:** bấm "Bắt đầu" là chạy hết từ nhận diện tới video xuất, không dừng giữa chừng để hỏi. Ô "Dừng sau bước dịch để tự duyệt câu" vẫn còn nếu bạn cần.
+- **Xem trước video đầu tiên:** trên hàng đợi hiện video đầu tiên đã chọn. Âm nền nghe như sau khi xử lý; khi chọn "Chèn chữ lên video" thì phụ đề mẫu hiện đúng vị trí và cỡ chữ lúc xuất.
+- **Khu duyệt câu dịch:** thanh tiêu đề luôn hiện trên cùng khi cuộn, gồm trạng thái, các bước và nút Tiếp tục / Dừng / Tải MP4. Ở chế độ đoạn văn: lời Trung bên trái, đoạn văn Việt sửa được bên phải (đếm số tiếng/giới hạn), phụ đề theo giọng bấm vào để tua.
+- **Mẫu văn phong dịch** (dùng chung trang Dịch AI và Lồng tiếng): Review sản phẩm, Gia dụng · nhà cửa, Trải nghiệm thực tế, Tin tức · thời sự, Chia sẻ mẹo, Giới thiệu sản phẩm, Làm đẹp · chăm sóc, Công nghệ · điện tử, Ẩm thực, Thời trang, Giải trí · hài hước. Mỗi mẫu có cách mở đầu (hook) riêng.
+- **Luôn áp dụng, không tắt được:** không nhắc giá, thương hiệu, khối lượng, kích thước, thể tích, công suất chính xác; chỉ dùng từ ngữ chung chung.
 
 ## Mới trong 0.15
 

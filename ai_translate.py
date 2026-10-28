@@ -16,13 +16,31 @@ STYLES = {
     'news': 'Tin tức: trung tính, thông tin chính trước, phân biệt sự kiện với nhận định, giữ nguồn nếu có.',
     'tips': 'Chia sẻ mẹo: nêu vấn đề, hướng dẫn ngắn gọn, kết quả chỉ trong phạm vi nguồn cung cấp.',
     'intro': 'Giới thiệu sản phẩm: mạch lạc, dễ hiểu, nhấn lợi ích đã được nguồn nêu, không cường điệu.',
+    'household': 'Gia dụng · đồ dùng nhà cửa: mở từ chuyện sinh hoạt hằng ngày (dọn dẹp, nấu nướng, cất đồ, giặt giũ), nói rõ dùng thế nào và tiện ở đâu, giọng gần gũi như người trong nhà mách nhau; nhấn sạch sẽ, gọn gàng, tiết kiệm thời gian, an toàn cho gia đình; không phóng đại công dụng.',
+    'experience': 'Trải nghiệm thực tế: kể theo trình tự dùng thử (mở hộp → dùng → cảm nhận), nói cả điểm hay lẫn lưu ý mà nguồn nêu, câu ngắn tự nhiên như đang quay vlog; chỉ dùng trải nghiệm có trong nguồn, không tự bịa cảm nhận.',
+    'beauty': 'Làm đẹp · chăm sóc: nhẹ nhàng, tinh tế, chú trọng cảm giác khi dùng, cách dùng và thói quen chăm sóc; tuyệt đối không cam kết hiệu quả điều trị, không dùng từ y khoa khẳng định.',
+    'tech': 'Công nghệ · đồ điện tử: rõ ràng, đi thẳng vào tính năng và lợi ích khi dùng, giải thích dễ hiểu cho người không rành kỹ thuật; nói chung chung về cấu hình, không đọc thông số.',
+    'food': 'Ẩm thực: gợi hình gợi vị (giòn, thơm, đậm đà…), kể cách làm/cách ăn theo thứ tự, giọng hào hứng vừa phải.',
+    'fashion': 'Thời trang: nói về phong cách, cách phối, chất liệu và cảm giác mặc, gợi ý dịp dùng; giọng trẻ trung, có gu.',
+    'fun': 'Giải trí · hài hước: nhịp nhanh, câu ngắn, dí dỏm, có thể dùng từ trend phổ biến nhưng không thô tục, không xúc phạm.',
 }
+# Labels shown in both the AI page and the dubbing page.
+STYLE_LABELS = {'review': 'Review sản phẩm', 'household': 'Gia dụng · nhà cửa', 'experience': 'Trải nghiệm thực tế', 'news': 'Tin tức · thời sự',
+                'tips': 'Chia sẻ mẹo', 'intro': 'Giới thiệu sản phẩm', 'beauty': 'Làm đẹp · chăm sóc', 'tech': 'Công nghệ · điện tử',
+                'food': 'Ẩm thực', 'fashion': 'Thời trang', 'fun': 'Giải trí · hài hước'}
 # How the opening hook should grab attention for each writing style.
 HOOKS = {
     'review': 'Mở bằng nỗi khó chịu/vấn đề người xem hay gặp hoặc điểm khác biệt nổi bật nhất của sản phẩm, dạng câu hỏi hoặc câu khẳng định ngắn gây tò mò.',
     'news': 'Mở bằng chi tiết gây chú ý nhất của tin (con số, diễn biến mới, hệ quả với người xem), giọng dứt khoát như tít báo; không suy diễn ngoài nguồn, không gây hoang mang.',
     'tips': 'Mở bằng kết quả hoặc lợi ích của mẹo (kiểu: chỉ với…, ít ai biết…, đừng … nữa nếu chưa biết…) nhưng chỉ hứa điều nguồn có nói.',
     'intro': 'Mở bằng lợi ích lớn nhất hoặc tình huống sử dụng quen thuộc, ngắn gọn và hấp dẫn, không cường điệu.',
+    'household': 'Mở bằng một phiền toái quen thuộc trong nhà (bếp bừa bộn, đồ khó vệ sinh, thiếu chỗ cất…) rồi hứa một cách xử lý gọn gàng mà nguồn có nói.',
+    'experience': 'Mở bằng cảm nhận/khoảnh khắc đáng chú ý nhất khi dùng thử mà nguồn có nêu, kiểu "dùng thử rồi mới biết…", không bịa.',
+    'beauty': 'Mở bằng nỗi lo làn da/vẻ ngoài quen thuộc hoặc cảm giác dễ chịu khi dùng, nhẹ nhàng, không hứa hiệu quả điều trị.',
+    'tech': 'Mở bằng tình huống bất tiện hằng ngày mà món đồ giải quyết, hoặc tính năng gây bất ngờ nhất, không đọc thông số.',
+    'food': 'Mở bằng hình ảnh/hương vị hấp dẫn nhất hoặc một câu hỏi gợi thèm.',
+    'fashion': 'Mở bằng kiểu phối hoặc khoảnh khắc mặc gây chú ý, giọng tự tin.',
+    'fun': 'Mở bằng một câu bất ngờ, hài hước hoặc tình huống ai cũng từng gặp.',
 }
 # On-video text must fit the current title/body boxes; defaults match design.settings in px mode.
 FIT_DEFAULTS = dict(title_font='sans-bold', title_size=30, title_width=548, body_font='sans', body_size=22, body_width=548)

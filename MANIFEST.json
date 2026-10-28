@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.15",
- "notes": "## Mới trong 0.15\n\n- **Lưu API key:** bên dưới mỗi ô key (OpenAI, Gemini, ai33) có nút **💾 Lưu key trên máy này**, nên lần sau không phải nhập lại.\n  - Không bấm lưu thì key chỉ giữ trong phiên như trước.\n  - Key được lưu trong `.local/secrets.json` trên máy bạn, không nằm trong ZIP hay bản cập nhật. Giao diện chỉ hiện 4 ký tự cuối.\n  - Có nút **Xóa key đã lưu**. Người dùng chung máy hoặc chung tài khoản Windows cũng dùng được key đã lưu.\n- **Câu lệnh dịch dùng chung:** trang Lồng tiếng dùng luôn mẫu câu lệnh đã sửa ở trang Dịch & biên tập AI (phần quy tắc nội dung và văn phong).\n  - Quy tắc cố định cho mọi mẫu: tuyệt đối không nêu giá, tên thương hiệu, tên shop, mã model, kích thước, thể tích, dung tích, khối lượng, công suất chính xác; chỉ dùng từ chung chung (\"giá mềm\", \"nhỏ gọn\", \"dung tích lớn\"…).\n  - Câu có con số kèm cm, ml, lít, kg, W, mAh… sẽ hiện cảnh báo.\n- **Chỉnh video gốc** (tab Khung hình):\n  - Căn trái/giữa/phải, trên/giữa/dưới, đặt giữa khung.\n  - Kích thước nhanh: Lấp đầy 9:16, Giữ toàn bộ hình, Vừa chiều ngang/dọc theo đúng tỷ lệ video gốc.\n  - Zoom 100–200%, thanh xoay kèm nút ↺90° ↻90° 180° 0°, **lật ngang/lật dọc**. Bản xuất giống bản xem trước.\n- **MP3:** bảng Giọng đọc và Nhạc nền có thanh và nút nhanh cho tốc độ (0.75×–1.5×) và âm lượng (Tắt/50/100/150/200%). Nhạc nền có thêm tốc độ riêng.\n- **Tự khớp thời lượng** (bảng Giọng đọc): \"MP3 khớp video\" hoặc \"Video khớp MP3\". Ứng dụng tự đổi tốc độ sau mỗi lần cắt/sửa để hai track kết thúc cùng lúc.\n- **Mục Xuất sắp xếp theo thứ tự:** ① Thông số xuất → ② Cấu hình đã lưu → ③ Xuất video đang dựng → ④ Xuất hàng loạt.\n  - **Cấu hình đã lưu:** lưu cả thiết kế, âm thanh, tốc độ, tự khớp, nhạc nền và độ phân giải để dùng lại.\n  - **Xuất hàng loạt:** tích nhiều video trong kho. Chọn MP3 (tự tìm MP3 cùng tên / không dùng / dùng MP3 đang chọn) và chữ (giữ chữ / tiêu đề = tên video / không chữ). Mỗi video xuất đủ độ dài với cùng thông số, tự khớp MP3 nếu bật, có tiến độ từng video và nút Dừng tất cả.",
+ "version": "0.16",
+ "notes": "## Mới trong 0.16\n\n- **Lồng tiếng thành 1 file giọng (mặc định):** dịch toàn bộ lời Trung thành **một đoạn văn tiếng Việt liền mạch**, gửi ai33 **một tác vụ**, nhận **một file giọng**.\n  - ai33 trả kèm phụ đề theo đúng giọng đọc, nên phụ đề Việt vẫn khớp thời gian.\n  - Muốn khớp khẩu hình hơn thì chọn chế độ cũ \"Từng câu theo thời gian\".\n- **Khớp thời lượng giọng ↔ video** (bước 04):\n  - Giữ tốc độ giọng, chỉ đọc nhanh khi giọng dài hơn video.\n  - **MP3 khớp video:** co giãn giọng (0,8× đến mức tối đa) để kết thúc cùng video.\n  - **Video khớp MP3:** tua nhanh hoặc làm chậm video (0,25–4×), nhạc nền đổi tốc độ theo.\n- **Chọn giọng ai33 ngay trên trang Lồng tiếng:** nút 🎙 Chọn giọng ai33 mở danh sách giọng (Edge, ElevenLabs, MiniMax, Vbee, Fish Audio, Kokoro, giọng clone), có tìm kiếm và lọc nam/nữ. Bấm ▶ nghe thử, bấm Chọn để dùng.\n- **Chạy tự động 1 bước:** bấm \"Bắt đầu\" là chạy hết từ nhận diện tới video xuất, không dừng giữa chừng để hỏi. Ô \"Dừng sau bước dịch để tự duyệt câu\" vẫn còn nếu bạn cần.\n- **Xem trước video đầu tiên:** trên hàng đợi hiện video đầu tiên đã chọn. Âm nền nghe như sau khi xử lý; khi chọn \"Chèn chữ lên video\" thì phụ đề mẫu hiện đúng vị trí và cỡ chữ lúc xuất.\n- **Khu duyệt câu dịch:** thanh tiêu đề luôn hiện trên cùng khi cuộn, gồm trạng thái, các bước và nút Tiếp tục / Dừng / Tải MP4. Ở chế độ đoạn văn: lời Trung bên trái, đoạn văn Việt sửa được bên phải (đếm số tiếng/giới hạn), phụ đề theo giọng bấm vào để tua.\n- **Mẫu văn phong dịch** (dùng chung trang Dịch AI và Lồng tiếng): Review sản phẩm, Gia dụng · nhà cửa, Trải nghiệm thực tế, Tin tức · thời sự, Chia sẻ mẹo, Giới thiệu sản phẩm, Làm đẹp · chăm sóc, Công nghệ · điện tử, Ẩm thực, Thời trang, Giải trí · hài hước. Mỗi mẫu có cách mở đầu (hook) riêng.\n- **Luôn áp dụng, không tắt được:** không nhắc giá, thương hiệu, khối lượng, kích thước, thể tích, công suất chính xác; chỉ dùng từ ngữ chung chung.",
  "files": {
   "update.py": {
    "sha256": "69dea002a0cb777dc61b4f48fa2b2f4046a8181c8b9db86d8f4361d8838cac7b",
@@ -24,8 +24,8 @@
    "size": 3948
   },
   "dub_ui.js": {
-   "sha256": "13f7d4821300a0803fb576a9bdb9bc157009d0a106a1c232cc9b54614d3d784d",
-   "size": 26656
+   "sha256": "b599e33599d3e971025bc96eca01b7cfcf795d98bd88bb2a2a4c5aeb2a9188a0",
+   "size": 39069
   },
   "layout_ui.js": {
    "sha256": "31474a69f54710df46c2483f9711e36d487d11437085b2b563f97b1f18ab711e",
@@ -44,12 +44,12 @@
    "size": 2135
   },
   "dubbing.py": {
-   "sha256": "a4ccf816a4c94d50ab16d19610f27c715d36b37f7ded2eb6ee1a66e711c5e6b3",
-   "size": 45683
+   "sha256": "cd4f2a973a2096c696131bb1a98d29ab983aca7a0b6eff6185371d02a7340528",
+   "size": 58255
   },
   "tests/test_dubbing.py": {
-   "sha256": "9342a183835e62133eb7483e65ef7b261d014197c70b2c669681e7653bc0040a",
-   "size": 9067
+   "sha256": "8b71a76af075da0ff04df117d12a01b1b46aecffe552b3bb62bea9b4b3fe571a",
+   "size": 14159
   },
   "image_ui.js": {
    "sha256": "b8e2a905501aedea84033a7c962b180251e06dc018e6133241f0310b474ed8e9",
@@ -120,8 +120,8 @@
    "size": 13961
   },
   "app.py": {
-   "sha256": "48f3c884ee1b5fd5842ffacbd1c3b91d191fdd45182e226b2ce5cdd9b37274f3",
-   "size": 45918
+   "sha256": "75376b62e01d4806cd3d02f60565d1c1d2931af74d09681911711af3071aae4b",
+   "size": 46062
   },
   "ai33_audio.py": {
    "sha256": "839b8badc118eb53d371d115fa1bca7426fef696bda789751199c5496b730807",
@@ -136,12 +136,12 @@
    "size": 29000
   },
   "ai_translate.py": {
-   "sha256": "1990a10616438cc11801b91d3844dbda845bbc9483f5067487836e937dce0774",
-   "size": 22103
+   "sha256": "afbccf33b426e49bb8888daaefadfd366b24882c1d08bbb29cc5c4d77220c536",
+   "size": 25305
   },
   "studio.css": {
-   "sha256": "aab8c23345f6ddb98fbcbd105a94e5a0bf7b77c6cbfbef7209fda71817e2fa43",
-   "size": 69875
+   "sha256": "6a88cb5327d3eee2648b9ad18720e87ac3f2322123bb8ede38008e9b48b5be1b",
+   "size": 72427
   },
   "studio.js": {
    "sha256": "3beaa5a97b9d5bfbe350504f3f8c2f64cf31f9f5926d08a0a4e3916e61a21df9",
@@ -160,8 +160,8 @@
    "size": 2609
   },
   "index.html": {
-   "sha256": "94fe54f2cf8f7de175571b20247bd1a88a3e2e62c57a46a985651099586e4b6d",
-   "size": 32701
+   "sha256": "4039e35a6abc9b2a46c94426644ced987230cdc33c3c723762c3142b737cfb17",
+   "size": 33080
   },
   "launch.py": {
    "sha256": "a493ab33e2db46235059df4460fd21a397ffd12880d85123d028cef9e2befa95",
@@ -180,15 +180,15 @@
    "size": 230
   },
   "HUONG_DAN.txt": {
-   "sha256": "bdd168c171ad435b110c4ee5c52c36260d440dc0b4a45c98f5ff55243cfe14e0",
-   "size": 25273
+   "sha256": "a3da7906a4088e0426a9d57bbe998002e1e766dfadd6bbf4358d234993aab076",
+   "size": 27759
   },
   "README.md": {
-   "sha256": "e142ce8ca244c944036af7b007825cdd3475a3d414fb3529409cd43450a1b981",
-   "size": 36318
+   "sha256": "fbd8245a12f1af5132e7a4942a57319dc7cd60a4bae50c0d49fd9d7328fe88ec",
+   "size": 38801
   },
   "VERSION": {
-   "sha256": "8f50a251b2e53316450daaaece743b78d53d38d491de193bd1afabba0a18f7ae",
+   "sha256": "29d707027ad99264288617ab4835a3704d6c95f9398523c5494206c942be6f11",
    "size": 5
   },
   ".gitignore": {
