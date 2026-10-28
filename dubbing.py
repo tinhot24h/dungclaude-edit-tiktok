@@ -41,7 +41,7 @@ SUBTITLES = ('none', 'file', 'soft')
 VOICE_RATE = 24000
 MAX_LINES = 600
 DEFAULTS = dict(language='zh', model=ai_translate.DEFAULT_MODEL, rate=4.2, pronoun='neutral', notes='', no_price=True,
-                voice_id='', voice_speed=1.0, dictionary_id=None, max_tempo=1.3, background='duck', duck_level=12,
+                voice_id='', voice_speed=1.0, dictionary_id=None, max_tempo=1.1, min_tempo=0.98, video_speed_min=0.85, video_speed_max=1.2, background='duck', duck_level=12,
                 background_volume=100, voice_volume=100, subtitles='file', loudness='tiktok', review=False, encoder='cpu', instructions='', mode='paragraph', align='auto', style='review',
                 frame_canvas='source', frame_fit='cover', frame_zoom=100, frame_x=0, frame_y=0, frame_rotate=0, frame_flip='none', trim_start=0, trim_end=0,
                 overlay=False, overlay_ids=[], overlay_count=1, overlay_blend='screen', overlay_opacity=60, overlay_timing='loop')
@@ -68,7 +68,7 @@ def options(raw):
         if isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) or not lo <= v <= hi:
             raise DubError('Thông số không hợp lệ: ' + key)
         out[key] = float(v)
-    for key, lo, hi in (('frame_zoom', 25, 400), ('frame_x', -100, 100), ('frame_y', -100, 100), ('frame_rotate', -180, 180), ('overlay_opacity', 0, 100), ('trim_start', 0, 120), ('trim_end', 0, 120), ('rate', 2.5, 7), ('voice_speed', .5, 1.5), ('max_tempo', 1, 1.6), ('duck_level', 0, 100),
+    for key, lo, hi in (('frame_zoom', 25, 400), ('frame_x', -100, 100), ('frame_y', -100, 100), ('frame_rotate', -180, 180), ('overlay_opacity', 0, 100), ('trim_start', 0, 120), ('trim_end', 0, 120), ('rate', 2.5, 7), ('voice_speed', .5, 1.5), ('max_tempo', 1, 1.6), ('min_tempo', .5, 1), ('video_speed_min', .25, 1), ('video_speed_max', 1, 4), ('duck_level', 0, 100),
                         ('background_volume', 0, 200), ('voice_volume', 0, 300)):
         num(key, lo, hi)
     if raw.get('subtitles') == 'burn':  # burned-in subtitles were removed; old saved settings get the .srt file instead
@@ -963,7 +963,7 @@ class Store:
                     continue
                 g['raw'] = g['file'].replace('.wav', '.pcm')
                 slot = g['clip_seconds'] / g['tempo'] - g['overflow']
-                fade = f",afade=t=out:st={max(0, slot - .25):.3f}:d=.25,atrim=duration={slot:.3f}" if g['overflow'] > .05 else ''
+                fade = f",afade=t=out:st={max(0, slot - .25):.3f}:d=0.25,atrim=duration={slot:.3f}" if g['overflow'] > .05 else ''
                 run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(folder / g['file']), '-af', tempo_filter(g['tempo']) + fade,
                      '-ac', '1', '-ar', str(VOICE_RATE), '-f', 's16le', str(folder / g['raw'])], cancel)
             mix_voice(job['groups'], folder, job['duration'])
@@ -1184,29 +1184,33 @@ class Store:
         g = job['groups'][0]
         start = g['start']
         room = max(.5, job['duration'] - start - .05)
-        tempo, stretch, overflow = 1.0, 1.0, 0.0
+        tempo, stretch = 1.0, 1.0
         need = g['clip_seconds'] / room
-        if settings['align'] == 'video':
-            # video follows the MP3: faster or slower so the voice ends just before the video does
-            stretch = max(.25, min(4.0, (g['clip_seconds'] + .3) / max(.5, job['duration'] - start)))
+        lo, hi = settings['min_tempo'], settings['max_tempo']
+        # video speed v plays the source v× faster, so the output is 1/v as long (stretch)
+        slow, fast = 1 / settings['video_speed_min'], 1 / settings['video_speed_max']
+        if settings['align'] in ('voice', 'auto'):
+            # MP3 follows the video within lo–hi ('auto' only speeds up when the voice is too long)
+            tempo = min(max(need, lo if settings['align'] == 'voice' else 1.0), hi)
+        if settings['align'] in ('video', 'auto'):
+            # video follows the MP3 within its speed range ('auto': only slowed down for what the voice still lacks)
+            want = (g['clip_seconds'] / tempo + .3) / max(.5, job['duration'] - start)
+            stretch = max(fast, min(slow, want)) if settings['align'] == 'video' else min(slow, max(1.0, want))
             if abs(stretch - 1) < .01:
                 stretch = 1.0
-        elif settings['align'] == 'voice' or need > 1:
-            # MP3 follows the video (both ways, kept in a natural range) — or, in 'auto', only when it is too long
-            tempo = min(max(need, .8 if settings['align'] == 'voice' else 1.0), settings['max_tempo'])
-        if stretch == 1:
-            overflow = max(0.0, g['clip_seconds'] / tempo - room)
+        # whatever still does not fit is cut at the end of the video (with a short fade)
+        overflow = max(0.0, g['clip_seconds'] / tempo - (max(.5, job['duration'] - start) * stretch - .05))
         job['video_stretch'] = round(stretch, 4)
         job['output_duration'] = round(job['duration'] * stretch, 3)
         place = round(start * stretch, 3)
         g.update(tempo=round(tempo, 4), overflow=round(overflow, 2), raw=g['file'].replace('.wav', '.pcm'), place=place)
         job['warnings'] = [w for w in job['warnings'] if not w.startswith(('Giọng dài', 'Video được'))]
         if overflow > .05:
-            job['warnings'].append(f'Giọng dài hơn video {overflow:.1f}s dù đã đọc nhanh {tempo:.2f}×; phần cuối được làm nhỏ dần. Rút gọn đoạn văn hoặc chọn "Video khớp MP3".')
+            job['warnings'].append(f'Giọng dài hơn video {overflow:.1f}s dù đã khớp trong giới hạn (giọng {tempo:.2f}×, video {1 / stretch:.2f}×); phần cuối giọng được cắt theo độ dài video. Rút gọn đoạn văn hoặc nới giới hạn tốc độ.')
         if stretch != 1:
             job['warnings'].append(f'Video được {"làm chậm" if stretch > 1 else "tua nhanh"} cho khớp giọng đọc: dài {job["output_duration"]:.1f}s (gốc {job["duration"]:.1f}s).')
         length = g['clip_seconds'] / tempo - overflow
-        fade = f",afade=t=out:st={max(0, length - .3):.3f}:d=.3,atrim=duration={length:.3f}" if overflow > .05 else ''
+        fade = f",afade=t=out:st={max(0, length - .3):.3f}:d=0.3,atrim=duration={length:.3f}" if overflow > .05 else ''
         run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(folder / g['file']), '-af', tempo_filter(tempo) + fade,
              '-ac', '1', '-ar', str(VOICE_RATE), '-f', 's16le', str(folder / g['raw'])], cancel)
         mix_voice(job['groups'], folder, job['output_duration'])

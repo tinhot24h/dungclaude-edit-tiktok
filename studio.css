@@ -638,5 +638,6 @@ kbd{display:inline-block;padding:2px 7px;border:1px solid #475569;border-bottom-
 #dub-frame-tools{flex-wrap:wrap;margin-top:6px}
 #dub-start{width:auto;flex:none}.dub-bar-tools{justify-content:flex-end}
 .dub-demucs{margin:8px 0 12px;padding:10px 12px;border:1px dashed var(--border);border-radius:10px}.dub-demucs .helper{margin:0 0 8px}.dub-demucs-log{margin:8px 0 0;max-height:140px;overflow:auto;white-space:pre-wrap;font-size:11px;opacity:.75}
-.dub-range{display:grid;grid-template-columns:minmax(0,1fr) 72px;gap:8px;align-items:center}.dub-range .dub-num{padding:6px 8px;font-variant-numeric:tabular-nums;text-align:right}
+.dub-range{display:grid;grid-template-columns:minmax(0,1fr) 78px;gap:8px;align-items:center}.dub-range .dub-numbox,.dub-limit-row input{width:100%;min-width:0;height:34px;padding:4px 8px;font-variant-numeric:tabular-nums;text-align:right}
+.dub-limits{margin-top:6px}.dub-limits .group-label{margin:16px 0 8px}.dub-limit-row{display:grid;grid-template-columns:96px minmax(0,1fr) 12px minmax(0,1fr) 14px;gap:6px;align-items:center;margin-bottom:8px;font-size:12px;color:#bdcadb}.dub-limit-row i{font-style:normal;text-align:center;color:var(--muted)}.dub-limit-row small{color:var(--muted)}
 .dub-inline-player{display:block;width:100%;max-height:62vh;margin:10px 0 4px;background:#000;border-radius:8px;object-fit:contain}

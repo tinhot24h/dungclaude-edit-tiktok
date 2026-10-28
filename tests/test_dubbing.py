@@ -148,25 +148,38 @@ class ParagraphTests(PipelineBase):
         self.assertEqual([(l['start'],l['end']) for l in lines],[(10,12.6),(12.6,16)])
         self.assertEqual(dubbing.sentence_lines('',0,3),[])
 
-    def test_slow_video_down_when_the_voice_is_longer(self):
-        long=Path(self.tmp.name)/'long.mp3';tone(long,6,600)
+    def run_long(self,seconds,**opts):
+        long=Path(self.tmp.name)/'long.mp3';tone(long,seconds,600)
         with mock.patch.object(dubbing,'paragraph_request',return_value='Một đoạn rất dài. Hai câu.'),\
              mock.patch.object(dubbing.ai33_audio,'get_task',return_value=dict(status='done',audio_url='https://cdn.example/a.mp3')),\
              mock.patch.object(dubbing.audio_files,'download',side_effect=lambda url,target:Path(target).write_bytes(long.read_bytes())):
-            job=self.job(subtitles='file',background='duck',review=False,align='video')
+            job=self.job(subtitles='file',background='duck',review=False,**opts)
             self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
         self.assertEqual(job['state'],'done',job['message'])
-        self.assertGreater(job['video_stretch'],1.5)
         self.assertAlmostEqual(dubbing.probe(self.data/'dub'/job['id']/'dubbed.mp4')['duration'],job['output_duration'],delta=.2)
-        self.assertEqual(len(job['vi_lines']),2)
+        return job
+
+    def test_slow_video_down_when_the_voice_is_longer(self):
+        job=self.run_long(6,align='video',video_speed_min=.25)
+        self.assertGreater(job['video_stretch'],1.5);self.assertEqual(len(job['vi_lines']),2)
         self.assertAlmostEqual(job['output_duration'],.2*job['video_stretch']+6+.3,delta=.1)
+
+    def test_default_limits_then_cut_to_the_video(self):
+        # video may slow to 0.85× at most; the rest of a 6 s voice in a 4 s video is cut where the video ends
+        job=self.run_long(6,align='video')
+        self.assertEqual(job['video_stretch'],round(1/.85,4));self.assertAlmostEqual(job['output_duration'],4/.85,delta=.02)
+        self.assertGreater(job['groups'][0]['overflow'],1);self.assertTrue(any('cắt theo độ dài video' in w for w in job['warnings']))
+        # auto: voice up to 1.1× first, then the video slows down for what is still missing
+        job=self.run_long(4.4,align='auto')
+        self.assertEqual(job['groups'][0]['tempo'],1.1);self.assertTrue(1<job['video_stretch']<=round(1/.85,4));self.assertEqual(job['groups'][0]['overflow'],0)
 
     def test_mp3_follows_video_both_ways(self):
         with mock.patch.object(dubbing,'paragraph_request',return_value='Ngắn.'):
             job=self.job(background='remove',review=False,align='voice',subtitles='none')
             self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
-        # 2.2s voice in a 3.75s window is slowed down to the natural floor of 0.8×
-        self.assertEqual(job['state'],'done',job['message']);self.assertEqual(job['groups'][0]['tempo'],.8);self.assertEqual(job['video_stretch'],1)
+        # 2.2s voice in a 3.75s window is slowed down only to the floor of 0.98×
+        self.assertEqual(job['state'],'done',job['message']);self.assertEqual(job['groups'][0]['tempo'],.98);self.assertEqual(job['video_stretch'],1)
+        with self.assertRaises(dubbing.DubError):dubbing.options(dict(video_speed_max=.5))
 
 
 class PromptTests(unittest.TestCase):

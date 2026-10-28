@@ -1,8 +1,20 @@
-# Review Studio 0.17.6
+# Review Studio 0.17.7
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.17.7
+
+- **Giới hạn tự khớp giọng ↔ video** (mục 🎙 Giọng đọc, nhập được số):
+  - Tốc độ giọng **0.98–1.1×**, tốc độ video **0.85–1.2×** (mặc định, sửa được).
+  - Quá giới hạn mà giọng vẫn dài hơn thì **cắt phần cuối giọng theo độ dài video**, có làm nhỏ dần.
+  - *Tự động:* giọng dài hơn video thì đọc nhanh tới 1.1×; còn thiếu thì làm chậm video tới 0.85×; vẫn dư thì cắt.
+  - *MP3 khớp video:* chỉ co giãn giọng trong giới hạn. *Video khớp MP3:* chỉ tua video trong giới hạn.
+  - Cấu hình cũ (đọc nhanh tối đa 1.3×) tự chuyển sang giới hạn mới.
+- **Số thập phân:** xoay, zoom, dịch ngang/dọc, độ đục, âm lượng… đặt được tới 0.1 (ví dụ xoay 0.5°).
+- **Sửa ô số bị cắt chữ** (ví dụ "103" chỉ hiện "03"): ô số rộng hơn và bỏ trùng tên với một kiểu cũ.
+- Sửa lỗi FFmpeg "Invalid duration .25/.3" khi giọng dài hơn chỗ trống và cần cắt (bản FFmpeg mới không nhận số dạng ".3").
 
 ## Mới trong 0.17.6
 

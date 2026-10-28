@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.17.6",
- "notes": "## Mới trong 0.17.6\n\n- **Overlay nền trong suốt (MOV ProRes 4444, QuickTime Animation, WebM alpha, PNG/GIF):**\n  - App tự nhận file có nền trong suốt; danh sách overlay ghi \"· trong suốt\".\n  - Khi xuất, các file này luôn được phủ **full khung** phía trên video theo đúng nền trong suốt, dù đang chọn chế độ hòa trộn nào. Chế độ \"Sáng\" trước đây làm mất kênh trong suốt nên gần như không thấy overlay.\n  - **Xem trước:** trình duyệt không phát được MOV ProRes, nên app tự tạo một bản WebM nhỏ giữ nền trong suốt chỉ để xem trước. Overlay hiện ngay trên khung xem trước. File gốc vẫn dùng khi xuất.\n  - Overlay đã thêm từ bản trước cũng được nhận lại tự động.\n- **Xem video ngay trong hàng đợi:** bấm vào một dòng đã **Hoàn tất** (hoặc nút **▶ Xem**) là video lồng tiếng mở và phát ngay trong dòng đó. Bấm lại dòng để đóng.",
+ "version": "0.17.7",
+ "notes": "## Mới trong 0.17.7\n\n- **Giới hạn tự khớp giọng ↔ video** (mục 🎙 Giọng đọc, nhập được số):\n  - Tốc độ giọng **0.98–1.1×**, tốc độ video **0.85–1.2×** (mặc định, sửa được).\n  - Quá giới hạn mà giọng vẫn dài hơn thì **cắt phần cuối giọng theo độ dài video**, có làm nhỏ dần.\n  - *Tự động:* giọng dài hơn video thì đọc nhanh tới 1.1×; còn thiếu thì làm chậm video tới 0.85×; vẫn dư thì cắt.\n  - *MP3 khớp video:* chỉ co giãn giọng trong giới hạn. *Video khớp MP3:* chỉ tua video trong giới hạn.\n  - Cấu hình cũ (đọc nhanh tối đa 1.3×) tự chuyển sang giới hạn mới.\n- **Số thập phân:** xoay, zoom, dịch ngang/dọc, độ đục, âm lượng… đặt được tới 0.1 (ví dụ xoay 0.5°).\n- **Sửa ô số bị cắt chữ** (ví dụ \"103\" chỉ hiện \"03\"): ô số rộng hơn và bỏ trùng tên với một kiểu cũ.\n- Sửa lỗi FFmpeg \"Invalid duration .25/.3\" khi giọng dài hơn chỗ trống và cần cắt (bản FFmpeg mới không nhận số dạng \".3\").",
  "files": {
   "demucs_runner.py": {
    "sha256": "426b21e67e115d21426f0ba38d0febe8707c0dd6336f7891396a59ec55500c0d",
@@ -28,8 +28,8 @@
    "size": 3948
   },
   "dub_ui.js": {
-   "sha256": "19ae4b3881fa2baf9c3215d76b3ba7f708de724c3294ee99fb009937122072ab",
-   "size": 58907
+   "sha256": "e9e4e3ecb52853e50dff045b2349b540262c9fd5c114614713e3e56e3aeb4f84",
+   "size": 59990
   },
   "layout_ui.js": {
    "sha256": "31474a69f54710df46c2483f9711e36d487d11437085b2b563f97b1f18ab711e",
@@ -48,12 +48,12 @@
    "size": 2135
   },
   "dubbing.py": {
-   "sha256": "cdb5c6543627a2aa8209c70d2ce39b060e92c373884169753d0fc1d3207d0965",
-   "size": 82589
+   "sha256": "82c0bede442203bb2cc340d8a4d05373ba00c7c94fe6cf837c99e8142297f699",
+   "size": 83220
   },
   "tests/test_dubbing.py": {
-   "sha256": "45ce5e8a71a2524e9454d6be9e844d3b2fef16620e6fa6229ab66bdb7b243371",
-   "size": 25713
+   "sha256": "e0353893c491dd3257d994f369ada31f7b9ece1c5b29cc3f05b5d99e64c59c4c",
+   "size": 26692
   },
   "image_ui.js": {
    "sha256": "b8e2a905501aedea84033a7c962b180251e06dc018e6133241f0310b474ed8e9",
@@ -144,8 +144,8 @@
    "size": 25305
   },
   "studio.css": {
-   "sha256": "7eef4cc2fdd4c116a215298f3918a5b5761b80769d5504fde6a87234df497b02",
-   "size": 78296
+   "sha256": "2040731b4dd5909a7197aa5dfbf8992aab1a49d49233924f7b57e9c947c9cc50",
+   "size": 78705
   },
   "studio.js": {
    "sha256": "3beaa5a97b9d5bfbe350504f3f8c2f64cf31f9f5926d08a0a4e3916e61a21df9",
@@ -164,7 +164,7 @@
    "size": 2609
   },
   "index.html": {
-   "sha256": "9a30bb7a63ead6b42f0c766907facf7f63fedbaed6309d48d4a1e438e73818fa",
+   "sha256": "af409a6082c63864a30ee42189b9d38bfdd2299187c0746d795df51cb17bceea",
    "size": 33084
   },
   "launch.py": {
@@ -184,15 +184,15 @@
    "size": 230
   },
   "HUONG_DAN.txt": {
-   "sha256": "53ef7873117ef58b8e07ee5feea6074882c9ac5fc28a651fb428b66f2ba21406",
-   "size": 33874
+   "sha256": "c14aa9f95fbc1b2969d81c770b8456e2de57e3594089b5a5dde631aad6303ea4",
+   "size": 34365
   },
   "README.md": {
-   "sha256": "1ee1b99fe484b97eab109fbd5d9a58c8d894d85cf587ab236a9ac278c566dd88",
-   "size": 46506
+   "sha256": "3abddf1b0a4fb51b01d0d8ab9206af7d1c71703310aab560b1a29014e731e239",
+   "size": 47658
   },
   "VERSION": {
-   "sha256": "3d4577b652bdb655f29a98530c52d2ff7d5c5d799e17d06602c4be73ebdaabb9",
+   "sha256": "47036bde3ecbc3bfb47979f1b555e7bff4c743018c8c20059eed08b264c7fb3e",
    "size": 7
   },
   ".gitignore": {
