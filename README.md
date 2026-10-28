@@ -1,8 +1,12 @@
-# Review Studio 0.19.4
+# Review Studio 0.19.5
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.19.5
+
+- **Bỏ cách mở không hiện cửa sổ cmd** (`MO_REVIEW_STUDIO.vbs`, `TAO_LOI_TAT_DESKTOP.vbs`) để tránh lỗi chạy ẩn bản cũ. Mở ứng dụng bằng `START_WINDOWS.bat`. Khi cập nhật, hai file này tự được xóa. Nút nguồn ở góc phải vẫn dùng để tắt ứng dụng.
 
 ## Mới trong 0.19.4
 
@@ -403,7 +407,7 @@ Cần Python 3.11+, FFmpeg/FFprobe với libx264/drawtext, libmp3lame cho MP3. K
 python3 launch.py
 ```
 
-Windows mở `MO_REVIEW_STUDIO.vbs` (không hiện cmd) hoặc `START_WINDOWS.bat`. Cổng loopback mặc định 8000; đặt `PORT` để đổi, `--no-browser` không tự mở trình duyệt. Health: `curl --fail http://127.0.0.1:8000/health`.
+Windows mở `START_WINDOWS.bat`. Cổng loopback mặc định 8000; đặt `PORT` để đổi, `--no-browser` không tự mở trình duyệt. Health: `curl --fail http://127.0.0.1:8000/health`.
 
 Dừng bản cũ, giải nén thư mục mới rồi chạy; không cần cài lại Python/FFmpeg. Thiết kế px 0.4 được giữ cùng khóa trình duyệt. Nếu cùng trình duyệt/địa chỉ/cổng và chưa có thiết kế px, có thể chuyển bản lưu 0.3 từ % sang px. PNG ở thư mục cũ cần tải lại.
 

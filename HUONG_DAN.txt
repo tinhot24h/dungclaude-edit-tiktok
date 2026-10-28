@@ -1,4 +1,4 @@
-REVIEW STUDIO 0.19.4 — VIDEO / DỊCH AI / ÂM THANH AI33
+REVIEW STUDIO 0.19.5 — VIDEO / DỊCH AI / ÂM THANH AI33
 
 CẬP NHẬT
 Từ bản 0.13: không cần tải lại ZIP. Trong ứng dụng bấm nút ⟳ (góc phải
@@ -22,11 +22,8 @@ Không có winget: cài Python từ https://www.python.org/downloads/
 Hoặc đặt ffmpeg.exe và ffprobe.exe trong thư mục bin cạnh launch.py.
 
 CHẠY
-Ứng dụng chạy trên Windows 10/11.
-- KHÔNG HIỆN CỬA SỔ CMD: nhấp đúp MO_REVIEW_STUDIO.vbs. Tắt bằng nút nguồn (biểu tượng ⏻) ở góc phải thanh trên cùng.
-  Nhấp đúp TAO_LOI_TAT_DESKTOP.vbs một lần để có lối tắt "Review Studio" trên Desktop.
-  Nếu không mở được, ứng dụng hiện hộp thông báo lỗi; chạy START_WINDOWS.bat để xem chi tiết.
-- CÓ CỬA SỔ CMD (xem log khi cần): nhấp đúp START_WINDOWS.bat. Ctrl+C hoặc nút nguồn để dừng.
+Ứng dụng chạy trên Windows 10/11: nhấp đúp START_WINDOWS.bat. Giữ cửa sổ cmd mở khi dùng;
+tắt bằng Ctrl+C trong cửa sổ đó hoặc nút nguồn ở góc phải thanh trên cùng.
 Trình duyệt tự mở http://127.0.0.1:8000. Mở lần nữa khi đang chạy chỉ mở lại trình duyệt. Cổng bận: đóng bản cũ hoặc chọn cổng khác:
   PowerShell: $env:PORT='8001'; python launch.py
 
@@ -222,6 +219,10 @@ Mở "⚙ Tùy chỉnh câu lệnh" để sửa quy tắc viết; bấm "Lưu th
 giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh gốc. Mẫu gốc đã
 cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
 Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
+
+NÂNG CẤP 0.19.5
+- Bỏ MO_REVIEW_STUDIO.vbs và TAO_LOI_TAT_DESKTOP.vbs. Mở ứng dụng bằng START_WINDOWS.bat (có cửa sổ cmd).
+  Khi cập nhật, hai file này tự được xóa khỏi thư mục ứng dụng.
 
 NÂNG CẤP 0.19.4
 - Mở bản mới mà bản cũ còn chạy ẩn: ứng dụng tự tắt bản cũ rồi chạy bản mới (trước đây vẫn thấy bản cũ).

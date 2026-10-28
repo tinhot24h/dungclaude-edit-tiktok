@@ -795,7 +795,7 @@ class Handler(BaseHTTPRequestHandler):
                     return self.respond(200,{**result,'video_id':vid})
                 except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
             if path=='/app/quit':
-                # "⏻ Tắt" in the header: needed when the app was opened without a console window (MO_REVIEW_STUDIO.vbs)
+                # quit button in the header
                 threading.Timer(.6,lambda:os._exit(0)).start()
                 return self.respond(200,{'quitting':True})
             if path in ('/update/apply','/update/restart'):

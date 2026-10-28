@@ -6,12 +6,12 @@ const el=(tag,props={},...children)=>{const e=Object.assign(document.createEleme
 const button=el('button',{type:'button',id:'update-button',className:'update-button',textContent:'⟳',title:'Kiểm tra cập nhật'});
 // header tools stay together on the right: update · quit · export settings
 const tools=el('div',{className:'header-tools'}),badge=$('export-badge');if(badge){badge.before(tools);tools.append(button,badge)}else{document.querySelector('.app-header').append(tools);tools.append(button)}
-// ⏻ quit: the only way to stop the app when it runs without a console window
+// quit button: stops the app from the browser (closing the cmd window or Ctrl+C works too)
 const quit=el('button',{type:'button',id:'quit-button',className:'update-button',title:'Tắt Review Studio','aria-label':'Tắt Review Studio'});
 // drawn as SVG: the ⏻ character is missing from Windows fonts and showed as an empty box
 quit.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 3v9"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg>';button.after(quit);
-quit.onclick=async()=>{if(!confirm('Tắt Review Studio?\n\nVideo đang xuất hoặc đang lồng tiếng sẽ dừng (lần sau bấm Tiếp tục để chạy tiếp). Mở lại bằng MO_REVIEW_STUDIO.vbs hoặc START_WINDOWS.bat.'))return;
- try{await request('/app/quit',{method:'POST'})}catch{}document.body.innerHTML='<main style="padding:60px;text-align:center;font:15px system-ui;color:#c8d4e3"><h1>Đã tắt Review Studio</h1><p>Có thể đóng tab này. Mở lại bằng MO_REVIEW_STUDIO.vbs (không hiện cửa sổ cmd) hoặc START_WINDOWS.bat.</p></main>'};
+quit.onclick=async()=>{if(!confirm('Tắt Review Studio?\n\nVideo đang xuất hoặc đang lồng tiếng sẽ dừng (lần sau bấm Tiếp tục để chạy tiếp). Mở lại bằng START_WINDOWS.bat.'))return;
+ try{await request('/app/quit',{method:'POST'})}catch{}document.body.innerHTML='<main style="padding:60px;text-align:center;font:15px system-ui;color:#c8d4e3"><h1>Đã tắt Review Studio</h1><p>Có thể đóng tab này. Mở lại bằng START_WINDOWS.bat.</p></main>'};
 const box=el('dialog',{id:'update-dialog',className:'update-dialog'});
 box.innerHTML='<h2>Cập nhật Review Studio</h2><p id="update-text" class="helper"></p><pre id="update-notes" hidden></pre><div class="result-actions"><button type="button" id="update-run" class="primary-action small-action" hidden>Cập nhật ngay</button><button type="button" id="update-restart" class="primary-action small-action" hidden>Khởi động lại</button><button type="button" id="update-close" class="outline-action small-action">Đóng</button></div><p class="helper">Chỉ tải các file thay đổi từ GitHub và kiểm tra mã SHA-256 từng file. Video, MP3, dự án và cài đặt trong thư mục .local được giữ nguyên; bản cũ được sao lưu trong .local/update.</p>';
 document.body.append(box);

@@ -14,7 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 
 
-HIDDEN = '--hidden' in sys.argv   # started by MO_REVIEW_STUDIO.vbs: no console window, errors go to a dialog
+HIDDEN = '--hidden' in sys.argv   # started without a console window: errors go to a dialog
 
 
 def already_running(port):
@@ -97,7 +97,7 @@ def main():
             # opened twice (e.g. the desktop shortcut): just bring the browser to the running app
             webbrowser.open(f'http://127.0.0.1:{port}')
             return 0
-        # another version or another folder is still running (often hidden, from MO_REVIEW_STUDIO.vbs): stop it
+        # another version or another folder is still running (e.g. an old window left open): stop it
         print('Dang tat ban Review Studio cu dang chay...', flush=True)
         stop_other(port)
     print(f'Mo trinh duyet: http://127.0.0.1:{port}', flush=True)
