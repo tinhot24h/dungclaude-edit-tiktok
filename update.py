@@ -120,6 +120,9 @@ def local_version():
 
 def check():
     """What an update would do: remote version, files to download and files to remove."""
+    # Resolve the newest commit on every check: the running app keeps this module loaded for days, and a commit
+    # remembered from start-up would hide every release published after it. apply() reuses the same commit.
+    _pinned.clear()
     remote = manifest(fetch('MANIFEST.json', 1024 * 1024))
     changed = []
     for name, info in sorted(remote['files'].items()):

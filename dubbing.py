@@ -1697,6 +1697,22 @@ class Store:
         # the browser preview copy is made on first view, so importing a folder of big MOV files stays fast
         return item
 
+    def overlay_thumb(self, item):
+        """Small picture for the library list. Transparent overlays get a PNG that keeps the alpha (shown on a
+        checkerboard); a JPG would turn the transparent area black and every live-comment overlay would look empty."""
+        jpg = self.overlay_dir / (item['id'] + '.jpg')
+        if not item.get('alpha'):
+            return jpg if jpg.is_file() else None
+        png = self.overlay_dir / (item['id'] + '.png')
+        if not png.is_file():
+            at = '0' if item['still'] else f"{min(3.0, max(0.0, (item.get('duration') or 0) / 3)):.2f}"
+            try:
+                run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-ss', at, *overlay_decoder(item), '-i', str(self.overlay_dir / item['file']),
+                     '-frames:v', '1', '-vf', 'scale=240:-2,format=rgba', str(png)], timeout=60)
+            except DubError:
+                return jpg if jpg.is_file() else None
+        return png
+
     def overlay_preview(self, item):
         """File the browser can show: the original when Chrome plays it, else a WebM VP9 copy that keeps the
         transparency (ProRes/QuickTime MOV with alpha cannot play in a browser). Made once, then reused."""
@@ -1723,7 +1739,7 @@ class Store:
         item = self.overlay(key)
         if not item:
             raise DubError('Không tìm thấy overlay.', 404)
-        for path in (self.overlay_dir / item['file'], self.overlay_dir / (key + '.json'), self.overlay_dir / (key + '.jpg'), self.overlay_dir / (key + '.preview.webm')):
+        for path in (self.overlay_dir / item['file'], self.overlay_dir / (key + '.json'), self.overlay_dir / (key + '.jpg'), self.overlay_dir / (key + '.png'), self.overlay_dir / (key + '.preview.webm')):
             path.unlink(missing_ok=True)
 
     def pick_overlays(self, job, duration):

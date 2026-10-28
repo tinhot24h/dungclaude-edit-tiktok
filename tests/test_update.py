@@ -67,6 +67,11 @@ class UpdaterTests(unittest.TestCase):
         with mock.patch.object(update,'SOURCE',''),mock.patch.dict(update._pinned,clear=True),mock.patch.object(update.request,'urlopen',side_effect=update.error.URLError('x')):
             self.assertEqual(update.source(),f'https://raw.githubusercontent.com/{update.REPO}/{update.BRANCH}/')
 
+    def test_each_check_looks_up_the_newest_commit_again(self):
+        # a long-running app must see a release published after it started
+        update._pinned['base']='https://raw.githubusercontent.com/x/y/'+'0'*40+'/'
+        update.check();self.assertNotIn('base',update._pinned)
+
     def test_stale_cache_with_a_bigger_file_asks_to_retry(self):
         real=update.fetch.side_effect
         def fetch(name,limit=0):

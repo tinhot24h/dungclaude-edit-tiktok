@@ -457,8 +457,8 @@ class Handler(BaseHTTPRequestHandler):
             item=DUB.overlay(ov[1])
             if not item:return self.respond(404,{'error':'Không tìm thấy overlay.'})
             if ov[2]=='thumb':
-                thumb=DATA/'overlays'/(item['id']+'.jpg')
-                return self.respond(200,thumb.read_bytes(),'image/jpeg') if thumb.is_file() else self.respond(404,{'error':'Chưa có ảnh nhỏ.'})
+                thumb=DUB.overlay_thumb(item)
+                return self.respond(200,thumb.read_bytes(),'image/png' if thumb.suffix=='.png' else 'image/jpeg') if thumb else self.respond(404,{'error':'Chưa có ảnh nhỏ.'})
             if ov[2]=='preview':
                 shown=DUB.overlay_preview(item)
                 if shown.name.endswith('.preview.webm'):return self.serve_audio(shown,False,'video/webm',item['name'])

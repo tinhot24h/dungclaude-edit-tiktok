@@ -1,8 +1,14 @@
-# Review Studio 0.19.1
+# Review Studio 0.19.2
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.19.2
+
+- **Sửa lỗi bấm ⟳ cập nhật không thấy bản mới:** ứng dụng đang chạy nhớ phiên bản GitHub lúc khởi động. Giờ mỗi lần kiểm tra đều hỏi lại phiên bản mới nhất.
+- **Sửa thanh trên cùng:** nút cập nhật, nút tắt và thông số xuất gom về góc phải. Nút tắt vẽ bằng biểu tượng nên không còn hiện ô vuông trên Windows.
+- **Ảnh nhỏ overlay nền trong suốt** hiện trên nền caro (trước đây toàn màu đen), dễ nhận ra overlay bình luận live.
 
 ## Mới trong 0.19.1
 
@@ -25,7 +31,7 @@ Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI,
 - **Mở ứng dụng không hiện cửa sổ cmd:**
   - Nhấp đúp `MO_REVIEW_STUDIO.vbs`. Python và FFmpeg chạy ẩn, không nháy cửa sổ đen khi xuất.
   - `TAO_LOI_TAT_DESKTOP.vbs` tạo lối tắt "Review Studio" trên Desktop.
-  - Tắt bằng nút **⏻** trên thanh trên cùng. Mở lần nữa khi đang chạy chỉ mở lại trình duyệt.
+  - Tắt bằng nút nguồn ở góc phải thanh trên cùng. Mở lần nữa khi đang chạy chỉ mở lại trình duyệt.
   - Lỗi khởi động hiện thành hộp thông báo. `START_WINDOWS.bat` vẫn dùng được khi cần xem log.
 - **Lồng tiếng hàng loạt rất nhiều video/overlay:**
   - Bỏ giới hạn 50 video mỗi lần. Trước đây chọn thư mục hơn 50 video sẽ báo lỗi.
