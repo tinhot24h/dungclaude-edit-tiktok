@@ -220,6 +220,11 @@ giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh g�
 cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
 Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
 
+NÂNG CẤP 0.22.2
+- AI viết tiêu đề/nội dung đúng giới hạn ký tự hơn (prompt ghi rõ giới hạn, số từ, yêu cầu tự đếm).
+  Dài quá thì nội dung cắt ở cuối câu, tiêu đề không bị cụt ở từ nối.
+- Chữ dài không vừa ô của mẫu: tự thu nhỏ chữ, video vẫn xuất (không còn báo Lỗi).
+
 NÂNG CẤP 0.22.1
 - Sửa lỗi mất thuộc tính chữ của Tiêu đề/Nội dung (font, cỡ, màu, vị trí…) và có lúc mất bảng Khung, Video.
 

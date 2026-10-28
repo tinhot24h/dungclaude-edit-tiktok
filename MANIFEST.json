@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.22.1",
- "notes": "## Mới trong 0.22.1\n\n- Sửa lỗi mất bảng thuộc tính chữ (font, cỡ, màu, vị trí, khoảng cách…) ở mục Tiêu đề/Nội dung, và có lúc mất bảng Khung, Video: code tab cũ của trình dựng tự ẩn các bảng này. Giờ các bảng luôn hiện.",
+ "version": "0.22.2",
+ "notes": "## Mới trong 0.22.2\n\n- **Prompt gửi OpenAI ghi rõ giới hạn ký tự** của tiêu đề/nội dung: kèm số từ tương ứng (AI đếm từ tốt hơn đếm ký tự), mức nhắm thấp hơn tối đa, yêu cầu AI tự đếm và rút gọn trước khi trả lời, tiêu đề là cụm hoàn chỉnh, nội dung là câu hoàn chỉnh.\n- Nếu AI vẫn viết dài: nội dung được cắt ở cuối câu gần nhất, tiêu đề không còn kết thúc bằng từ nối (\"và\", \"cho\", \"của\"…).\n- Chữ không vừa ô chữ của mẫu không còn làm video báo **Lỗi**: chữ tự thu nhỏ (có ghi cỡ cũ → cỡ mới), vẫn không vừa thì vẫn xuất video kèm cảnh báo.",
  "files": {
   "design_tab.js": {
    "sha256": "1b4a45e8a5445f410ed85991eb393fd9e53ae4a7eac06bc44cfb46e588dcdd40",
@@ -52,12 +52,12 @@
    "size": 2135
   },
   "dubbing.py": {
-   "sha256": "43842c0f534a03fd54a274707c7cd37fba65b178cc9370b7ee2544e72e0b8c2d",
-   "size": 132509
+   "sha256": "9063379767e711ae8c1c856d6d6a2ced68a5b17f099dedd6e27a36a6e695d130",
+   "size": 135247
   },
   "tests/test_dubbing.py": {
-   "sha256": "4742222ed13902fed24eb8728af1c7b45f722eb7180dcf1bc0509ba40a23d262",
-   "size": 45619
+   "sha256": "a7da08290bdd3ca36b4216007e437c3b5fea2d8ec5d2cce0a85f872fc9940f1d",
+   "size": 47490
   },
   "image_ui.js": {
    "sha256": "b8e2a905501aedea84033a7c962b180251e06dc018e6133241f0310b474ed8e9",
@@ -116,8 +116,8 @@
    "size": 2104
   },
   "media_engine.py": {
-   "sha256": "492675094de304bae35132b6d2226137f2d655f5114629c1b96750d45c4404e9",
-   "size": 20597
+   "sha256": "b0f3df76750b034edf6cabc0b66fe05acf1e16cfe020a91180f22aa376e155c6",
+   "size": 20633
   },
   "editor_ui.js": {
    "sha256": "4d530e07bf71c63eb3a84544c46c53d247a031e9882e74d28faad35a7466df5e",
@@ -168,7 +168,7 @@
    "size": 4702
   },
   "index.html": {
-   "sha256": "45d55cc040621daebe9d4f3e16654eace3b3b76ecf930661dfe5c19cd888c1c8",
+   "sha256": "8189c132d057a6a648461c436eeca34a0e307e01c2878aa13f5869d14cbc8a96",
    "size": 33161
   },
   "launch.py": {
@@ -184,15 +184,15 @@
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "52a94f5f0c6808b871d2933b74b8e7e2a71232268652a639172ac63df849e3aa",
-   "size": 42142
+   "sha256": "b2c6c83f9a9245c1f8a2168ebf2399eab7dd243fad4d64730ee4cdd624c9514a",
+   "size": 42503
   },
   "README.md": {
-   "sha256": "101c1ea1e67752e53cfd12fc455025d07ca017821235e397b6b80f921ba6dbc0",
-   "size": 63769
+   "sha256": "e97a44adc61af416f6b1d957fb7762b2caa666e9f28d53a659979ac8f56bbd75",
+   "size": 64494
   },
   "VERSION": {
-   "sha256": "cc001c7b0f7e3ddacdc145fb6e4101e66a11e1bc82399f59d9ed020c0cc30273",
+   "sha256": "76dff43b6331e7f1a4f0d1b14bbc1c3e001190af5a7ed008ab165bbc3c815e12",
    "size": 7
   },
   ".gitignore": {

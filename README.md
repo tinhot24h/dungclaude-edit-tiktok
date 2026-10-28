@@ -1,8 +1,14 @@
-# Review Studio 0.22.1
+# Review Studio 0.22.2
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.22.2
+
+- **Prompt gửi OpenAI ghi rõ giới hạn ký tự** của tiêu đề/nội dung: kèm số từ tương ứng (AI đếm từ tốt hơn đếm ký tự), mức nhắm thấp hơn tối đa, yêu cầu AI tự đếm và rút gọn trước khi trả lời, tiêu đề là cụm hoàn chỉnh, nội dung là câu hoàn chỉnh.
+- Nếu AI vẫn viết dài: nội dung được cắt ở cuối câu gần nhất, tiêu đề không còn kết thúc bằng từ nối ("và", "cho", "của"…).
+- Chữ không vừa ô chữ của mẫu không còn làm video báo **Lỗi**: chữ tự thu nhỏ (có ghi cỡ cũ → cỡ mới), vẫn không vừa thì vẫn xuất video kèm cảnh báo.
 
 ## Mới trong 0.22.1
 

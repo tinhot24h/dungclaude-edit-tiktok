@@ -188,7 +188,7 @@ def design_layers(folder,opts,args,graph,top,next_input,scale,duration,frame_pat
         shown=f":enable='between(t,{image['start']},{image['end'] or duration+1})'" if image['start']>0 or image['end']>0 else ''
         graph.append(f'[{top}][image{n}]overlay=x={round(image["x"]*scale)}+({w}-overlay_w)/2:y={round(image["y"]*scale)}+({h}-overlay_h)/2:format=auto{shown}[imaged{n}]')
         top=f'imaged{n}';next_input+=1
-    textfilters=[];items=layout(opts)
+    textfilters=[];items=layout(opts,strict=not opts.get('lenient_text'))
     # Caption boxes are rounded PNGs overlaid under their text for the same time window.
     for item in items:
         box=item.get('box')

@@ -17,6 +17,15 @@ def tone(path,seconds,freq=440):
 
 
 class HelperTests(unittest.TestCase):
+    def test_character_limits_cut_cleanly_and_are_in_the_prompt(self):
+        self.assertEqual(dubbing.limit_chars('Kệ bếp gọn gàng cho căn bếp nhỏ xinh',20),('Kệ bếp gọn gàng',True))   # no "cho" at the end
+        self.assertEqual(dubbing.limit_chars('Ngắn gọn',20),('Ngắn gọn',False))
+        body='Mặt nạ tạo V giúp nâng cơ, thu gọn cằm rõ rệt nếu bạn kiên trì dùng đều đặn mỗi ngày. Thiết kế thoáng, dễ đeo cả khi ngủ.'
+        self.assertEqual(dubbing.limit_chars(body,100,sentences=True)[0],'Mặt nạ tạo V giúp nâng cơ, thu gọn cằm rõ rệt nếu bạn kiên trì dùng đều đặn mỗi ngày.')
+        rules=dubbing.text_rules(dict(title_chars=30,body_min_chars=50,body_max_chars=100))
+        self.assertIn('TỐI ĐA 30 ký tự',rules);self.assertIn('khoảng 5 từ',rules);self.assertIn('tự đếm số ký tự',rules)
+        self.assertIn('30 ký tự',dubbing.text_schema(dict(title_chars=30,body_min_chars=50,body_max_chars=100))['title']['description'])
+
     def test_balance_splits_the_speed_between_voice_and_video(self):
         lo,hi,fast,slow=.98,1.1,1/1.2,1/.85
         t,v=dubbing.balance(10.8,10,lo,hi,fast,slow)              # 8% longer voice: ~4% each instead of 8% on one side
@@ -433,6 +442,15 @@ class DesignTests(PipelineBase):
         self.assertEqual(job['options']['frame_canvas'],'9:16')
         with self.assertRaises(dubbing.DubError):dubbing.options(dict(design=dict(background='bad')))
         with self.assertRaises(dubbing.DubError):dubbing.options(dict(body_min_chars=300,body_max_chars=100))
+
+    def test_text_that_never_fits_the_template_box_does_not_stop_the_video(self):
+        # the template's title box sticks out of the canvas: smaller font cannot fix it, the video is still exported
+        d=dubbing.design_mod.settings(dict(units='px',background='solid',frame_style='none',title='Tiêu đề',body='',title_x=600,title_width=548))
+        job=dict(id='x',name='clip',warnings=[],texts={},options=dubbing.options(dict(design=d,title_source='fixed',body_source='fixed')))
+        folder=Path(self.tmp.name)/'fonts';folder.mkdir()
+        opts=self.store.design_for(job,folder)
+        self.assertTrue(opts['lenient_text']);self.assertTrue(any(w.startswith('Chữ không vừa ô') for w in job['warnings']))
+        self.assertTrue(dubbing.design_mod.layout(opts,strict=False)[0]['text'])
 
     def test_camera_zoom_of_the_design_is_in_the_export_graph(self):
         d=dubbing.design_mod.settings(dict(self.DESIGN,video_motion='zoom_in',motion_amount=20))

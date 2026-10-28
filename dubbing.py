@@ -371,26 +371,49 @@ def ai_texts_wanted(settings):
     return bool(settings.get('design')) and 'ai' in (settings['title_source'], settings['body_source'])
 
 
+def words_for(chars):
+    """About how many Vietnamese words fit in that many characters (a word is ~4.5 letters + a space)."""
+    return max(1, int(chars / 5.5))
+
+
 def text_rules(settings):
-    """Title/body rules for the same OpenAI call that writes the voice text (no extra request)."""
-    return (f'\n- Ngoài lời đọc, viết thêm TIÊU ĐỀ (title) tối đa {settings["title_chars"]} ký tự và NỘI DUNG (body) '
-            f'từ {settings["body_min_chars"]} đến {settings["body_max_chars"]} ký tự (tính cả dấu cách) để hiện chữ trên khung video: tiếng Việt tự nhiên, hấp dẫn, '
-            'nêu lợi ích chính; không hashtag, không emoji, không ngoặc kép, không xuống dòng. Áp dụng đúng các quy tắc nội dung bên trên.')
+    """Title/body rules for the same OpenAI call that writes the voice text (no extra request). Models count
+    characters badly, so the limit is also given in words and the target is set a little under the maximum."""
+    t, lo, hi = settings['title_chars'], settings['body_min_chars'], settings['body_max_chars']
+    return (f'\n- Ngoài lời đọc, viết thêm TIÊU ĐỀ (title) và NỘI DUNG (body) để hiện chữ trên khung video.'
+            f'\n- GIỚI HẠN BẮT BUỘC, tính cả dấu cách và dấu câu: title TỐI ĐA {t} ký tự (khoảng {words_for(t)} từ, nhắm khoảng {round(t * .85)} ký tự); '
+            f'body từ {lo} đến {hi} ký tự (khoảng {words_for(lo)}–{words_for(hi)} từ, 1–2 câu ngắn, nhắm khoảng {round((lo + hi) / 2)} ký tự).'
+            '\n- Trước khi trả lời, tự đếm số ký tự của title và body; nếu vượt giới hạn thì viết lại ngắn hơn. Thà ngắn hơn một chút còn hơn vượt. '
+            'Title là một cụm hoàn chỉnh (không kết thúc bằng "và", "cho", "của", "với", "để"…); body kết thúc bằng câu hoàn chỉnh.'
+            '\n- Tiếng Việt tự nhiên, hấp dẫn, nêu lợi ích chính; không hashtag, không emoji, không ngoặc kép, không xuống dòng. Áp dụng đúng các quy tắc nội dung bên trên.')
 
 
 def text_schema(settings):
-    return dict(title=dict(type='string'), body=dict(type='string'))
+    t, lo, hi = settings['title_chars'], settings['body_min_chars'], settings['body_max_chars']
+    return dict(title=dict(type='string', description=f'Tiêu đề, tối đa {t} ký tự kể cả dấu cách'),
+                body=dict(type='string', description=f'Nội dung, {lo}–{hi} ký tự kể cả dấu cách, câu hoàn chỉnh'))
 
 
-def limit_chars(text, most):
-    """At most `most` characters (spaces included), cut at the last space so no word is split."""
+DANGLING = {'và', 'cho', 'của', 'với', 'để', 'là', 'thì', 'mà', 'nhưng', 'hay', 'hoặc', 'các', 'những', 'một', 'giúp', 'khi',
+            'từ', 'trong', 'ở', 'tại', 'về', 'theo', 'đến', 'rất', 'càng', 'cùng', 'nên', 'vì', 'do', 'bởi', 'được', 'bị', 'sẽ', 'đã', 'đang'}
+
+
+def limit_chars(text, most, sentences=False):
+    """At most `most` characters (spaces included), never splitting a word: the body ends at the last full sentence
+    when that keeps most of it, and a cut never ends on a linking word ("và", "cho", "của"…)."""
     text = ' '.join(str(text or '').split())
     if len(text) <= most:
         return text, False
     head = text[:most + 1]
+    if sentences:
+        end = max(head.rfind(p) for p in '.!?…')
+        if end >= most * .6:
+            return head[:end + 1].strip(), True
     space = head.rfind(' ')
-    out = (head[:space] if space >= most // 2 else text[:most]).rstrip(' ,;:–-')
-    return out, True
+    words = (head[:space] if space >= most // 2 else text[:most]).split(' ')
+    while len(words) > 1 and words[-1].lower().strip(',;:–-') in DANGLING:
+        words.pop()
+    return ' '.join(words).rstrip(' ,;:–-'), True
 
 
 def finish_texts(job, raw):
@@ -401,7 +424,7 @@ def finish_texts(job, raw):
     for key, most, label in (('title', settings['title_chars'], 'Tiêu đề'), ('body', settings['body_max_chars'], 'Nội dung AI')):
         if settings[key + '_source'] != 'ai' or not isinstance(raw, dict):
             continue
-        value, cut = limit_chars(raw.get(key, ''), most)
+        value, cut = limit_chars(raw.get(key, ''), most, sentences=key == 'body')
         texts[key] = value[:design_mod.TEXT_LIMITS[key]]
         if cut:
             job['warnings'].append(f'{label} dài hơn {most} ký tự nên đã được cắt bớt.')
@@ -1594,6 +1617,8 @@ class Store:
         """The template's design with this video's own title/body. Text too long for its box gets smaller until it
         fits (a batch must not stop on one long title); fonts are copied next to the graph (no path escaping)."""
         opts = dict(job['options']['design'], **self.texts_for(job))
+        size = {k: opts[k + '_size'] for k in ('title', 'body')}
+        job['warnings'] = [w for w in job['warnings'] if not w.startswith('Chữ ')]
         for _ in range(12):
             try:
                 design_mod.layout(opts)
@@ -1602,7 +1627,13 @@ class Store:
                 for key in ('title', 'body'):
                     opts[key + '_size'] = max(12, round(opts[key + '_size'] * .92, 1))
         else:
-            raise DubError('Tiêu đề/nội dung quá dài cho ô chữ của mẫu. Rút gọn chữ hoặc nới ô chữ.')
+            # still does not fit (e.g. the box sticks out of the canvas in the template): export anyway, say so
+            opts['lenient_text'] = True
+            problems = [i['warnings'][0] for i in design_mod.layout(opts, strict=False) if i['warnings']]
+            job['warnings'].append('Chữ không vừa ô của mẫu dù đã thu nhỏ hết mức; video vẫn xuất. ' + (problems[0] if problems else ''))
+        smaller = [f'{"tiêu đề" if k == "title" else "nội dung"} {size[k]:g}→{opts[k + "_size"]:g}px' for k in size if opts[k + '_size'] < size[k]]
+        if smaller and not opts.get('lenient_text'):
+            job['warnings'].append('Chữ dài nên được thu nhỏ cho vừa ô: ' + ', '.join(smaller) + '.')
         for key in design_mod.TEXT_KEYS:
             name = FONTS[opts[key + '_font']][0]
             if not (folder / name).is_file():
