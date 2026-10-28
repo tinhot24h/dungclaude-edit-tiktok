@@ -1,8 +1,27 @@
-# Review Studio 0.13
+# Review Studio 0.14
 
 Dựng video review 9:16, dịch văn bản Trung qua thủ công/Gemini/OpenAI, tạo giọng đọc qua ai33.pro.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.14
+
+- **Trang Lồng tiếng (mới):** tự động lồng tiếng video tiếng Trung sang tiếng Việt theo 5 bước:
+  1. **Nhận diện:** OpenAI Whisper nhận lời nói, xuất SRT tiếng Trung có thời gian (khoảng 0,006 USD/phút). Có sẵn file .srt cùng tên thì bỏ qua bước này.
+  2. **Dịch OpenAI:** dịch tự nhiên, mỗi câu giới hạn số tiếng theo thời gian nói (mặc định 4,2 tiếng/giây), không đọc giá chính xác, có ghi chú văn phong và cách xưng hô.
+  3. **Tách âm thanh gốc:** giảm tiếng gốc khi có lời (giữ nhạc nền), lọc giọng giữa (thử nghiệm), tách giọng AI bằng Demucs nếu đã cài (`pip install demucs`), giữ nguyên hoặc xóa hẳn tiếng gốc.
+  4. **Lồng tiếng ai33:** gộp câu thành đoạn tự nhiên, tạo giọng Việt, tự đọc nhanh hơn (tối đa 1,3×) cho vừa chỗ trống rồi đặt đúng thời điểm.
+  5. **Xuất:** MP4 H.264 + AAC, phụ đề Việt dạng file .srt, kênh phụ đề trong MP4 hoặc chèn chữ lên hình; tự lưu vào thư mục xuất.
+- Chọn 1 video, nhiều video hoặc cả thư mục (kéo thả được), hoặc lấy từ kho Media; các video chạy lần lượt trong hàng đợi.
+- Mặc định **dừng sau bước dịch để duyệt**: bảng câu Trung ↔ Việt có đếm số tiếng/giới hạn (đỏ khi quá dài), sửa xong bấm Tiếp tục. Sửa câu sau khi đã xong thì chỉ câu đó được tạo giọng lại.
+- Tiến độ và mã tác vụ ai33 được lưu lại: dừng giữa chừng hoặc tắt ứng dụng thì bấm **Tiếp tục**, không tạo trùng giọng (không mất credit hai lần). Key API chỉ giữ trong phiên.
+- **Mở trong trình dựng:** đưa video (chỉ còn nhạc nền) và giọng Việt sang trang Dựng video để thêm chữ, logo, khung rồi xuất như bình thường.
+- **Giao diện trang dựng mới (tham khảo TaoClip):**
+  - Thanh công cụ dọc bên trái: Media · Âm thanh · Văn bản · Ảnh/Logo · Xuất.
+  - Kho media có nút "＋ Nhập media" / "＋ Nhập ảnh", mỗi thẻ có nút "Thêm vào timeline".
+  - Bảng thuộc tính theo ngữ cảnh: chỉ hiện các tab của lớp đang chọn, kèm tên lớp và nút "Thiết kế chung". Clip video có tab Cắt & tốc độ (nút 0.5× 1× 1.5× 2× 4×, hiện độ dài) và tab Khung hình.
+  - Trình phát có nút phát lặp ⟲ và thanh âm lượng xem trước.
+  - Timeline có nút chữ "✂ Tách", "Snap: bật/tắt", "Vừa khung", mã track V1/A1/A2; nút ↶ ↷ trên thanh dự án.
 
 ## Mới trong 0.13
 

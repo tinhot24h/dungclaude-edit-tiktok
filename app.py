@@ -25,6 +25,7 @@ import audio_files
 import library_store
 import output_folder
 import update
+import dubbing
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / '.local'
@@ -46,6 +47,7 @@ ACTIVE = ('queued','rendering','cancelling')
 PROJECT = re.compile('[a-f0-9]{32}')
 VERSION = (ROOT/'VERSION').read_text(encoding='utf-8').strip()
 RESTART_CODE = 75
+DUB = dubbing.Store(DATA, SETTINGS, DATA, AUDIO, media_engine.encoder_args)
 
 
 def keep_days():
@@ -345,7 +347,7 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == '/':
             return self.respond(200, (ROOT / 'index.html').read_bytes(), 'text/html; charset=utf-8')
-        if path in ('/studio.css','/studio.js','/ai_ui.js','/audio_ui.js','/editor_ui.js','/timeline_ui.js','/history_ui.js','/workspace_ui.js','/clip_ui.js','/studio_shell.js','/media_bin.js','/image_ui.js','/export_ui.js','/style_ui.js','/update_ui.js'):
+        if path in ('/studio.css','/studio.js','/ai_ui.js','/audio_ui.js','/editor_ui.js','/timeline_ui.js','/history_ui.js','/workspace_ui.js','/clip_ui.js','/studio_shell.js','/media_bin.js','/image_ui.js','/export_ui.js','/style_ui.js','/update_ui.js','/dub_ui.js','/layout_ui.js'):
             mime = 'text/css' if path.endswith('.css') else 'text/javascript'
             return self.respond(200, (ROOT/path.lstrip('/')).read_bytes(), mime+'; charset=utf-8')
         if path in ('/assets/'+font[0] for font in FONTS.values()):
@@ -403,6 +405,27 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(200,(IMAGES/(image_match[1]+'.png')).read_bytes(),'image/png')
         if path == '/images':
             return self.respond(200,{'images':images()})
+        if path == '/dub/jobs':
+            return self.respond(200,{'jobs':DUB.jobs()})
+        if path == '/dub/capabilities':
+            return self.respond(200,{'demucs':bool(dubbing.demucs_command()),'openai':bool(dubbing.openai_key({})),'ai33':bool(dubbing.ai33_key({})),
+                                     'defaults':dubbing.DEFAULTS,'pronouns':dubbing.PRONOUNS})
+        dub=re.fullmatch(r'/dub/([a-f0-9]{32})(?:/(download|srt/vi|srt/zh))?',path)
+        if dub:
+            try:job=DUB.load(dub[1])
+            except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
+            if not dub[2]:return self.respond(200,job)
+            folder=DATA/'dub'/dub[1]
+            if dub[2]=='download':
+                target=folder/'dubbed.mp4'
+                if not target.is_file():return self.respond(404,{'error':'Chưa có video lồng tiếng.'})
+                return self.serve_audio(target,'download=1' in urlparse(self.path).query,'video/mp4',job['name']+'-long-tieng.mp4')
+            target=folder/(dub[2][-2:]+'.srt')
+            if not target.is_file():return self.respond(404,{'error':'Chưa có phụ đề.'})
+            self.send_response(200);data=target.read_bytes()
+            self.send_header('Content-Type','application/x-subrip; charset=utf-8');self.send_header('Content-Length',str(len(data)))
+            self.send_header('Content-Disposition',"attachment; filename=\"sub.srt\"; filename*=UTF-8''"+quote(job['name']+'-'+dub[2][-2:]+'.srt'))
+            self.end_headers();self.wfile.write(data);return
         if path == '/update/check':
             if (ROOT/'.git').exists():return self.respond(200,{'git':True,'current':VERSION})
             try:
@@ -570,6 +593,27 @@ class Handler(BaseHTTPRequestHandler):
                     return self.respond(200,{'id':key,'url':'/frames/'+key})
                 for suffix in ('.png','.json'):(IMAGES/(key+suffix)).unlink(missing_ok=True)
                 return self.respond(200,{'images':images()})
+            dub=re.fullmatch(r'/dub/(start|([a-f0-9]{32})/(continue|lines|cancel|delete|editor))',path)
+            if dub:
+                if not 0 <= size <= 4*1024*1024:raise ValueError('Yêu cầu lồng tiếng quá lớn.')
+                raw=json.loads(self.rfile.read(size)) if size else {}
+                if not isinstance(raw,dict):raise ValueError('Yêu cầu lồng tiếng không hợp lệ.')
+                try:
+                    if dub[1]=='start':return self.respond(200,{'jobs':DUB.create(raw)})
+                    key,action=dub[2],dub[3]
+                    if action=='continue':return self.respond(200,DUB.proceed(key,raw))
+                    if action=='lines':return self.respond(200,DUB.edit_lines(key,raw.get('lines')))
+                    if action=='cancel':return self.respond(200,DUB.cancel(key))
+                    if action=='delete':DUB.delete(key);return self.respond(200,{'jobs':DUB.jobs()})
+                    vid=uuid.uuid4().hex;folder=DATA/vid;folder.mkdir()
+                    try:
+                        result=DUB.to_editor(key,lambda:folder/'source',lambda p,n:audio_files.import_audio(p,AUDIO,n))
+                        name=DUB.load(key)['name']+' · lồng tiếng'
+                        (folder/'source.json').write_text(json.dumps(dict(id=vid,name=name,url='/media/video/'+vid,**probe(folder/'source')),ensure_ascii=False),encoding='utf-8')
+                    except BaseException:
+                        shutil.rmtree(folder,ignore_errors=True);raise
+                    return self.respond(200,{**result,'video_id':vid})
+                except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
             if path in ('/update/apply','/update/restart'):
                 if (ROOT/'.git').exists():raise ValueError('Bản git clone: cập nhật bằng lệnh git pull.')
                 with LOCK:busy=any(job.get('state') in ACTIVE for job in JOBS.values())

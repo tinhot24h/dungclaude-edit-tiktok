@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.13",
- "notes": "## Mới trong 0.13\n\n- **Cập nhật không cần tải lại toàn bộ:** nút **⟳** ở góc phải trên cùng tự kiểm tra GitHub khi mở ứng dụng; có bản mới thì hiện **⬆ Có bản …**. Bấm **Cập nhật ngay**: ứng dụng chỉ tải các file đã thay đổi, kiểm tra mã SHA-256 từng file, sao lưu bản cũ vào `.local/update`, rồi bấm **Khởi động lại** là dùng được bản mới. Video, MP3, dự án, kiểu chữ và cài đặt trong `.local` được giữ nguyên.\n- Cập nhật ngoài ứng dụng: bấm đúp `UPDATE_WINDOWS.bat` (Windows) hoặc `UPDATE_MAC_LINUX.command`, hoặc chạy `python update.py` (`--check` để chỉ xem thay đổi). Thư mục là bản `git clone` thì dùng `git pull`.\n- Từ 0.13 trở đi mới cập nhật được kiểu này: bản 0.12.1 trở về trước cần tải ZIP 0.13 một lần.",
+ "version": "0.14",
+ "notes": "## Mới trong 0.14\n\n- **Trang Lồng tiếng (mới):** tự động lồng tiếng video tiếng Trung sang tiếng Việt theo 5 bước:\n  1. **Nhận diện:** OpenAI Whisper nhận lời nói, xuất SRT tiếng Trung có thời gian (khoảng 0,006 USD/phút). Có sẵn file .srt cùng tên thì bỏ qua bước này.\n  2. **Dịch OpenAI:** dịch tự nhiên, mỗi câu giới hạn số tiếng theo thời gian nói (mặc định 4,2 tiếng/giây), không đọc giá chính xác, có ghi chú văn phong và cách xưng hô.\n  3. **Tách âm thanh gốc:** giảm tiếng gốc khi có lời (giữ nhạc nền), lọc giọng giữa (thử nghiệm), tách giọng AI bằng Demucs nếu đã cài (`pip install demucs`), giữ nguyên hoặc xóa hẳn tiếng gốc.\n  4. **Lồng tiếng ai33:** gộp câu thành đoạn tự nhiên, tạo giọng Việt, tự đọc nhanh hơn (tối đa 1,3×) cho vừa chỗ trống rồi đặt đúng thời điểm.\n  5. **Xuất:** MP4 H.264 + AAC, phụ đề Việt dạng file .srt, kênh phụ đề trong MP4 hoặc chèn chữ lên hình; tự lưu vào thư mục xuất.\n- Chọn 1 video, nhiều video hoặc cả thư mục (kéo thả được), hoặc lấy từ kho Media; các video chạy lần lượt trong hàng đợi.\n- Mặc định **dừng sau bước dịch để duyệt**: bảng câu Trung ↔ Việt có đếm số tiếng/giới hạn (đỏ khi quá dài), sửa xong bấm Tiếp tục. Sửa câu sau khi đã xong thì chỉ câu đó được tạo giọng lại.\n- Tiến độ và mã tác vụ ai33 được lưu lại: dừng giữa chừng hoặc tắt ứng dụng thì bấm **Tiếp tục**, không tạo trùng giọng (không mất credit hai lần). Key API chỉ giữ trong phiên.\n- **Mở trong trình dựng:** đưa video (chỉ còn nhạc nền) và giọng Việt sang trang Dựng video để thêm chữ, logo, khung rồi xuất như bình thường.\n- **Giao diện trang dựng mới (tham khảo TaoClip):**\n  - Thanh công cụ dọc bên trái: Media · Âm thanh · Văn bản · Ảnh/Logo · Xuất.\n  - Kho media có nút \"＋ Nhập media\" / \"＋ Nhập ảnh\", mỗi thẻ có nút \"Thêm vào timeline\".\n  - Bảng thuộc tính theo ngữ cảnh: chỉ hiện các tab của lớp đang chọn, kèm tên lớp và nút \"Thiết kế chung\". Clip video có tab Cắt & tốc độ (nút 0.5× 1× 1.5× 2× 4×, hiện độ dài) và tab Khung hình.\n  - Trình phát có nút phát lặp ⟲ và thanh âm lượng xem trước.\n  - Timeline có nút chữ \"✂ Tách\", \"Snap: bật/tắt\", \"Vừa khung\", mã track V1/A1/A2; nút ↶ ↷ trên thanh dự án.",
  "files": {
   "update.py": {
    "sha256": "69dea002a0cb777dc61b4f48fa2b2f4046a8181c8b9db86d8f4361d8838cac7b",
@@ -23,6 +23,22 @@
    "sha256": "9c4280d3a39addeb8181a9b9662c00b57e93962de38581ac8cfa373b89544900",
    "size": 3948
   },
+  "dub_ui.js": {
+   "sha256": "4783fcf9e07e097ee10e71f7234d6bc9c3525bcca57ccbf0f21c243e7039005e",
+   "size": 25555
+  },
+  "layout_ui.js": {
+   "sha256": "64ef494c12aab1ca6af41f5df517495d94a895e9d6b258846e97dad62c61c376",
+   "size": 8449
+  },
+  "dubbing.py": {
+   "sha256": "ab45ad6d4eb472e1419ae0346135573a25b0950e57e3ad7b16483adfe761cbfc",
+   "size": 44523
+  },
+  "tests/test_dubbing.py": {
+   "sha256": "9ad334d1ae9ec65dff5c998a12b67029fa95f9b37eb9d5f4bedb07db825eedf1",
+   "size": 7535
+  },
   "image_ui.js": {
    "sha256": "b8e2a905501aedea84033a7c962b180251e06dc018e6133241f0310b474ed8e9",
    "size": 13416
@@ -36,8 +52,8 @@
    "size": 7809
   },
   "media_bin.js": {
-   "sha256": "f2e90f970f87ad891ca38e691f3e5198837c9b0eecb647f784c85472f1b6762b",
-   "size": 15169
+   "sha256": "245a57ef168a26579f647868bdefa336217290b60b971d6d363239a611bf9ee4",
+   "size": 15918
   },
   "studio_shell.js": {
    "sha256": "e5a2c956be5ec4bf24ff896dc9cdf0b6fd1b624dbdd40edbb1172dfa6eb72461",
@@ -84,16 +100,16 @@
    "size": 19882
   },
   "editor_ui.js": {
-   "sha256": "c7f2a4edb22836065d660c5c1b1a9a0c7da1f45bc6a662127633e4e9b8806167",
-   "size": 37037
+   "sha256": "e03ba069af5295b9c9bb1950e84be3f8bb705478ad14f8cb2e4be0a110092a18",
+   "size": 37438
   },
   "tests/test_media_engine.py": {
    "sha256": "636e0720dcd585690a727581534cee9c4c783c4647b4d736a5059ba2081be8a2",
    "size": 12927
   },
   "app.py": {
-   "sha256": "ae50e4671cc9ee8a5340e28940cb458cb020090189ead66b8aaae230aa0f8dd1",
-   "size": 41995
+   "sha256": "4aebae3f44720f2712b8b4c0a1cfa79689c1a340880769a86458a03eeaf4ea4e",
+   "size": 45362
   },
   "ai33_audio.py": {
    "sha256": "857db392e2c1e54a915925282b2e38f590e2105ecc716ec98eb548fac90f825b",
@@ -112,12 +128,12 @@
    "size": 20683
   },
   "studio.css": {
-   "sha256": "b05bb86ffa98cf5aaa3c4c07f8cb85fff8b0d6f89c2d0a7d1a0ee360cf822367",
-   "size": 59058
+   "sha256": "e0a2ddcd52952663b390321ca4ffb665d53e0de32fe8b85f17032eaf95ab69d3",
+   "size": 67711
   },
   "studio.js": {
-   "sha256": "faa6ae3aa17f7771914d140d7d75116a6a5a93239c5d70bbef425d640a2ae8ac",
-   "size": 24874
+   "sha256": "63687bbd9b6e43c8b01b81e2a2b280f2ac96ca690cebcae3487efe8feb5bb3e2",
+   "size": 24923
   },
   "ai_ui.js": {
    "sha256": "1a67d1936a7137ab3c805a1fafb113d8f6f687c6050321ffb7cf34800e17a1f6",
@@ -132,16 +148,16 @@
    "size": 2609
   },
   "index.html": {
-   "sha256": "32b5d8cf3ed55bd1c80077b6fb6e3951c08410c7b7aabd593f20342c78fcfeac",
-   "size": 31822
+   "sha256": "d384f4bfb240abb11182cc492e78ebf1296022173f5df4b3bdcf9e2ca0c3bce5",
+   "size": 32008
   },
   "launch.py": {
    "sha256": "a493ab33e2db46235059df4460fd21a397ffd12880d85123d028cef9e2befa95",
    "size": 2533
   },
   "build_package.py": {
-   "sha256": "2091e00436b40dfa6593105b8d66450611201517771e600eaa7392844be67da3",
-   "size": 3057
+   "sha256": "b1e5cc1f64417e6e46a502d0195c4cc1f2b36525532a0633483feba15547af14",
+   "size": 3125
   },
   "START_WINDOWS.bat": {
    "sha256": "616ecf0e4d9a41995c509f79bd5e1a01d1dce7ba76356a801417e08747847c4e",
@@ -152,15 +168,15 @@
    "size": 230
   },
   "HUONG_DAN.txt": {
-   "sha256": "099b7d583aa8985f491212ba9081624554460d46ac509f7ede49fe33824b73f4",
-   "size": 20030
+   "sha256": "a66459f4d093dd66f6074b0a819ed90a5c2ed00bf0bb2c4d6080dc1f636364bd",
+   "size": 22766
   },
   "README.md": {
-   "sha256": "67f88e5f9abaa7f9d1c655c5cf0b963b067032641bbc0910552b8d5928809f16",
-   "size": 31006
+   "sha256": "0bb2526872cddb84858f13eae42475e56bd9b465945fa5a56266fb51901eb3fd",
+   "size": 33706
   },
   "VERSION": {
-   "sha256": "342a2d9e91ecb95d736e0a0cd7540c7b4637173ebc0f3a12a09839873b863e56",
+   "sha256": "425edad3ef4afd2c4299c5532c8a36c92a9fd36c7097ecaa1d9af84b82b810d1",
    "size": 5
   },
   ".gitignore": {

@@ -9,13 +9,14 @@ let items=[],filter='all',peaks=new Map(),waiting=new Set(),uploads=[];
 
 // ---- layout: toolbar, filters, grid; the old upload box stays hidden but keeps working for drag-and-drop
 const picker=el('input',{type:'file',multiple:true,accept:'video/*,audio/*,image/png,image/jpeg,image/webp,image/gif',hidden:true});
-const bar=el('div',{className:'bin-bar'},el('button',{type:'button',id:'bin-import',className:'bin-import',textContent:'＋ Nhập'}),el('input',{id:'bin-search',type:'search',placeholder:'Tìm kiếm tệp phương tiện',maxLength:100}),picker);
+const images=el('input',{type:'file',multiple:true,accept:'image/png,image/jpeg,image/webp,image/gif',hidden:true});
+const bar=el('div',{className:'bin-bar'},el('div',{className:'bin-import-row'},el('button',{type:'button',id:'bin-import',className:'bin-import',textContent:'＋ Nhập media'}),el('button',{type:'button',id:'bin-import-image',className:'bin-import secondary',textContent:'＋ Nhập ảnh'})),el('input',{id:'bin-search',type:'search',placeholder:'Tìm media theo tên…',maxLength:100}),picker,images);
 const chips=el('div',{className:'bin-filters'});for(const[k,t]of [['all','Tất cả'],['video','Video'],['audio','Âm thanh'],['image','Ảnh & logo'],['frame','Khung PNG']]){const b=el('button',{type:'button',className:'chip-button',textContent:t});b.dataset.filter=k;b.onclick=()=>{filter=k;render()};chips.append(b)}
 const grid=el('div',{id:'bin-grid',className:'bin-grid'});
 const hint=el('p',{className:'helper',textContent:'Bấm ＋ hoặc kéo thẻ xuống timeline để dùng; kéo ảnh/logo thả lên khung hình để đặt đúng chỗ. Có thể kéo file từ thư mục máy tính thả thẳng vào đây hoặc vào timeline.'});
 pane.querySelector('.pane-title').after(bar,chips,grid,hint);
 pane.querySelector('.upload-zone')?.classList.add('bin-legacy');pane.querySelector('label[for=file]')?.classList.add('bin-legacy');
-$('bin-import').onclick=()=>picker.click();
+$('bin-import').onclick=()=>picker.click();$('bin-import-image').onclick=()=>images.click();images.onchange=()=>{filter='image';importFiles([...images.files],undefined,true);images.value=''};
 picker.onchange=()=>{importFiles([...picker.files]);picker.value=''};
 $('bin-search').oninput=()=>render();
 
@@ -46,7 +47,9 @@ function card(item){const tag=used(item),box=el('div',{className:'bin-card '+ite
  if(item.kind==='audio'){const bed=el('button',{type:'button',className:'bin-add music',textContent:'♪',title:'Thêm làm nhạc nền'});bed.onclick=e=>{e.stopPropagation();use(item,'music')};thumb.append(bed)}
  if(item.kind==='image'){const frame=el('button',{type:'button',className:'bin-add music',textContent:'▭',title:'Dùng ảnh này làm khung PNG'});frame.onclick=async e=>{e.stopPropagation();try{const d=await request(`/images/${item.id}/as-frame`,{method:'POST'});design.apply({frame_id:d.id,frame_style:'custom'});setTimeout(()=>window.appHistory?.checkpoint(),200);say('Đã dùng ảnh làm khung PNG.');load()}catch(err){say(err.message)}};thumb.append(frame)}
  if(item.kind!=='frame'){const drop=el('button',{type:'button',className:'bin-del',textContent:'🗑',title:'Xóa khỏi kho media'});drop.onclick=e=>{e.stopPropagation();remove(item)};thumb.append(drop)}
- box.append(thumb,el('div',{className:'bin-name',textContent:item.name}));
+ const label=item.kind==='video'?'Thêm vào timeline':item.kind==='audio'?'Làm giọng đọc':item.kind==='image'?'Thêm lên video':'Dùng làm khung';
+ const go=el('button',{type:'button',className:'bin-use',textContent:tag&&item.kind!=='image'?'✓ '+tag:label});go.onclick=e=>{e.stopPropagation();use(item,'audio')};
+ box.append(thumb,el('div',{className:'bin-name',textContent:item.name}),go);
  box.ondblclick=()=>use(item,'audio');
  box.ondragstart=e=>{e.dataTransfer.setData('application/x-review-media',JSON.stringify({kind:item.kind,id:item.id}));e.dataTransfer.effectAllowed='copy';document.body.classList.add('dragging-media')};
  box.ondragend=()=>document.body.classList.remove('dragging-media');
