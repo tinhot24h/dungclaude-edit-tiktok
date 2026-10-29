@@ -6,6 +6,7 @@ import re
 import shutil
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from urllib import error, request
 
 import ai33_audio
@@ -25,8 +26,9 @@ def row(key, label, state, detail, fix=''):
 
 def ffmpeg_lists():
     try:
-        run = lambda *a: subprocess.run(['ffmpeg', '-hide_banner', *a], capture_output=True, text=True, timeout=30).stdout
-        return run('-version').splitlines()[0] if run('-version') else '', run('-filters'), run('-encoders')
+        run = lambda *a: subprocess.run(['ffmpeg', '-hide_banner', *a], capture_output=True, text=True, timeout=20).stdout
+        version = run('-version')
+        return version.splitlines()[0] if version else '', run('-filters'), run('-encoders')
     except (OSError, subprocess.SubprocessError):
         return '', '', ''
 
@@ -54,6 +56,17 @@ def openai_ok(key):
         return 'không kết nối được api.openai.com'
 
 
+def ai33_credits(key):
+    """One short request, no retries (the export's own calls wait and retry; a check must not hang)."""
+    try:
+        value = ai33_audio._request('/v1/credits', key, content_type='application/json', timeout=12).get('credits')
+    except ai33_audio._Retry as exc:
+        raise exc.error from None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError('ai33.pro không trả số dư credit hợp lệ.')
+    return value
+
+
 def run(root, data_dir, settings_path, network=True):
     rows = []
     v = sys.version_info
@@ -61,7 +74,19 @@ def run(root, data_dir, settings_path, network=True):
                     '' if v >= (3, 11) else 'Cần Python 3.11 trở lên: chạy START_WINDOWS.bat để tự cài Python 3.12.'))
 
     where = shutil.which('ffmpeg')
-    version, filters, encoders = ffmpeg_lists() if where else ('', '', '')
+    keys = {p: secrets_store.get(p) for p in ('openai', 'ai33')}
+    # the slow parts (FFmpeg runs, GPU and Demucs probes, the two key requests) run side by side
+    pool = ThreadPoolExecutor(6)
+    lists = pool.submit(ffmpeg_lists) if where else None
+    gpu = pool.submit(media_engine.hardware_encoders) if where else None
+    demucs_job = pool.submit(dubbing.demucs_command)
+    tried = {}
+    if network and keys['openai']:
+        tried['openai'] = pool.submit(openai_ok, keys['openai'])
+    if network and keys['ai33']:
+        tried['ai33'] = pool.submit(ai33_credits, keys['ai33'])
+    pool.shutdown(wait=False)
+    version, filters, encoders = lists.result() if lists else ('', '', '')
     local = bool(where) and os.path.normcase(os.path.dirname(where)) == os.path.normcase(str(root / 'bin'))
     if not where or not shutil.which('ffprobe'):
         rows.append(row('ffmpeg', 'FFmpeg / FFprobe', BAD, 'chưa có ' + ('ffprobe' if where else 'ffmpeg'),
@@ -77,16 +102,16 @@ def run(root, data_dir, settings_path, network=True):
         ass = has_filter(filters, 'ass')
         rows.append(row('libass', 'Phụ đề chữ chạy (libass)', OK if ass else WARN, 'có' if ass else 'bản FFmpeg này thiếu libass: video xuất không có phụ đề chữ chạy',
                         '' if ass else 'Xóa thư mục bin rồi mở lại bằng START_WINDOWS.bat để tải bản FFmpeg đầy đủ (có libass).'))
-        hw = media_engine.hardware_encoders()
+        hw = gpu.result()
         rows.append(row('gpu', 'Xuất bằng card đồ họa', OK if hw else INFO, ', '.join(hw) if hw else 'không có (xuất bằng CPU, chậm hơn nhưng vẫn chạy)',
                         '' if hw else 'Máy có card NVIDIA: cập nhật driver mới để dùng NVENC.'))
 
-    demucs = dubbing.demucs_command()
+    demucs = demucs_job.result()
     rows.append(row('demucs', 'Tách giọng AI (Demucs)', OK if demucs else INFO, 'đã cài' if demucs else 'chưa cài · chỉ cần khi chọn "Tách giọng AI"',
                     '' if demucs else 'Bấm "⬇ Cài Demucs tự động" ở mục 🎵 Âm thanh gốc khi cần.'))
 
     for provider, label in (('openai', 'OpenAI key'), ('ai33', 'ai33.pro key')):
-        key = secrets_store.get(provider)
+        key = keys[provider]
         if not key:
             rows.append(row(provider, label, WARN, 'chưa lưu key', 'Bấm 🔑 API key trên thanh trên cùng để nhập và lưu key.'))
             continue
@@ -94,15 +119,15 @@ def run(root, data_dir, settings_path, network=True):
             rows.append(row(provider, label, OK, 'đã lưu'))
             continue
         if provider == 'openai':
-            problem = openai_ok(key)
+            problem = tried['openai'].result()
             rows.append(row(provider, label, BAD if 'key' in problem else WARN if problem else OK, problem or 'hợp lệ, kết nối được',
                             'Kiểm tra key ở 🔑 API key hoặc mạng Internet.' if problem else ''))
         else:
             try:
-                left = ai33_audio.credits({})['credits']
+                left = tried['ai33'].result()
                 low = isinstance(left, (int, float)) and left < 2000
                 rows.append(row(provider, label, WARN if low else OK, f'hợp lệ · còn ◆ {left:,.0f} credit'.replace(',', '.'), 'Credit sắp hết: nạp thêm ở ai33.pro.' if low else ''))
-            except ai33_audio.AudioError as exc:
+            except (ai33_audio.AudioError, ValueError) as exc:
                 rows.append(row(provider, label, BAD, str(exc)[:160], 'Kiểm tra key ở 🔑 API key hoặc mạng Internet.'))
 
     out = output_folder.load(settings_path)
@@ -124,9 +149,10 @@ def run(root, data_dir, settings_path, network=True):
                     'Giải nén lại toàn bộ file ZIP vào thư mục app.' if lost else ''))
 
     if os.name == 'nt':
+        import importlib.util
         try:
-            ok = subprocess.run([sys.executable, '-c', 'import pythoncom; from win32com.propsys import propsys'], capture_output=True, timeout=30).returncode == 0
-        except (OSError, subprocess.SubprocessError):
+            ok = bool(importlib.util.find_spec('pythoncom') and importlib.util.find_spec('win32com'))
+        except (ImportError, ValueError):
             ok = False
         rows.append(row('winmeta', 'Ghi thông tin file Windows (pywin32)', OK if ok else INFO, 'có' if ok else 'chưa có · app tự cài khi xuất video có Thông tin file',
                         '' if ok else 'Không cần làm gì: lần xuất đầu tiên app tự cài pywin32.'))

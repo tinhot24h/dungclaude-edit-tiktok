@@ -4,6 +4,11 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.35.1
+
+- Sửa 🩺 Kiểm tra hệ thống đứng mãi ở "Đang kiểm tra…" (lúc máy còn đang kiểm tra nhanh khi mới mở app, bấm nút không chạy kiểm tra đầy đủ). Giờ bảng luôn chạy kiểm tra, đếm giây đang chờ, và báo rõ nếu quá 90 giây hoặc lỗi.
+- Kiểm tra nhanh hơn: FFmpeg, card đồ họa, Demucs và 2 key chạy song song; thử key ai33 chỉ 1 lần, chờ tối đa 12 giây.
+
 ## Mới trong 0.35.0
 
 - **🩺 Kiểm tra hệ thống** trên thanh trên cùng (cạnh 🔑 API key): chấm xanh = ổn, vàng = có mục cần chú ý, đỏ = có lỗi. Lúc mở app tự kiểm tra nhanh để tô màu chấm.

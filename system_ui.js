@@ -12,7 +12,7 @@ function badge(d){open.classList.remove('ok','warn','bad');if(!d)return;open.cla
  const n=d.rows.filter(r=>r.state==='bad'||r.state==='warn').length;open.title=TITLE[d.state]+(n?` (${n} mục) · bấm để xem cách sửa`:' · bấm để kiểm tra lại')}
 function report(d){return[`Review Studio ${d.version} · ${d.platform} · ${new Date().toLocaleString('vi-VN')}`,...d.rows.map(r=>`[${ICON[r.state]}] ${r.label}: ${r.detail}${r.fix?' → '+r.fix:''}`)].join('\n')}
 function keyButton(){const b=el('button',{type:'button',className:'outline-action small-action',textContent:'🔑 Mở API key'});b.onclick=()=>{dialog.close();window.openKeys()};return b}
-function draw(d,note=''){const again=el('button',{type:'button',className:'primary-action small-action',textContent:'↻ Kiểm tra lại',disabled:busy});again.onclick=()=>check(false);
+function draw(d,note=''){const again=el('button',{type:'button',className:'primary-action small-action',textContent:'↻ Kiểm tra lại',disabled:busy});again.onclick=()=>check();
  const copy=el('button',{type:'button',className:'outline-action small-action',textContent:'📋 Copy báo cáo',disabled:!d});
  copy.onclick=async()=>{try{await navigator.clipboard.writeText(report(d));copy.textContent='✓ Đã copy'}catch{copy.textContent='Không copy được'}};
  const close=el('button',{type:'button',className:'outline-action small-action',textContent:'Đóng'});close.onclick=()=>dialog.close();
@@ -20,10 +20,15 @@ function draw(d,note=''){const again=el('button',{type:'button',className:'prima
  const list=d?el('div',{className:'system-list'},...[...d.rows].sort((a,b)=>RANK[a.state]-RANK[b.state]).map(r=>el('div',{className:'system-row '+r.state},el('span',{className:'system-icon',textContent:ICON[r.state]}),
   el('div',{},el('strong',{textContent:r.label}),el('small',{textContent:r.detail}),...(r.fix?[el('em',{textContent:'Cách sửa: '+r.fix})]:[]),...(r.state!=='ok'&&(r.key==='openai'||r.key==='ai33')&&window.openKeys?[keyButton()]:[]))))):'';
  dialog.replaceChildren(el('h2',{textContent:'🩺 Kiểm tra hệ thống'}),head,list,...(d&&note?[el('p',{className:'helper',textContent:note})]:[]),el('div',{className:'dub-actions'},copy,again,close))}
-async function check(quick){if(busy)return;busy=true;let note='';if(!quick)draw(null,'Đang kiểm tra (thử key qua mạng, mất vài giây)…');
- try{last=await request('/system/check'+(quick?'?quick=1':''));badge(last)}catch(e){note='Không kiểm tra được: '+e.message}
- busy=false;if(!quick&&dialog.open)draw(last,note)}
-window.openSystemCheck=()=>{draw(last);dialog.showModal();check(false)};open.onclick=()=>window.openSystemCheck();
-document.addEventListener('keys-changed',()=>check(true));
-check(true);
+// the quick check (start, key changes) only colors the dot; the full one (dialog) never waits behind it
+let quickBusy=false,timer=0;
+async function quickCheck(){if(quickBusy)return;quickBusy=true;try{const d=await request('/system/check?quick=1');if(!busy){last=d;badge(d)}}catch{}quickBusy=false}
+async function check(){if(busy)return;busy=true;const t0=Date.now(),stop=new AbortController(),limit=setTimeout(()=>stop.abort(),90000);let note='';
+ const wait=()=>{if(dialog.open&&busy)draw(null,`Đang kiểm tra (FFmpeg, card đồ họa, thử key qua mạng)… ${Math.round((Date.now()-t0)/1000)} giây`)};wait();clearInterval(timer);timer=setInterval(wait,1000);
+ try{last=await request('/system/check',{signal:stop.signal});badge(last)}
+ catch(e){note=stop.signal.aborted?'Kiểm tra quá 90 giây chưa xong: bấm ↻ Kiểm tra lại, hoặc khởi động lại app.':'Không kiểm tra được: '+e.message+' (nếu vừa cập nhật, hãy tắt app rồi mở lại).'}
+ clearTimeout(limit);clearInterval(timer);busy=false;if(dialog.open)draw(last,note)}
+window.openSystemCheck=()=>{dialog.showModal();check()};open.onclick=()=>window.openSystemCheck();
+document.addEventListener('keys-changed',quickCheck);
+quickCheck();
 })();

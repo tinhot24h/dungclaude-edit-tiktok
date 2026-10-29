@@ -461,7 +461,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(200,secrets_store.status())
         if path == '/system/check':
             quick='quick' in parse_qs(urlparse(self.path).query)
-            return self.respond(200,system_check.run(ROOT,DATA,SETTINGS,network=not quick))
+            try:return self.respond(200,system_check.run(ROOT,DATA,SETTINGS,network=not quick))
+            except Exception as exc:return self.respond(500,{'error':f'Lỗi khi kiểm tra: {type(exc).__name__}: {exc}'[:300]})
         if path == '/app/info':
             return self.respond(200,{'version':VERSION,'root':str(ROOT)})
         if path == '/local/file':

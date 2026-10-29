@@ -67,6 +67,9 @@ khi mở app (đặt REVIEW_KEEP_DAYS=0 để tắt), trừ video còn trong hà
 Chỉ dùng trên máy này. Chưa gọi thử OpenAI / ai33 thật, NVENC và ghi Tags của Windows
 trên máy thật: hãy chạy thử 1–2 video trước khi chạy lô lớn.
 
+NÂNG CẤP 0.35.1
+- Sửa "Kiểm tra hệ thống" đứng ở "Đang kiểm tra…"; kiểm tra nhanh hơn.
+
 NÂNG CẤP 0.35.0
 - Nút "🩺 Kiểm tra" trên thanh trên cùng: kiểm tra FFmpeg, key, ổ đĩa, phông chữ... và chỉ cách sửa từng mục.
 

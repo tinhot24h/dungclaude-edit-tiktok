@@ -1,19 +1,19 @@
 {
  "app": "ReviewStudio",
- "version": "0.35.0",
- "notes": "## Mới trong 0.35.0\n\n- **🩺 Kiểm tra hệ thống** trên thanh trên cùng (cạnh 🔑 API key): chấm xanh = ổn, vàng = có mục cần chú ý, đỏ = có lỗi. Lúc mở app tự kiểm tra nhanh để tô màu chấm.\n- Bấm vào để kiểm tra đầy đủ: Python, FFmpeg/FFprobe và các tính năng xuất video cần (chữ, H.264, MP3, nhạc nền tự giảm, hòa trộn lớp), libass (phụ đề chữ chạy), card đồ họa, Demucs, OpenAI key và ai33 key (thử thật 1 lần miễn phí, hiện số credit còn lại), thư mục xuất, dung lượng ổ đĩa, phông chữ, công cụ ghi thông tin file Windows.\n- Mục lỗi xếp lên đầu, mỗi mục có **Cách sửa**; mục key có nút mở thẳng 🔑 API key. **📋 Copy báo cáo** để gửi khi cần hỗ trợ (báo cáo không chứa key).",
+ "version": "0.35.1",
+ "notes": "## Mới trong 0.35.1\n\n- Sửa 🩺 Kiểm tra hệ thống đứng mãi ở \"Đang kiểm tra…\" (lúc máy còn đang kiểm tra nhanh khi mới mở app, bấm nút không chạy kiểm tra đầy đủ). Giờ bảng luôn chạy kiểm tra, đếm giây đang chờ, và báo rõ nếu quá 90 giây hoặc lỗi.\n- Kiểm tra nhanh hơn: FFmpeg, card đồ họa, Demucs và 2 key chạy song song; thử key ai33 chỉ 1 lần, chờ tối đa 12 giây.",
  "files": {
   "ffmpeg_setup.py": {
    "sha256": "f66eb85abf503510412af3b364a9e5e10558cc92a8caa4153aa07bbc44a227ab",
    "size": 4524
   },
   "system_check.py": {
-   "sha256": "ae10d7f9ff0124fd6dea04c73554ec8079b4b6dfc11058ef5a2d2272ebb67ce8",
-   "size": 8367
+   "sha256": "470d85dbfc8eb57ac6b7229b3a9779475c758af27c5c8f25b01d4f4661aed420",
+   "size": 9478
   },
   "system_ui.js": {
-   "sha256": "39b55dde76cd18b5f225dac525b69de6bf3de0018e3feca3b5f0659e5be58f54",
-   "size": 3758
+   "sha256": "8194d8977e5b60037a075fc3b3990724838b51ba3b32a4e0d24ccb53d5618e33",
+   "size": 4470
   },
   "tests/test_system_check.py": {
    "sha256": "72bdf3b1aa757c30a96b15260176271b255a9efa0d347351b48ed65a3cb91ad6",
@@ -136,8 +136,8 @@
    "size": 13961
   },
   "app.py": {
-   "sha256": "a3c8a232e95ebbb6679ce3aa2cfb78b901a655d33b4ce5ef943de6d7beb8a86e",
-   "size": 64146
+   "sha256": "2e1d3fb2998cd43438a5ed962435798ee771e909c742cff3a286b2aa28d8a01a",
+   "size": 64280
   },
   "ai33_audio.py": {
    "sha256": "64c870ef291fbd725d4cdae68bc841d437040110ca83e429e1ff0b15ebf1fe5b",
@@ -172,7 +172,7 @@
    "size": 6858
   },
   "index.html": {
-   "sha256": "2822929580c3e7db0b6f178ec9d6bbd35a411b2fdf2dace13a401d5d13bff2f9",
+   "sha256": "47e0e5ecbe2a4146a9efc50fb2bf1514e6f7c4b2e6228f23f041f72808ff7686",
    "size": 24220
   },
   "launch.py": {
@@ -188,15 +188,15 @@
    "size": 1411
   },
   "HUONG_DAN.txt": {
-   "sha256": "9dec9bad3e944a6d59bc9c8c9ab746e75132ccd154a47960c6f89e570d2ed018",
-   "size": 14488
+   "sha256": "a3014a031c03481bef09e105a7a5af545d0b0ac2137718de88777e2baec25284",
+   "size": 14600
   },
   "README.md": {
-   "sha256": "8d9880afea51c861827dc6da47387ad3b85bf8c44721908bc15fcc8b64739cea",
-   "size": 34053
+   "sha256": "96ba4f8edb662fd55e9cfaaa8a32c2983f43b9bd9cb4f3195c6dc84dd1ead94b",
+   "size": 34516
   },
   "VERSION": {
-   "sha256": "eb16b5510966aa3f5ea607e5f41f799667f344fd3f47bdd81913b8e9c1a33921",
+   "sha256": "645fd1a585b9e4297f053de5b2feaf97c6622366318bce9a9c8c0840ae9a49ea",
    "size": 7
   },
   ".gitignore": {
