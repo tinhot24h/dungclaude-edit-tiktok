@@ -203,7 +203,8 @@ function ccDubFrame(){const body=$('sec-frame').querySelector('.dub-sec-body');i
   ccGroup('Khung xuất',ccRow('Khung xuất',ccBare('dub-canvas')),ccRow('Đặt hình',ccBare('dub-fit'))),
   ccGroup('Biến đổi',ccRow('Tỷ lệ',ccBare('dub-zoom')),ccRow('Vị trí',labelled('X %',ccBare('dub-x')),labelled('Y %',ccBare('dub-y'))),ccRow('Căn',$('dub-frame-align')),
    ccRow('Xoay',ccBare('dub-rotate')),ccRow('',$('dub-frame-tools')),ccRow('Lật',ccSeg('dub-flip',[['none','Không'],['h','⇋ Ngang'],['v','⇵ Dọc'],['hv','Cả hai']]))));
- for(const c of old)c.classList.add('cc-hide');body.insertBefore(panel,videoHost);$('dub-frame-tools').classList.add('cc-chips');refreshers.forEach(f=>f())}
+ // hide what was left behind only: the align grid and the quick buttons were children of the body and are now in the panel
+ for(const c of old)if(!panel.contains(c))c.classList.add('cc-hide');body.insertBefore(panel,videoHost);$('dub-frame-tools').classList.add('cc-chips');refreshers.forEach(f=>f())}
 // the same header switch as Nền & khung / Tiêu đề / Nội dung (off: the values stay, nothing is applied)
 function headSwitch(sec,box,title){const row=box.closest('label.check-row'),sw=el('label',{className:'dt-toggle',title});box.hidden=false;sw.append(box,el('i'));sec.classList.add('dt-group');sec.querySelector('summary').append(sw);if(row)row.remove();
  sw.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();box.checked=!box.checked;box.dispatchEvent(new Event('change',{bubbles:true}))});

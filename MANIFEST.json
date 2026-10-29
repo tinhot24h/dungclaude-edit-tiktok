@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.30.2",
- "notes": "## Mới trong 0.30.2\n\n- **Nút chạy gọn một hàng:** \"🧪 Chạy thử 1\" và \"▶ Lồng tiếng N video\" ghép thành một cụm nút trên thanh trên cùng (không còn nút chạy thử dài cả hàng, nút chính rớt xuống dòng dưới). Khi đang xếp hàng, cả hai nút cùng khóa.",
+ "version": "0.30.3",
+ "notes": "## Mới trong 0.30.3\n\n- **Sửa lỗi mất nút căn ở \"Cắt & vị trí video\" (khi không dùng mẫu thiết kế):** dòng \"Căn\" trống và hàng nút nhanh (⊕ Giữa, xoay 90°, lật, Zoom 110%, Đặt lại) biến mất vì bị ẩn nhầm khi dựng khung CapCut. Nay hiện lại đủ lưới căn 9 ô và hàng nút nhanh. Chế độ có mẫu thiết kế vẫn có \"⊕ Giữa khung\" như trước.",
  "files": {
   "video_tools.js": {
    "sha256": "217dc997759d9b7b26fccfb7abaa35ebf82b5eb333f816dc83fcf67b06781706",
@@ -24,8 +24,8 @@
    "size": 25049
   },
   "design_tab.js": {
-   "sha256": "5a8df6c51ecbc9e173542101ed47505209f06e464f88484f1df7375dabc11a07",
-   "size": 38562
+   "sha256": "c7dfbfdd07abfef046a737ea2bc1ce884c5cf889314d099a4eb0c77d0f56ade4",
+   "size": 38708
   },
   "local_files.js": {
    "sha256": "b9a975e980db7f5f013f6046d58228fb39817b6959e8caaf9505c4ba3cc898a7",
@@ -152,7 +152,7 @@
    "size": 6858
   },
   "index.html": {
-   "sha256": "c98d8eb3a91e8990659fa66706043638c8f605464dc7ac12f976931212342921",
+   "sha256": "410f3e147667653f264b7068ea7610a5f3703e59f1742d19c3319b258ada9476",
    "size": 24079
   },
   "launch.py": {
@@ -168,15 +168,15 @@
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "82ae0bcab67c96799cd7bde8673de7ffae4a5c979f22f90ef063afb386ff9931",
-   "size": 11399
+   "sha256": "889629f9cfa8eabc1e34185b3e7776f40728795b3a54449785edadbfe4615b6c",
+   "size": 11531
   },
   "README.md": {
-   "sha256": "5e5a00514eede0ea6c888a6239456b8b718b1d3fceb5dfe5d59fd65310f9c8db",
-   "size": 22679
+   "sha256": "e7f7b47229a284d6d7240824cff0a42a529a844cc001b98b2f5e2f9e24f9e914",
+   "size": 23105
   },
   "VERSION": {
-   "sha256": "bde134662aa859bedc0a5aa2c7ec894cf75ba27906b897bbc62a4f6b9fbe4868",
+   "sha256": "ed309f2d3d36c45d2126ef27c0ab8448cd9d30e27d440c38b8c8b991647c7e3b",
    "size": 7
   },
   ".gitignore": {

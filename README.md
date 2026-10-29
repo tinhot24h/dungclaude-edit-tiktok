@@ -4,6 +4,10 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.30.3
+
+- **Sửa lỗi mất nút căn ở "Cắt & vị trí video" (khi không dùng mẫu thiết kế):** dòng "Căn" trống và hàng nút nhanh (⊕ Giữa, xoay 90°, lật, Zoom 110%, Đặt lại) biến mất vì bị ẩn nhầm khi dựng khung CapCut. Nay hiện lại đủ lưới căn 9 ô và hàng nút nhanh. Chế độ có mẫu thiết kế vẫn có "⊕ Giữa khung" như trước.
+
 ## Mới trong 0.30.2
 
 - **Nút chạy gọn một hàng:** "🧪 Chạy thử 1" và "▶ Lồng tiếng N video" ghép thành một cụm nút trên thanh trên cùng (không còn nút chạy thử dài cả hàng, nút chính rớt xuống dòng dưới). Khi đang xếp hàng, cả hai nút cùng khóa.
