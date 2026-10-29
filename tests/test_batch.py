@@ -44,6 +44,17 @@ class CoverTests(unittest.TestCase):
         for vx, vy, rot in ((0, 0, .5), (13, -8, .5), (0, 0, -4)):
             d = dict(units='px', video_x=vx, video_y=vy, video_width=720, video_height=1280, video_zoom=103, video_rotation=rot, video_fit='cover', background='color', color='#000000')
             self.assertGreater(self.border(dubbing.design_video(d, 720, 1280) + ['[framed]null[out]'], 720, 1280), 150, (vx, vy, rot))
+        # "Giữ toàn bộ" on a 9:16 source cut by "Cắt viền mép" fills the frame instead of leaving 1–2 px black or blurred strips
+        for fit in ('contain', 'blur'):
+            o = dubbing.options(dict(frame_canvas='9:16', frame_fit=fit, edge_trim=4, frame_rotate=.5, out_resolution='720'))
+            lines, (W, H) = dubbing.frame_graph(o, dict(width=720, height=1280), [], [])
+            self.assertNotIn('decrease', ';'.join(lines));self.assertNotIn('boxblur', ';'.join(lines))
+            lines[-1] = lines[-1].replace('[vout]', '[out]')
+            self.assertGreater(self.border(lines, W, H), 150, fit)
+            wide, _ = dubbing.frame_graph(o, dict(width=1280, height=720), [], [])   # a really different shape is still fitted
+            self.assertIn('decrease', ';'.join(wide))
+        d = dict(units='px', video_x=0, video_y=0, video_width=720, video_height=1280, video_zoom=100, video_rotation=0, video_fit='contain', background='color', color='#000000')
+        self.assertGreater(self.border(dubbing.design_video(d, 720, 1280, trim=['crop=iw-8:ih-8:4:4'], source=(712, 1272)) + ['[framed]null[out]'], 720, 1280), 150)
         # a box smaller than the frame is left as placed
         small = dict(units='px', video_x=100, video_y=100, video_width=400, video_height=700, video_zoom=100, video_rotation=5, video_fit='cover', background='color', color='#000000')
         self.assertLess(self.border(dubbing.design_video(small, 720, 1280) + ['[framed]null[out]'], 720, 1280), 20)

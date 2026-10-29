@@ -292,7 +292,8 @@ class FrameOverlayTests(PipelineBase):
         sparkle=self.overlay('sparkle.mp4',['-f','lavfi','-i','testsrc2=s=320x240:r=30:d=1.5','-pix_fmt','yuv420p'])
         logo=self.overlay('logo.png',['-f','lavfi','-i','color=c=red:s=64x64:d=0.04','-frames:v','1'])
         self.assertEqual((sparkle['still'],logo['still']),(False,True));self.assertEqual(len(self.store.overlays()),2)
-        with mock.patch.object(dubbing,'paragraph_request',return_value='Xin chào.'):
+        # NEAR_FIT off: the 9:16 test video would otherwise be filled instead of shown on a blurred copy
+        with mock.patch.object(dubbing,'paragraph_request',return_value='Xin chào.'),mock.patch.object(dubbing,'NEAR_FIT',-1):
             job=self.job(background='remove',review=False,subtitles='file',frame_canvas='9:16',frame_fit='blur',frame_zoom=120,frame_x=10,frame_rotate=8,frame_flip='h',
                          overlay=True,overlay_count=2,overlay_blend='screen',overlay_timing='random',overlay_opacity=50,end_with_voice=False)
             self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())

@@ -325,9 +325,9 @@ function preview(){sel=Math.max(0,Math.min(sel,files.length-1));const ov=pickOve
  else if(f){const key=f.id||f.name+f.file?.size;if(key!==previewKey){previewKey=key;if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl=f.file?URL.createObjectURL(f.file):'';const src=previewUrl||'/media/video/'+f.id;fg.src=src;bgv.src=src}}
  const o=settings(),frame=$('dub-frame'),[W,H]=CANVAS[o.frame_canvas]||[fg.videoWidth||9,fg.videoHeight||16];frame.style.aspectRatio=`${W}/${H}`;
  const box=frame.getBoundingClientRect(),fx=o.frame_flip.includes('h')?-1:1,fy=o.frame_flip.includes('v')?-1:1;
- let z=o.frame_zoom/100;const dx=o.frame_x*box.width/200,dy=o.frame_y*box.height/200;if(o.frame_fit==='cover'&&z>=1&&box.width)z*=window.coverScale(box.width,box.height,box.width*z,box.height*z,box.width/2+dx,box.height/2+dy,o.frame_rotate,box.width/540);
- Object.assign(fg.style,{width:z*100+'%',height:z*100+'%',objectFit:o.frame_fit==='cover'?'cover':'contain',transform:`translate(-50%,-50%) translate(${o.frame_x*box.width/200}px,${o.frame_y*box.height/200}px) rotate(${o.frame_rotate}deg) scale(${fx},${fy})`});
- bgv.hidden=!f||o.frame_fit!=='blur';
+ let z=o.frame_zoom/100;const dx=o.frame_x*box.width/200,dy=o.frame_y*box.height/200,e=o.edge_trim||0,fit=o.frame_fit!=='cover'&&window.nearFit(fg.videoWidth-2*e,fg.videoHeight-2*e,W,H)?'cover':o.frame_fit;if(fit==='cover'&&z>=1&&box.width)z*=window.coverScale(box.width,box.height,box.width*z,box.height*z,box.width/2+dx,box.height/2+dy,o.frame_rotate,box.width/540);
+ Object.assign(fg.style,{width:z*100+'%',height:z*100+'%',objectFit:fit==='cover'?'cover':'contain',transform:`translate(-50%,-50%) translate(${o.frame_x*box.width/200}px,${o.frame_y*box.height/200}px) rotate(${o.frame_rotate}deg) scale(${fx},${fy})`});
+ bgv.hidden=!f||fit!=='blur';
  drawImage(o,box,W,H);$('dub-safezone').hidden=!$('dub-safe').checked;
  const level=o.background==='remove'?0:Math.min(1,(o.background_volume||0)/100*(o.background==='duck'?Math.max(.05,(o.duck_level||0)/100):1));fg.volume=level;fg.muted=level===0||fg.dataset.mute==='1';
  if(f&&fg.duration)$('dub-preview-info').textContent=`${f.name} · ${fg.videoWidth}×${fg.videoHeight} → ${W}×${H} · ${time(Math.max(0,fg.duration-o.trim_start-o.trim_end))} sau khi cắt`;

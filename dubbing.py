@@ -1064,7 +1064,7 @@ def source_fps(video):
         return 0.0
 
 
-def design_video(design, W, H, stretch=1, duration=0, adjust=(), trim=()):
+def design_video(design, W, H, stretch=1, duration=0, adjust=(), trim=(), source=(0, 0)):
     """With a design the video sits in the design's video box exactly as in the editor (x/y/width/height/zoom in
     720×1280 design pixels, cover/contain/stretch, camera zoom in/out over the video, flip, rotation) on the
     background colour → [framed]."""
@@ -1072,6 +1072,8 @@ def design_video(design, W, H, stretch=1, duration=0, adjust=(), trim=()):
     box = design_mod.video_box(design)
     rad = math.radians(float(design.get('video_rotation', 0)))
     fit = design.get('video_fit', 'cover')
+    if fit == 'contain' and near_fit(*source, box['width'], box['height']):
+        fit = 'cover'   # source = picture size after "Cắt viền mép"
     bx, by, bw, bh = box['x'] * scale, box['y'] * scale, box['width'] * scale, box['height'] * scale
     if fit == 'cover' and bw >= W - 1 and bh >= H - 1:
         # a box as big as the frame is meant to fill it: grow it about its centre so a rotation or a small X/Y
@@ -1115,6 +1117,15 @@ def cover_scale(W, H, bw, bh, cx, cy, turn, margin=2):
     return need if need > 1.0005 else 1.0
 
 
+NEAR_FIT = .03
+
+
+def near_fit(sw, sh, W, H):
+    """A picture within 3 % of the frame's shape (a 9:16 video after "Cắt viền mép", 1080×1918 …) is filled instead
+    of fitted: "Giữ toàn bộ" would only leave 1–2 px strips (black or blurred) along the edges."""
+    return bool(sw and sh and W and H) and abs((sw / sh) / (W / H) - 1) <= NEAR_FIT
+
+
 def edge_crop(settings):
     """"Cắt viền mép": px cut off every side of the source picture (blurred or light borders of downloaded videos)."""
     e = int(settings.get('edge_trim') or 0)
@@ -1151,6 +1162,9 @@ def frame_graph(settings, video, before, after):
         return ['[0:v:0]' + ','.join(pre + size + [tail]) + '[vout]'], (W, H)
     z = settings['frame_zoom'] / 100
     fit = settings['frame_fit']
+    e = int(settings.get('edge_trim') or 0)
+    if fit != 'cover' and near_fit(int(video.get('width') or 0) - 2 * e, int(video.get('height') or 0) - 2 * e, W, H):
+        fit = 'cover'
     turn = math.radians(settings['frame_rotate'])
     dx, dy = round(settings['frame_x'] * W / 200), round(settings['frame_y'] * H / 200)
     if fit == 'cover' and z >= 1 and (turn or dx or dy):
@@ -2717,7 +2731,9 @@ class Store:
             width, height = frame_size(settings, video)
             # frame → random overlays
             if design:
-                lines = design_video(design, width, height, stretch, duration, adjust, edge_crop(settings))
+                e = int(settings.get('edge_trim') or 0)
+                lines = design_video(design, width, height, stretch, duration, adjust, edge_crop(settings),
+                                     (int(video.get('width') or 0) - 2 * e, int(video.get('height') or 0) - 2 * e))
             else:
                 lines, _ = frame_graph(settings, video, ([f'setpts=PTS*{stretch:.6f}'] if stretch != 1 else []) + adjust, [])
                 lines[-1] = lines[-1][:-len('[vout]')] + '[framed]'
