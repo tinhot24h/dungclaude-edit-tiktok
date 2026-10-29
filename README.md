@@ -4,6 +4,10 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.31.2
+
+- **Hết vệt mờ chéo ở góc khi xoay video (lỗi cũ quay lại):** video tải về thường có sẵn dải mép mờ/tối rộng vài px. Khi không xoay, zoom 103% che dải này dọc 4 cạnh. Khi xoay 0,5°, 4 góc chỉ còn chừa 2px nên dải mép bị kéo vào góc thành vệt chéo, kể cả khi đã "Cắt viền mép 2px". Nay khi xoay, app giữ ở góc đúng phần dư mà zoom tạo ra (phóng thêm khoảng 1–2%), nên xoay không bao giờ làm lộ mép nhiều hơn lúc không xoay. Áp dụng cho Khung xuất, video trong mẫu thiết kế và khung xem trước. Có test với video có mép mờ 6px.
+
 ## Mới trong 0.31.1
 
 - **Sửa & xuất lại dùng luôn danh sách "Video đầu vào":** tick video ở hàng đợi rồi bấm "✎ Sửa & xuất lại" (hoặc "✎ Sửa" trên một dòng), các video đó hiện ở mục 🎬 Video đầu vào. Bấm từng dòng để xem trước video đó; nút chính trên cùng đổi thành "⟳ Xuất lại N video". Bấm "✕ Thoát sửa" để trả lại danh sách video và thông số trước đó.

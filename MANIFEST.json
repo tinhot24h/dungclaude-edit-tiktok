@@ -1,15 +1,15 @@
 {
  "app": "ReviewStudio",
- "version": "0.31.1",
- "notes": "## Mới trong 0.31.1\n\n- **Sửa & xuất lại dùng luôn danh sách \"Video đầu vào\":** tick video ở hàng đợi rồi bấm \"✎ Sửa & xuất lại\" (hoặc \"✎ Sửa\" trên một dòng), các video đó hiện ở mục 🎬 Video đầu vào. Bấm từng dòng để xem trước video đó; nút chính trên cùng đổi thành \"⟳ Xuất lại N video\". Bấm \"✕ Thoát sửa\" để trả lại danh sách video và thông số trước đó.\n- Video trùng tên AI hiện thêm tên file gốc để dễ phân biệt.\n- Đảm bảo xuất lại theo thông số mới: mỗi lần bấm \"Xuất lại\", thông số đang chỉnh bên trái (khung, zoom, xoay, màu, nền, chữ, phụ đề, lớp, nhạc, độ phân giải…) được ghi vào video rồi mới render. File mới đúng thông số mới, file cũ giữ nguyên; giọng và chữ không làm lại. Có test kiểm tra.",
+ "version": "0.31.2",
+ "notes": "## Mới trong 0.31.2\n\n- **Hết vệt mờ chéo ở góc khi xoay video (lỗi cũ quay lại):** video tải về thường có sẵn dải mép mờ/tối rộng vài px. Khi không xoay, zoom 103% che dải này dọc 4 cạnh. Khi xoay 0,5°, 4 góc chỉ còn chừa 2px nên dải mép bị kéo vào góc thành vệt chéo, kể cả khi đã \"Cắt viền mép 2px\". Nay khi xoay, app giữ ở góc đúng phần dư mà zoom tạo ra (phóng thêm khoảng 1–2%), nên xoay không bao giờ làm lộ mép nhiều hơn lúc không xoay. Áp dụng cho Khung xuất, video trong mẫu thiết kế và khung xem trước. Có test với video có mép mờ 6px.",
  "files": {
   "video_tools.js": {
    "sha256": "217dc997759d9b7b26fccfb7abaa35ebf82b5eb333f816dc83fcf67b06781706",
    "size": 4542
   },
   "tests/test_batch.py": {
-   "sha256": "9bde23b37c560c0eb3ce5daf432b5ec8ee38908447506dfd92acddaba7ab7b62",
-   "size": 22880
+   "sha256": "0939fff47f3766b47d4a1dd0e6b2c64d5d90952a6815e442a204d1c6264be1ca",
+   "size": 24182
   },
   "win_meta.py": {
    "sha256": "228d18deb126f8965807b7c3a7d2249007da30d88f3a6bbf04493deb52b989a8",
@@ -52,8 +52,8 @@
    "size": 5181
   },
   "dub_ui.js": {
-   "sha256": "555fa6c9c20d201eb9003f426af46f02a21bf660b41e4db7ebc12d76761a1831",
-   "size": 160229
+   "sha256": "81cbee8cb2f638ba0bae36b97cab8c526fa59d2e7bf823181367e05a5fa08686",
+   "size": 160278
   },
   "key_ui.js": {
    "sha256": "4c1833943a21476f6e515115af555c36a4d763bbc5c1122f111cad0a5065574d",
@@ -64,8 +64,8 @@
    "size": 2610
   },
   "dubbing.py": {
-   "sha256": "26a782cf14f0cccb039d78aaff59b7ab962f33c5e930633819060522b9e03ee2",
-   "size": 206626
+   "sha256": "80ea56d59c58cd85ca6617a7a7f17ba09f21e2dd50ceb12342f3f261ea67a748",
+   "size": 206891
   },
   "tests/test_dubbing.py": {
    "sha256": "8cfe463e82cae6857f9073341b8c4422f1d3174b2162f366d8b1801342e2fc14",
@@ -108,8 +108,8 @@
    "size": 21185
   },
   "editor_ui.js": {
-   "sha256": "d73b1369983256aef8539d25cb9e3d22973ae75fcab56c6caf3ff284ed5e70c5",
-   "size": 39989
+   "sha256": "f1df577130591c8fc40c0a89508b32fd21ab23df542ba4913f648ea57bbb49e1",
+   "size": 40032
   },
   "tests/test_media_engine.py": {
    "sha256": "dd2e3b438d4df3b407ef3bb1df1ea6887ebf1c21d2806f4280b38d421ba673fe",
@@ -152,7 +152,7 @@
    "size": 6858
   },
   "index.html": {
-   "sha256": "7c09299e58f1585efc9a5890fd906a5d6a8e479868b97379e88c31ff3e768349",
+   "sha256": "099f44d90eb88bca08c66a1d2d99bba166e20ac1bf8842799c03b9cc88078b60",
    "size": 24079
   },
   "launch.py": {
@@ -168,15 +168,15 @@
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "3a5e9e294308777dd81b9bf66ae502e95d5420d00c3a9caf828b602d9b3d236c",
-   "size": 12098
+   "sha256": "797067631e326528f815424b213708ca0d9b8d97dd87b5e3bf2ded0de5f8ac00",
+   "size": 12214
   },
   "README.md": {
-   "sha256": "f84995561166442afebd88f33296cc989be8ee590b4a89dd6ecaeeb67f253b4e",
-   "size": 25511
+   "sha256": "6f9854c7a19176c1f146b9f12411563f9caa055c21865c4f790e916614ff8705",
+   "size": 26188
   },
   "VERSION": {
-   "sha256": "381b1837d3f90ff195c6783527f8b4bd0e7bf8dcf89b00da8fb0465052b1f01a",
+   "sha256": "44471db8d48da0233f082ae81ee63933ea4c9554b7c798c3d3d0bca1cf44c812",
    "size": 7
   },
   ".gitignore": {

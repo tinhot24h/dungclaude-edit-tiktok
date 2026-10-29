@@ -56,6 +56,18 @@ class CoverTests(unittest.TestCase):
             self.assertIn('decrease', ';'.join(wide))
         d = dict(units='px', video_x=0, video_y=0, video_width=720, video_height=1280, video_zoom=100, video_rotation=0, video_fit='contain', background='color', color='#000000')
         self.assertGreater(self.border(dubbing.design_video(d, 720, 1280, trim=['crop=iw-8:ih-8:4:4'], source=(712, 1272)) + ['[framed]null[out]'], 720, 1280), 150)
+        # a downloaded video with a soft dark border wider than "Cắt viền mép": straight, the zoom hides it; tilted, the
+        # corners must keep the same crop (this came back once: rotation 0.5°, zoom 103 %, edge trim 2 px)
+        soft = ['color=c=0xd0c0a0:s=708x1268', 'pad=720:1280:6:6:color=0x202020,boxblur=3:1']
+        def soft_border(**k):
+            o = dubbing.options({**dict(frame_canvas='9:16', frame_fit='cover', frame_zoom=103, frame_rotate=.5, edge_trim=2, out_resolution='720'), **k})
+            lines, (W, H) = dubbing.frame_graph(o, dict(width=720, height=1280), [], [])
+            lines[0] = f'{soft[0]},{soft[1]},' + lines[0][len('[0:v:0]'):]
+            lines[-1] = lines[-1].replace('[vout]', '[out]')
+            px = subprocess.run(['ffmpeg', '-v', 'error', '-f', 'lavfi', '-i', 'nullsrc=s=16x16:d=1', '-filter_complex', ';'.join(lines), '-map', '[out]', '-frames:v', '1',
+                                 '-f', 'rawvideo', '-pix_fmt', 'gray', '-'], capture_output=True, check=True).stdout
+            return min(min(px[:W]), min(px[-W:]), min(px[y * W] for y in range(H)), min(px[y * W + W - 1] for y in range(H)))
+        self.assertGreater(soft_border(), 180);self.assertGreater(soft_border(frame_x=3), 180);self.assertGreater(soft_border(frame_rotate=0), 180)
         # a box smaller than the frame is left as placed
         small = dict(units='px', video_x=100, video_y=100, video_width=400, video_height=700, video_zoom=100, video_rotation=5, video_fit='cover', background='color', color='#000000')
         self.assertLess(self.border(dubbing.design_video(small, 720, 1280) + ['[framed]null[out]'], 720, 1280), 20)
