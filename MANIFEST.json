@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.30.0",
- "notes": "## Mới trong 0.30.0\n\n**💬 Phụ đề chữ chạy (mới, có công tắc)**\n- Phụ đề in thẳng lên video, mỗi lần vài chữ, từ đang đọc sáng lên theo giọng đọc tiếng Việt (giống phụ đề tự động của CapCut).\n- 9 kiểu hiệu ứng: Viền đen, Nền hộp, Phóng to từ, Phát sáng, Karaoke tô dần, Nền màu từ, Bóng đổ, Hiện dần, Từng chữ.\n- 12 mẫu nhanh, mỗi mẫu đặt sẵn kiểu, phông và màu chỉ với 1 lần bấm (TikTok vàng, Hộp đen, Pop xanh, Neon hồng, Karaoke, Marker đỏ, Bóng đổ, Hiện dần, Từng chữ, Viết tay, Truyện tranh, Dễ thương).\n- Chỉnh phông, số chữ mỗi lần, cỡ chữ, vị trí dọc (kéo chữ mẫu trên khung xem trước), màu chữ, màu từ đang đọc, viết hoa.\n- Khung xem trước chạy một câu mẫu với đúng kiểu và màu đã chọn, vì chữ thật chỉ có sau khi AI dịch xong. Video xuất dùng đúng lời đọc của từng video.\n- Cần FFmpeg có libass (bản \"full\"). Nếu thiếu, video vẫn xuất nhưng không có phụ đề, và hàng đợi báo rõ lý do.\n\n**🆕 7 phông chữ mới có đủ dấu tiếng Việt:** Montserrat, Nunito, Lexend, Oswald, Baloo 2, Quicksand, Fira Sans. Dùng được cho phụ đề và cho tiêu đề / nội dung.\n\n**🎶 Nhạc nền (mới, có công tắc)**\n- Kho nhạc riêng: thêm MP3/WAV/M4A…, nghe thử, xóa, gắn văn phong cho từng bài.\n- Mỗi video tự chọn 1 bài hợp văn phong của nó (không có thì lấy bài chưa gắn, rồi bất kỳ bài nào). Tick \"Dùng\" để giới hạn những bài được chọn.\n- Bài dài bắt đầu ở một đoạn ngẫu nhiên, bài ngắn tự lặp; có lên và xuống nhỏ dần ở đầu, cuối.\n- Chỉnh được âm lượng; \"Tự giảm nhạc khi có giọng đọc\" làm nhạc nhỏ đi khi đang nói.\n- Bài đã chọn được giữ cho video đó: xuất lại vẫn đúng bài cũ.\n\n**🧪 Chạy thử 1 video**\n- Có từ 2 video trở lên thì hiện nút \"Chạy thử 1 video\": chạy riêng video đầu tiên.\n- Xong sẽ hiện thanh \"Xem video thử\" và \"Ưng rồi · chạy N video còn lại\". Chưa ưng thì sửa thông số rồi bấm chạy thử lại.",
+ "version": "0.30.1",
+ "notes": "## Mới trong 0.30.1\n\n- **Sắp lại các mục theo đúng trình tự làm việc:** 🎬 Video đầu vào → Nhận diện, dịch & viết chữ → Giọng đọc ai33 → Âm thanh gốc → Nhạc nền → Cắt & vị trí video → Điều chỉnh màu → Nền & khung → Tiêu đề → Nội dung → Phụ đề chữ chạy → Lớp ảnh → Overlay ngẫu nhiên → Xuất & chạy hàng loạt. Trước đây \"Phụ đề chữ chạy\" và \"Nhạc nền\" bị nằm trên cả \"Video đầu vào\".",
  "files": {
   "video_tools.js": {
    "sha256": "217dc997759d9b7b26fccfb7abaa35ebf82b5eb333f816dc83fcf67b06781706",
@@ -24,8 +24,8 @@
    "size": 25049
   },
   "design_tab.js": {
-   "sha256": "a231bd6bf01961419d109c2f5edb5db9bf420582e92893ec22039739d87f6d55",
-   "size": 38299
+   "sha256": "5a8df6c51ecbc9e173542101ed47505209f06e464f88484f1df7375dabc11a07",
+   "size": 38562
   },
   "local_files.js": {
    "sha256": "b9a975e980db7f5f013f6046d58228fb39817b6959e8caaf9505c4ba3cc898a7",
@@ -152,7 +152,7 @@
    "size": 6858
   },
   "index.html": {
-   "sha256": "2491bfe78d23327b48e25e7303b842912c918d9b945a200dcf013b077b9447c4",
+   "sha256": "c2e4c5e3a7f98e4b593abf620666642ee7c54fa9d5acaf922185ef4cf239311a",
    "size": 24079
   },
   "launch.py": {
@@ -168,15 +168,15 @@
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "b735438b1885f0d6e96c6eda2985ca5e7e93fe4cd51fa0e9c09a7b21ab34eb90",
-   "size": 11087
+   "sha256": "79fbc2c88cba8032b670309740e70e28df1cd55c5d44198d2f9006e7c5947ae8",
+   "size": 11277
   },
   "README.md": {
-   "sha256": "0f287ff85db6cda19dac07c50de15ae5a58897548688a918963504dd321e9fc8",
-   "size": 21843
+   "sha256": "3624dd416096bcf3be933844dc169ca6d1a7522208678f2afcda3a8f4e755495",
+   "size": 22369
   },
   "VERSION": {
-   "sha256": "42659901f3c792eb230cf32b2c844ae738cd6d53dd84c1b7eb434e969b472ec2",
+   "sha256": "3b2234b65d3aa488b122baba61669c187293385c0c348b8c80a775459ccea55e",
    "size": 7
   },
   ".gitignore": {
@@ -188,8 +188,8 @@
    "size": 8536
   },
   "tests/test_design.py": {
-   "sha256": "29161e458165e193ac53dce779eb99f3a64d5216847d53a820b6d866adf728d9",
-   "size": 6286
+   "sha256": "a8cccbf146af503c0f0565b83bbe5dd528f4c13aeed57a5d0410784f6cc57995",
+   "size": 7022
   },
   "tests/test_ai33_audio.py": {
    "sha256": "1bc21f3eddeb8beee49eab73c862336c17147fd7cea0755d9ad7b00065c55686",

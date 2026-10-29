@@ -4,6 +4,10 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.30.1
+
+- **Sắp lại các mục theo đúng trình tự làm việc:** 🎬 Video đầu vào → Nhận diện, dịch & viết chữ → Giọng đọc ai33 → Âm thanh gốc → Nhạc nền → Cắt & vị trí video → Điều chỉnh màu → Nền & khung → Tiêu đề → Nội dung → Phụ đề chữ chạy → Lớp ảnh → Overlay ngẫu nhiên → Xuất & chạy hàng loạt. Trước đây "Phụ đề chữ chạy" và "Nhạc nền" bị nằm trên cả "Video đầu vào".
+
 ## Mới trong 0.30.0
 
 **💬 Phụ đề chữ chạy (mới, có công tắc)**

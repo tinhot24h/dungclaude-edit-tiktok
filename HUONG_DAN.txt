@@ -65,6 +65,9 @@ khi mở app (đặt REVIEW_KEEP_DAYS=0 để tắt), trừ video còn trong hà
 Chỉ dùng trên máy này. Chưa gọi thử OpenAI / ai33 thật, NVENC và ghi Tags của Windows
 trên máy thật: hãy chạy thử 1–2 video trước khi chạy lô lớn.
 
+NÂNG CẤP 0.30.1
+- Các mục ở tab Lồng tiếng xếp theo trình tự: video đầu vào → lời & giọng → âm thanh → hình ảnh → chữ, phụ đề, lớp → xuất.
+
 NÂNG CẤP 0.30.0
 - Phụ đề chữ chạy (mục 💬, có công tắc): từ đang đọc sáng lên, 9 kiểu + 12 mẫu nhanh, kéo chữ mẫu trên xem trước để đặt vị trí. Cần FFmpeg bản "full" (có libass).
 - 7 phông mới có đủ dấu tiếng Việt.

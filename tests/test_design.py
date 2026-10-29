@@ -120,3 +120,16 @@ class FontListTests(unittest.TestCase):
                 continue   # labelled as missing some letters (old templates only)
             advances, _ = metrics(key)
             self.assertFalse([c for c in 'ăâđêôơưắằẳẵặếềểễệốồổỗộớờởỡợứừửữựĐ' if ord(c) not in advances], key)
+
+
+class SectionOrderTests(unittest.TestCase):
+    def test_every_section_of_the_dub_tab_has_its_place_and_input_comes_first(self):
+        import re
+        from pathlib import Path
+        root = Path(__file__).resolve().parent.parent
+        made = set(re.findall(r"\$\{section\('(\w+)'", (root / 'dub_ui.js').read_text(encoding='utf-8')))
+        tab = (root / 'design_tab.js').read_text(encoding='utf-8')
+        made |= set(re.findall(r"=sec\('(\w+)'", tab))
+        order = re.findall(r"'(\w+)'", tab.split('const ORDER=[')[1].split(']')[0])
+        self.assertEqual(order[0], 'input');self.assertEqual(order[-1], 'export')
+        self.assertEqual(set(order), made - {'keys'})   # the API keys section lives in the header (🔑)

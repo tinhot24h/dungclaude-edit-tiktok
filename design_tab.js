@@ -43,7 +43,9 @@ $('dub-frame').closest('.dub-frame-wrap').after(stageHost);
 $('sec-keys').hidden=true;
 
 // ---- order and visibility
-const ORDER=['input','design','title','body','frame','adjust','overlay','image','translate','voice','audio','export'];
+// the order of the work: video in → what is said (AI text, voice, sound) → how the picture looks (cut, colour, background,
+// texts, captions, layers) → export. Every section is listed: one left out would stay above "Video đầu vào".
+const ORDER=['input','translate','voice','audio','music','frame','adjust','design','title','body','captions','image','overlay','export'];
 const bgOn=()=>$('dt-design-on').checked,titleOn=()=>$('dt-title-on').checked,bodyOn=()=>$('dt-body-on').checked;
 const on=()=>bgOn()||titleOn()||bodyOn();
 // with a design the editor's video box places the video; without it the dub frame tools do
