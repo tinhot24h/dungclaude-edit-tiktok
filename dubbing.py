@@ -52,7 +52,7 @@ DEFAULTS = dict(language='zh', model=ai_translate.DEFAULT_MODEL, rate=4.2, prono
                 voice_id='', voice_speed=1.0, dictionary_id=None, max_tempo=1.1, min_tempo=0.98, video_speed_min=0.85, video_speed_max=1.2, background='duck', duck_level=12,
                 background_volume=100, voice_volume=100, subtitles='file', loudness='tiktok', review=False, encoder='cpu', instructions='', mode='paragraph', align='auto', style='review',
                 frame_canvas='source', frame_fit='cover', frame_zoom=100, frame_x=0, frame_y=0, frame_rotate=0, frame_flip='none', trim_start=0, trim_end=0,
-                overlay=False, overlay_ids=[], overlay_count=1, overlay_blend='screen', overlay_opacity=60, overlay_timing='loop', end_with_voice=True,
+                overlay=False, overlay_ids=[], overlay_count=1, overlay_blend='screen', overlay_opacity=60, overlay_timing='loop', overlay_scale=100, overlay_x=0, overlay_y=0, overlay_rotate=0, overlay_flip='none', overlay_fit='cover', end_with_voice=True,
                 image=False, image_id='', image_x=0, image_y=0, image_w=60, image_h=0, image_rotate=0, image_flip='none', image_blend='normal',
                 image_opacity=100, image_layer='below', layer_order='',
                 captions=False, caption_style='classic', caption_font='bvp-black', caption_size=68, caption_y=70, caption_words=5,
@@ -87,7 +87,7 @@ def options(raw):
         if isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) or not lo <= v <= hi:
             raise DubError('Thông số không hợp lệ: ' + key)
         out[key] = float(v)
-    for key, lo, hi in (('frame_zoom', 25, 400), ('frame_x', -400, 400), ('frame_y', -400, 400), ('frame_rotate', -180, 180), ('overlay_opacity', 0, 100), ('trim_start', 0, 120), ('trim_end', 0, 120), ('rate', 2.5, 7), ('voice_speed', .5, 1.5), ('max_tempo', 1, 1.6), ('min_tempo', .5, 1), ('video_speed_min', .25, 1), ('video_speed_max', 1, 4), ('duck_level', 0, 100),
+    for key, lo, hi in (('frame_zoom', 25, 400), ('frame_x', -400, 400), ('frame_y', -400, 400), ('frame_rotate', -180, 180), ('overlay_opacity', 0, 100), ('overlay_scale', 10, 400), ('overlay_x', -150, 150), ('overlay_y', -150, 150), ('overlay_rotate', -180, 180), ('trim_start', 0, 120), ('trim_end', 0, 120), ('rate', 2.5, 7), ('voice_speed', .5, 1.5), ('max_tempo', 1, 1.6), ('min_tempo', .5, 1), ('video_speed_min', .25, 1), ('video_speed_max', 1, 4), ('duck_level', 0, 100),
                         ('background_volume', 0, 200), ('voice_volume', 0, 300),
                         ('image_x', -150, 150), ('image_y', -150, 150), ('image_w', 1, 400), ('image_h', 0, 400), ('image_rotate', -180, 180), ('image_opacity', 0, 100),
                         ('adjust_brightness', -100, 100), ('adjust_contrast', -100, 100), ('adjust_saturation', -100, 100), ('adjust_sharpen', 0, 100)):
@@ -96,7 +96,7 @@ def options(raw):
         raw = dict(raw, subtitles='file')
     for key, allowed in (('language', ('zh', 'en', 'auto')), ('background', BACKGROUND), ('subtitles', SUBTITLES),
                          ('loudness', ('off', 'tiktok')), ('pronoun', tuple(PRONOUNS)), ('mode', ('paragraph', 'lines', 'ai33', 'design')), ('align', ('auto', 'voice', 'video')), ('style', tuple(ai_translate.STYLES)), ('energy', tuple(ai_translate.ENERGY)), ('frame_canvas', tuple(CANVAS)), ('frame_fit', ('cover', 'contain', 'blur')),
-                         ('frame_flip', ('none', 'h', 'v', 'hv')), ('overlay_blend', ('normal', 'screen', 'key')), ('overlay_timing', ('loop', 'sequence', 'random')),
+                         ('frame_flip', ('none', 'h', 'v', 'hv')), ('overlay_blend', ('normal', 'screen', 'key')), ('overlay_timing', ('loop', 'sequence', 'random')), ('overlay_flip', ('none', 'h', 'v', 'hv')), ('overlay_fit', ('cover', 'contain')),
                          ('image_flip', ('none', 'h', 'v', 'hv')), ('image_blend', tuple(IMAGE_BLENDS)), ('image_layer', ('below', 'above')),
                          ('title_source', TEXT_SOURCES), ('body_source', TEXT_SOURCES), ('title_style', tuple(TITLE_STYLES)),
                          ('out_resolution', (*RESOLUTIONS, 'source')), ('out_fps', FPS), ('out_quality', ('standard', 'high'))):
@@ -1461,31 +1461,72 @@ def overlay_decoder(meta):
     return []
 
 
-def overlay_fit(W, H):
-    return f'fps=30,scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1'
+def overlay_moved(settings):
+    """True when "Căn chỉnh overlay" differs from the default (full frame, centred, upright)."""
+    return bool(settings and (settings.get('overlay_scale', 100) != 100 or settings.get('overlay_x', 0) or settings.get('overlay_y', 0)
+                              or settings.get('overlay_rotate', 0) or settings.get('overlay_flip', 'none') != 'none' or settings.get('overlay_fit', 'cover') != 'cover'))
+
+
+def overlay_box(W, H, settings=None):
+    """Size of the overlay box: the frame × "Thu phóng" (even numbers, so every joined clip has the same size)."""
+    s = (settings or {}).get('overlay_scale', 100) / 100
+    return max(2, round(W * s / 2) * 2), max(2, round(H * s / 2) * 2)
+
+
+def overlay_fit(W, H, settings=None):
+    """The overlay fills its box like CapCut: "Lấp đầy" covers it (cut to the box), "Vừa khung" shows it whole
+    (transparent bars). By default the box is the whole frame."""
+    w, h = overlay_box(W, H, settings)
+    if (settings or {}).get('overlay_fit', 'cover') == 'contain':
+        return f'fps=30,scale={w}:{h}:force_original_aspect_ratio=decrease,setsar=1,format=rgba,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color=black@0'
+    return f'fps=30,scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},setsar=1'
+
+
+def overlay_turn(settings):
+    """Flip and rotation of "Căn chỉnh overlay" (after the box, before it is placed)."""
+    chain = {'none': '', 'h': ',hflip', 'v': ',vflip', 'hv': ',hflip,vflip'}[settings.get('overlay_flip', 'none')]
+    if settings.get('overlay_rotate', 0):
+        turn = math.radians(settings['overlay_rotate'])
+        chain += f',format=rgba,rotate={turn:.9f}:ow=rotw({turn:.9f}):oh=roth({turn:.9f}):c=none'
+    return chain
+
+
+def overlay_place(settings):
+    """x:y of the overlay filter: centre of the frame + offset in % of the frame (the part outside is cut off)."""
+    return (f"x=(main_w-overlay_w)/2+main_w*{settings.get('overlay_x', 0) / 100:.5f}"
+            f":y=(main_h-overlay_h)/2+main_h*{settings.get('overlay_y', 0) / 100:.5f}")
 
 
 def overlay_chain(source, item, W, H, settings, base, duration):
     """Graph lines putting an overlay stream (`source`: an input like [3:v] or a joined sequence label) on top of
     [base]; returns (lines, new label). Longer than the video → cut to the video; shorter → looped or joined
     (decided by the inputs). normal/key: alpha overlay (key removes a green background) · screen: blend for effects on black.
-    Files with their own transparency (item['alpha']) always use the normal alpha overlay, full frame."""
+    Files with their own transparency (item['alpha']) always use the normal alpha overlay. "Căn chỉnh overlay"
+    (size, fit, position, rotation, flip) applies to every overlay of the pool alike."""
     op = settings['overlay_opacity'] / 100
     k = item['k']
     random_time = settings['overlay_timing'] == 'random'
-    chain = f'{source}{overlay_fit(W, H)}' + ('' if random_time else f',trim=duration={duration:.3f},setpts=PTS-STARTPTS')
+    moved = overlay_moved(settings)
+    chain = f'{source}{overlay_fit(W, H, settings)}' + ('' if random_time else f',trim=duration={duration:.3f},setpts=PTS-STARTPTS')
     blend = 'normal' if item.get('alpha') else settings['overlay_blend']
     if blend == 'screen':
+        lines = []
+        if moved:
+            # moved / smaller / turned: put it on a black frame first (black adds nothing in "screen")
+            lines += [chain + overlay_turn(settings) + f',format=rgba[ot{k}]', f'color=c=black:s={W}x{H}:r=30,format=rgba[oc{k}]',
+                      f'[oc{k}][ot{k}]overlay={overlay_place(settings)}:shortest=1:format=auto,setsar=1[op{k}]']
+            chain = f'[op{k}]null'
         if random_time:
             chain += f",tpad=start_duration={item['start']:.3f}:stop_duration={duration + 5:.3f}:color=black"
-        return [chain + f',format=gbrp[ov{k}]', f'[{base}]format=gbrp[bk{k}]',
+        return [*lines, chain + f',format=gbrp[ov{k}]', f'[{base}]format=gbrp[bk{k}]',
                 *wide_blend(f'bk{k}', f'ov{k}', 'screen', W, H, f'os{k}', f':all_opacity={op:.3f}')], f'os{k}'
     if blend == 'key':
         chain += ',colorkey=0x00FF00:0.30:0.10'
-    chain += f',format=rgba,colorchannelmixer=aa={op:.3f}'
+    chain += f',format=rgba,colorchannelmixer=aa={op:.3f}' + (overlay_turn(settings) if moved else '')
     if random_time:
         chain += f",setpts=PTS-STARTPTS+{item['start']:.3f}/TB"
-    return [chain + f'[ov{k}]', f'[{base}][ov{k}]overlay=0:0:eof_action=pass:format=auto' + ('' if random_time else ':shortest=1') + f'[os{k}]'], f'os{k}'
+    at = overlay_place(settings) if moved else '0:0'
+    return [chain + f'[ov{k}]', f'[{base}][ov{k}]overlay={at}:eof_action=pass:format=auto' + ('' if random_time else ':shortest=1') + f'[os{k}]'], f'os{k}'
 
 
 # ---------------------------------------------------------------- job store and worker
@@ -3078,7 +3119,7 @@ class Store:
                             if not meta:
                                 continue
                             args += (['-loop', '1', '-t', '3'] if meta['still'] else []) + overlay_decoder(meta) + ['-i', str(self.overlay_dir / meta['file'])]
-                            graph.append(f'[{index}:v]{overlay_fit(width, height)},format=rgba[sq{k}_{n}]')
+                            graph.append(f'[{index}:v]{overlay_fit(width, height, settings)},format=rgba[sq{k}_{n}]')
                             parts.append(f'[sq{k}_{n}]')
                             index += 1
                         graph.append(''.join(parts) + f'concat=n={len(parts)}:v=1:a=0[seq{k}]')

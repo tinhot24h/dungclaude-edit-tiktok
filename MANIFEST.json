@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.35.1",
- "notes": "## Mới trong 0.35.1\n\n- Sửa 🩺 Kiểm tra hệ thống đứng mãi ở \"Đang kiểm tra…\" (lúc máy còn đang kiểm tra nhanh khi mới mở app, bấm nút không chạy kiểm tra đầy đủ). Giờ bảng luôn chạy kiểm tra, đếm giây đang chờ, và báo rõ nếu quá 90 giây hoặc lỗi.\n- Kiểm tra nhanh hơn: FFmpeg, card đồ họa, Demucs và 2 key chạy song song; thử key ai33 chỉ 1 lần, chờ tối đa 12 giây.",
+ "version": "0.36.0",
+ "notes": "## Mới trong 0.36.0\n\n- **Căn chỉnh video overlay kiểu CapCut** (mục ✨ Overlay → nhóm *Căn chỉnh*):\n  - **Lấp đầy / Vừa khung**, **Thu phóng** 10–400 %, **Vị trí X/Y**, lưới **căn 9 điểm**, **Xoay** (kèm nút ↺ 90° / ↻ 90°), **Lật** ngang / dọc, **↺ Đặt lại căn chỉnh**.\n  - Khi mục Overlay đang mở: **kéo overlay ngay trên khung xem trước** để di chuyển, kéo ô vuông ở góc để đổi cỡ (cả khung thường lẫn khung thiết kế).\n  - Áp dụng cho mọi overlay trong thư viện (overlay được chọn ngẫu nhiên vẫn nằm đúng chỗ), mọi kiểu hòa trộn (sáng, bình thường, tách nền xanh, overlay nền trong suốt) và mọi kiểu thời gian. Video xuất khớp vị trí với xem trước. Lưu cùng mẫu.\n- **Bấm ra ngoài là bỏ chọn khung chữ**: đang kéo/chỉnh khung tiêu đề, nội dung, bấm vào chỗ trống quanh khung xem trước, vào hình (ngoài khung đang chọn) hoặc nhấn **Esc** thì khung và các nút kéo biến mất, về chế độ xem trước. Bấm vào thanh thuộc tính bên trái thì khung vẫn được chọn.\n- **Bấm vào tiêu đề / nội dung trên xem trước là mở luôn mục thuộc tính** của lớp đó ở cột bên trái (khung nền → Nền & khung, lớp ảnh → Lớp ảnh), không phải tự tìm.\n- **\"Căn khung\" của tiêu đề / nội dung căn theo khung nền**: các nút Sát trên / dưới / trái / phải / giữa giờ căn theo mép **khung nền** khi đang bật khung (trước đây căn theo cả màn hình video). Đổi lại bằng ô **Căn theo: Theo khung / Theo màn hình**.\n- Sửa: nút ↺ 90° / ↻ 90° của Lớp ảnh trong bảng kiểu CapCut không chạy.",
  "files": {
   "ffmpeg_setup.py": {
    "sha256": "f66eb85abf503510412af3b364a9e5e10558cc92a8caa4153aa07bbc44a227ab",
@@ -28,8 +28,8 @@
    "size": 4542
   },
   "tests/test_batch.py": {
-   "sha256": "a08262ba2b54e606cd5cf3fd2e85944e44664de903599c0f8d97913bca19ac7d",
-   "size": 28766
+   "sha256": "ee45af25062d04c19787075f6664fab48c2c2e4c5d9e127a4b1d48bef682bbd8",
+   "size": 31786
   },
   "win_meta.py": {
    "sha256": "228d18deb126f8965807b7c3a7d2249007da30d88f3a6bbf04493deb52b989a8",
@@ -44,8 +44,8 @@
    "size": 25049
   },
   "design_tab.js": {
-   "sha256": "779b44760e0fe604e825b6017790cebc854d110b99fb2bfe7d3c17e3363ddb28",
-   "size": 38845
+   "sha256": "332aac2f5d0a537690ba8e396ee55eeebcf993028cf363c8754b2d841b50d586",
+   "size": 41892
   },
   "local_files.js": {
    "sha256": "b9a975e980db7f5f013f6046d58228fb39817b6959e8caaf9505c4ba3cc898a7",
@@ -72,8 +72,8 @@
    "size": 5181
   },
   "dub_ui.js": {
-   "sha256": "da147f72e12272d163dcf4415f4714431d836ac28aacdb41f9e98b71b3947915",
-   "size": 167915
+   "sha256": "85404cb8b940fbcccbf04fe9ec1863a15e19b648dac656d84b180fbc9073978a",
+   "size": 174099
   },
   "key_ui.js": {
    "sha256": "4c1833943a21476f6e515115af555c36a4d763bbc5c1122f111cad0a5065574d",
@@ -84,8 +84,8 @@
    "size": 2610
   },
   "dubbing.py": {
-   "sha256": "7d0c872f0d567303fcd402ff48c5d3832d75a878f90af429897b698c4cf38253",
-   "size": 209414
+   "sha256": "862568afb5ddb92a3a67cdbd19b380af51f34520ffb02051d31c74bb3d8b9000",
+   "size": 212329
   },
   "tests/test_dubbing.py": {
    "sha256": "8cfe463e82cae6857f9073341b8c4422f1d3174b2162f366d8b1801342e2fc14",
@@ -128,8 +128,8 @@
    "size": 21185
   },
   "editor_ui.js": {
-   "sha256": "f1df577130591c8fc40c0a89508b32fd21ab23df542ba4913f648ea57bbb49e1",
-   "size": 40032
+   "sha256": "cec7f6a54b34a0f9410a45f8081199251fc3df759d392db50b552df85fb8b243",
+   "size": 41122
   },
   "tests/test_media_engine.py": {
    "sha256": "dd2e3b438d4df3b407ef3bb1df1ea6887ebf1c21d2806f4280b38d421ba673fe",
@@ -156,8 +156,8 @@
    "size": 13467
   },
   "studio.css": {
-   "sha256": "2cb292e451b7971dc3c98437ba2a012941f1654b2017c6e750b9c27c58d109b8",
-   "size": 106830
+   "sha256": "632b514d989d85c650bc9414b812649511bd9605ac31b14b11daf864fcbe7d56",
+   "size": 107528
   },
   "studio.js": {
    "sha256": "e2ebb2f8bb72ba3bee02faa67609c6859a96a3ad16be04fe28e6aba60519f7bc",
@@ -172,7 +172,7 @@
    "size": 6858
   },
   "index.html": {
-   "sha256": "47e0e5ecbe2a4146a9efc50fb2bf1514e6f7c4b2e6228f23f041f72808ff7686",
+   "sha256": "548d2d4a4237fc07c946b8a744674821ecf739fdf5db692cf9deff84627a4994",
    "size": 24220
   },
   "launch.py": {
@@ -188,15 +188,15 @@
    "size": 1411
   },
   "HUONG_DAN.txt": {
-   "sha256": "a3014a031c03481bef09e105a7a5af545d0b0ac2137718de88777e2baec25284",
-   "size": 14600
+   "sha256": "269d5590b7d15ed537874bc487efc2cbf22262011e3ea2916315f3ea684e2966",
+   "size": 15060
   },
   "README.md": {
-   "sha256": "96ba4f8edb662fd55e9cfaaa8a32c2983f43b9bd9cb4f3195c6dc84dd1ead94b",
-   "size": 34516
+   "sha256": "7fa324203c913c0599fa937ebd53cd3fa8ee7c0e0d67687bb10d53d56e4faafd",
+   "size": 36333
   },
   "VERSION": {
-   "sha256": "645fd1a585b9e4297f053de5b2feaf97c6622366318bce9a9c8c0840ae9a49ea",
+   "sha256": "867a70774294546ebe3cac14fa311d8d27922466625e3fd9a42e9a26682a86e7",
    "size": 7
   },
   ".gitignore": {

@@ -4,6 +4,17 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.36.0
+
+- **Căn chỉnh video overlay kiểu CapCut** (mục ✨ Overlay → nhóm *Căn chỉnh*):
+  - **Lấp đầy / Vừa khung**, **Thu phóng** 10–400 %, **Vị trí X/Y**, lưới **căn 9 điểm**, **Xoay** (kèm nút ↺ 90° / ↻ 90°), **Lật** ngang / dọc, **↺ Đặt lại căn chỉnh**.
+  - Khi mục Overlay đang mở: **kéo overlay ngay trên khung xem trước** để di chuyển, kéo ô vuông ở góc để đổi cỡ (cả khung thường lẫn khung thiết kế).
+  - Áp dụng cho mọi overlay trong thư viện (overlay được chọn ngẫu nhiên vẫn nằm đúng chỗ), mọi kiểu hòa trộn (sáng, bình thường, tách nền xanh, overlay nền trong suốt) và mọi kiểu thời gian. Video xuất khớp vị trí với xem trước. Lưu cùng mẫu.
+- **Bấm ra ngoài là bỏ chọn khung chữ**: đang kéo/chỉnh khung tiêu đề, nội dung, bấm vào chỗ trống quanh khung xem trước, vào hình (ngoài khung đang chọn) hoặc nhấn **Esc** thì khung và các nút kéo biến mất, về chế độ xem trước. Bấm vào thanh thuộc tính bên trái thì khung vẫn được chọn.
+- **Bấm vào tiêu đề / nội dung trên xem trước là mở luôn mục thuộc tính** của lớp đó ở cột bên trái (khung nền → Nền & khung, lớp ảnh → Lớp ảnh), không phải tự tìm.
+- **"Căn khung" của tiêu đề / nội dung căn theo khung nền**: các nút Sát trên / dưới / trái / phải / giữa giờ căn theo mép **khung nền** khi đang bật khung (trước đây căn theo cả màn hình video). Đổi lại bằng ô **Căn theo: Theo khung / Theo màn hình**.
+- Sửa: nút ↺ 90° / ↻ 90° của Lớp ảnh trong bảng kiểu CapCut không chạy.
+
 ## Mới trong 0.35.1
 
 - Sửa 🩺 Kiểm tra hệ thống đứng mãi ở "Đang kiểm tra…" (lúc máy còn đang kiểm tra nhanh khi mới mở app, bấm nút không chạy kiểm tra đầy đủ). Giờ bảng luôn chạy kiểm tra, đếm giây đang chờ, và báo rõ nếu quá 90 giây hoặc lỗi.

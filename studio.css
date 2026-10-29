@@ -881,3 +881,9 @@ details.cc-group>summary.cc-head{cursor:pointer;margin:0}details.cc-group[open]>
 .system-row.ok .system-icon{background:#1d3b2e;color:#5fd39a}.system-row.warn .system-icon{background:#3d3020;color:#e8a04d}.system-row.bad .system-icon{background:#432326;color:#ff8a8a}
 .system-row.bad{border-color:#6b3438}.system-row.warn{border-color:#5a4627}
 .system-row div button{justify-self:start;margin-top:3px}
+/* Căn chỉnh overlay: drag handle on the preview while the overlay section is open */
+.dub-ovbox{position:absolute;z-index:6;cursor:move;touch-action:none;outline:1px dashed #6fe0cc88}.dub-ovbox:hover,.dub-ovbox.dragging{outline:2px solid #6fe0cc}
+.dub-ovbox .dub-img-handle{opacity:1}
+#dub-ov-fitbtns button.on{border-color:var(--accent);color:var(--text);background:#173a34}
+#scene .dub-ovbox{outline-width:3px}#scene .dub-ovbox .dub-img-handle{width:28px;height:28px;right:-14px;bottom:-14px;border-width:4px}
+.dub-sec.dt-flash>summary{animation:dtflash 1s ease}@keyframes dtflash{0%,40%{background:#1f4a42;box-shadow:inset 3px 0 0 var(--accent)}100%{background:transparent;box-shadow:none}}

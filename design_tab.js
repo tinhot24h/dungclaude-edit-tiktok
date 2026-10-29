@@ -95,6 +95,11 @@ const DEFAULT_BOX={title:{x:86,y:819,width:548,height:0},body:{x:86,y:934,width:
 const fire=e=>{e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}))};
 const setValue=(id,v)=>{const e=$(id);e.value=v;fire(e)};
 const refreshers=[];
+// "Căn khung" of the title / body: inside the design frame (khung) when it is on, or the whole 720×1280 picture
+let alignTo='frame';try{alignTo=localStorage.getItem('dt-align-to')||'frame'}catch{}
+const frameShown=()=>bgOn()&&$('frame_style')&&$('frame_style').value!=='none';
+function alignArea(){if(alignTo!=='frame'||!frameShown())return{x:0,y:0,w:720,h:1280};const n=(id,d)=>Number($(id)?.value)||d;
+ return{x:n('frame_x',0),y:n('frame_y',0),w:n('frame_width',648),h:n('frame_height',333)}}
 function capcut(k){const sec=$('section-'+k);if(sec.querySelector('.cc-panel'))return;
  const ctl=id=>$(id)?.closest('.control'),panel=el('div',{className:'cc-panel'});
  const group=(title,...rows)=>el('div',{className:'cc-group'},el('div',{className:'cc-head',textContent:title}),...rows);
@@ -108,8 +113,12 @@ function capcut(k){const sec=$('section-'+k);if(sec.querySelector('.cc-panel'))r
  refreshers.push(()=>{const f=$(k+'_font').value;bold.disabled=!(BOLD[f]||REGULAR[f]);bold.classList.toggle('on',!!REGULAR[f]);bold.title=bold.disabled?'Font này không có bản đậm riêng':'Chữ đậm'});
  // box to the canvas: left / centre / right, top / middle / bottom (like CapCut's 6 buttons)
  const place=a=>{const b=document.querySelector(`#texts .text-box[data-key=${k}]`),w=Number($(k+'_width').value)||548,h=b?.offsetHeight||Number($(k+'_height').value)||40;
-  const v={l:[k+'_x',0],c:[k+'_x',(720-w)/2],r:[k+'_x',720-w],t:[k+'_y',0],m:[k+'_y',(1280-h)/2],b:[k+'_y',1280-h]}[a];setValue(v[0],Math.round(v[1]))};
- const aligns=el('div',{className:'cc-seg cc-icons'});for(const[a,t,tip]of [['l','⇤','Sát trái khung hình'],['c','↔','Giữa ngang'],['r','⇥','Sát phải'],['t','⤒','Sát trên'],['m','↕','Giữa dọc'],['b','⤓','Sát dưới']]){const b=el('button',{type:'button',textContent:t,title:tip});b.onclick=()=>place(a);aligns.append(b)}
+  // inside the frame ("khung") when it is shown and "Theo khung" is chosen, else the whole picture
+  const f=alignArea();const v={l:[k+'_x',f.x],c:[k+'_x',f.x+(f.w-w)/2],r:[k+'_x',f.x+f.w-w],t:[k+'_y',f.y],m:[k+'_y',f.y+(f.h-h)/2],b:[k+'_y',f.y+f.h-h]}[a];setValue(v[0],Math.round(v[1]))};
+ const target=el('div',{className:'cc-seg',title:'Căn theo khung nền hay cả khung hình'});
+ for(const[v,t]of [['frame','Theo khung'],['canvas','Theo màn hình']]){const b=el('button',{type:'button',textContent:t});b.dataset.v=v;b.onclick=()=>{alignTo=v;try{localStorage.setItem('dt-align-to',v)}catch{}refreshers.forEach(f=>f())};target.append(b)}
+ refreshers.push(()=>{const has=frameShown();for(const b of target.children){b.classList.toggle('on',b.dataset.v===(has?alignTo:'canvas'));b.disabled=b.dataset.v==='frame'&&!has}});
+ const aligns=el('div',{className:'cc-seg cc-icons'});for(const[a,t,tip]of [['l','⇤','Sát trái'],['c','↔','Giữa ngang'],['r','⇥','Sát phải'],['t','⤒','Sát trên'],['m','↕','Giữa dọc'],['b','⤓','Sát dưới']]){const b=el('button',{type:'button',textContent:t,title:tip});b.onclick=()=>place(a);aligns.append(b)}
  const reset=el('button',{type:'button',className:'cc-reset',textContent:'↺',title:'Về vị trí và kích thước mặc định'});reset.onclick=()=>{for(const[a,v]of Object.entries(DEFAULT_BOX[k]))setValue(k+'_'+a,v)};
  // font size with a slider, like CapCut
  const size=$(k+'_size'),slide=el('input',{type:'range',min:size.min,max:size.max,step:1,value:size.value,className:'cc-slider'});slide.setAttribute('aria-label','Cỡ chữ');
@@ -122,7 +131,7 @@ function capcut(k){const sec=$('section-'+k);if(sec.querySelector('.cc-panel'))r
    row('Ký tự',bare(k+'_letter')),row('Từ',bare(k+'_word')),row('Dòng',bare(k+'_gap')),
    row('Căn chỉnh',seg(k+'_align',[['left','⯇≡','Căn trái'],['center','≡','Căn giữa'],['right','≡⯈','Căn phải'],['justify','☰','Đều hai bên']],'Căn chữ trong hộp'),seg(k+'_valign',[['top','⊤','Trên (khi đặt chiều cao hộp)'],['middle','⊝','Giữa'],['bottom','⊥','Dưới']],'Căn dọc trong hộp')),
    row('Viền chữ',bare(k+'_outline'),bare(k+'_outline_color'))),
-  group('Biến đổi',row('Vị trí',labelled('X',bare(k+'_x')),labelled('Y',bare(k+'_y'))),row('Kích thước',labelled('Rộng',bare(k+'_width')),labelled('Cao · 0 tự động',bare(k+'_height'))),row('Căn khung',aligns,reset)),
+  group('Biến đổi',row('Vị trí',labelled('X',bare(k+'_x')),labelled('Y',bare(k+'_y'))),row('Kích thước',labelled('Rộng',bare(k+'_width')),labelled('Cao · 0 tự động',bare(k+'_height'))),row('Căn khung',aligns,reset),row('Căn theo',target)),
   group('Nền chữ',row('Nền hộp',bare(k+'_box'),bare(k+'_box_color')),row('Độ đục',bare(k+'_box_opacity')),row('Đệm · bo góc',bare(k+'_box_pad'),bare(k+'_box_radius'))),
   el('details',{className:'cc-group cc-more'},el('summary',{className:'cc-head',textContent:'Thời gian hiện'}),row('Từ giây',bare(k+'_start')),row('Đến giây · 0 = hết',bare(k+'_end'))));
  // whatever the old section still holds (its headings, two centre buttons, saved caption styles) is not shown here
@@ -189,8 +198,13 @@ function ccOverlay(){const body=$('sec-overlay').querySelector('.dub-sec-body');
  const panel=el('div',{className:'cc-panel'},
   ccGroup('Thư viện overlay',body.querySelector('.result-actions'),$('dub-ov-bulk'),$('dub-ov-list'),$('dub-ov-note')),
   ccGroup('Hòa trộn',ccRow('Chế độ',ccBare('dub-ov-blend')),ccRow('Độ mờ',ccBare('dub-ov-opacity'))),
-  ccGroup('Thời gian',ccRow('Số overlay',ccBare('dub-ov-count')),ccRow('Thời gian',ccBare('dub-ov-timing'))));
- ccHideRest(body,null);body.append(panel)}
+  ccGroup('Thời gian',ccRow('Số overlay',ccBare('dub-ov-count')),ccRow('Thời gian',ccBare('dub-ov-timing'))),
+  // Căn chỉnh like CapCut's "Biến đổi"; dragging on the preview works while this section is open
+  ccGroup('Căn chỉnh',ccRow('Kiểu',ccSeg('dub-ov-fit',[['cover','Lấp đầy','Phủ kín khung của overlay, cắt phần thừa'],['contain','Vừa khung','Hiện trọn overlay, không cắt']])),
+   ccRow('Thu phóng',ccBare('dub-ov-scale')),ccRow('Vị trí',labelled('X %',ccBare('dub-ov-x')),labelled('Y %',ccBare('dub-ov-y'))),ccRow('Căn',$('dub-ov-align')),
+   ccRow('Xoay',ccBare('dub-ov-rot')),ccRow('',ccButtons([...$('dub-ov-turn').querySelectorAll('button[data-r]')],'cc-chips')),ccRow('Lật',ccSeg('dub-ov-flip',optionList('dub-ov-flip'))),
+   ccRow('',el('small',{className:'helper',textContent:'Kéo overlay trên khung xem trước, kéo góc để đổi cỡ.'}),$('dub-ov-reset'))));
+ ccHideRest(body,null);body.append(panel);refreshers.forEach(f=>f())}
 // Cắt đầu / cuối (used with and without a design) as the first group of "Cắt & vị trí video"
 function ccTrim(){const body=$('sec-frame').querySelector('.dub-sec-body'),first=body.firstElementChild;if(first.classList.contains('cc-group'))return;
  const g=ccGroup('Cắt',ccRow('Cắt đầu',labelled('giây',$('dub-trim-start'))),ccRow('Cắt cuối',labelled('giây',$('dub-trim-end'))),
@@ -251,17 +265,26 @@ function designPreview(){const stem=n=>(n||'').replace(/^.*[\\/]/,'').replace(/\
  if(!bgOn())Object.assign(o,{background:'none',frame_style:'none'});
  for(const k of ['title','body']){const src=$(`dt-${k}-src`).value;if(!$(`dt-${k}-on`).checked)o[k]='';else if(jobShown?.texts)o[k]=jobShown.texts[k]||'';else if(src==='file')o[k]=k==='title'?name:''}
  window.designPreview=o;studio.schedule()}
+// the overlay on the 720×1280 stage follows "Căn chỉnh overlay" (size, position, rotation, flip, fit)
+function stageBox(){const st=window.dubOverlayStyle?.()||{};const pc=v=>parseFloat(v)/100;
+ return{objectFit:st.objectFit||'cover',width:720*pc(st.width||'100%')+'px',height:1280*pc(st.height||'100%')+'px',left:720*pc(st.left||'50%')+'px',top:1280*pc(st.top||'50%')+'px',transform:st.transform||'translate(-50%,-50%)',transformOrigin:'50% 50%'}}
 function overlayLayer(){window.dubLayers?.z();const still=$('dub-ovi');let img=$('dt-ovi');
  if(!img){img=el('img',{id:'dt-ovi',className:'art',alt:''});img.style.pointerEvents='none';$('overlay').after(img)}
- img.hidden=still.hidden||!still.dataset.src;if(!img.hidden){if(img.dataset.src!==still.dataset.src){img.src=still.dataset.src;img.dataset.src=still.dataset.src}Object.assign(img.style,{opacity:still.style.opacity,mixBlendMode:still.style.mixBlendMode,objectFit:'cover',width:'720px',height:'1280px',left:0,top:0})}
+ img.hidden=still.hidden||!still.dataset.src;if(!img.hidden){if(img.dataset.src!==still.dataset.src){img.src=still.dataset.src;img.dataset.src=still.dataset.src}Object.assign(img.style,{opacity:still.style.opacity,mixBlendMode:still.style.mixBlendMode,...stageBox()})}
  const src=$('dub-ovv'),show=!src.hidden&&src.dataset.src;let v=$('dt-ovv');
  if(!v){v=el('video',{id:'dt-ovv',className:'art',muted:true,loop:true,playsInline:true});v.style.pointerEvents='none';$('overlay').after(v)}
  v.hidden=!show;if(!show)return;if(v.dataset.src!==src.dataset.src){v.src=src.dataset.src;v.dataset.src=src.dataset.src}
- Object.assign(v.style,{opacity:src.style.opacity,mixBlendMode:src.style.mixBlendMode,objectFit:'cover',width:'720px',height:'1280px',left:0,top:0});
+ Object.assign(v.style,{opacity:src.style.opacity,mixBlendMode:src.style.mixBlendMode,...stageBox()});
  window.dubLayers?.z();const main=$('video');if(main.paused)v.pause();else v.play().catch(()=>{});
  if(v.duration&&Math.abs(v.currentTime-(main.currentTime%v.duration))>.3)v.currentTime=main.currentTime%v.duration}
 // image layer and TikTok safe zone: the dub page's boxes move onto the stage (image under the frame and text, like the export)
-function stageLayers(use){const box=$('dub-imgbox'),safe=$('dub-safe').checked;
+// clicking the title / body / frame on the stage opens its own section of the panel, scrolled into view
+const PICK_SECTION={title:'sec-title',body:'sec-body',frame:'sec-design'};
+window.openDubSection=id=>{const d=$(id);if(!d)return;if(!d.open)d.open=true;d.classList.remove('dt-flash');void d.offsetWidth;d.classList.add('dt-flash');
+ requestAnimationFrame(()=>d.scrollIntoView({block:'nearest',behavior:'smooth'}))};
+addEventListener('layer-picked',e=>{if(on()&&PICK_SECTION[e.detail])window.openDubSection(PICK_SECTION[e.detail])});
+function stageLayers(use){const box=$('dub-imgbox'),ovbox=$('dub-ovbox'),safe=$('dub-safe').checked;
+ if(ovbox){const home=use?$('scene'):$('dub-frame');if(ovbox.parentNode!==home)home.append(ovbox)}
  if(use){const o=api.settings(),scene=$('scene'),anchor=$('frame-art');if(box.parentNode!==scene||box.nextSibling!==anchor)scene.insertBefore(box,anchor);
   api.drawImage(o,720,1280);window.dubCaption?.($('scene'),720)}
  else{const frame=$('dub-frame');if(box.parentNode!==frame)frame.insertBefore(box,$('dub-frame-empty'))}

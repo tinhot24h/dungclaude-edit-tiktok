@@ -178,6 +178,47 @@ class CaptionMusicTests(test_dubbing.PipelineBase):
         self.assertTrue(any(w.startswith('Nhạc nền') for w in job3['warnings']))
 
 
+class OverlayAlignTests(unittest.TestCase):
+    """Căn chỉnh overlay (CapCut-style size, fit, position, rotation, flip) for every blend mode."""
+    W, H = 1080, 1920
+
+    def render(self, **opts):
+        o = dubbing.options(dict(overlay_blend='normal', overlay_opacity=100, **opts))
+        lines, out = dubbing.overlay_chain('[1:v]', dict(id='x' * 32, k=0, start=0, alpha=False), self.W, self.H, o, 'b', 1)
+        px = subprocess.run(['ffmpeg', '-v', 'error', '-f', 'lavfi', '-i', f'color=black:s={self.W}x{self.H}:d=1:r=30', '-f', 'lavfi', '-i', 'color=white:s=640x360:d=1:r=30',
+                             '-filter_complex', ';'.join(['[0:v]null[b]', *lines, f'[{out}]format=gray[g]']), '-map', '[g]', '-frames:v', '1', '-f', 'rawvideo', '-'],
+                            capture_output=True, check=True).stdout
+        pts = [(i % self.W, i // self.W) for i in range(0, len(px), 7) if px[i] > 128]
+        xs, ys = [p[0] for p in pts], [p[1] for p in pts]
+        return min(xs), max(xs), min(ys), max(ys)
+
+    def test_default_is_unchanged_full_frame(self):
+        o = dubbing.options(dict(overlay_blend='screen'))
+        self.assertFalse(dubbing.overlay_moved(o))
+        lines, _ = dubbing.overlay_chain('[2:v]', dict(id='x' * 32, k=0, start=0, alpha=False), 1080, 1920, o, 'framed', 4)
+        self.assertIn('scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920', lines[0])
+        self.assertNotIn('rotate', ';'.join(lines))
+
+    def test_position_size_rotation_match_the_preview(self):
+        # box = 50 % of the frame (540×960), whole 16:9 overlay inside (540×304), turned 90° → 304×540, centre at 75 % / 25 %
+        x0, x1, y0, y1 = self.render(overlay_scale=50, overlay_x=25, overlay_y=-25, overlay_rotate=90, overlay_fit='contain')
+        self.assertAlmostEqual((x0 + x1) / 2, 810, delta=6);self.assertAlmostEqual((y0 + y1) / 2, 480, delta=6)
+        self.assertAlmostEqual(x1 - x0, 304, delta=10);self.assertAlmostEqual(y1 - y0, 540, delta=10)
+
+    def test_every_blend_and_timing_runs(self):
+        for blend in ('screen', 'normal', 'key'):
+            for timing in ('loop', 'random'):
+                o = dubbing.options(dict(overlay_blend=blend, overlay_timing=timing, overlay_scale=60, overlay_x=-10, overlay_rotate=15, overlay_flip='hv'))
+                lines, out = dubbing.overlay_chain('[1:v]', dict(id='x' * 32, k=0, start=.3, alpha=False), 720, 1280, o, 'b', 1)
+                subprocess.run(['ffmpeg', '-v', 'error', '-f', 'lavfi', '-i', 'color=red:s=720x1280:d=1:r=30', '-f', 'lavfi', '-i', 'testsrc=s=320x180:d=1:r=30',
+                                '-filter_complex', ';'.join(['[0:v]null[b]', *lines]), '-map', f'[{out}]', '-frames:v', '10', '-f', 'null', '-'], check=True, capture_output=True)
+
+    def test_bad_values_are_refused(self):
+        for bad in (dict(overlay_scale=5), dict(overlay_x=200), dict(overlay_flip='x'), dict(overlay_fit='stretch')):
+            with self.assertRaises(dubbing.DubError):
+                dubbing.options(bad)
+
+
 class BlendWidthTests(unittest.TestCase):
     def test_blend_never_runs_on_a_width_that_is_not_a_multiple_of_64(self):
         """Some FFmpeg builds get the last (width mod 16) columns of blend wrong: 1080 px wide gave an 8 px darker
