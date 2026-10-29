@@ -1,8 +1,13 @@
-# Review Studio 0.27.2
+# Review Studio 0.27.3
 
 Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: chọn nhiều MP4 tiếng Trung → OpenAI nhận diện lời, dịch, viết tiêu đề / nội dung / tên file → ai33.pro đọc giọng Việt → FFmpeg ghép nền, khung, chữ, overlay và xuất MP4 hoàn chỉnh vào thư mục của bạn.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.27.3
+
+- **Tên file dài hơn:** AI đặt tên 30–45 ký tự (khoảng 6–9 từ: loại sản phẩm + 2–3 đặc điểm), ví dụ `tui-vai-dung-quan-ao-gap-gon-chong-am`. Tên bị cắt không bao giờ kết thúc bằng từ nối (-cho, -va, -cua…). Sửa tay cũng theo giới hạn mới.
+- **Contributing artists để trống:** bỏ trường Authors (Windows hiện trường này thành Contributing artists của nhóm Media). Tác giả chỉ vào Directors / Producers / Writers.
 
 ## Mới trong 0.27.2
 

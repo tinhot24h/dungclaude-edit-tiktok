@@ -142,7 +142,8 @@ class ParagraphTests(PipelineBase):
     def test_ai_file_name_names_the_export_and_never_overwrites(self):
         self.assertEqual(dubbing.slug_name('Quần áo nữ Hottrend!'),'quan-ao-nu-hottrend')
         self.assertEqual(dubbing.slug_name('  Đồ   ĐIỆN gia dụng.mp4 '),'do-dien-gia-dung-mp4')
-        self.assertEqual(dubbing.slug_name('may hut bui cam tay khong day sieu nhe cho gia dinh'),'may-hut-bui-cam-tay-khong-day')   # ≤ 30, between words
+        self.assertEqual(dubbing.slug_name('may hut bui cam tay khong day sieu nhe cho gia dinh nho'),'may-hut-bui-cam-tay-khong-day-sieu-nhe')   # ≤ 45, between words, no "cho" at the end
+        self.assertEqual(dubbing.slug_name('tui vai dung quan ao dung tich lon gap gon chong am'),'tui-vai-dung-quan-ao-dung-tich-lon-gap-gon')
         names=[]
         for _ in range(2):
             with mock.patch.object(dubbing,'paragraph_request',return_value=dict(text='Xin chào.',title='',body='',file_name='Quần áo nữ hottrend')):

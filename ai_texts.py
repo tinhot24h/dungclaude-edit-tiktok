@@ -20,14 +20,22 @@ TITLE_STYLES = {
 TITLE_COUNT, BODY_COUNT = 3, 2
 
 
+NAME_MIN, NAME_MAX = 30, 45   # file name length: about 6–9 words
+NAME_LINKS = {'cho', 'va', 'cua', 'voi', 'de', 'la', 'thi', 'ma', 'nhung', 'hay', 'hoac', 'cac', 'mot', 'khi', 'tu', 'trong', 'o', 'tai', 've', 'theo', 'den', 'rat', 'cung', 'nen', 'vi', 'do', 'duoc', 'bi', 'se', 'da', 'dang'}
+
+
 def slug_name(text):
-    """quan-ao-nu-hottrend: lower case, no accents, words joined by '-', at most 30 characters (cut between words)."""
+    """tui-vai-dung-quan-ao-gap-gon-chong-am: lower case, no accents, words joined by '-', at most NAME_MAX characters (cut between words)."""
     text = unicodedata.normalize('NFD', str(text or '').replace('đ', 'd').replace('Đ', 'D'))
     text = ''.join(c for c in text if unicodedata.category(c) != 'Mn').lower()
     text = re.sub(r'[^a-z0-9]+', '-', text).strip('-')
-    if len(text) > 30:
-        cut = text[:31].rfind('-')
-        text = text[:cut] if cut >= 15 else text[:30]
+    if len(text) > NAME_MAX:
+        cut = text[:NAME_MAX + 1].rfind('-')
+        text = text[:cut] if cut >= NAME_MIN else text[:NAME_MAX]
+        parts = text.split('-')
+        while len(parts) > 3 and parts[-1] in NAME_LINKS:   # a cut name never ends on "cho", "va", "cua"…
+            parts.pop()
+        text = '-'.join(parts)
     return text.rstrip('-')
 
 

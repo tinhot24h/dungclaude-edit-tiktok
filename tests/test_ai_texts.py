@@ -137,6 +137,7 @@ class MetadataTests(test_dubbing.PipelineBase):
         props = win.call_args[0][1]
         self.assertEqual(props['keywords'], ['đệm lót giày', 'êm chân']);self.assertEqual(props['rating'], 5);self.assertEqual(props['promotion_url'], 'https://www.tiktok.com/@xom_review')
         self.assertNotIn('encoded_by', props)
+        self.assertNotIn('authors', props);self.assertEqual(props['directors'], ['Kênh Xóm Review'])   # nothing that Windows shows under "Media"
         # switched off: nothing of ours, nothing stripped, no Windows step
         job2 = dict(job, options=dubbing.options(dict(job['options'], meta=False)))
         self.assertEqual(self.store.metadata_args(job2), [])

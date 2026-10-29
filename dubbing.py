@@ -519,11 +519,12 @@ def text_rules(settings):
 
 NAME_RULE = ('\n\nTÊN FILE VIDEO'
              '\n- file_name: tên file gọi đúng sản phẩm đang được giới thiệu (loại sản phẩm + đặc điểm nổi bật), tiếng Việt KHÔNG DẤU, chữ thường, '
-             'các từ nối bằng dấu gạch ngang, dài 15–30 ký tự (khoảng 3–6 từ), không đuôi .mp4, không giá, không thương hiệu. Ví dụ: quan-ao-nu-hottrend, noi-chien-khong-dau-mini.'
+             'các từ nối bằng dấu gạch ngang, dài 30–45 ký tự (khoảng 6–9 từ: loại sản phẩm + 2–3 đặc điểm), không đuôi .mp4, không giá, không thương hiệu. '
+             'Ví dụ: tui-vai-dung-quan-ao-gap-gon-chong-am, noi-chien-khong-dau-mini-dung-tich-lon.'
              '\n- file_name_alt: tên dự phòng cùng quy tắc nhưng khác file_name, thêm một đặc điểm khác (màu, chất liệu, công dụng), ví dụ vay-maxi-hoa-nhi-di-bien.'
              '\n- video_title: tên video tiếng Việt CÓ DẤU, tự nhiên, 30–80 ký tự, nêu sản phẩm và điểm nổi bật (dùng làm tiêu đề trong thông tin file), không giá, không thương hiệu, không hashtag, không emoji, ví dụ "Đệm lót giày TPU mềm gót, tiện lợi khi vận động".'
              '\n- tags: 3–6 từ khóa tìm kiếm tiếng Việt CÓ DẤU về sản phẩm (mỗi cái 1–4 từ, chữ thường, không dấu #, không giá, không thương hiệu), ví dụ ["miếng lót giày", "đệm lót giày êm chân"].')
-NAME_FIELD = dict(type='string', description='Tên file 15–30 ký tự, không dấu, chữ thường, nối bằng dấu gạch ngang, theo sản phẩm')
+NAME_FIELD = dict(type='string', description='Tên file 30–45 ký tự, không dấu, chữ thường, nối bằng dấu gạch ngang, theo sản phẩm')
 NAME_FIELDS = dict(file_name=NAME_FIELD, file_name_alt=dict(NAME_FIELD, description='Tên dự phòng khác file_name, cùng quy tắc'),
                    video_title=dict(type='string', description='Tên video tiếng Việt có dấu 30–80 ký tự theo sản phẩm'),
                    tags=dict(type='array', items=dict(type='string'), description='3–6 từ khóa tiếng Việt có dấu về sản phẩm'))
@@ -2843,10 +2844,11 @@ class Store:
         return args + ['-fflags', '+bitexact']
 
     def windows_properties(self, job):
-        """What Explorer shows on the Details tab (written by the Windows property system after the export)."""
+        """What Explorer shows on the Details tab (written by the Windows property system after the export). No
+        System.Author: for an MP4 Windows shows it as "Contributing artists" (Media group), which stays empty."""
         o = job['options']
         people = [o['meta_author']] if o['meta_author'] else []
-        return {k: v for k, v in dict(title=self.meta_title(job), keywords=job.get('tags') or [], rating=o['meta_rating'], authors=people,
+        return {k: v for k, v in dict(title=self.meta_title(job), keywords=job.get('tags') or [], rating=o['meta_rating'],
                                        directors=people, producers=people, writers=people, publisher=o['meta_publisher'],
                                        content_provider=o['meta_publisher'] or o['meta_url'],
                                        author_url=o['meta_url'], promotion_url=o['meta_url'], copyright=o['meta_copyright']).items() if v}
