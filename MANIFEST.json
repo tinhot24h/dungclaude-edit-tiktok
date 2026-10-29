@@ -1,8 +1,12 @@
 {
  "app": "ReviewStudio",
- "version": "0.31.4",
- "notes": "## Mới trong 0.31.4\n\n- **Giữ đúng màu giao diện trên mọi trình duyệt:** trang khai báo sẵn là giao diện tối (color-scheme + darkreader-lock), nên chế độ tối tự động của Chrome/Cốc Cốc và tiện ích Dark Reader không tự đổi màu nữa (trước đây có máy thấy nút mất màu xanh, nền xám, viền trắng quanh mọi nút).",
+ "version": "0.31.5",
+ "notes": "## Mới trong 0.31.5\n\n- **Tự báo lỗi giao diện:** trang chạy một bộ kiểm tra trước tiên. Trình duyệt quá cũ (thiếu tính năng app cần, ví dụ Edge đời cũ trên Windows 10 bản cũ) sẽ hiện thanh vàng nói rõ cần cài Chrome/Edge bản mới. Bất kỳ lỗi mã nào khiến nút bấm không chạy sẽ hiện thanh đỏ \"⚠ Lỗi giao diện: …\" kèm tên file và dòng lỗi, để chụp gửi người hỗ trợ (trước đây lỗi xảy ra im lặng, nút chỉ không phản hồi). Mất kết nối với ứng dụng cũng được báo.\n- App không cần Node.js hay thư viện trình duyệt nào: chỉ cần Python 3.11+ và FFmpeg, mở bằng START_WINDOWS.bat (http://127.0.0.1:8000).",
  "files": {
+  "compat.js": {
+   "sha256": "3b72a7c0d5d15ad220a4fcd06f1c2ead7bc6830b65eeab747658980aa44cafd8",
+   "size": 3762
+  },
   "video_tools.js": {
    "sha256": "217dc997759d9b7b26fccfb7abaa35ebf82b5eb333f816dc83fcf67b06781706",
    "size": 4542
@@ -116,8 +120,8 @@
    "size": 13961
   },
   "app.py": {
-   "sha256": "a03940ba4330ed0857fe381e44aa3cb0b6975dc36134791dac3f180c97f6b686",
-   "size": 63877
+   "sha256": "88ae633662f66f863c49700ad196d52eb5fc4387e64a70aab932f7311155601e",
+   "size": 63890
   },
   "ai33_audio.py": {
    "sha256": "bf91eee837ea08e1b3e96495f68f87b621f0d68abfeedfdbc4a53f8a13b21b7d",
@@ -152,31 +156,31 @@
    "size": 6858
   },
   "index.html": {
-   "sha256": "3b8e00b4e7f7fac27e169a41a52e6920025de0c0fb1a6b46182565924d8d65f3",
-   "size": 24149
+   "sha256": "de14c9ccb0d530f97c91b59dfc865fb1a76a15016d23a64a7ef87d33b9891e4d",
+   "size": 24183
   },
   "launch.py": {
    "sha256": "283210c4d7b6b1485fa3443ef11b2d51dc3a00a67384b18efb169e391e7522f3",
    "size": 5006
   },
   "build_package.py": {
-   "sha256": "0a7d3492fd8179fb91c924519a247b92cc6a3f1ac9a229f5fa86cff43d63e03e",
-   "size": 3215
+   "sha256": "6e6d2ccc6794cc368411b57c4880fa527cd5a31cac44969398f7a81756c89653",
+   "size": 3228
   },
   "START_WINDOWS.bat": {
    "sha256": "616ecf0e4d9a41995c509f79bd5e1a01d1dce7ba76356a801417e08747847c4e",
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "77a827d9681097102cd454f642743847bb105c70693a2437b0e8f7a52df7379d",
-   "size": 12695
+   "sha256": "5e1563b5ecd601b8100afb5e7b836cd9a9d8b00e5bf162efbadaa3adc8532ce9",
+   "size": 12909
   },
   "README.md": {
-   "sha256": "db9356ef74b279b45ed2533875769492e61e38897a625a04028746cb32a4bbc1",
-   "size": 27280
+   "sha256": "5eef360e9c87f41148396d70234f1220600179308eca5c6d725c2722faf72723",
+   "size": 28040
   },
   "VERSION": {
-   "sha256": "51bf5d025b8f7e18c523eab418bd62d590652c60c8cb29f12ae6b025d7f4fe8c",
+   "sha256": "658aa3c56f5efff429db0b358a67add4c3139f76ff951d8e98425d26a95e073e",
    "size": 7
   },
   ".gitignore": {

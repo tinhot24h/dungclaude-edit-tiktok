@@ -4,6 +4,11 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.31.5
+
+- **Tự báo lỗi giao diện:** trang chạy một bộ kiểm tra trước tiên. Trình duyệt quá cũ (thiếu tính năng app cần, ví dụ Edge đời cũ trên Windows 10 bản cũ) sẽ hiện thanh vàng nói rõ cần cài Chrome/Edge bản mới. Bất kỳ lỗi mã nào khiến nút bấm không chạy sẽ hiện thanh đỏ "⚠ Lỗi giao diện: …" kèm tên file và dòng lỗi, để chụp gửi người hỗ trợ (trước đây lỗi xảy ra im lặng, nút chỉ không phản hồi). Mất kết nối với ứng dụng cũng được báo.
+- App không cần Node.js hay thư viện trình duyệt nào: chỉ cần Python 3.11+ và FFmpeg, mở bằng START_WINDOWS.bat (http://127.0.0.1:8000).
+
 ## Mới trong 0.31.4
 
 - **Giữ đúng màu giao diện trên mọi trình duyệt:** trang khai báo sẵn là giao diện tối (color-scheme + darkreader-lock), nên chế độ tối tự động của Chrome/Cốc Cốc và tiện ích Dark Reader không tự đổi màu nữa (trước đây có máy thấy nút mất màu xanh, nền xám, viền trắng quanh mọi nút).
