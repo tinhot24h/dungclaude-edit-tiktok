@@ -65,6 +65,10 @@ khi mở app (đặt REVIEW_KEEP_DAYS=0 để tắt), trừ video còn trong hà
 Chỉ dùng trên máy này. Chưa gọi thử OpenAI / ai33 thật, NVENC và ghi Tags của Windows
 trên máy thật: hãy chạy thử 1–2 video trước khi chạy lô lớn.
 
+NÂNG CẤP 0.31.4
+- Trình duyệt bật chế độ tối tự động hoặc Dark Reader không còn làm sai màu giao diện.
+- Nếu vẫn thấy mọi nút viền trắng, nền xám: tắt chế độ tương phản cao của Windows (Settings → Accessibility → Contrast themes → None) và dùng Chrome hoặc Edge bản mới.
+
 NÂNG CẤP 0.31.3
 - Hết dải mờ ở mép phải khi bật Lớp ảnh (ánh sáng dịu…) hoặc overlay chế độ Màn hình.
 

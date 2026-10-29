@@ -832,3 +832,6 @@ details.cc-group>summary.cc-head{cursor:pointer;margin:0}details.cc-group[open]>
 .dub-edit-item{display:flex;align-items:center;gap:10px;cursor:pointer}.dub-edit-item.current{outline:1px solid var(--accent);background:#10261f}
 .dub-edit-mark{color:var(--accent);font-weight:700}
 .dub-edit-item .dub-row-name{flex:1;min-width:0}.dub-edit-item .dub-row-name small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* the page is dark already: browsers' automatic dark mode and Dark Reader must not recolour it (index.html: color-scheme, darkreader-lock) */
+:root{color-scheme:dark}

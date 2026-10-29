@@ -4,6 +4,10 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.31.4
+
+- **Giữ đúng màu giao diện trên mọi trình duyệt:** trang khai báo sẵn là giao diện tối (color-scheme + darkreader-lock), nên chế độ tối tự động của Chrome/Cốc Cốc và tiện ích Dark Reader không tự đổi màu nữa (trước đây có máy thấy nút mất màu xanh, nền xám, viền trắng quanh mọi nút).
+
 ## Mới trong 0.31.3
 
 - **Sửa lỗi dải mờ ở mép phải khi bật Lớp ảnh có chế độ hòa trộn** (ánh sáng dịu, nhân, màn hình…): một số bản FFmpeg (gặp trên Windows) xử lý bộ lọc hòa trộn theo từng khối 16 điểm ảnh và làm sai các cột lẻ còn lại. Khung 1080 px dư đúng 8 px, nên 8 px mép phải không được hòa trộn mà bị phủ tối bằng đúng độ mờ của lớp ảnh. Nay khung được nới thành bội số của 64 trước khi hòa trộn rồi cắt lại đúng kích thước, nên kết quả đúng trên mọi bản FFmpeg. Overlay video chế độ "Màn hình" cũng được sửa theo cách này.

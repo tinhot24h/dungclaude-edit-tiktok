@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.31.3",
- "notes": "## Mới trong 0.31.3\n\n- **Sửa lỗi dải mờ ở mép phải khi bật Lớp ảnh có chế độ hòa trộn** (ánh sáng dịu, nhân, màn hình…): một số bản FFmpeg (gặp trên Windows) xử lý bộ lọc hòa trộn theo từng khối 16 điểm ảnh và làm sai các cột lẻ còn lại. Khung 1080 px dư đúng 8 px, nên 8 px mép phải không được hòa trộn mà bị phủ tối bằng đúng độ mờ của lớp ảnh. Nay khung được nới thành bội số của 64 trước khi hòa trộn rồi cắt lại đúng kích thước, nên kết quả đúng trên mọi bản FFmpeg. Overlay video chế độ \"Màn hình\" cũng được sửa theo cách này.",
+ "version": "0.31.4",
+ "notes": "## Mới trong 0.31.4\n\n- **Giữ đúng màu giao diện trên mọi trình duyệt:** trang khai báo sẵn là giao diện tối (color-scheme + darkreader-lock), nên chế độ tối tự động của Chrome/Cốc Cốc và tiện ích Dark Reader không tự đổi màu nữa (trước đây có máy thấy nút mất màu xanh, nền xám, viền trắng quanh mọi nút).",
  "files": {
   "video_tools.js": {
    "sha256": "217dc997759d9b7b26fccfb7abaa35ebf82b5eb333f816dc83fcf67b06781706",
@@ -136,8 +136,8 @@
    "size": 13467
   },
   "studio.css": {
-   "sha256": "c8672450d7ee33dcf584e05280e738a4ea2cbd1d63dc137a5dfa45da026bf546",
-   "size": 102486
+   "sha256": "95242a14ec69ab5a2459a280a9fd956955117c8b5294f7754dfa66633f90e4b2",
+   "size": 102655
   },
   "studio.js": {
    "sha256": "606d2f4b4825a547cc13cd5bc91af2cb4a802960047a4bcae3ff5ad0aa1e2973",
@@ -152,8 +152,8 @@
    "size": 6858
   },
   "index.html": {
-   "sha256": "015d93f75ea487ac9ffcee7555aeb21a6b6b0853aa4fa4741732118abf37ada0",
-   "size": 24079
+   "sha256": "3b8e00b4e7f7fac27e169a41a52e6920025de0c0fb1a6b46182565924d8d65f3",
+   "size": 24149
   },
   "launch.py": {
    "sha256": "283210c4d7b6b1485fa3443ef11b2d51dc3a00a67384b18efb169e391e7522f3",
@@ -168,15 +168,15 @@
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "fd88c5bcbb9684c9dd225575bd5247b3c07e81e1a65005494174c8a67695a0eb",
-   "size": 12352
+   "sha256": "77a827d9681097102cd454f642743847bb105c70693a2437b0e8f7a52df7379d",
+   "size": 12695
   },
   "README.md": {
-   "sha256": "bc7749990897a11a7d7cdef9cacdc41f30c7c53ce89621c2f29f0ef902aa0226",
-   "size": 26895
+   "sha256": "db9356ef74b279b45ed2533875769492e61e38897a625a04028746cb32a4bbc1",
+   "size": 27280
   },
   "VERSION": {
-   "sha256": "119ce9dcbfd9b4073524a0ae1a99923c91b7ce782a6b93f5717e3508628ac3b0",
+   "sha256": "51bf5d025b8f7e18c523eab418bd62d590652c60c8cb29f12ae6b025d7f4fe8c",
    "size": 7
   },
   ".gitignore": {
