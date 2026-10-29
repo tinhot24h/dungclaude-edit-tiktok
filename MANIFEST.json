@@ -1,15 +1,15 @@
 {
  "app": "ReviewStudio",
- "version": "0.33.1",
- "notes": "## Mới trong 0.33.1\n\n- **Xuất lại theo đúng nguồn chữ mới:** khi ✎ Sửa & xuất lại, đổi nguồn tiêu đề/nội dung sang Cố định, Tên file hoặc Không giờ có tác dụng (trước đây bị khóa theo lần chạy đầu, bật tiêu đề cố định lại ra tên file). Chọn \"AI viết\" mà video chưa có chữ AI: app báo và hiện nút \"✍ Viết chữ AI (N video)\" trên thanh Đang sửa (mỗi video 1 lần gọi OpenAI, giọng giữ nguyên).\n- **Xuất lại theo đúng \"Âm thanh gốc\" mới:** đổi cách xử lý tiếng gốc (giảm khi có lời, lọc giọng giữa, Demucs, giữ, bỏ) hoặc mức \"Tiếng gốc khi có lời\" giờ làm lại bước tách âm (chạy trên máy, không tốn API) thay vì giữ tiếng nền cũ.\n- **Chạy thử 1 video lỗi ngay khi nạp:** báo lý do và hiện lại nút chạy thử, không còn kẹt \"Đang chạy thử…\".\n- **Thời gian còn lại ước tính đúng sau khi xuất lại:** chỉ tính thời gian của lần chạy gần nhất (trước đây cộng dồn).",
+ "version": "0.34.0",
+ "notes": "## Mới trong 0.34.0\n\n- **Khung xem trước vừa màn hình:** chiều cao khung tự tính theo chỗ trống thực tế của cửa sổ (trừ tiêu đề trang, thứ tự lớp, thanh phát), không còn cao quá màn hình laptop. Khung 16:9 / 1:1 tự lấy theo chiều ngang cột, không méo. Đổi cỡ cửa sổ là khung tự co giãn.\n- **Thanh phát kiểu CapCut** (khung thường và khung thiết kế): thanh tua ở trên; bên dưới là thời gian · nút phát ở giữa · **Tỷ lệ ▾** và **⛶ toàn màn hình** bên phải.\n- **Đổi khung ngay trên xem trước:** menu Tỷ lệ chọn 9:16 (TikTok, Reels), 16:9 (YouTube), 1:1, 4:5 hoặc Gốc; đổi luôn \"Khung xuất\" của video. Mẫu thiết kế (nền, khung, tiêu đề, nội dung) chỉ có 9:16 nên các tỷ lệ khác bị khóa khi đang bật.\n- Thứ tự lớp gọn hơn; dòng hướng dẫn dưới xem trước rút còn 2 dòng (rê chuột để xem hết).\n- Không còn báo nhầm \"Lỗi giao diện: ResizeObserver loop…\" (thông báo vô hại của trình duyệt khi khung tự co giãn).",
  "files": {
   "ffmpeg_setup.py": {
    "sha256": "f66eb85abf503510412af3b364a9e5e10558cc92a8caa4153aa07bbc44a227ab",
    "size": 4524
   },
   "compat.js": {
-   "sha256": "31c366a5f9b1cc1c080ff65fdbb2adf6cd919c886b6a55ce0c314dbe3f57538e",
-   "size": 4069
+   "sha256": "a8ddbb6481917d970691f2f6185f28f2a2234c7c6e9052395ff9c43f4130b395",
+   "size": 4185
   },
   "video_tools.js": {
    "sha256": "217dc997759d9b7b26fccfb7abaa35ebf82b5eb333f816dc83fcf67b06781706",
@@ -32,8 +32,8 @@
    "size": 25049
   },
   "design_tab.js": {
-   "sha256": "8fbb519639cbe5993b91ada22d67e2d8bda9e10588575e512ea09069d39bab4c",
-   "size": 38708
+   "sha256": "779b44760e0fe604e825b6017790cebc854d110b99fb2bfe7d3c17e3363ddb28",
+   "size": 38845
   },
   "local_files.js": {
    "sha256": "b9a975e980db7f5f013f6046d58228fb39817b6959e8caaf9505c4ba3cc898a7",
@@ -60,8 +60,8 @@
    "size": 5181
   },
   "dub_ui.js": {
-   "sha256": "fe8d9e1c4234a23269f0032e4b76ce4e9217443dea23b039d31a47acd93a5392",
-   "size": 164344
+   "sha256": "da147f72e12272d163dcf4415f4714431d836ac28aacdb41f9e98b71b3947915",
+   "size": 167915
   },
   "key_ui.js": {
    "sha256": "4c1833943a21476f6e515115af555c36a4d763bbc5c1122f111cad0a5065574d",
@@ -144,8 +144,8 @@
    "size": 13467
   },
   "studio.css": {
-   "sha256": "95242a14ec69ab5a2459a280a9fd956955117c8b5294f7754dfa66633f90e4b2",
-   "size": 102655
+   "sha256": "b76355e33b28316df2a2c6b6616d36ebb94ca6f0d83264cdb99b21dc7232c0df",
+   "size": 105531
   },
   "studio.js": {
    "sha256": "e2ebb2f8bb72ba3bee02faa67609c6859a96a3ad16be04fe28e6aba60519f7bc",
@@ -160,7 +160,7 @@
    "size": 6858
   },
   "index.html": {
-   "sha256": "de83455e52425b062df65eec21026cba282e4eb522130363d768b4d79c08b232",
+   "sha256": "d89d66c02dfdc40a35525e4071e7d68d9124f2c6a15d1e1fc67396f2913cf0e5",
    "size": 24183
   },
   "launch.py": {
@@ -176,15 +176,15 @@
    "size": 1411
   },
   "HUONG_DAN.txt": {
-   "sha256": "d545950bcf51b190f351cc5bd561117b9111fbf52c8b05bc04c880848331e758",
-   "size": 14168
+   "sha256": "5ab2f765b56f38b0c1d6b3bc9aabadf20b75c7d06eb932e48f1de47481d3d6cc",
+   "size": 14331
   },
   "README.md": {
-   "sha256": "97bc4f94c4a6762e0446c0db8d739af3eebb887190ee8e1056f32b17962b528d",
-   "size": 32066
+   "sha256": "c3e47fbdaf946b2131064de9fc3dbe6aaaa14905dfed052d6279ad61b33478dc",
+   "size": 33193
   },
   "VERSION": {
-   "sha256": "88dc89b23d1eb296b577d2cd6b8fd2a8013d9d499299cdb24578106eb5b4f59c",
+   "sha256": "a341550457891be148045ef7560e7499da6063d012ce8163bf6e6db2f08d2466",
    "size": 7
   },
   ".gitignore": {

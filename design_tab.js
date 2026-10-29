@@ -71,7 +71,7 @@ function moveIn(){if(moved)return;moved=true;
  for(const id of ['section-background','section-frame','section-title','section-body','section-video'])keep.observe($(id),{attributes:true,attributeFilter:['hidden']})}
 // a small transport for the stage (the overlay video follows it)
 const transport=el('div',{className:'dub-transport dt-transport'}),tPlay=el('button',{type:'button',className:'fm-play',textContent:'▶',title:'Phát/dừng'}),tSeek=el('input',{type:'range',min:0,max:1,step:.01,value:0}),tTime=el('output',{textContent:'0:00.0'});
-tSeek.setAttribute('aria-label','Vị trí');transport.append(tPlay,tSeek,tTime);
+tSeek.setAttribute('aria-label','Vị trí');transport.append(tPlay,tSeek,tTime);setTimeout(()=>window.dubPlayerTools&&transport.append(window.dubPlayerTools(()=>$('stage').closest('.preview-workspace')||$('stage'))));
 const clock=t=>`${Math.floor(t/60)}:${(t%60).toFixed(1).padStart(4,'0')}`;
 // plays only the part kept by "Cắt đầu / Cắt cuối", like the export
 const cut=()=>{const o=api.settings(),d=$('video').duration||0;return[Math.min(o.trim_start||0,d),Math.max(0,d-(o.trim_end||0))]};

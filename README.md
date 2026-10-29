@@ -4,6 +4,14 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.34.0
+
+- **Khung xem trước vừa màn hình:** chiều cao khung tự tính theo chỗ trống thực tế của cửa sổ (trừ tiêu đề trang, thứ tự lớp, thanh phát), không còn cao quá màn hình laptop. Khung 16:9 / 1:1 tự lấy theo chiều ngang cột, không méo. Đổi cỡ cửa sổ là khung tự co giãn.
+- **Thanh phát kiểu CapCut** (khung thường và khung thiết kế): thanh tua ở trên; bên dưới là thời gian · nút phát ở giữa · **Tỷ lệ ▾** và **⛶ toàn màn hình** bên phải.
+- **Đổi khung ngay trên xem trước:** menu Tỷ lệ chọn 9:16 (TikTok, Reels), 16:9 (YouTube), 1:1, 4:5 hoặc Gốc; đổi luôn "Khung xuất" của video. Mẫu thiết kế (nền, khung, tiêu đề, nội dung) chỉ có 9:16 nên các tỷ lệ khác bị khóa khi đang bật.
+- Thứ tự lớp gọn hơn; dòng hướng dẫn dưới xem trước rút còn 2 dòng (rê chuột để xem hết).
+- Không còn báo nhầm "Lỗi giao diện: ResizeObserver loop…" (thông báo vô hại của trình duyệt khi khung tự co giãn).
+
 ## Mới trong 0.33.1
 
 - **Xuất lại theo đúng nguồn chữ mới:** khi ✎ Sửa & xuất lại, đổi nguồn tiêu đề/nội dung sang Cố định, Tên file hoặc Không giờ có tác dụng (trước đây bị khóa theo lần chạy đầu, bật tiêu đề cố định lại ra tên file). Chọn "AI viết" mà video chưa có chữ AI: app báo và hiện nút "✍ Viết chữ AI (N video)" trên thanh Đang sửa (mỗi video 1 lần gọi OpenAI, giọng giữ nguyên).

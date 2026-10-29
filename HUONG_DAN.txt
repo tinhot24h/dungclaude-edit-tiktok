@@ -67,6 +67,9 @@ khi mở app (đặt REVIEW_KEEP_DAYS=0 để tắt), trừ video còn trong hà
 Chỉ dùng trên máy này. Chưa gọi thử OpenAI / ai33 thật, NVENC và ghi Tags của Windows
 trên máy thật: hãy chạy thử 1–2 video trước khi chạy lô lớn.
 
+NÂNG CẤP 0.34.0
+- Khung xem trước tự vừa màn hình; thanh phát kiểu CapCut với nút Tỷ lệ (9:16, 16:9, 1:1, 4:5, Gốc) và toàn màn hình.
+
 NÂNG CẤP 0.33.1
 - Xuất lại áp dụng cả nguồn chữ tiêu đề/nội dung và "Âm thanh gốc" mới; nút "✍ Viết chữ AI" khi chọn AI mà chưa có chữ.
 - Chạy thử 1 video báo lỗi rõ khi nạp không được; thời gian còn lại ước tính đúng sau khi xuất lại.

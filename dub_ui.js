@@ -347,13 +347,38 @@ $('dub-adj-reset').onclick=()=>{for(const id of ['dub-adj-bright','dub-adj-contr
 // overlay: the first overlay of the pool (the real one is picked at random per video); the design stage shows it too
 function pickOverlay(o){const pool=overlays.filter(x=>ovAll||ovUse.has(x.id)),ov=o.overlay?pool[0]:null,ovv=$('dub-ovv'),ovi=$('dub-ovi');ovv.hidden=!ov||ov.still;ovi.hidden=!ov||!ov.still;
  if(ov){const src=`/overlays/${ov.id}/${ov.still?'file':'preview'}`,target=ov.still?ovi:ovv;if(target.dataset.src!==src){target.src=src;target.dataset.src=src;if(!ov.still)ovv.onloadedmetadata=syncOverlay}Object.assign(target.style,{opacity:o.overlay_opacity/100,mixBlendMode:o.overlay_blend==='screen'&&!ov.alpha?'screen':'normal'})}else ovv.pause();return ov}
+// ---- the preview fits the window: the frame gets the height left by the panel's other rows (measured, not guessed)
+// and the column's width, so 9:16, 16:9 and 1:1 all stay whole on a laptop as on a big monitor
+function fitFrame(ratio){const pv=$('dub-preview');if(!pv)return;const design=!$('dt-stage-host')?.hidden,box=design?$('stage'):$('dub-frame');if(!box)return;
+ // the layout's own place on the page (the panel itself is sticky, so its place moves while scrolling)
+ const wrap=design?box.parentElement:$('dub-frame').closest('.dub-frame-wrap'),lay=pv.closest('.dub-layout')||pv,top=lay.getBoundingClientRect().top+window.scrollY,
+  other=pv.offsetHeight-box.offsetHeight,room=Math.max(200,Math.min(900,innerHeight-top-other-14)),
+  colW=Math.max(140,(wrap?.clientWidth||pv.clientWidth)-24),r=design?9/16:ratio||9/16;
+ let h=room,w=h*r;if(document.fullscreenElement&&document.fullscreenElement.contains(box)){h=innerHeight-40;w=h*r;if(w>innerWidth-40){w=innerWidth-40;h=w/r}}else if(w>colW){w=colW;h=w/r}
+ if(design){const want=Math.round(w)+'px';if(box.style.width!==want)box.style.width=want}
+ else{const ww=Math.round(w)+'px',hh=Math.round(h)+'px';if(box.style.width!==ww||box.style.height!==hh)Object.assign(box.style,{width:ww,height:hh})}}
+addEventListener('resize',()=>{clearTimeout(fitFrame.t);fitFrame.t=setTimeout(()=>preview(),120)});
+// CapCut-like player bar: seek on top; time · play · "Tỷ lệ ▾" + full screen below. One bar for the plain frame and one for
+// the design stage, both built here; the ratio menu sets "Khung xuất" (the design stage is 9:16 only)
+const RATIOS=[['9:16','9:16 · TikTok, Reels'],['16:9','16:9 · YouTube'],['1:1','1:1 · vuông'],['4:5','4:5 · bài đăng'],['source','Gốc · theo video']];
+function playerTools(wrapOf){const t=el('span',{className:'cc-tools'}),btn=el('button',{type:'button',className:'cc-ratio',title:'Tỷ lệ khung xuất'}),menu=el('div',{className:'cc-ratio-menu',hidden:true});
+ menu.append(...RATIOS.map(([v,label])=>{const b=el('button',{type:'button',textContent:label});b.dataset.c=v;b.onclick=e=>{e.stopPropagation();menu.hidden=true;if(b.disabled)return;const c=$('dub-canvas');c.value=v;c.dispatchEvent(new Event('change',{bubbles:true}));c.dispatchEvent(new Event('input',{bubbles:true}));window.appHistory?.checkpoint?.()};return b}));
+ btn.onclick=e=>{e.stopPropagation();menu.hidden=!menu.hidden};document.addEventListener('click',()=>{menu.hidden=true});
+ const full=el('button',{type:'button',className:'cc-full',textContent:'⛶',title:'Xem toàn màn hình (Esc để thoát)'});full.onclick=()=>{const w=wrapOf();if(document.fullscreenElement)document.exitFullscreen();else w?.requestFullscreen?.().catch(()=>{})};
+ t.append(btn,menu,full);return t}
+function canvasChips(o){const design=designOn(),now=design?'9:16':o.frame_canvas;
+ for(const b of document.querySelectorAll('.cc-ratio'))b.textContent='Tỷ lệ · '+(now==='source'?'Gốc':now)+' ▾';
+ for(const b of document.querySelectorAll('.cc-ratio-menu button')){b.setAttribute('aria-pressed',String(b.dataset.c===now));b.disabled=design&&b.dataset.c!=='9:16';
+  b.title=design&&b.dataset.c!=='9:16'?'Mẫu thiết kế (nền, khung, tiêu đề, nội dung) chỉ có khung 9:16. Tắt các nhóm đó để dùng khung khác.':''}}
+$('dub-pv-play').closest('.dub-transport').append(playerTools(()=>$('dub-frame').closest('.dub-frame-wrap')));
+document.addEventListener('fullscreenchange',()=>preview());
 // what the preview shows: the video of the job being edited again (✎ Sửa), else the selected input
 const cur=()=>{if(!editing)return files[sel];const it=editing.items[editing.at]||editing.items[0];return it&&{id:it.video_id,name:it.name}};
-function preview(){sel=Math.max(0,Math.min(sel,files.length-1));const ov=pickOverlay(settings());adjustPreview(settings());drawLayers();layerZ();if(window.dubProfile?.preview?.(cur())){layerZ();return}const f=cur();$('dub-frame-empty').hidden=!!f;for(const v of [fg,bgv])v.hidden=!f;
+function preview(){sel=Math.max(0,Math.min(sel,files.length-1));const ov=pickOverlay(settings());adjustPreview(settings());drawLayers();layerZ();if(window.dubProfile?.preview?.(cur())){layerZ();fitFrame();canvasChips(settings());return}const f=cur();$('dub-frame-empty').hidden=!!f;for(const v of [fg,bgv])v.hidden=!f;
  if(!f&&previewKey){previewKey='';if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl='';for(const v of [fg,bgv]){v.pause();v.removeAttribute('src');v.load()}}
  if(f?.path&&!f.id){if(!f.importing){f.importing=true;localImport(f).then(()=>preview()).catch(e=>{f.error=e.message;draw()})}}
  else if(f){const key=f.id||f.name+f.file?.size;if(key!==previewKey){previewKey=key;if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl=f.file?URL.createObjectURL(f.file):'';const src=previewUrl||'/media/video/'+f.id;fg.src=src;bgv.src=src}}
- const o=settings(),frame=$('dub-frame'),[W,H]=CANVAS[o.frame_canvas]||[fg.videoWidth||9,fg.videoHeight||16];frame.style.aspectRatio=`${W}/${H}`;
+ const o=settings(),frame=$('dub-frame'),[W,H]=CANVAS[o.frame_canvas]||[fg.videoWidth||9,fg.videoHeight||16];frame.style.aspectRatio=`${W}/${H}`;fitFrame(W/H);canvasChips(o);
  const box=frame.getBoundingClientRect(),fx=o.frame_flip.includes('h')?-1:1,fy=o.frame_flip.includes('v')?-1:1;
  let z=o.frame_zoom/100;const dx=o.frame_x*box.width/200,dy=o.frame_y*box.height/200,e=o.edge_trim||0,fit=o.frame_fit!=='cover'&&window.nearFit(fg.videoWidth-2*e,fg.videoHeight-2*e,W,H)?'cover':o.frame_fit;if(fit==='cover'&&z>=1&&box.width)z*=window.coverScale(box.width,box.height,box.width*z,box.height*z,box.width/2+dx,box.height/2+dy,o.frame_rotate,Math.max(box.width/540,(z-1)/2*Math.min(box.width,box.height)));
  Object.assign(fg.style,{width:z*100+'%',height:z*100+'%',objectFit:fit==='cover'?'cover':'contain',transform:`translate(-50%,-50%) translate(${o.frame_x*box.width/200}px,${o.frame_y*box.height/200}px) rotate(${o.frame_rotate}deg) scale(${fx},${fy})`});
@@ -692,7 +717,7 @@ function layerZ(o=settings()){const design=designOn(),order=layerStack(o,design)
  const set=(e,v)=>{if(e)e.style.zIndex=String(v)};
  set($('dub-preview-video'),1);for(const id of ['dub-ovv','dub-ovi'])set($(id),z('overlay'));set($('dub-imgbox'),z('image'));
  if(design){set($('video-transform'),z('video'));set($('overlay'),z('background'));for(const id of ['dt-ovv','dt-ovi'])set($(id),z('overlay'))}}
-window.dubLayers={draw:drawLayers,z:layerZ};
+window.dubLayers={draw:drawLayers,z:layerZ};window.dubPlayerTools=playerTools;
 // ---- "Phụ đề chữ chạy": style chips, sample on the preview (word lights up in turn, drag to move it up/down)
 const CAP_SAMPLE='Chào cả nhà hôm nay mình giới thiệu món đồ rất hay';
 // quick looks: style + font + colours (+ size, capitals) in one click

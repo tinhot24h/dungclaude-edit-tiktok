@@ -44,6 +44,7 @@
   window.addEventListener('error', function (e) {
     if (!e || !e.message) return;   // a picture or video that did not load: not a script error
     if (!ours(e.filename)) return;
+    if (/ResizeObserver loop/.test(e.message)) return;   // harmless browser notice when the preview resizes itself
     var where = e.filename ? ' (' + String(e.filename).replace(/^.*\//, '') + ':' + e.lineno + ')' : '';
     ready(function () { bar('⚠ Lỗi giao diện: ' + e.message + where + '\nChụp màn hình thông báo này gửi người hỗ trợ.', 'error'); });
   });
