@@ -61,8 +61,9 @@ def write(path, props):
         with tempfile.NamedTemporaryFile('w', suffix='.json', delete=False, encoding='utf-8') as f:
             json.dump(dict(path=os.path.abspath(str(path)), props=props), f, ensure_ascii=False)
         try:
+            # UTF-8 output: the Windows console code page cannot print Vietnamese ("chưa ghi được…" crashed with charmap)
             done = subprocess.run([sys.executable, os.path.abspath(__file__), f.name], capture_output=True, text=True, encoding='utf-8',
-                                  errors='replace', creationflags=flags(), timeout=120)
+                                  errors='replace', creationflags=flags(), timeout=120, env=dict(os.environ, PYTHONIOENCODING='utf-8', PYTHONUTF8='1'))
         finally:
             os.unlink(f.name)
         if done.returncode == 2:   # some fields saved, some refused
@@ -115,6 +116,10 @@ def main(job_file):
 
 
 if __name__ == '__main__':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    except (AttributeError, ValueError):
+        pass
     try:
         main(sys.argv[1])
     except SystemExit:

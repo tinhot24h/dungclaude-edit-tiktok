@@ -1,8 +1,12 @@
-# Review Studio 0.27.3
+# Review Studio 0.27.4
 
 Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: chọn nhiều MP4 tiếng Trung → OpenAI nhận diện lời, dịch, viết tiêu đề / nội dung / tên file → ai33.pro đọc giọng Việt → FFmpeg ghép nền, khung, chữ, overlay và xuất MP4 hoàn chỉnh vào thư mục của bạn.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.27.4
+
+- **Sửa lỗi "UnicodeEncodeError: 'charmap' codec…" khi ghi thông tin file:** bước ghi của Windows in thông báo tiếng Việt ra cửa sổ lệnh không hỗ trợ chữ có dấu nên bị lỗi và che mất tên trường bị từ chối. Nay luôn in UTF-8: hàng đợi báo đúng "Windows chưa ghi được: <tên trường> (lý do)", các trường khác vẫn được lưu.
 
 ## Mới trong 0.27.3
 

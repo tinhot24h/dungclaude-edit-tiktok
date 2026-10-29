@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.27.3",
- "notes": "## Mới trong 0.27.3\n\n- **Tên file dài hơn:** AI đặt tên 30–45 ký tự (khoảng 6–9 từ: loại sản phẩm + 2–3 đặc điểm), ví dụ `tui-vai-dung-quan-ao-gap-gon-chong-am`. Tên bị cắt không bao giờ kết thúc bằng từ nối (-cho, -va, -cua…). Sửa tay cũng theo giới hạn mới.\n- **Contributing artists để trống:** bỏ trường Authors (Windows hiện trường này thành Contributing artists của nhóm Media). Tác giả chỉ vào Directors / Producers / Writers.",
+ "version": "0.27.4",
+ "notes": "## Mới trong 0.27.4\n\n- **Sửa lỗi \"UnicodeEncodeError: 'charmap' codec…\" khi ghi thông tin file:** bước ghi của Windows in thông báo tiếng Việt ra cửa sổ lệnh không hỗ trợ chữ có dấu nên bị lỗi và che mất tên trường bị từ chối. Nay luôn in UTF-8: hàng đợi báo đúng \"Windows chưa ghi được: <tên trường> (lý do)\", các trường khác vẫn được lưu.",
  "files": {
   "video_tools.js": {
    "sha256": "217dc997759d9b7b26fccfb7abaa35ebf82b5eb333f816dc83fcf67b06781706",
@@ -12,8 +12,8 @@
    "size": 10472
   },
   "win_meta.py": {
-   "sha256": "dc7abe84528ffb57d5f5ff89f23c0b09fc5f63c6d64f6adaec11b8a2e8c4c0e8",
-   "size": 6106
+   "sha256": "228d18deb126f8965807b7c3a7d2249007da30d88f3a6bbf04493deb52b989a8",
+   "size": 6429
   },
   "ai_texts.py": {
    "sha256": "4e0052352efae7d10d524ba7e41df4c2a322438e5809d3a6bb709f1a47bbccd1",
@@ -152,7 +152,7 @@
    "size": 5352
   },
   "index.html": {
-   "sha256": "c96516a9f5a7f47038e75b7e48a4f5ef252f3beb11a1b57c39026a4334db35aa",
+   "sha256": "07e8ef44422d82d42f10b8f555169e95a605953071491a682bc39328da192e8b",
    "size": 24079
   },
   "launch.py": {
@@ -168,15 +168,15 @@
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "d47c1db458e7d32dc41d1b78af53285c933a5e17632b3f12487fd259ad45e0c2",
-   "size": 9056
+   "sha256": "b8b6655777d0efc63a21b8aa4a682caaef269739b51164baf07fdeb5fedc2299",
+   "size": 9199
   },
   "README.md": {
-   "sha256": "adacc830eed22057e08d30bbd8ae23f29c336d7f9f58f79f0f63162e1dfb780f",
-   "size": 13742
+   "sha256": "0a5dcad0667bf49e5ed3e8de0bfa1160c9471dedc350b68691c5d6a8f1edbbbb",
+   "size": 14168
   },
   "VERSION": {
-   "sha256": "71949df520b01e11aba57d29ef42c948aec48d8f34a6fb75a5d5e02ab170346a",
+   "sha256": "8220e8fed948ca94c8d47bd635dec2025edfb1fbbbb0254a4a7903abeb4d3c52",
    "size": 7
   },
   ".gitignore": {
