@@ -502,7 +502,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(200,dubbing.demucs_status('refresh' in parse_qs(urlparse(self.path).query)))
         if path == '/dub/capabilities':
             return self.respond(200,{'demucs':bool(dubbing.demucs_command()),'openai':bool(dubbing.openai_key({})),'ai33':bool(dubbing.ai33_key({})),
-                                     'defaults':dubbing.DEFAULTS,'models':dubbing.MODELS,'whisper_per_minute':dubbing.WHISPER_PER_MINUTE,'pronouns':dubbing.PRONOUNS,'styles':ai_translate.STYLE_LABELS})
+                                     'defaults':dubbing.DEFAULTS,'models':dubbing.MODELS,'whisper_per_minute':dubbing.WHISPER_PER_MINUTE,'pronouns':dubbing.PRONOUNS,'styles':ai_translate.STYLE_LABELS,'energy':ai_translate.ENERGY_LABELS})
         sample=re.fullmatch(r'/dub/sample/([a-f0-9]{24})\.mp3',path)
         if sample:
             try:return self.serve_audio(DUB.sample_file(sample[1]))
@@ -772,7 +772,7 @@ class Handler(BaseHTTPRequestHandler):
                     except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
                 finally:temp.unlink(missing_ok=True)
             if path=='/dub/demucs/install':return self.respond(200,dubbing.install_demucs())
-            if path in ('/dub/queue','/dub/review','/dub/estimate','/dub/sample','/dub/sweep'):
+            if path in ('/dub/queue','/dub/review','/dub/estimate','/dub/sample','/dub/sweep','/dub/batch'):
                 size=int(self.headers.get('Content-Length',0) or 0)
                 if size>4*1024*1024:return self.respond(413,{'error':'Yêu cầu quá lớn.'})
                 raw=json.loads(self.rfile.read(size)) if size else {}
@@ -780,6 +780,7 @@ class Handler(BaseHTTPRequestHandler):
                 try:
                     if path=='/dub/queue':return self.respond(200,DUB.set_parallel(raw.get('parallel'),raw.get('resume'),raw.get('demucs')))
                     if path=='/dub/review':return self.respond(200,DUB.review(raw))
+                    if path=='/dub/batch':return self.respond(200,DUB.batch(raw))
                     if path=='/dub/sample':return self.respond(200,DUB.voice_sample(raw))
                     if path=='/dub/sweep':return self.respond(200,DUB.sweep(raw.get('days',0) if isinstance(raw.get('days',0),int) and 0<=raw.get('days',0)<=3650 else 0))
                     return self.respond(200,DUB.estimate(raw))

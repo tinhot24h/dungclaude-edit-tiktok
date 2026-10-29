@@ -4,6 +4,28 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.29.0
+
+**Thứ tự lớp (mới)**
+- Ô "Thứ tự lớp" ngay dưới khung xem trước: 🎬 Video · 🎨 Nền · ✨ Video overlay · 🖼 Lớp ảnh, xếp từ trên cùng xuống dưới cùng; bấm ‹ › để đưa một lớp lên hoặc xuống, ↺ về mặc định. Khung trang trí và chữ luôn nằm trên cùng.
+- Xem trước đổi ngay khi sắp xếp, video xuất ra đúng thứ tự đó; thứ tự lưu cùng mẫu cấu hình.
+- Không dùng mẫu thiết kế thì video phủ cả khung nên luôn ở dưới cùng; chỉ đổi được thứ tự Lớp ảnh và Overlay.
+
+**Hàng đợi thiết kế lại**
+- Thanh tổng quan: tiến độ cả lô (xong / đang chạy / chờ / chờ duyệt / lỗi), thời gian còn lại ước tính, thời gian trung bình mỗi video, OpenAI đã dùng và credit ai33 còn lại.
+- Thanh công cụ gọn: "↻ Chạy lại lỗi" và "■ Dừng tất cả"; dọn file tạm, xóa và "🔔 Báo khi cả lô xong" nằm trong menu ⋯.
+- Tick chọn nhiều video: Chạy, Dừng, ⤒ Ưu tiên / ⤓ Xuống cuối trong hàng chờ, ⟳ Xuất lại với thông số mới (giữ giọng và chữ đã có), Xóa. Video đang chờ hiện số thứ tự "Chờ · #3"; video đang chạy hiện bước đang làm.
+- Tìm theo tên video và lọc video kẹt ở từng bước.
+- Lỗi được gom nhóm theo nguyên nhân, kèm cách xử lý và nút "Chạy lại nhóm".
+- Báo khi cả lô xong: âm báo, thông báo trên máy và dòng tóm tắt.
+- Sửa lỗi: "Chạy lại lỗi" trước đây chạy luôn cả video đang chờ duyệt (xuất khi chưa xem chữ AI); nay chỉ chạy video lỗi. Nút xóa không còn sáng khi hàng đợi trống. Mọi thao tác hàng loạt gửi một lần cho server (nhanh với hàng trăm video).
+
+**Văn phong viết hay hơn**
+- Mỗi văn phong có hồ sơ riêng: giọng, câu mở 3 giây đầu, trình tự ý, từ nên dùng / cần tránh, câu mẫu. Gửi đầy đủ khi viết đoạn văn lồng tiếng và tiêu đề / nội dung; bản dịch theo từng dòng (phải khớp thời gian) chỉ dùng câu ngắn để câu không dài ra.
+- Mới: "Độ hào hứng" (Nhẹ nhàng / Vừa phải / Hào hứng) dùng chung mọi văn phong.
+- Kiểu tiêu đề "Tự chọn" theo văn phong (Tin tức không dùng kiểu nỗi đau – giải pháp, Giải trí ưu tiên gây tò mò…).
+- Sửa mâu thuẫn: "Trải nghiệm thực tế" chỉ kể trải nghiệm có trong lời gốc; bỏ câu trùng về thông số ở "Công nghệ".
+
 ## Mới trong 0.28.2
 
 - **Xem trước cập nhật ngay khi bỏ video đầu vào:** bỏ hết video (✕ hoặc "Bỏ tất cả") thì khung xem trước trống ngay, không còn giữ video cũ; áp dụng cho cả khung thiết kế và khung thường.

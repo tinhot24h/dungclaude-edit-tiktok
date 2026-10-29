@@ -41,6 +41,20 @@ CHỮ HIỂN THỊ TRÊN VIDEO (khác script dùng để đọc)
         rules = dubbing.base_rules(dubbing.options({}), 'Vai')
         self.assertNotIn('BỎ QUA', rules);self.assertIn('QUY TẮC NỘI DUNG DÙNG CHUNG', rules);self.assertIn(ai_translate.STRICT, rules)
 
+    def test_style_profiles_full_for_writing_short_for_timed_lines(self):
+        import ai_translate
+        self.assertEqual(set(ai_translate.STYLE_PROFILES), set(ai_translate.STYLES))
+        o = dubbing.options(dict(style='household', energy='high'))
+        full = dubbing.base_rules(o, dubbing.PARAGRAPH_RULES)
+        short = dubbing.base_rules(o, dubbing.TRANSLATE_RULES, full=False)
+        self.assertIn('3 giây đầu', full);self.assertIn(ai_translate.ENERGY['high'], full)
+        self.assertNotIn('3 giây đầu', short);self.assertIn(ai_translate.ENERGY['high'], short)
+        self.assertIn('KHÔNG dùng kiểu nỗi đau', dubbing.text_rules(dubbing.options(dict(style='news'))))
+        self.assertNotIn('ưu tiên', dubbing.text_rules(dubbing.options(dict(style='news', title_style='question'))))
+        with self.assertRaises(dubbing.DubError):dubbing.options(dict(energy='max'))
+        a, b = dubbing.reuse_keys(o, 'x', ''), dubbing.reuse_keys(dubbing.options(dict(style='household', energy='low')), 'x', '')
+        self.assertEqual(a['asr'], b['asr']);self.assertNotEqual(a['trans'], b['trans'])   # a new energy writes the text again
+
     def test_title_style_variants_and_limits_in_prompt(self):
         o = dubbing.options(dict(title_style='question', title_chars=30, body_min_chars=50, body_max_chars=100))
         rules = dubbing.text_rules(o)

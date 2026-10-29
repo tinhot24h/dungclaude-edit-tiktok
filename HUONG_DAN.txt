@@ -65,6 +65,12 @@ khi mở app (đặt REVIEW_KEEP_DAYS=0 để tắt), trừ video còn trong hà
 Chỉ dùng trên máy này. Chưa gọi thử OpenAI / ai33 thật, NVENC và ghi Tags của Windows
 trên máy thật: hãy chạy thử 1–2 video trước khi chạy lô lớn.
 
+NÂNG CẤP 0.29.0
+- Thứ tự lớp: ô dưới khung xem trước, bấm ‹ › để xếp Video / Nền / Video overlay / Lớp ảnh; xem trước đổi ngay.
+- Hàng đợi mới: thanh tiến độ + thời gian còn lại, tick chọn nhiều video (chạy, dừng, ưu tiên, xuất lại, xóa), tìm kiếm, lọc theo bước, lỗi gom nhóm có cách xử lý, báo khi cả lô xong.
+- "Chạy lại lỗi" chỉ chạy video lỗi (video chờ duyệt vẫn chờ bạn duyệt).
+- Văn phong có hồ sơ chi tiết + "Độ hào hứng"; kiểu tiêu đề tự chọn theo văn phong.
+
 NÂNG CẤP 0.28.2
 - Bỏ hết video đầu vào thì khung xem trước trống ngay (không còn hiện video cũ).
 

@@ -47,13 +47,13 @@ BACKGROUND = ('duck', 'center', 'demucs', 'remove', 'keep')
 SUBTITLES = ('none', 'file', 'soft')
 VOICE_RATE = 24000
 MAX_LINES = 600
-DEFAULTS = dict(language='zh', model=ai_translate.DEFAULT_MODEL, rate=4.2, pronoun='neutral', notes='', no_price=True,
+DEFAULTS = dict(language='zh', model=ai_translate.DEFAULT_MODEL, rate=4.2, pronoun='neutral', energy='mid', notes='', no_price=True,
                 voice_id='', voice_speed=1.0, dictionary_id=None, max_tempo=1.1, min_tempo=0.98, video_speed_min=0.85, video_speed_max=1.2, background='duck', duck_level=12,
                 background_volume=100, voice_volume=100, subtitles='file', loudness='tiktok', review=False, encoder='cpu', instructions='', mode='paragraph', align='auto', style='review',
                 frame_canvas='source', frame_fit='cover', frame_zoom=100, frame_x=0, frame_y=0, frame_rotate=0, frame_flip='none', trim_start=0, trim_end=0,
                 overlay=False, overlay_ids=[], overlay_count=1, overlay_blend='screen', overlay_opacity=60, overlay_timing='loop', end_with_voice=True,
                 image=False, image_id='', image_x=0, image_y=0, image_w=60, image_h=0, image_rotate=0, image_flip='none', image_blend='normal',
-                image_opacity=100, image_layer='below',
+                image_opacity=100, image_layer='below', layer_order='',
                 design=None, title_source='ai', body_source='ai', title_chars=30, body_min_chars=50, body_max_chars=100, review_texts=False, design_bg=True, design_title=True, design_body=True,
                 adjust=False, adjust_brightness=0, adjust_contrast=0, adjust_saturation=0, adjust_sharpen=0,
                 vision=True, title_style='auto', reuse=True,
@@ -91,7 +91,7 @@ def options(raw):
     if raw.get('subtitles') == 'burn':  # burned-in subtitles were removed; old saved settings get the .srt file instead
         raw = dict(raw, subtitles='file')
     for key, allowed in (('language', ('zh', 'en', 'auto')), ('background', BACKGROUND), ('subtitles', SUBTITLES),
-                         ('loudness', ('off', 'tiktok')), ('pronoun', tuple(PRONOUNS)), ('mode', ('paragraph', 'lines', 'ai33', 'design')), ('align', ('auto', 'voice', 'video')), ('style', tuple(ai_translate.STYLES)), ('frame_canvas', tuple(CANVAS)), ('frame_fit', ('cover', 'contain', 'blur')),
+                         ('loudness', ('off', 'tiktok')), ('pronoun', tuple(PRONOUNS)), ('mode', ('paragraph', 'lines', 'ai33', 'design')), ('align', ('auto', 'voice', 'video')), ('style', tuple(ai_translate.STYLES)), ('energy', tuple(ai_translate.ENERGY)), ('frame_canvas', tuple(CANVAS)), ('frame_fit', ('cover', 'contain', 'blur')),
                          ('frame_flip', ('none', 'h', 'v', 'hv')), ('overlay_blend', ('normal', 'screen', 'key')), ('overlay_timing', ('loop', 'sequence', 'random')),
                          ('image_flip', ('none', 'h', 'v', 'hv')), ('image_blend', tuple(IMAGE_BLENDS)), ('image_layer', ('below', 'above')),
                          ('title_source', TEXT_SOURCES), ('body_source', TEXT_SOURCES), ('title_style', tuple(TITLE_STYLES)),
@@ -100,6 +100,10 @@ def options(raw):
         if v not in allowed:
             raise DubError('Thông số không hợp lệ: ' + key)
         out[key] = v
+    order = raw.get('layer_order', '')
+    if order and (not isinstance(order, str) or sorted(order.split(',')) != sorted(LAYERS)):
+        raise DubError('Thông số không hợp lệ: layer_order')
+    out['layer_order'] = order
     ids = raw.get('overlay_ids', [])
     if not isinstance(ids, list) or len(ids) > 500 or not all(isinstance(i, str) and re.fullmatch('[a-f0-9]{32}', i) for i in ids):
         raise DubError('Danh sách overlay không hợp lệ.')
@@ -226,7 +230,7 @@ def reuse_keys(settings, source, hint):
         return hashlib.sha1(json.dumps(parts, ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:20]
     o = settings
     asr = h(source, o['trim_start'], o['trim_end'], o['language'])
-    write = (o['model'], o['style'], o['notes'], o['instructions'], o['vision'], hint)
+    write = (o['model'], o['style'], o.get('energy', 'mid'), o['notes'], o['instructions'], o['vision'], hint)
     trans = h(asr, o['mode'], o['pronoun'], o['rate'], *write) if o['mode'] in ('paragraph', 'lines') else ''
     texts = h(asr, o['mode'], *write, ai_texts_wanted(o), o['title_source'], o['body_source'], o['title_chars'], o['body_min_chars'], o['body_max_chars'], o['title_style'],
               trans if o['mode'] in ('paragraph', 'lines') else '')
@@ -558,6 +562,14 @@ def ai_texts_wanted(settings):
     return bool(settings.get('design')) and 'ai' in (settings['title_source'], settings['body_source'])
 
 
+def title_kind(settings):
+    """Kiểu tiêu đề; "Tự chọn" leans on the kinds that suit the văn phong (no pain–solution title for news…)."""
+    kind = settings.get('title_style', 'auto')
+    if kind != 'auto':
+        return TITLE_STYLES[kind]
+    return TITLE_STYLES['auto'] + '; với văn phong này ưu tiên ' + ai_translate.STYLE_PROFILES[settings.get('style', 'review')]['titles']
+
+
 def text_rules(settings):
     """Title/body rules for the same OpenAI call that writes the voice text (no extra request). Models count
     characters badly, so several variants of different lengths are asked for and the app keeps the longest one
@@ -565,7 +577,7 @@ def text_rules(settings):
     t, lo, hi = settings['title_chars'], settings['body_min_chars'], settings['body_max_chars']
     tt, bb = text_targets(settings)
     return (f'\n\nCHỮ TRÊN KHUNG VIDEO (khác lời đọc)'
-            f'\n- title_options: ĐÚNG {TITLE_COUNT} phương án TIÊU ĐỀ khác nhau. Kiểu tiêu đề: {TITLE_STYLES[settings.get("title_style", "auto")]}.'
+            f'\n- title_options: ĐÚNG {TITLE_COUNT} phương án TIÊU ĐỀ khác nhau. Kiểu tiêu đề: {title_kind(settings)}.'
             f'\n- body_options: ĐÚNG {BODY_COUNT} phương án NỘI DUNG khác nhau, mỗi phương án 1–2 câu ngắn nêu lợi ích chính có trong video.'
             f'\n- GIỚI HẠN BẮT BUỘC, tính cả dấu cách và dấu câu: mỗi title TỐI ĐA {t} ký tự (khoảng {words_for(t)} từ); 3 phương án dài lần lượt khoảng '
             f'{tt[0]}, {tt[1]} và {tt[2]} ký tự. Mỗi body từ {lo} đến {hi} ký tự (khoảng {words_for(lo)}–{words_for(hi)} từ); 2 phương án dài khoảng {bb[0]} và {bb[1]} ký tự.'
@@ -622,7 +634,7 @@ def template_rules(template):
     return '\n\n'.join(kept), dropped and bool(kept)
 
 
-def base_rules(settings, role, pronoun=True):
+def base_rules(settings, role, pronoun=True, full=True):
     """The shared head of every OpenAI call (voice text, title/body, file name): same rules, same order."""
     template = settings.get('instructions') or ai_translate.DEFAULT_RULES
     shared, _ = template_rules(template)
@@ -631,7 +643,7 @@ def base_rules(settings, role, pronoun=True):
     head = ('MẪU CÂU LỆNH (áp dụng các quy tắc nội dung và văn phong; BỎ QUA mọi yêu cầu về hook, script, title, body hay định dạng kết quả trong mẫu này):\n' + (shared or template)) if other else \
         ('QUY TẮC NỘI DUNG DÙNG CHUNG (mẫu câu lệnh):\n' + shared)
     rules = (DUB_GUARD + '\n\n' + role + ('\n- Xưng hô: ' + PRONOUNS[settings['pronoun']] + '.' if pronoun else '')
-             + '\n- Văn phong: ' + ai_translate.STYLES[settings.get('style', 'review')] + '\n\n' + head)
+             + '\n- Văn phong: ' + ai_translate.style_rules(settings.get('style', 'review'), settings.get('energy', 'mid'), full) + '\n\n' + head)
     # Always on (cannot be switched off): no exact price, brand, size, volume, weight or power.
     rules += '\n\n' + ai_translate.STRICT + ' Ví dụ: "giá mềm", "đang có ưu đãi", "sản phẩm này", "nhỏ gọn", "dung tích lớn".'
     if settings['notes']:
@@ -798,8 +810,11 @@ TRANSLATE_RULES = '''Bạn là biên dịch viên lồng tiếng video ngắn, d
 def translate_request(key, model, lines, settings, want_texts=False, want_name=False, context=None):
     # The shared writing template from the "Dịch & biên tập AI" page: its content and style rules apply here,
     # its hook/script/title/body sections are left out (dubbing translates line by line).
-    rules = base_rules(settings, TRANSLATE_RULES.replace('{src}', SOURCE_NAMES[settings.get('language', 'zh')]))
+    # timed lines: only the short style line (the full profile would make lines longer than their time)
+    rules = base_rules(settings, TRANSLATE_RULES.replace('{src}', SOURCE_NAMES[settings.get('language', 'zh')]), full=False)
     more, extra = extra_rules(settings, want_texts, want_name, context if (want_texts or want_name) else None)
+    if want_texts:   # the title/body written in the same call get the full văn phong
+        more = '\n\nVĂN PHONG CHO TIÊU ĐỀ / NỘI DUNG: ' + ai_translate.style_rules(settings.get('style', 'review'), settings.get('energy', 'mid')) + more
     rules += more
     schema = dict(type='object', additionalProperties=False, required=['lines', *extra], properties=dict(lines=dict(type='array', items=dict(
         type='object', additionalProperties=False, required=['id', 'vi'], properties=dict(id=dict(type='integer'), vi=dict(type='string')))), **extra))
@@ -1183,6 +1198,21 @@ def near_fit(sw, sh, W, H):
     return bool(sw and sh and W and H) and abs((sw / sh) / (W / H) - 1) <= NEAR_FIT
 
 
+LAYERS = ('video', 'background', 'overlay', 'image')
+
+
+def layer_stack(settings, design=True):
+    """"Thứ tự lớp", bottom → top: video, nền (design background + fade), video overlay, lớp ảnh. The frame and
+    the texts always stay on top. Without a saved order the old "Lớp ảnh trên/dưới overlay" choice decides.
+    Without a design the video fills the frame, so it stays the bottom layer and there is no background layer."""
+    order = [k for k in (settings.get('layer_order') or '').split(',') if k in LAYERS]
+    if sorted(order) != sorted(LAYERS):
+        order = ['video', 'background'] + (['overlay', 'image'] if settings.get('image_layer') == 'above' else ['image', 'overlay'])
+    if not design:
+        order = ['video'] + [k for k in order if k in ('overlay', 'image')]
+    return order
+
+
 def edge_crop(settings):
     """"Cắt viền mép": px cut off every side of the source picture (blurred or light borders of downloaded videos)."""
     e = int(settings.get('edge_trim') or 0)
@@ -1345,7 +1375,7 @@ def cost(settings, seconds, reuse=None, audio=True, redo_texts=False):
     if whisper:
         uses.append('nhận diện lời')
     if mode in ('paragraph', 'lines') and 'translate' not in covered:
-        head = len(base_rules(settings, PARAGRAPH_RULES if mode == 'paragraph' else TRANSLATE_RULES)) + len(extra_rules(settings, texts, True, dict(images=[1] * (3 if images else 0), hint='x'))[0])
+        head = len(base_rules(settings, PARAGRAPH_RULES if mode == 'paragraph' else TRANSLATE_RULES, full=mode == 'paragraph')) + len(extra_rules(settings, texts, True, dict(images=[1] * (3 if images else 0), hint='x'))[0])
         calls = 1 if mode == 'paragraph' else max(1, math.ceil(seconds / 120))
         tin += tokens(head) * calls + seconds * 5 + images
         tout += seconds * settings['rate'] * 1.4 + (180 if texts else 0) + 30
@@ -1476,7 +1506,7 @@ class Store:
             tmp.replace(folder / 'job.json')
 
     def summary(self, job):
-        return {k: job.get(k) for k in ('id', 'name', 'file_name', 'file_name_alt', 'video_title', 'tags', 'hint', 'reused', 'text_options', 'text_flags', 'state', 'step', 'steps', 'progress', 'message', 'created', 'outputs', 'warnings', 'duration', 'video_id')} | \
+        return {k: job.get(k) for k in ('id', 'name', 'file_name', 'file_name_alt', 'video_title', 'tags', 'hint', 'reused', 'text_options', 'text_flags', 'state', 'step', 'steps', 'progress', 'message', 'created', 'outputs', 'warnings', 'duration', 'video_id', 'started', 'finished', 'spent')} | \
                dict(texts=self.texts_for(job) if job.get('options', {}).get('design') else None, mp3=bool(job.get('mp3')), mode=job.get('options', {}).get('mode', 'lines'), lines=len(job.get('segments') or []), translated=len(job.get('segments') or []) if job.get('paragraph') else sum(1 for s in job.get('segments') or [] if s.get('vi')))
 
     def jobs(self):
@@ -1502,7 +1532,7 @@ class Store:
                     pass
         rows.sort(key=lambda r: r[2].get('created') or '', reverse=True)
         changed = [r[2] for r in rows if not since or r[1] or r[0] >= since]
-        return dict(jobs=changed, ids=[r[2]['id'] for r in rows], stamp=top, full=not since)
+        return dict(jobs=changed, ids=[r[2]['id'] for r in rows], stamp=top, full=not since, waiting=list(self.queue), parallel=self.parallel)
 
     # files of a finished job that are worth keeping: its state, subtitles, the voice (reused by "Dùng lại kết quả
     # cũ" and by a re-export) and the export itself; everything else is made again when needed
@@ -1984,6 +2014,46 @@ class Store:
         self.save(job)
         return job
 
+    BATCH = dict(retry=('error',), resume=('paused',), cancel=('queued', 'running'), delete=('error', 'paused', 'review', 'done'),
+                 top=('queued',), bottom=('queued',), reexport=('done', 'error', 'paused'))
+
+    def batch(self, raw):
+        """One request for many jobs (the queue's toolbar and the ticked rows): retry = errors only (a job waiting
+        for review is never exported unseen), resume = paused, cancel, delete, top/bottom = order of the waiting
+        jobs. Jobs in another state are skipped; the errors are grouped by message."""
+        action, ids = raw.get('action'), raw.get('ids')
+        if action not in self.BATCH:
+            raise DubError('Thao tác hàng loạt không hợp lệ.')
+        if not isinstance(ids, list) or len(ids) > 5000 or not all(isinstance(i, str) and re.fullmatch('[a-f0-9]{32}', i) for i in ids):
+            raise DubError('Danh sách tác vụ không hợp lệ.')
+        done, skipped, errors = 0, 0, {}
+        if action in ('top', 'bottom'):
+            with self.lock:
+                moved = [k for k in ids if k in self.queue]
+                rest = [k for k in self.queue if k not in moved]
+                self.queue[:] = moved + rest if action == 'top' else rest + moved
+            return dict(done=len(moved), skipped=len(ids) - len(moved), errors=[], waiting=list(self.queue))
+        for key in ids:
+            try:
+                job = self.load(key)
+                if job['state'] not in self.BATCH[action]:
+                    skipped += 1
+                    continue
+                if action in ('retry', 'resume', 'reexport'):
+                    more = dict(**{k: v for k, v in raw.items() if k in ('openai_key', 'ai33_key')})
+                    if action == 'reexport':
+                        # the look changed (frame, layers, overlays, export settings): the voice and texts are kept
+                        more.update({'from': 'export', **({'options': raw['options']} if isinstance(raw.get('options'), dict) else {})})
+                    self.proceed(key, more)
+                elif action == 'cancel':
+                    self.cancel(key)
+                else:
+                    self.delete(key)
+                done += 1
+            except (DubError, OSError) as exc:
+                errors.setdefault(str(exc), []).append(key)
+        return dict(done=done, skipped=skipped, errors=[dict(error=e, ids=k) for e, k in errors.items()], waiting=list(self.queue))
+
     def delete(self, key):
         job = self.load(key)
         if job['state'] in ('running', 'queued'):
@@ -2016,8 +2086,13 @@ class Store:
         if cancel.is_set():
             return
         job['state'] = 'running'
+        began = time.time()
+        job['started'] = round(began)
         try:
             self.process(job, self.keys.get(key, {}), cancel)
+            if job.get('state') == 'done':
+                job['finished'] = round(time.time())
+                job['spent'] = round(job.get('spent', 0) + time.time() - began)   # working seconds, for the batch ETA
         except Cancelled:
             job['state'] = 'paused'
             job['message'] = 'Đã dừng. Bấm Tiếp tục để chạy tiếp từ bước đang dở.'
@@ -2795,58 +2870,75 @@ class Store:
             else:
                 lines, _ = frame_graph(settings, video, ([f'setpts=PTS*{stretch:.6f}'] if stretch != 1 else []) + adjust, [])
                 lines[-1] = lines[-1][:-len('[vout]')] + '[framed]'
-            graph.extend(lines)
-            base, index = 'framed', 2 + has_bg + (subs == 'soft')
+            order = layer_stack(settings, bool(design))
+            if order[0] == 'video':
+                graph.extend(lines)
+                base, video_line = 'framed', None
+            else:
+                # something under the video: start from the background colour, put the video in its place later
+                graph.extend(lines[:-1])
+                base, video_line = 'dbase', lines[-1]
+            index = 2 + has_bg + (subs == 'soft')
             scale = width / design_mod.W
-            if design:
-                # nền + vùng hòa nền drawn over the video (the editor's look), below overlays and the frame
-                bg_png, frame_png = design_mod.artwork_layers(design)
-                (folder / 'design-bg.png').write_bytes(bg_png)
-                (folder / 'design-frame.png').write_bytes(frame_png)
+            art = design_mod.artwork_layers(design) if design else None   # (nền PNG, khung PNG)
+            def add_background(base, index):
+                # nền + vùng hòa nền (the editor's look)
+                nonlocal args
+                (folder / 'design-bg.png').write_bytes(art[0])
                 args += ['-loop', '1', '-framerate', '30', '-t', f'{duration:.3f}', '-i', 'design-bg.png']
                 graph.append(f'[{index}:v]scale={width}:{height}:flags=lanczos,format=rgba[dbg]')
                 graph.append(f'[{base}][dbg]overlay=0:0:format=auto:shortest=1[designbg]')
-                base, index = 'designbg', index + 1
+                return 'designbg', index + 1
             def add_image(base, index):
                 nonlocal args
                 args += ['-loop', '1', '-framerate', '30', '-t', f'{duration:.3f}', '-i', str(self.image_dir / image['file'])]
                 more, base = image_chain(index, settings, width, height, base, duration)
                 graph.extend(more)
                 return base, index + 1
-            if image and settings['image_layer'] == 'below':
-                base, index = add_image(base, index)
-            for k, item in enumerate(chosen):
-                if settings['overlay_timing'] == 'sequence' and item.get('sequence'):
-                    # joined clips: each normalised to the frame, concatenated, then cut to the video's length
-                    parts = []
-                    for n, clip in enumerate(item['sequence']):
-                        meta = self.overlay(clip)
-                        if not meta:
-                            continue
-                        args += (['-loop', '1', '-t', '3'] if meta['still'] else []) + overlay_decoder(meta) + ['-i', str(self.overlay_dir / meta['file'])]
-                        graph.append(f'[{index}:v]{overlay_fit(width, height)},format=rgba[sq{k}_{n}]')
-                        parts.append(f'[sq{k}_{n}]')
-                        index += 1
-                    graph.append(''.join(parts) + f'concat=n={len(parts)}:v=1:a=0[seq{k}]')
-                    source = f'[seq{k}]'
-                else:
-                    meta = self.overlay(item['id'])
-                    path = str(self.overlay_dir / meta['file'])
-                    if meta['still']:
-                        args += ['-loop', '1', '-t', str(duration if settings['overlay_timing'] == 'loop' else min(duration, 4)), '-i', path]
+            def add_overlays(base, index):
+                nonlocal args
+                for k, item in enumerate(chosen):
+                    if settings['overlay_timing'] == 'sequence' and item.get('sequence'):
+                        # joined clips: each normalised to the frame, concatenated, then cut to the video's length
+                        parts = []
+                        for n, clip in enumerate(item['sequence']):
+                            meta = self.overlay(clip)
+                            if not meta:
+                                continue
+                            args += (['-loop', '1', '-t', '3'] if meta['still'] else []) + overlay_decoder(meta) + ['-i', str(self.overlay_dir / meta['file'])]
+                            graph.append(f'[{index}:v]{overlay_fit(width, height)},format=rgba[sq{k}_{n}]')
+                            parts.append(f'[sq{k}_{n}]')
+                            index += 1
+                        graph.append(''.join(parts) + f'concat=n={len(parts)}:v=1:a=0[seq{k}]')
+                        source = f'[seq{k}]'
                     else:
-                        args += (['-stream_loop', '-1'] if settings['overlay_timing'] == 'loop' else []) + overlay_decoder(meta) + ['-i', path]
-                    source = f'[{index}:v]'
-                    index += 1
-                clips = [self.overlay(c) for c in item.get('sequence') or [item['id']]] if settings['overlay_timing'] == 'sequence' else [self.overlay(item['id'])]
-                alpha = all(c and c.get('alpha') for c in clips)
-                more, base = overlay_chain(source, dict(item, k=k, alpha=alpha), width, height, settings, base, duration)
-                graph.extend(more)
-            if image and settings['image_layer'] == 'above':
-                base, index = add_image(base, index)
+                        meta = self.overlay(item['id'])
+                        path = str(self.overlay_dir / meta['file'])
+                        if meta['still']:
+                            args += ['-loop', '1', '-t', str(duration if settings['overlay_timing'] == 'loop' else min(duration, 4)), '-i', path]
+                        else:
+                            args += (['-stream_loop', '-1'] if settings['overlay_timing'] == 'loop' else []) + overlay_decoder(meta) + ['-i', path]
+                        source = f'[{index}:v]'
+                        index += 1
+                    clips = [self.overlay(c) for c in item.get('sequence') or [item['id']]] if settings['overlay_timing'] == 'sequence' else [self.overlay(item['id'])]
+                    alpha = all(c and c.get('alpha') for c in clips)
+                    more, base = overlay_chain(source, dict(item, k=k, alpha=alpha), width, height, settings, base, duration)
+                    graph.extend(more)
+                return base, index
+            for layer in order:
+                if layer == 'video' and video_line:
+                    graph.append(video_line.replace('[dbase][clip]', f'[{base}][clip]', 1))
+                    base = 'framed'
+                elif layer == 'background' and design:
+                    base, index = add_background(base, index)
+                elif layer == 'image' and image:
+                    base, index = add_image(base, index)
+                elif layer == 'overlay' and chosen:
+                    base, index = add_overlays(base, index)
             text = 'null'
             if design:
                 # khung → khung PNG riêng → ảnh/logo → nền chữ → tiêu đề, nội dung (shared with the editor)
+                (folder / 'design-frame.png').write_bytes(art[1])
                 args += ['-loop', '1', '-framerate', '30', '-t', f'{duration:.3f}', '-i', 'design-frame.png']
                 graph.append(f'[{index}:v]scale={width}:{height}:flags=lanczos,format=rgba[dfr]')
                 graph.append(f'[{base}][dfr]overlay=0:0:format=auto:shortest=1[designfr]')

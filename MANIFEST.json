@@ -1,15 +1,15 @@
 {
  "app": "ReviewStudio",
- "version": "0.28.2",
- "notes": "## Mới trong 0.28.2\n\n- **Xem trước cập nhật ngay khi bỏ video đầu vào:** bỏ hết video (✕ hoặc \"Bỏ tất cả\") thì khung xem trước trống ngay, không còn giữ video cũ; áp dụng cho cả khung thiết kế và khung thường.",
+ "version": "0.29.0",
+ "notes": "## Mới trong 0.29.0\n\n**Thứ tự lớp (mới)**\n- Ô \"Thứ tự lớp\" ngay dưới khung xem trước: 🎬 Video · 🎨 Nền · ✨ Video overlay · 🖼 Lớp ảnh, xếp từ trên cùng xuống dưới cùng; bấm ‹ › để đưa một lớp lên hoặc xuống, ↺ về mặc định. Khung trang trí và chữ luôn nằm trên cùng.\n- Xem trước đổi ngay khi sắp xếp, video xuất ra đúng thứ tự đó; thứ tự lưu cùng mẫu cấu hình.\n- Không dùng mẫu thiết kế thì video phủ cả khung nên luôn ở dưới cùng; chỉ đổi được thứ tự Lớp ảnh và Overlay.\n\n**Hàng đợi thiết kế lại**\n- Thanh tổng quan: tiến độ cả lô (xong / đang chạy / chờ / chờ duyệt / lỗi), thời gian còn lại ước tính, thời gian trung bình mỗi video, OpenAI đã dùng và credit ai33 còn lại.\n- Thanh công cụ gọn: \"↻ Chạy lại lỗi\" và \"■ Dừng tất cả\"; dọn file tạm, xóa và \"🔔 Báo khi cả lô xong\" nằm trong menu ⋯.\n- Tick chọn nhiều video: Chạy, Dừng, ⤒ Ưu tiên / ⤓ Xuống cuối trong hàng chờ, ⟳ Xuất lại với thông số mới (giữ giọng và chữ đã có), Xóa. Video đang chờ hiện số thứ tự \"Chờ · #3\"; video đang chạy hiện bước đang làm.\n- Tìm theo tên video và lọc video kẹt ở từng bước.\n- Lỗi được gom nhóm theo nguyên nhân, kèm cách xử lý và nút \"Chạy lại nhóm\".\n- Báo khi cả lô xong: âm báo, thông báo trên máy và dòng tóm tắt.\n- Sửa lỗi: \"Chạy lại lỗi\" trước đây chạy luôn cả video đang chờ duyệt (xuất khi chưa xem chữ AI); nay chỉ chạy video lỗi. Nút xóa không còn sáng khi hàng đợi trống. Mọi thao tác hàng loạt gửi một lần cho server (nhanh với hàng trăm video).\n\n**Văn phong viết hay hơn**\n- Mỗi văn phong có hồ sơ riêng: giọng, câu mở 3 giây đầu, trình tự ý, từ nên dùng / cần tránh, câu mẫu. Gửi đầy đủ khi viết đoạn văn lồng tiếng và tiêu đề / nội dung; bản dịch theo từng dòng (phải khớp thời gian) chỉ dùng câu ngắn để câu không dài ra.\n- Mới: \"Độ hào hứng\" (Nhẹ nhàng / Vừa phải / Hào hứng) dùng chung mọi văn phong.\n- Kiểu tiêu đề \"Tự chọn\" theo văn phong (Tin tức không dùng kiểu nỗi đau – giải pháp, Giải trí ưu tiên gây tò mò…).\n- Sửa mâu thuẫn: \"Trải nghiệm thực tế\" chỉ kể trải nghiệm có trong lời gốc; bỏ câu trùng về thông số ở \"Công nghệ\".",
  "files": {
   "video_tools.js": {
    "sha256": "217dc997759d9b7b26fccfb7abaa35ebf82b5eb333f816dc83fcf67b06781706",
    "size": 4542
   },
   "tests/test_batch.py": {
-   "sha256": "d6d511b2ec706cef98eb98d95bf4550a6c8ddedf1c1abb52dbbc72bdc04cb094",
-   "size": 14709
+   "sha256": "b7366c25f7af2ee443405fd94f4833d0e4f0bc2fc3d14d789e9b2a2c5196fc33",
+   "size": 16193
   },
   "win_meta.py": {
    "sha256": "228d18deb126f8965807b7c3a7d2249007da30d88f3a6bbf04493deb52b989a8",
@@ -20,12 +20,12 @@
    "size": 5446
   },
   "tests/test_ai_texts.py": {
-   "sha256": "26d933df03787d5f0259b1971fb6d5cc9beea9bd48b7c8dd155253f808d99e5c",
-   "size": 23885
+   "sha256": "3f3055b2468f39adafd9b04853cab403f2e831daf771d872f17f8254f83529d5",
+   "size": 25049
   },
   "design_tab.js": {
-   "sha256": "e4ae80c540f82b3cd8ac7433a15fc45b289b7537b4811501e3629c7950ac0765",
-   "size": 38039
+   "sha256": "8b05d411987eb1068c9c8907c9890d6865fce80fc66092c182518e3076af8ef0",
+   "size": 38110
   },
   "local_files.js": {
    "sha256": "b9a975e980db7f5f013f6046d58228fb39817b6959e8caaf9505c4ba3cc898a7",
@@ -52,8 +52,8 @@
    "size": 5181
   },
   "dub_ui.js": {
-   "sha256": "cc661c6dfe9b644758fdd4ffccde77cf0b9a642ae7624f4e7bef84f25c7199c6",
-   "size": 124734
+   "sha256": "63c95c0b35777bd7a1c0824a354725888f6cf5f9e70ac46308b120e083c5568a",
+   "size": 138795
   },
   "key_ui.js": {
    "sha256": "4c1833943a21476f6e515115af555c36a4d763bbc5c1122f111cad0a5065574d",
@@ -64,12 +64,12 @@
    "size": 2610
   },
   "dubbing.py": {
-   "sha256": "3fc64dc20dfb13fd4b4a2586b1839d5403c65862eef60731e25017b903acabf7",
-   "size": 185145
+   "sha256": "555bad151e964bfbfc0dee678835129f152280b56ffacf1d2f557018cc985099",
+   "size": 190856
   },
   "tests/test_dubbing.py": {
-   "sha256": "8f056ca16aa2b2384b13931a62cf9cf3c2b1883448b95f19743e34e8fb86a80e",
-   "size": 51270
+   "sha256": "8cfe463e82cae6857f9073341b8c4422f1d3174b2162f366d8b1801342e2fc14",
+   "size": 52744
   },
   "image_ui.js": {
    "sha256": "b8e2a905501aedea84033a7c962b180251e06dc018e6133241f0310b474ed8e9",
@@ -116,8 +116,8 @@
    "size": 13961
   },
   "app.py": {
-   "sha256": "000f42630e2cc7f880bf2ec200b5e8dec53d084035a0b67b9eb71cc114ee993e",
-   "size": 61820
+   "sha256": "2a7b298a7eaed120a46a67e5a76ce7b8abdd59d57816cce65b7e648552a8163e",
+   "size": 61951
   },
   "ai33_audio.py": {
    "sha256": "bf91eee837ea08e1b3e96495f68f87b621f0d68abfeedfdbc4a53f8a13b21b7d",
@@ -132,12 +132,12 @@
    "size": 28722
   },
   "ai_translate.py": {
-   "sha256": "a902837b027201e394cd4f6464e203f555c881ef0c62edea9a2e89ba3c4bbb4a",
-   "size": 5241
+   "sha256": "e342f4fbb05c503401484744887bf8ad14ce2ce70f934e9ee425732c1fc42246",
+   "size": 13467
   },
   "studio.css": {
-   "sha256": "dd2326849281e2d9c290a41e884f597af0f8649fa58e637cae1ea0ec2c551a4c",
-   "size": 94722
+   "sha256": "891d1b8fb373073949bc3ef9ceab38e301619a5382ab492b60c057a669d7f992",
+   "size": 98306
   },
   "studio.js": {
    "sha256": "88660710a1bdbc6d29b18e06a4464c1111d0de7db68e6e74bd8d1963e0e76c22",
@@ -152,7 +152,7 @@
    "size": 5352
   },
   "index.html": {
-   "sha256": "0dace0e940c1fb22c33fcc7d5df626d85386254a9ca1aa991e575b70ad54b50d",
+   "sha256": "67ba2b6a758cff65c29b65486588a4b62192bddbb719923698f13c803d0615b7",
    "size": 24079
   },
   "launch.py": {
@@ -168,15 +168,15 @@
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "0c37e221b76a1efacf107bcc84a45ef25bcfd73bfb22abd5c0243be8c2de2121",
-   "size": 10002
+   "sha256": "857e11d81fcf95f28eb6da3448922763f5664d7d4d0c9f70028d0d4dbecf2485",
+   "size": 10610
   },
   "README.md": {
-   "sha256": "d5faed5cb9f2ac804a974c5add536c6f7693b3dc56781b74ec1a4bf1c3ef181f",
-   "size": 16866
+   "sha256": "7478e3633c5ca637407c26a88bfbd2e9759f96daed7bf1bb2bb8c2c928c5b44d",
+   "size": 19519
   },
   "VERSION": {
-   "sha256": "5a988f563b4e7f63fa09396db7bb2eed6011a42483ddf76464028588e5bd2d51",
+   "sha256": "a68641c6aacd345c4931a6217331d2bf43398c7bc134666a2f756953eab407aa",
    "size": 7
   },
   ".gitignore": {

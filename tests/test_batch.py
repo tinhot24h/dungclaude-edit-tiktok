@@ -179,6 +179,25 @@ class Batch2Tests(test_dubbing.PipelineBase):
         self.assertEqual((dubbing.DEMUCS_SLOT.limit, self.store.queue_info()['demucs']), (3, 3))
         self.store.set_parallel(None, demucs=1)
 
+    def test_batch_actions_touch_only_the_right_states(self):
+        a, b, c = (self.job(mode='paragraph') for _ in range(3))
+        for j, state in ((a, 'error'), (b, 'review'), (c, 'paused')):
+            j['state'] = state;self.store.save(j)
+        with mock.patch.object(self.store, 'enqueue') as enqueue:
+            got = self.store.batch(dict(action='retry', ids=[a['id'], b['id'], c['id']]))
+        self.assertEqual((got['done'], got['skipped']), (1, 2))          # a job waiting for review is never sent on unseen
+        self.assertEqual([x.args[0] for x in enqueue.call_args_list], [a['id']])
+        with mock.patch.object(self.store, 'enqueue'):
+            self.assertEqual(self.store.batch(dict(action='resume', ids=[a['id'], b['id'], c['id']]))['done'], 1)
+        self.store.queue[:] = [a['id'], b['id'], c['id']]
+        self.assertEqual(self.store.batch(dict(action='top', ids=[c['id']]))['waiting'], [c['id'], a['id'], b['id']])
+        self.assertEqual(self.store.batch(dict(action='bottom', ids=[c['id'], a['id']]))['waiting'], [b['id'], c['id'], a['id']])
+        self.store.queue[:] = []
+        got = self.store.batch(dict(action='delete', ids=[b['id']]))
+        self.assertEqual(got['done'], 1);self.assertFalse((self.data / 'dub' / b['id']).exists())
+        with self.assertRaises(dubbing.DubError):self.store.batch(dict(action='format', ids=[]))
+        with self.assertRaises(dubbing.DubError):self.store.batch(dict(action='delete', ids=['../x']))
+
     def test_queue_sends_only_changes(self):
         a = self.job(mode='paragraph');b = self.job(mode='paragraph')
         first = self.store.jobs_since(0)

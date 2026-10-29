@@ -449,6 +449,22 @@ class DesignTests(PipelineBase):
         r,g,b=self.pixel(out,540,1700);self.assertTrue(r>200 and b>200 and g<80,(r,g,b))      # nền below the fade
         top=self.pixel(out,540,300);self.assertFalse(top[0]>200 and top[2]>200 and top[1]<80,top)   # video above the fade
 
+    def test_layer_order_puts_the_video_above_the_background(self):
+        o=lambda **k:dubbing.options(k)
+        self.assertEqual(dubbing.layer_stack(o()),['video','background','image','overlay'])
+        self.assertEqual(dubbing.layer_stack(o(image_layer='above')),['video','background','overlay','image'])
+        self.assertEqual(dubbing.layer_stack(o(layer_order='background,image,overlay,video')),['background','image','overlay','video'])
+        self.assertEqual(dubbing.layer_stack(o(layer_order='background,image,overlay,video'),design=False),['video','image','overlay'])   # no design: the video fills the frame
+        with self.assertRaises(dubbing.DubError):o(layer_order='video,video,image,overlay')
+        with mock.patch.object(dubbing,'paragraph_request',return_value='Xin chào.'):
+            job=self.job(background='remove',review=False,subtitles='none',design=self.DESIGN,title_source='fixed',body_source='none',end_with_voice=False,layer_order='background,image,overlay,video')
+            self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
+        self.assertEqual(job['state'],'done',job['message'])
+        graph=(self.data/'dub'/job['id']/'export.ffgraph').read_text()
+        self.assertLess(graph.index('[designbg]'),graph.index('[clip]overlay'))
+        r,g,b=self.pixel(self.data/'dub'/job['id']/'dubbed.mp4',540,1700)
+        self.assertFalse(r>200 and b>200 and g<80,(r,g,b))   # the video now covers the magenta nền
+
     def test_fixed_and_file_texts_and_dub_with_design_in_the_same_call(self):
         seen={}
         def para(key,model,segments,seconds,limit,settings,context=None):

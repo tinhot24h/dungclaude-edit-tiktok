@@ -179,7 +179,7 @@ function ccImage(){const body=$('sec-image').querySelector('.dub-sec-body');if(b
   ccGroup('Biến đổi',ccRow('Tỷ lệ',labelled('Rộng %',ccBare('dub-img-w')),labelled('Cao %',ccBare('dub-img-h'))),ccRow('Thu phóng đồng nhất',ccSwitch('dub-img-keep','Giữ tỷ lệ ảnh')),ccRow('Vừa khung',$('dub-img-fit')),
    ccRow('Vị trí',labelled('Ngang %',ccBare('dub-img-x')),labelled('Dọc %',ccBare('dub-img-y'))),ccRow('Căn',$('dub-img-align')),
    ccRow('Xoay',ccBare('dub-img-rot')),ccRow('',ccButtons(turn,'cc-chips')),ccRow('Lật',ccSeg('dub-img-flip',optionList('dub-img-flip')))),
-  ccGroup('Hòa trộn',ccRow('Chế độ',ccBare('dub-img-blend')),ccRow('Độ mờ',ccBare('dub-img-op')),ccRow('Thứ tự lớp',ccBare('dub-img-layer'),$('dub-img-reset'))));
+  ccGroup('Hòa trộn',ccRow('Chế độ',ccBare('dub-img-blend')),ccRow('Độ mờ',ccBare('dub-img-op')),ccRow('Thứ tự lớp',el('small',{className:'helper',textContent:'Sắp xếp ở ô “Thứ tự lớp” ngay dưới khung xem trước.'}),$('dub-img-reset'))));
  ccHideRest(body,null);body.append(panel);refreshers.forEach(f=>f())}
 function ccOverlay(){const body=$('sec-overlay').querySelector('.dub-sec-body');if(body.querySelector('.cc-panel'))return;
  headSwitch($('sec-overlay'),$('dub-overlay'),'Bật/tắt video overlay');
@@ -247,19 +247,19 @@ function designPreview(){const stem=n=>(n||'').replace(/^.*[\\/]/,'').replace(/\
  if(!bgOn())Object.assign(o,{background:'none',frame_style:'none'});
  for(const k of ['title','body']){const src=$(`dt-${k}-src`).value;if(!$(`dt-${k}-on`).checked)o[k]='';else if(jobShown?.texts)o[k]=jobShown.texts[k]||'';else if(src==='file')o[k]=k==='title'?name:''}
  window.designPreview=o;studio.schedule()}
-function overlayLayer(){const still=$('dub-ovi');let img=$('dt-ovi');
+function overlayLayer(){window.dubLayers?.z();const still=$('dub-ovi');let img=$('dt-ovi');
  if(!img){img=el('img',{id:'dt-ovi',className:'art',alt:''});img.style.pointerEvents='none';$('overlay').after(img)}
  img.hidden=still.hidden||!still.dataset.src;if(!img.hidden){if(img.dataset.src!==still.dataset.src){img.src=still.dataset.src;img.dataset.src=still.dataset.src}Object.assign(img.style,{opacity:still.style.opacity,mixBlendMode:still.style.mixBlendMode,objectFit:'cover',width:'720px',height:'1280px',left:0,top:0})}
  const src=$('dub-ovv'),show=!src.hidden&&src.dataset.src;let v=$('dt-ovv');
  if(!v){v=el('video',{id:'dt-ovv',className:'art',muted:true,loop:true,playsInline:true});v.style.pointerEvents='none';$('overlay').after(v)}
  v.hidden=!show;if(!show)return;if(v.dataset.src!==src.dataset.src){v.src=src.dataset.src;v.dataset.src=src.dataset.src}
  Object.assign(v.style,{opacity:src.style.opacity,mixBlendMode:src.style.mixBlendMode,objectFit:'cover',width:'720px',height:'1280px',left:0,top:0});
- const main=$('video');if(main.paused)v.pause();else v.play().catch(()=>{});
+ window.dubLayers?.z();const main=$('video');if(main.paused)v.pause();else v.play().catch(()=>{});
  if(v.duration&&Math.abs(v.currentTime-(main.currentTime%v.duration))>.3)v.currentTime=main.currentTime%v.duration}
 // image layer and TikTok safe zone: the dub page's boxes move onto the stage (image under the frame and text, like the export)
 function stageLayers(use){const box=$('dub-imgbox'),safe=$('dub-safe').checked;
- if(use){const o=api.settings(),scene=$('scene'),anchor=o.image_layer==='above'||!$('dt-ovi')?$('frame-art'):$('dt-ovi');if(box.parentNode!==scene||box.nextSibling!==anchor)scene.insertBefore(box,anchor);
-  api.drawImage(o,720,1280);box.style.zIndex='auto'}
+ if(use){const o=api.settings(),scene=$('scene'),anchor=$('frame-art');if(box.parentNode!==scene||box.nextSibling!==anchor)scene.insertBefore(box,anchor);
+  api.drawImage(o,720,1280)}
  else{const frame=$('dub-frame');if(box.parentNode!==frame)frame.insertBefore(box,$('dub-frame-empty'))}
  // the stage's own TikTok safe zone (720×1280 design pixels) follows the "Vùng an toàn TikTok" box of this page
  if($('safe-zone'))$('safe-zone').hidden=!(use&&safe);$('dub-safezone').hidden=use||!safe}
@@ -305,7 +305,7 @@ $('dub-preset').addEventListener('change',async e=>{const v=$('dub-preset').valu
  try{const r=await request('/library/templates/'+v.slice(4));studio.apply(r.data.design);studio.schedule();api.remember();api.say(`Đã áp dụng thiết kế "${r.name}". Bấm 💾 Lưu mẫu để lưu kèm mọi thông số.`)}catch(err){api.say(err.message)}},true);
 new MutationObserver(()=>{if(!$('dub-preset').querySelector('optgroup.dt-old'))addTemplates()}).observe($('dub-preset'),{childList:true});
 
-window.dubProfile={name:'dub',extend,apply,preview,labels,previewJob};
+window.dubProfile={name:'dub',extend,apply,preview,labels,previewJob,on};
 // the start page; its saved settings load once the dubbing defaults are known
 document.addEventListener('dub-ready',()=>enter(),{once:true});
 const ready=setInterval(()=>{if(document.querySelector('#dub-style option')){clearInterval(ready);document.dispatchEvent(new Event('dub-ready'))}},100);
