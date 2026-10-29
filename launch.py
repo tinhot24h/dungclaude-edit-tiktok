@@ -76,17 +76,10 @@ def main():
     if sys.version_info < (3, 11):
         raise RuntimeError('Can Python 3.11 tro len. Xem HUONG_DAN.txt.')
     os.environ['PATH'] = str(ROOT / 'bin') + os.pathsep + os.environ.get('PATH', '')
-    for tool in ('ffmpeg', 'ffprobe'):
-        if not shutil.which(tool):
-            raise RuntimeError(f'Chua co {tool}. Cai FFmpeg theo HUONG_DAN.txt roi mo lai.')
-        subprocess.run([tool, '-version'], check=True, stdout=subprocess.DEVNULL,
-                       stderr=subprocess.PIPE, timeout=20)
-    filters = subprocess.run(['ffmpeg', '-hide_banner', '-filters'],
-                             capture_output=True, text=True, check=True, timeout=20)
-    encoders = subprocess.run(['ffmpeg', '-hide_banner', '-encoders'],
-                              capture_output=True, text=True, check=True, timeout=20)
-    if 'drawtext' not in filters.stdout or 'libx264' not in encoders.stdout:
-        raise RuntimeError('Ban FFmpeg can co drawtext va libx264. Xem HUONG_DAN.txt.')
+    # FFmpeg missing or too limited: on Windows it is downloaded once into bin/ (no searching, no setup)
+    import ffmpeg_setup
+    if ffmpeg_setup.usable() and not ffmpeg_setup.install(ROOT, lambda text: print(text, flush=True)):
+        raise RuntimeError('Chua co FFmpeg (' + ffmpeg_setup.usable() + '). Kiem tra mang roi mo lai, hoac cai theo HUONG_DAN.txt.')
     for font in ('DejaVuSans.ttf', 'DejaVuSans-Bold.ttf', 'DejaVuSerif.ttf',
                  'DejaVuSerif-Bold.ttf', 'DejaVuSansMono.ttf', 'DejaVuSansMono-Bold.ttf'):
         if not (ROOT / 'assets' / font).is_file():

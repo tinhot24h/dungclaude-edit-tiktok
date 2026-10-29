@@ -4,6 +4,12 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.32.0
+
+- **Tự cài FFmpeg và Python trên Windows:** bấm START_WINDOWS.bat là xong, không phải tự đi tìm.
+  - Chưa có FFmpeg, hoặc bản đang có thiếu drawtext/libx264: app tự tải bản đầy đủ cho Windows (BtbN, dự phòng gyan.dev; khoảng 200 MB, có hiện % tiến độ, chỉ tải 1 lần) vào thư mục `bin` của ứng dụng, rồi chạy tiếp. Không cài vào hệ thống; xóa thư mục `bin` là gỡ. Bản này có sẵn libass (phụ đề chữ chạy) và NVENC.
+  - Chưa có Python 3.11+: START_WINDOWS.bat tự cài Python 3.12 bằng winget (cho tài khoản đang dùng), rồi mở app.
+
 ## Mới trong 0.31.5
 
 - **Tự báo lỗi giao diện:** trang chạy một bộ kiểm tra trước tiên. Trình duyệt quá cũ (thiếu tính năng app cần, ví dụ Edge đời cũ trên Windows 10 bản cũ) sẽ hiện thanh vàng nói rõ cần cài Chrome/Edge bản mới. Bất kỳ lỗi mã nào khiến nút bấm không chạy sẽ hiện thanh đỏ "⚠ Lỗi giao diện: …" kèm tên file và dòng lỗi, để chụp gửi người hỗ trợ (trước đây lỗi xảy ra im lặng, nút chỉ không phản hồi). Mất kết nối với ứng dụng cũng được báo.

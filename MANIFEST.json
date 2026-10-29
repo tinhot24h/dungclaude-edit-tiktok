@@ -1,8 +1,12 @@
 {
  "app": "ReviewStudio",
- "version": "0.31.5",
- "notes": "## Mới trong 0.31.5\n\n- **Tự báo lỗi giao diện:** trang chạy một bộ kiểm tra trước tiên. Trình duyệt quá cũ (thiếu tính năng app cần, ví dụ Edge đời cũ trên Windows 10 bản cũ) sẽ hiện thanh vàng nói rõ cần cài Chrome/Edge bản mới. Bất kỳ lỗi mã nào khiến nút bấm không chạy sẽ hiện thanh đỏ \"⚠ Lỗi giao diện: …\" kèm tên file và dòng lỗi, để chụp gửi người hỗ trợ (trước đây lỗi xảy ra im lặng, nút chỉ không phản hồi). Mất kết nối với ứng dụng cũng được báo.\n- App không cần Node.js hay thư viện trình duyệt nào: chỉ cần Python 3.11+ và FFmpeg, mở bằng START_WINDOWS.bat (http://127.0.0.1:8000).",
+ "version": "0.32.0",
+ "notes": "## Mới trong 0.32.0\n\n- **Tự cài FFmpeg và Python trên Windows:** bấm START_WINDOWS.bat là xong, không phải tự đi tìm.\n  - Chưa có FFmpeg, hoặc bản đang có thiếu drawtext/libx264: app tự tải bản đầy đủ cho Windows (BtbN, dự phòng gyan.dev; khoảng 200 MB, có hiện % tiến độ, chỉ tải 1 lần) vào thư mục `bin` của ứng dụng, rồi chạy tiếp. Không cài vào hệ thống; xóa thư mục `bin` là gỡ. Bản này có sẵn libass (phụ đề chữ chạy) và NVENC.\n  - Chưa có Python 3.11+: START_WINDOWS.bat tự cài Python 3.12 bằng winget (cho tài khoản đang dùng), rồi mở app.",
  "files": {
+  "ffmpeg_setup.py": {
+   "sha256": "f66eb85abf503510412af3b364a9e5e10558cc92a8caa4153aa07bbc44a227ab",
+   "size": 4524
+  },
   "compat.js": {
    "sha256": "3b72a7c0d5d15ad220a4fcd06f1c2ead7bc6830b65eeab747658980aa44cafd8",
    "size": 3762
@@ -48,8 +52,8 @@
    "size": 212
   },
   "tests/test_update.py": {
-   "sha256": "069866b8408d3c15106883469d87fb4a819ee139bdc8c626ff85aaab10f8da88",
-   "size": 5777
+   "sha256": "7d0fd19e1e34851342c457aae2bdab795ff2aec2bd43160557a7f8d9445b97ed",
+   "size": 7510
   },
   "update_ui.js": {
    "sha256": "f4a5051f4fe780188189c2decb37914c65cd58147c8a3503bc535a5f12b4f0ab",
@@ -156,36 +160,36 @@
    "size": 6858
   },
   "index.html": {
-   "sha256": "de14c9ccb0d530f97c91b59dfc865fb1a76a15016d23a64a7ef87d33b9891e4d",
+   "sha256": "b2f2d7a5aacfec5e8d499aa3123baa988ffe140dc3e3108919515210e5a8cf02",
    "size": 24183
   },
   "launch.py": {
-   "sha256": "283210c4d7b6b1485fa3443ef11b2d51dc3a00a67384b18efb169e391e7522f3",
-   "size": 5006
+   "sha256": "259b3abb4d3abfbc789c3a2c3b6cce0a93f5004ac90474afbff201f730143f92",
+   "size": 4587
   },
   "build_package.py": {
-   "sha256": "6e6d2ccc6794cc368411b57c4880fa527cd5a31cac44969398f7a81756c89653",
-   "size": 3228
+   "sha256": "ac0f676561e139cce94e2c255353dea69c39de65457c91868c3d432b2d1b0ba2",
+   "size": 3247
   },
   "START_WINDOWS.bat": {
-   "sha256": "616ecf0e4d9a41995c509f79bd5e1a01d1dce7ba76356a801417e08747847c4e",
-   "size": 212
+   "sha256": "45917335d9a938e178467107e9ceeaed5daecef10ca9351015867336746a6957",
+   "size": 1411
   },
   "HUONG_DAN.txt": {
-   "sha256": "5e1563b5ecd601b8100afb5e7b836cd9a9d8b00e5bf162efbadaa3adc8532ce9",
-   "size": 12909
+   "sha256": "5bc41f3bba67e8df6f54cceaf0abc5403656cefa22d259d28a55c5c481f44045",
+   "size": 13301
   },
   "README.md": {
-   "sha256": "5eef360e9c87f41148396d70234f1220600179308eca5c6d725c2722faf72723",
-   "size": 28040
+   "sha256": "148b65ae13c499f8e1dc4f9988889b86ea6bc305d57899ce0f073fa892612659",
+   "size": 28709
   },
   "VERSION": {
-   "sha256": "658aa3c56f5efff429db0b358a67add4c3139f76ff951d8e98425d26a95e073e",
+   "sha256": "e0ccf7913110f807adecc59be43ce6fb334f82a8a7f70f70fbbba34bf1eeaaf2",
    "size": 7
   },
   ".gitignore": {
-   "sha256": "0f1a2bf5537910f90c1fe49597d40905cc011718e7987d530dbc236951f7e0d7",
-   "size": 27
+   "sha256": "28e248862fca9a61c12949e6f0dbe2c02452c146b9f30462b6c7fd430dfa2647",
+   "size": 32
   },
   "tests/test_storage.py": {
    "sha256": "4ff9454ea2fd064479e1d26f28d6c43db6ffa5a68234df869b14e35bf9bb75d7",

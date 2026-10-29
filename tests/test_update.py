@@ -99,3 +99,30 @@ class ManifestTests(unittest.TestCase):
 
 if __name__=='__main__':
     unittest.main()
+
+
+class FFmpegSetupTests(unittest.TestCase):
+    def test_missing_ffmpeg_is_downloaded_into_bin(self):
+        import io, tempfile, zipfile
+        from unittest import mock
+        import ffmpeg_setup
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            def fake_download(url, target, say):
+                if 'github' in url:
+                    raise OSError('mat mang')            # the first source fails: the next one is tried
+                with zipfile.ZipFile(target, 'w') as z:
+                    z.writestr('ffmpeg-7.1-essentials_build/bin/ffmpeg.exe', b'exe1')
+                    z.writestr('ffmpeg-7.1-essentials_build/bin/ffprobe.exe', b'exe2')
+                    z.writestr('ffmpeg-7.1-essentials_build/README.txt', b'x')
+            said = []
+            with mock.patch.object(ffmpeg_setup, 'download', side_effect=fake_download), mock.patch.object(ffmpeg_setup, 'usable', return_value=''):
+                self.assertTrue(ffmpeg_setup.install(root, said.append, windows=True))
+            self.assertEqual(sorted(p.name for p in (root / 'bin').iterdir()), ['ffmpeg.exe', 'ffprobe.exe'])   # the archive is removed
+            self.assertEqual((root / 'bin' / 'ffmpeg.exe').read_bytes(), b'exe1')
+            self.assertTrue(any('Thu nguon khac' in s for s in said))
+            # nothing downloads: a clear message, no half files
+            with mock.patch.object(ffmpeg_setup, 'download', side_effect=OSError('offline')):
+                (root / 'bin' / 'ffmpeg.exe').unlink();(root / 'bin' / 'ffprobe.exe').unlink()
+                self.assertFalse(ffmpeg_setup.install(root, said.append, windows=True))
+            self.assertEqual(list((root / 'bin').iterdir()), [])

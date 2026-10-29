@@ -10,16 +10,18 @@ ReviewStudio-v0.13.zip vào thư mục mới, chép thư mục .local của bả
 nếu muốn giữ video/MP3/dự án. Không chạy từ trong ZIP.
 
 CÀI MỘT LẦN
-Cần Python 3.11+, FFmpeg/FFprobe có libx264/drawtext và libmp3lame. Không cần pip/npm.
-Font tiếng Việt kèm sẵn. Python/FFmpeg không kèm ZIP; chưa phải EXE.
+Windows: chỉ cần bấm đúp START_WINDOWS.bat, không phải tự tìm hay cài gì.
+- Chưa có Python: tự cài Python 3.12 bằng winget (có sẵn trên Windows 10/11).
+- Chưa có FFmpeg (hoặc bản thiếu drawtext/libx264): tự tải bản đầy đủ cho Windows
+  (khoảng 200 MB, chỉ tải 1 lần, có phụ đề chữ chạy và NVENC) vào thư mục bin của ứng dụng.
+  Không cài vào hệ thống; xóa thư mục bin là gỡ.
+Không cần Node.js, pip hay npm. Font tiếng Việt kèm sẵn.
 
-Windows 10/11, PowerShell:
+Cài tay (khi máy không có mạng hoặc không có winget):
   winget install --exact --id Python.Python.3.12
   winget install --exact --id Gyan.FFmpeg
-Đóng/mở lại terminal hoặc File Explorer để nhận PATH.
-Không có winget: cài Python từ https://www.python.org/downloads/
-(chọn Add Python to PATH), FFmpeg từ https://ffmpeg.org/download.html.
-Hoặc đặt ffmpeg.exe và ffprobe.exe trong thư mục bin cạnh launch.py.
+Hoặc cài Python từ https://www.python.org/downloads/ (chọn Add Python to PATH),
+và đặt ffmpeg.exe + ffprobe.exe trong thư mục bin cạnh launch.py.
 
 CHẠY
 Ứng dụng chạy trên Windows 10/11: nhấp đúp START_WINDOWS.bat. Giữ cửa sổ cmd mở khi dùng;
@@ -64,6 +66,9 @@ Video nguồn, hàng đợi, MP3, mẫu nằm trong .local. Video không dùng q
 khi mở app (đặt REVIEW_KEEP_DAYS=0 để tắt), trừ video còn trong hàng đợi chưa xong.
 Chỉ dùng trên máy này. Chưa gọi thử OpenAI / ai33 thật, NVENC và ghi Tags của Windows
 trên máy thật: hãy chạy thử 1–2 video trước khi chạy lô lớn.
+
+NÂNG CẤP 0.32.0
+- START_WINDOWS.bat tự cài Python (winget) và tự tải FFmpeg vào thư mục bin khi máy chưa có.
 
 NÂNG CẤP 0.31.5
 - Trình duyệt quá cũ hoặc lỗi giao diện sẽ hiện thanh thông báo ở cuối trang (vàng: trình duyệt cũ, đỏ: lỗi + tên file, dòng). Chụp gửi người hỗ trợ.
