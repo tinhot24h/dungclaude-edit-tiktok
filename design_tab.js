@@ -188,7 +188,7 @@ function ccImage(){const body=$('sec-image').querySelector('.dub-sec-body');if(b
  const panel=el('div',{className:'cc-panel'},
   ccGroup('Ảnh',pick),
   ccGroup('Biến đổi',ccRow('Tỷ lệ',labelled('Rộng %',ccBare('dub-img-w')),labelled('Cao %',ccBare('dub-img-h'))),ccRow('Thu phóng đồng nhất',ccSwitch('dub-img-keep','Giữ tỷ lệ ảnh')),ccRow('Vừa khung',$('dub-img-fit')),
-   ccRow('Vị trí',labelled('Ngang %',ccBare('dub-img-x')),labelled('Dọc %',ccBare('dub-img-y'))),ccRow('Căn',$('dub-img-align')),
+   ccRow('Vị trí',labelled('X',ccBare('dub-img-x')),labelled('Y',ccBare('dub-img-y'))),ccRow('Căn',$('dub-img-align')),
    ccRow('Xoay',ccBare('dub-img-rot')),ccRow('',ccButtons(turn,'cc-chips')),ccRow('Lật',ccSeg('dub-img-flip',optionList('dub-img-flip')))),
   ccGroup('Hòa trộn',ccRow('Chế độ',ccBare('dub-img-blend')),ccRow('Độ mờ',ccBare('dub-img-op')),ccRow('Thứ tự lớp',el('small',{className:'helper',textContent:'Sắp xếp ở ô “Thứ tự lớp” ngay dưới khung xem trước.'}),$('dub-img-reset'))));
  ccHideRest(body,null);body.append(panel);refreshers.forEach(f=>f())}
@@ -201,7 +201,7 @@ function ccOverlay(){const body=$('sec-overlay').querySelector('.dub-sec-body');
   ccGroup('Thời gian',ccRow('Số overlay',ccBare('dub-ov-count')),ccRow('Thời gian',ccBare('dub-ov-timing'))),
   // Căn chỉnh like CapCut's "Biến đổi"; dragging on the preview works while this section is open
   ccGroup('Căn chỉnh',ccRow('Kiểu',ccSeg('dub-ov-fit',[['cover','Lấp đầy','Phủ kín khung của overlay, cắt phần thừa'],['contain','Vừa khung','Hiện trọn overlay, không cắt']])),
-   ccRow('Thu phóng',ccBare('dub-ov-scale')),ccRow('Vị trí',labelled('X %',ccBare('dub-ov-x')),labelled('Y %',ccBare('dub-ov-y'))),ccRow('Căn',$('dub-ov-align')),
+   ccRow('Thu phóng',ccBare('dub-ov-scale')),ccRow('Vị trí',labelled('X',ccBare('dub-ov-x')),labelled('Y',ccBare('dub-ov-y'))),ccRow('Căn',$('dub-ov-align')),
    ccRow('Xoay',ccBare('dub-ov-rot')),ccRow('',ccButtons([...$('dub-ov-turn').querySelectorAll('button[data-r]')],'cc-chips')),ccRow('Lật',ccSeg('dub-ov-flip',optionList('dub-ov-flip'))),
    ccRow('',el('small',{className:'helper',textContent:'Kéo overlay trên khung xem trước, kéo góc để đổi cỡ.'}),$('dub-ov-reset'))));
  ccHideRest(body,null);body.append(panel);refreshers.forEach(f=>f())}
@@ -215,7 +215,7 @@ function ccDubFrame(){const body=$('sec-frame').querySelector('.dub-sec-body');i
  const old=[...body.children].filter((c,i)=>i>0&&c!==videoHost&&!c.classList.contains('cc-group'));
  const panel=el('div',{className:'cc-panel cc-dubframe'},
   ccGroup('Khung xuất',ccRow('Khung xuất',ccBare('dub-canvas')),ccRow('Đặt hình',ccBare('dub-fit'))),
-  ccGroup('Biến đổi',ccRow('Tỷ lệ',ccBare('dub-zoom')),ccRow('Vị trí',labelled('X %',ccBare('dub-x')),labelled('Y %',ccBare('dub-y'))),ccRow('Căn',$('dub-frame-align')),
+  ccGroup('Biến đổi',ccRow('Tỷ lệ',ccBare('dub-zoom')),ccRow('Vị trí',labelled('X',ccBare('dub-x')),labelled('Y',ccBare('dub-y'))),ccRow('Căn',$('dub-frame-align')),
    ccRow('Xoay',ccBare('dub-rotate')),ccRow('',$('dub-frame-tools')),ccRow('Lật',ccSeg('dub-flip',[['none','Không'],['h','⇋ Ngang'],['v','⇵ Dọc'],['hv','Cả hai']]))));
  // hide what was left behind only: the align grid and the quick buttons were children of the body and are now in the panel
  for(const c of old)if(!panel.contains(c))c.classList.add('cc-hide');body.insertBefore(panel,videoHost);$('dub-frame-tools').classList.add('cc-chips');refreshers.forEach(f=>f())}

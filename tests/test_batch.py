@@ -26,7 +26,18 @@ class OutputSizeTests(unittest.TestCase):
 
 
 class CoverTests(unittest.TestCase):
-    """"Lấp đầy · cắt viền" + rotation 0.5° + zoom 103 % + an X/Y offset used to show black corners."""
+    """"Lấp đầy · cắt viền" + rotation 0.5° + zoom 103 % used to show black corners. Since 0.37 X/Y only move the
+    picture (by that many px of the exported video), they no longer zoom it."""
+
+    def test_offset_moves_without_zoom(self):
+        # Y = -100 px on a 1080×1920 export: the picture keeps its size and moves up exactly 100 px
+        o = dubbing.options(dict(frame_canvas='9:16', frame_fit='cover', frame_x=0, frame_y=-100 * 200 / 1920, out_resolution='1080'))
+        lines, (W, H) = dubbing.frame_graph(o, dict(width=1080, height=1920), [], [])
+        graph = ';'.join(lines)
+        self.assertIn('scale=1080:1920:force_original_aspect_ratio=increase', graph)
+        self.assertIn('y=(main_h-overlay_h)/2+(-100)', graph)
+        d = dict(units='px', video_x=0, video_y=-60, video_width=720, video_height=1280, video_zoom=100, video_rotation=0, video_fit='cover', background='color', color='#000000')
+        self.assertIn('scale=720:1280:', ';'.join(dubbing.design_video(d, 720, 1280)))
     def border(self, lines, W, H):
         cmd = ['ffmpeg', '-v', 'error', '-f', 'lavfi', '-i', f'color=c=0xd0c0a0:s={W}x{H}:d=1', '-filter_complex', ';'.join(lines),
                '-map', '[out]', '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'gray', '-']
@@ -37,12 +48,12 @@ class CoverTests(unittest.TestCase):
 
     def test_rotation_and_offset_never_show_black(self):
         self.assertEqual(dubbing.cover_scale(720, 1280, 720, 1280, 360, 640, 0), 1.0)
-        for fx, fy, rot in ((0, 0, .5), (2, 0, .5), (4, -3, .5), (10, 5, 8)):
+        for fx, fy, rot in ((0, 0, .5), (0, 0, 8)):
             o = dubbing.options(dict(frame_canvas='9:16', frame_fit='cover', frame_zoom=103, frame_rotate=rot, frame_x=fx, frame_y=fy, out_resolution='720'))
             lines, (W, H) = dubbing.frame_graph(o, dict(width=720, height=1280), [], [])
             lines[-1] = lines[-1].replace('[vout]', '[out]')
             self.assertGreater(self.border(lines, W, H), 150, (fx, fy, rot))
-        for vx, vy, rot in ((0, 0, .5), (13, -8, .5), (0, 0, -4)):
+        for vx, vy, rot in ((0, 0, .5), (0, 0, -4)):
             d = dict(units='px', video_x=vx, video_y=vy, video_width=720, video_height=1280, video_zoom=103, video_rotation=rot, video_fit='cover', background='color', color='#000000')
             self.assertGreater(self.border(dubbing.design_video(d, 720, 1280) + ['[framed]null[out]'], 720, 1280), 150, (vx, vy, rot))
         # "Giữ toàn bộ" on a 9:16 source cut by "Cắt viền mép" fills the frame instead of leaving 1–2 px black or blurred strips
@@ -67,7 +78,7 @@ class CoverTests(unittest.TestCase):
             px = subprocess.run(['ffmpeg', '-v', 'error', '-f', 'lavfi', '-i', 'nullsrc=s=16x16:d=1', '-filter_complex', ';'.join(lines), '-map', '[out]', '-frames:v', '1',
                                  '-f', 'rawvideo', '-pix_fmt', 'gray', '-'], capture_output=True, check=True).stdout
             return min(min(px[:W]), min(px[-W:]), min(px[y * W] for y in range(H)), min(px[y * W + W - 1] for y in range(H)))
-        self.assertGreater(soft_border(), 180);self.assertGreater(soft_border(frame_x=3), 180);self.assertGreater(soft_border(frame_rotate=0), 180)
+        self.assertGreater(soft_border(), 180);self.assertGreater(soft_border(frame_rotate=0), 180)
         # a box smaller than the frame is left as placed
         small = dict(units='px', video_x=100, video_y=100, video_width=400, video_height=700, video_zoom=100, video_rotation=5, video_fit='cover', background='color', color='#000000')
         self.assertLess(self.border(dubbing.design_video(small, 720, 1280) + ['[framed]null[out]'], 720, 1280), 20)

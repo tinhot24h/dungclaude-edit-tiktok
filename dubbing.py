@@ -1175,9 +1175,9 @@ def design_video(design, W, H, stretch=1, duration=0, adjust=(), trim=(), source
         fit = 'cover'   # source = picture size after "Cắt viền mép"
     bx, by, bw, bh = box['x'] * scale, box['y'] * scale, box['width'] * scale, box['height'] * scale
     if fit == 'cover' and bw >= W - 1 and bh >= H - 1:
-        # a box as big as the frame is meant to fill it: grow it about its centre so a rotation or a small X/Y
-        # offset never shows black corners or strips
-        grow = cover_scale(W, H, bw, bh, bx + bw / 2, by + bh / 2, rad, margin=max(2, min(bw - W, bh - H) / 2))
+        # a box as big as the frame is meant to fill it: grow it about its centre so a rotation never shows black
+        # corners (an X/Y offset only moves it, without zooming)
+        grow = cover_scale(W, H, bw, bh, W / 2, H / 2, rad, margin=max(2, min(bw - W, bh - H) / 2)) if rad else 1
         bx, by, bw, bh = bx - bw * (grow - 1) / 2, by - bh * (grow - 1) / 2, bw * grow, bh * grow
     vw, vh = max(2, round(bw / 2) * 2), max(2, round(bh / 2) * 2)
     chain = '[0:v:0]' + ''.join(t + ',' for t in trim) + (f'setpts=PTS*{stretch:.6f},' if stretch != 1 else '') + 'fps=30,' + ''.join(a + ',' for a in adjust) + 'format=rgba,'
@@ -1377,10 +1377,11 @@ def frame_graph(settings, video, before, after):
         fit = 'cover'
     turn = math.radians(settings['frame_rotate'])
     dx, dy = round(settings['frame_x'] * W / 200), round(settings['frame_y'] * H / 200)
-    if fit == 'cover' and z >= 1 and (turn or dx or dy):
-        # never show black corners or strips; a rotation also keeps the zoom's own crop at the corners (the zoom
-        # hides the soft border of downloaded videos along the edges; tilted, the corners would bring it back)
-        z *= cover_scale(W, H, W * z, H * z, W / 2 + dx, H / 2 + dy, turn, margin=max(2, (z - 1) / 2 * min(W, H)))
+    if fit == 'cover' and z >= 1 and turn:
+        # a rotation never shows black corners and keeps the zoom's own crop at the corners (the zoom hides the soft
+        # border of downloaded videos along the edges; tilted, the corners would bring it back). X/Y only move the
+        # picture along its axis by that many px (no hidden zoom since 0.37): the uncovered edge shows the background.
+        z *= cover_scale(W, H, W * z, H * z, W / 2, H / 2, turn, margin=max(2, (z - 1) / 2 * min(W, H)))
     bw, bh = max(2, round(W * z / 2) * 2), max(2, round(H * z / 2) * 2)
     box = (f'scale={bw}:{bh}:force_original_aspect_ratio=increase,crop={bw}:{bh}' if fit == 'cover' else
            f'scale={bw}:{bh}:force_original_aspect_ratio=decrease,format=rgba,pad={bw}:{bh}:(ow-iw)/2:(oh-ih)/2:color=black@0')

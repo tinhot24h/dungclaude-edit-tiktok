@@ -4,6 +4,11 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.37.0
+
+- **Vị trí X/Y tính bằng px, chỉ dịch chuyển:** ở *Cắt & vị trí video*, *Lớp ảnh* và *Video overlay*, ô X / Y giờ là ô số có đuôi **px** (giống Biến đổi của tiêu đề / nội dung), tính theo pixel của video xuất (vd 1080×1920). 0 = chính giữa, số âm = sang trái / lên trên. Trong ô: ↑/↓ = 1 px, Shift + ↑/↓ = 10 px.
+- **Vị trí không còn kiêm zoom:** trước đây đổi X/Y của video thì app tự phóng to video để che viền đen, nên trông như bị zoom. Giờ X/Y chỉ dời video theo trục đúng số px; phần lộ ra ở mép là nền (đen hoặc nền mờ). Muốn phủ kín thì tăng **Tỷ lệ** (zoom) riêng. Xoay vẫn tự phủ kín các góc như cũ.
+
 ## Mới trong 0.36.0
 
 - **Căn chỉnh video overlay kiểu CapCut** (mục ✨ Overlay → nhóm *Căn chỉnh*):
