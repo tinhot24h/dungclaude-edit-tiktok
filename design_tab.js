@@ -173,17 +173,18 @@ function ccVideo(){const sec=$('section-video');if(sec.querySelector('.cc-panel'
 
 // Lớp ảnh and Overlay ngẫu nhiên (dub page sections)
 function ccImage(){const body=$('sec-image').querySelector('.dub-sec-body');if(body.querySelector('.cc-panel'))return;
- const turn=[...$('dub-img-turn').querySelectorAll('button')],pick=body.querySelector('.dub-img-pick'),on=$('dub-img').closest('label');
+ const turn=[...$('dub-img-turn').querySelectorAll('button')],pick=body.querySelector('.dub-img-pick');headSwitch($('sec-image'),$('dub-img'),'Bật/tắt lớp ảnh');
  const panel=el('div',{className:'cc-panel'},
-  ccGroup('Ảnh',on,pick),
+  ccGroup('Ảnh',pick),
   ccGroup('Biến đổi',ccRow('Tỷ lệ',labelled('Rộng %',ccBare('dub-img-w')),labelled('Cao %',ccBare('dub-img-h'))),ccRow('Thu phóng đồng nhất',ccSwitch('dub-img-keep','Giữ tỷ lệ ảnh')),ccRow('Vừa khung',$('dub-img-fit')),
    ccRow('Vị trí',labelled('Ngang %',ccBare('dub-img-x')),labelled('Dọc %',ccBare('dub-img-y'))),ccRow('Căn',$('dub-img-align')),
    ccRow('Xoay',ccBare('dub-img-rot')),ccRow('',ccButtons(turn,'cc-chips')),ccRow('Lật',ccSeg('dub-img-flip',optionList('dub-img-flip')))),
   ccGroup('Hòa trộn',ccRow('Chế độ',ccBare('dub-img-blend')),ccRow('Độ mờ',ccBare('dub-img-op')),ccRow('Thứ tự lớp',ccBare('dub-img-layer'),$('dub-img-reset'))));
  ccHideRest(body,null);body.append(panel);refreshers.forEach(f=>f())}
 function ccOverlay(){const body=$('sec-overlay').querySelector('.dub-sec-body');if(body.querySelector('.cc-panel'))return;
+ headSwitch($('sec-overlay'),$('dub-overlay'),'Bật/tắt video overlay');
  const panel=el('div',{className:'cc-panel'},
-  ccGroup('Thư viện overlay',$('dub-overlay').closest('label'),body.querySelector('.result-actions'),$('dub-ov-bulk'),$('dub-ov-list'),$('dub-ov-note')),
+  ccGroup('Thư viện overlay',body.querySelector('.result-actions'),$('dub-ov-bulk'),$('dub-ov-list'),$('dub-ov-note')),
   ccGroup('Hòa trộn',ccRow('Chế độ',ccBare('dub-ov-blend')),ccRow('Độ mờ',ccBare('dub-ov-opacity'))),
   ccGroup('Thời gian',ccRow('Số overlay',ccBare('dub-ov-count')),ccRow('Thời gian',ccBare('dub-ov-timing'))));
  ccHideRest(body,null);body.append(panel)}
@@ -200,12 +201,13 @@ function ccDubFrame(){const body=$('sec-frame').querySelector('.dub-sec-body');i
   ccGroup('Biến đổi',ccRow('Tỷ lệ',ccBare('dub-zoom')),ccRow('Vị trí',labelled('X %',ccBare('dub-x')),labelled('Y %',ccBare('dub-y'))),ccRow('Căn',$('dub-frame-align')),
    ccRow('Xoay',ccBare('dub-rotate')),ccRow('',$('dub-frame-tools')),ccRow('Lật',ccSeg('dub-flip',[['none','Không'],['h','⇋ Ngang'],['v','⇵ Dọc'],['hv','Cả hai']]))));
  for(const c of old)c.classList.add('cc-hide');body.insertBefore(panel,videoHost);$('dub-frame-tools').classList.add('cc-chips');refreshers.forEach(f=>f())}
+// the same header switch as Nền & khung / Tiêu đề / Nội dung (off: the values stay, nothing is applied)
+function headSwitch(sec,box,title){const row=box.closest('label.check-row'),sw=el('label',{className:'dt-toggle',title});box.hidden=false;sw.append(box,el('i'));sec.classList.add('dt-group');sec.querySelector('summary').append(sw);if(row)row.remove();
+ sw.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();box.checked=!box.checked;box.dispatchEvent(new Event('change',{bubbles:true}))});
+ const mark=()=>sec.classList.toggle('off',!box.checked);box.addEventListener('change',mark);refreshers.push(mark);mark()}
 // Điều chỉnh màu: one CapCut group
 function ccAdjust(){const sec=$('sec-adjust'),body=sec.querySelector('.dub-sec-body');if(body.querySelector('.cc-panel'))return;
- // the same header switch as Nền & khung / Tiêu đề / Nội dung (off: the values stay, nothing is applied)
- const box=$('dub-adj-on'),sw=el('label',{className:'dt-toggle',title:'Bật/tắt điều chỉnh màu'});box.hidden=false;sw.append(box,el('i'));sec.classList.add('dt-group');sec.querySelector('summary').append(sw);
- sw.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();box.checked=!box.checked;box.dispatchEvent(new Event('change',{bubbles:true}))});
- const mark=()=>sec.classList.toggle('off',!box.checked);box.addEventListener('change',mark);refreshers.push(mark);
+ headSwitch(sec,$('dub-adj-on'),'Bật/tắt điều chỉnh màu');
  const reset=el('button',{type:'button',className:'cc-reset',textContent:'↺',title:'Đặt lại điều chỉnh'});reset.onclick=()=>$('dub-adj-reset').click();
  const panel=el('div',{className:'cc-panel'},ccGroup('Điều chỉnh',ccRow('Độ sáng',ccBare('dub-adj-bright')),ccRow('Độ tương phản',ccBare('dub-adj-contrast')),ccRow('Độ bão hòa',ccBare('dub-adj-sat')),ccRow('Độ sắc nét',ccBare('dub-adj-sharp')),ccRow('',reset)),body.querySelector('.helper'));
  ccHideRest(body,null);body.append(panel)}

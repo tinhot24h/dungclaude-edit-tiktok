@@ -3,7 +3,7 @@
 // each with a one-line summary · right: live preview of the first input (cut, frame, overlay, subtitle) and a compact
 // batch queue with filters and bulk actions. Jobs run on the server one at a time.
 (()=>{
-const view=$('view-dub'),edit=window.editorState;
+const view=$('view-dub'),edit=window.editorState;let bal={},balBusy=false;
 const el=(tag,props={},...children)=>{const e=Object.assign(document.createElement(tag),props);e.append(...children);return e};
 const json=(url,body)=>request(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});
 const STORE0='review-dub-v1',STORE='review-dub-v2',profile=()=>window.dubProfile?.name||'dub',storeKey=()=>STORE,presetKind=()=>'dubpresets',STEPS=[['asr','01','Nhận diện'],['translate','02','Dịch'],['separate','03','Tách âm'],['tts','04','Giọng ai33'],['export','05','Xuất']];
@@ -140,11 +140,18 @@ function labels(){setTimeout(()=>window.dubProfile?.labels?.());syncNumbers();co
  t('sum-audio',o.background==='duck'?`${bg} · ${o.duck_level}%`:bg);t('sum-export',({file:'SRT kèm file',soft:'kênh phụ đề',none:'không phụ đề'})[o.subtitles]+(o.loudness==='tiktok'?' · −14 LUFS':''));
  keyState();startLabel()}
 view.addEventListener('input',e=>{if(e.target.closest('.dub-setup')&&!['dub-openai','dub-ai33'].includes(e.target.id)){remember();preview()}});view.addEventListener('change',e=>{if(e.target.closest('.dub-setup')){remember();preview();alignNote()}});
-function keyState(){const build=profile()==='design',o=$('dub-openai').value||caps.openai||(!build&&$('dub-mode').value==='ai33'),a=build||$('dub-ai33').value||$('tts-key')?.value||caps.ai33;$('dub-key-state').textContent=`OpenAI ${o?'✓':'✗'} · ai33 ${a?'✓':'✗'}`;$('dub-key-state').classList.toggle('bad',!(o&&a));$('sum-keys').textContent=o&&a?'đã sẵn sàng':'cần nhập key'}
-$('dub-key-state').onclick=()=>window.openKeys?.();
+function keyState(){const build=profile()==='design',o=$('dub-openai').value||caps.openai||(!build&&$('dub-mode').value==='ai33'),a=build||$('dub-ai33').value||$('tts-key')?.value||caps.ai33;const money=bal.spend?` · đã dùng $${bal.spend.usd.toFixed(2)}`:'',credit=typeof bal.ai33==='number'?` · còn ◆ ${Math.round(bal.ai33).toLocaleString('vi-VN')}`:'';
+ $('dub-key-state').textContent=`OpenAI ${o?'✓':'✗'}${money}  |  ai33 ${a?'✓':'✗'}${credit}`;
+ $('dub-key-state').title=[bal.spend?`OpenAI: app ước tính đã dùng ~$${bal.spend.usd.toFixed(2)} trong tháng ${bal.spend.month.split('-').reverse().join('/')} (${bal.spend.calls} lần gọi). OpenAI không cho xem số dư qua API key, xem số dư thật ở platform.openai.com → Billing.`:'',typeof bal.ai33==='number'?`ai33.pro: còn ${Math.round(bal.ai33).toLocaleString('vi-VN')} credit.`:'','Bấm để quản lý key · số dư tự cập nhật mỗi phút và sau mỗi video xong.'].filter(Boolean).join('\n');$('dub-key-state').classList.toggle('bad',!(o&&a));$('sum-keys').textContent=o&&a?'đã sẵn sàng':'cần nhập key'}
+$('dub-key-state').onclick=()=>{window.openKeys?.();loadBalance()};
+// money left / used: ai33 credits from ai33.pro, OpenAI = what this app's own calls cost this month (no balance API)
+async function loadBalance(){if(balBusy)return;balBusy=true;try{bal.spend=await request('/dub/spend')}catch{}
+ const key=$('dub-ai33').value||$('tts-key')?.value;if(key||caps.ai33){try{bal.ai33=Number((await request('/audio/credits',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(key?{api_key:key}:{})})).credits)}catch{bal.ai33=null}}
+ balBusy=false;keyState()}
+setInterval(()=>{if(!document.hidden&&!view.hidden)loadBalance()},60000);
 for(const id of ['dub-openai','dub-ai33'])$(id).addEventListener('input',keyState);$('dub-mode').addEventListener('change',keyState);
-document.addEventListener('keys-changed',()=>request('/dub/capabilities').then(d=>{caps=d;keyState()}).catch(()=>{}));
-request('/dub/capabilities').then(d=>{caps=d;$('dub-style').replaceChildren(...Object.entries(d.styles).map(([k,v])=>new Option(v,k)));$('dub-pronoun').replaceChildren(...Object.entries(d.pronouns).map(([k,v])=>new Option(v[0].toUpperCase()+v.slice(1),k)));let saved={};try{saved=JSON.parse(localStorage.getItem(storeKey())||'null')||mergedOld()}catch{}
+document.addEventListener('keys-changed',()=>request('/dub/capabilities').then(d=>{caps=d;keyState();loadBalance()}).catch(()=>{}));
+request('/dub/capabilities').then(d=>{caps=d;setTimeout(loadBalance,500);$('dub-style').replaceChildren(...Object.entries(d.styles).map(([k,v])=>new Option(v,k)));$('dub-pronoun').replaceChildren(...Object.entries(d.pronouns).map(([k,v])=>new Option(v[0].toUpperCase()+v.slice(1),k)));let saved={};try{saved=JSON.parse(localStorage.getItem(storeKey())||'null')||mergedOld()}catch{}
  // 0.16: one-click automatic run by default — older saved settings had the review pause switched on
  if(!(saved._v>=2)){delete saved.review;delete saved.align;saved._v=2}
  // 0.17.7: speed limits 0.98–1.1× voice / 0.85–1.2× video replace the old 1.3× maximum
@@ -278,7 +285,7 @@ $('dub-ov-local').onclick=async()=>{const b=$('dub-ov-local');b.disabled=true;tr
   const have=new Set(overlays.map(o=>o.name+'|'+o.size)),todo=list.filter(x=>!have.has(x.name+'|'+x.size)),errors=[];let ok=0,alpha=false;
   for(const[i,x]of todo.entries()){$('dub-ov-note').textContent=`Đang đọc overlay ${i+1}/${todo.length} từ máy: ${x.name}…`;try{const item=await json('/overlays/import-local',{path:x.path});ok++;alpha=alpha||!!item.alpha}catch(e){errors.push(x.name+': '+e.message)}if(i%25===24)await loadOverlays()}
   if(alpha&&+$('dub-ov-opacity').value===60){$('dub-ov-opacity').value=100;$('dub-ov-opacity').dispatchEvent(new Event('input',{bubbles:true}))}
-  await loadOverlays();if(ok&&!$('dub-overlay').checked){$('dub-overlay').checked=true;remember()}labels();preview();
+  await loadOverlays();if(ok&&!$('dub-overlay').checked){$('dub-overlay').checked=true;$('dub-overlay').dispatchEvent(new Event('change',{bubbles:true}));remember()}labels();preview();
   say(`Đã thêm ${ok} overlay từ máy (không tải lên).`+(list.length-todo.length?` Bỏ qua ${list.length-todo.length} file đã có.`:'')+(errors.length?` ${errors.length} file lỗi.`:''));if(errors.length)$('dub-ov-note').textContent=`${errors.length} file lỗi: `+errors.slice(0,5).join(' · ')}catch(e){say(e.message)}finally{b.disabled=false}};
 function startLabel(){const n=files.length,build=profile()==='design';$('dub-start').textContent=build?(n>1?`▶ Xuất ${n} video`:'▶ Bắt đầu dựng video'):n>1?`▶ Lồng tiếng ${n} video`:'▶ Bắt đầu lồng tiếng'}
 
@@ -296,7 +303,7 @@ async function addOverlays(list){const media=[...list].filter(f=>/^(video|image)
 
  // transparent overlays (live comments, frames, stickers) are meant to show fully, like in CapCut
  if(alpha&&+$('dub-ov-opacity').value===60){$('dub-ov-opacity').value=100;$('dub-ov-opacity').dispatchEvent(new Event('input',{bubbles:true}))}
- await loadOverlays();if(ok&&!$('dub-overlay').checked){$('dub-overlay').checked=true;remember()}labels();preview();say((ok?`Đã thêm ${ok} overlay và bật chèn overlay vào video (bỏ tick "Thêm overlay" nếu không muốn dùng).`:'Chưa thêm overlay mới nào.')+(skipped?` Bỏ qua ${skipped} file đã có trong thư viện.`:'')+(errors.length?` ${errors.length} file lỗi (xem dưới danh sách overlay).`:''));if(errors.length)$('dub-ov-note').textContent=`${errors.length} file lỗi: `+errors.slice(0,5).join(' · ')+(errors.length>5?' …':'')}
+ await loadOverlays();if(ok&&!$('dub-overlay').checked){$('dub-overlay').checked=true;$('dub-overlay').dispatchEvent(new Event('change',{bubbles:true}));remember()}labels();preview();say((ok?`Đã thêm ${ok} overlay và bật chèn overlay vào video (tắt công tắc ở tiêu đề Overlay nếu không muốn dùng).`:'Chưa thêm overlay mới nào.')+(skipped?` Bỏ qua ${skipped} file đã có trong thư viện.`:'')+(errors.length?` ${errors.length} file lỗi (xem dưới danh sách overlay).`:''));if(errors.length)$('dub-ov-note').textContent=`${errors.length} file lỗi: `+errors.slice(0,5).join(' · ')+(errors.length>5?' …':'')}
 $('dub-ov-files').onchange=()=>{addOverlays($('dub-ov-files').files);$('dub-ov-files').value=''};$('dub-ov-folder').onchange=()=>{addOverlays($('dub-ov-folder').files);$('dub-ov-folder').value=''};
 
 // ---- frame quick tools
@@ -477,7 +484,7 @@ function filters(){reviewBar();$('dub-filters').replaceChildren(...Object.entrie
 let queueMax=60;function moreButton(n){const b=el('button',{type:'button',className:'outline-action small-action dub-more',textContent:`Hiện thêm ${Math.min(60,n)} / còn ${n} tác vụ`});b.onclick=()=>{queueMax+=60;refresh()};return b}
 // the server sends only what changed since the last answer (+ running jobs); the full order comes as ids
 const jobMap=new Map();let jobStamp=0;
-async function refresh(){clearTimeout(poll);try{const d=await request('/dub/jobs?since='+jobStamp);if(d.full)jobMap.clear();for(const j of d.jobs)jobMap.set(j.id,j);
+async function refresh(){clearTimeout(poll);try{const d=await request('/dub/jobs?since='+jobStamp);if(d.full)jobMap.clear();if(!d.full&&d.jobs.some(j=>j.state==='done'&&jobMap.get(j.id)?.state!=='done'))loadBalance();for(const j of d.jobs)jobMap.set(j.id,j);
   const keep=new Set(d.ids);for(const id of [...jobMap.keys()])if(!keep.has(id))jobMap.delete(id);jobStamp=d.ids.every(id=>jobMap.has(id))?d.stamp||0:0;jobs=d.ids.map(id=>jobMap.get(id)).filter(Boolean);filters();const shown=jobs.filter(GROUP[filter][1]);
   const more=shown.length-queueMax;$('dub-queue').replaceChildren(...(shown.length?[...shown.slice(0,queueMax).map(card),...(more>0?[moreButton(more)]:[])]:[el('div',{className:'note-empty'},el('div',{textContent:'🎙'}),el('strong',{textContent:jobs.length?'Không có tác vụ trong nhóm này':'Chưa có video nào'}),el('p',{className:'helper',textContent:jobs.length?'Chọn nhóm khác ở trên.':'Chọn video ở mục 🎬 rồi bấm Bắt đầu lồng tiếng.'}))]));
   if(current&&openDetail===current)await showDetail();else $('dub-detail').hidden=true}catch(e){say(e.message)}
@@ -547,7 +554,7 @@ function drawImage(o,box,W,H){lastWH=[W,H];const m=o.image?imgMeta():null,wrap=$
 async function loadImages(keep){try{images=(await request('/dub/images')).images}catch{images=[]}const pick=$('dub-img-pick'),cur=keep??pick.value;
  pick.replaceChildren(new Option(images.length?'— Chọn ảnh —':'Chưa có ảnh · bấm Thêm ảnh',''),...images.map(m=>new Option(`${m.name} · ${m.width}×${m.height}`,m.id)));pick.value=images.some(m=>m.id===cur)?cur:'';labels();preview()}
 $('dub-img-file').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;say('Đang thêm ảnh '+f.name+'…');
- try{const item=await request('/dub/images/upload',{method:'POST',headers:{'X-Filename':encodeURIComponent(f.name)},body:f});await loadImages(item.id);$('dub-img').checked=true;keepSync('w');imgChanged();say(`Đã thêm ảnh ${item.name}. Kéo ảnh trên khung xem trước để đặt vị trí, kéo góc dưới phải để đổi cỡ.`)}catch(err){say(err.message)}};
+ try{const item=await request('/dub/images/upload',{method:'POST',headers:{'X-Filename':encodeURIComponent(f.name)},body:f});await loadImages(item.id);$('dub-img').checked=true;$('dub-img').dispatchEvent(new Event('change',{bubbles:true}));keepSync('w');imgChanged();say(`Đã thêm ảnh ${item.name}. Kéo ảnh trên khung xem trước để đặt vị trí, kéo góc dưới phải để đổi cỡ.`)}catch(err){say(err.message)}};
 $('dub-img-del').onclick=async()=>{const m=imgMeta();if(!m)return;if(!confirm(`Xóa ảnh "${m.name}" khỏi thư viện?`))return;try{await request(`/dub/images/${m.id}/delete`,{method:'POST'});await loadImages('');imgChanged()}catch(e){say(e.message)}};
 $('dub-img-fit').onclick=e=>{const b=e.target.closest('button');const m=imgMeta();if(!b||!m)return;const[W,H]=lastWH,fit=b.dataset.fit;
  if(fit==='stretch'){$('dub-img-keep').checked=false;setNum('dub-img-w',100);setNum('dub-img-h',100)}

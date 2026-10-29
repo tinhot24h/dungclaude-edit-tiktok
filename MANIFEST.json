@@ -1,15 +1,15 @@
 {
  "app": "ReviewStudio",
- "version": "0.27.6",
- "notes": "## Mới trong 0.27.6\n\n- **Hết viền mờ / viền đen ở cạnh khi chọn \"Giữ toàn bộ\":** \"Cắt viền mép\" làm video 9:16 lệch tỷ lệ một chút (1080×1920 → 1072×1912), nên \"Giữ toàn bộ · viền đen\" để lại dải đen 1–2 px và \"Giữ toàn bộ · nền mờ\" để lại dải mờ ở hai cạnh. Nay video gần đúng tỷ lệ khung (lệch ≤ 3%) luôn được phủ kín như \"Lấp đầy\", kể cả khi xoay; video khác hẳn tỷ lệ (16:9, 1:1…) vẫn giữ toàn bộ như cũ. Áp dụng cho Khung xuất, video trong mẫu thiết kế và khung xem trước.",
+ "version": "0.28.0",
+ "notes": "## Mới trong 0.28.0\n\n- **Xem số dư ngay trên thanh chạy (tab Lồng tiếng):** ô key hiện `OpenAI ✓ · đã dùng $1.23 | ai33 ✓ · còn ◆ 123.457`.\n  - **ai33:** số credit còn lại lấy trực tiếp từ ai33.pro.\n  - **OpenAI:** OpenAI không cho xem số dư bằng API key thường, nên app tự cộng chi phí các lần gọi của chính app trong tháng (token thực tế × bảng giá, Whisper theo phút). Đây là ước tính; số dư thật xem ở platform.openai.com → Billing. Rê chuột lên ô để xem chi tiết.\n  - Tự cập nhật mỗi phút, sau mỗi video xong và khi bấm vào ô.\n- **Lớp ảnh và Overlay ngẫu nhiên có công tắc bật/tắt ở tiêu đề**, giống Nền & khung / Tiêu đề / Nội dung / Điều chỉnh màu. Tắt thì giữ nguyên mọi thông số, chỉ không chèn vào video.",
  "files": {
   "video_tools.js": {
    "sha256": "217dc997759d9b7b26fccfb7abaa35ebf82b5eb333f816dc83fcf67b06781706",
    "size": 4542
   },
   "tests/test_batch.py": {
-   "sha256": "14c58a99f24355551df03276639233b090a12b2453ba1d11e8d1f898c73c54e5",
-   "size": 13646
+   "sha256": "d6d511b2ec706cef98eb98d95bf4550a6c8ddedf1c1abb52dbbc72bdc04cb094",
+   "size": 14709
   },
   "win_meta.py": {
    "sha256": "228d18deb126f8965807b7c3a7d2249007da30d88f3a6bbf04493deb52b989a8",
@@ -24,8 +24,8 @@
    "size": 23885
   },
   "design_tab.js": {
-   "sha256": "ff8df9de97533f0522280666f6fc5abb5c0bc8b2488199ce45b626f4c208c03e",
-   "size": 37612
+   "sha256": "6b1f10a0ce2ecb5f8973a3a632c5bbc1fdeb2aabfe400956c95763e06ed7e570",
+   "size": 37793
   },
   "local_files.js": {
    "sha256": "b9a975e980db7f5f013f6046d58228fb39817b6959e8caaf9505c4ba3cc898a7",
@@ -52,8 +52,8 @@
    "size": 5181
   },
   "dub_ui.js": {
-   "sha256": "243582e21ca52941c5042ccd1d9f1e3523188016be196a630b1d5498fa42c16e",
-   "size": 122867
+   "sha256": "5098f5747e0c58845c53de0d27a92c085aef0d99b001659dfdb93027a0dfa24a",
+   "size": 124569
   },
   "key_ui.js": {
    "sha256": "4c1833943a21476f6e515115af555c36a4d763bbc5c1122f111cad0a5065574d",
@@ -64,8 +64,8 @@
    "size": 2610
   },
   "dubbing.py": {
-   "sha256": "673c2ad1227fe439a4d2dc73391ff8e94a4d51c2eee16deb096f27ca626877e1",
-   "size": 182644
+   "sha256": "e784514b94eae2d4d7043166a3d4774089814b753ab948a58f8002b523e04871",
+   "size": 185061
   },
   "tests/test_dubbing.py": {
    "sha256": "8f056ca16aa2b2384b13931a62cf9cf3c2b1883448b95f19743e34e8fb86a80e",
@@ -116,8 +116,8 @@
    "size": 13961
   },
   "app.py": {
-   "sha256": "fdda7072e360225ad90a95d64ab0ff79d9f0887ce73d8839815b0f6b4b8d61eb",
-   "size": 61726
+   "sha256": "000f42630e2cc7f880bf2ec200b5e8dec53d084035a0b67b9eb71cc114ee993e",
+   "size": 61820
   },
   "ai33_audio.py": {
    "sha256": "bf91eee837ea08e1b3e96495f68f87b621f0d68abfeedfdbc4a53f8a13b21b7d",
@@ -152,7 +152,7 @@
    "size": 5352
   },
   "index.html": {
-   "sha256": "70eedac5198a4a7a30ad6fe4cca2906407b82162215ee858b5ea29762a251bb0",
+   "sha256": "fbacef53694ce157315faa9d0bff41110d8131c591c83ac9d94718faa404b2a8",
    "size": 24079
   },
   "launch.py": {
@@ -168,15 +168,15 @@
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "1987c2f287a50fb9163ff4bc0dc693bf4d800b4b97c992184a312560734dac9d",
-   "size": 9536
+   "sha256": "e5da135c9c1fe3ca0ab3640a359439cbf836822e134dfec17d1d177a472f417b",
+   "size": 9767
   },
   "README.md": {
-   "sha256": "4fded91fe54ece847d7bf351839a294c7370310b0fd9047717c46a288ab590f6",
-   "size": 15337
+   "sha256": "780bee74704d9ee792db3bada2ddbd5c318bd864e1c5044eca8357c3a593192f",
+   "size": 16222
   },
   "VERSION": {
-   "sha256": "99d9574316600b5344fa4598737ea26e0d3b99606a529a863a28d4ba4d73c09b",
+   "sha256": "a80bff70756ff2e0f528e9b6844fcb5fe4baea4c6f257257c4aea3a38ab31222",
    "size": 7
   },
   ".gitignore": {

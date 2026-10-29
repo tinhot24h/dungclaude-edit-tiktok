@@ -454,7 +454,9 @@ def openai_call(path, key, body, content_type, timeout=300):
         try:
             with request.urlopen(req, timeout=timeout) as response:
                 raw = response.read(16 * 1024 * 1024)
-            return json.loads(raw)
+            result = json.loads(raw)
+            SPEND.add(path, body, result)
+            return result
         except error.HTTPError as exc:
             try:
                 detail = exc.read(4000).decode('utf-8', 'replace')
@@ -479,6 +481,61 @@ def openai_call(path, key, body, content_type, timeout=300):
             raise DubError('Không kết nối được api.openai.com hoặc hết thời gian chờ (đã thử lại 3 lần). Kiểm tra mạng rồi bấm Tiếp tục.', 504) from None
         except ValueError:
             raise DubError('Không đọc được phản hồi OpenAI.', 502) from None
+
+
+class Spend:
+    """OpenAI has no balance API for normal keys, so the app adds up what its own calls cost (tokens in `usage` ×
+    the price list below, Whisper minutes × WHISPER_PER_MINUTE) per month in .local/dub/openai_spend.json.
+    An estimate: other apps using the same key and price changes are not counted."""
+    def __init__(self):
+        self.path, self.lock = None, threading.Lock()
+
+    def usd(self, path, body, result):
+        if path == 'audio/transcriptions':
+            return float(result.get('duration') or 0) / 60 * WHISPER_PER_MINUTE
+        try:
+            model = json.loads(body).get('model', '')
+        except (ValueError, TypeError, AttributeError):
+            model = ''
+        price = next((m['price'] for m in MODELS if m['id'] == model), (.4, 1.6))
+        use = result.get('usage') or {}
+        return ((use.get('input_tokens') or 0) * price[0] + (use.get('output_tokens') or 0) * price[1]) / 1e6
+
+    def read(self):
+        try:
+            data = json.loads(self.path.read_text(encoding='utf-8')) if self.path and self.path.is_file() else {}
+        except (OSError, ValueError):
+            data = {}
+        return data if isinstance(data, dict) else {}
+
+    def add(self, path, body, result):
+        if not self.path:
+            return
+        try:
+            usd = self.usd(path, body, result)
+        except (TypeError, ValueError):
+            return
+        month = time.strftime('%Y-%m')
+        with self.lock:
+            data = self.read()
+            row = data.setdefault(month, dict(usd=0, calls=0))
+            row['usd'], row['calls'] = round(row.get('usd', 0) + usd, 6), row.get('calls', 0) + 1
+            for old in sorted(data)[:-12]:   # a year of months is enough
+                data.pop(old)
+            try:
+                tmp = self.path.with_name(self.path.name + '.tmp')
+                tmp.write_text(json.dumps(data), encoding='utf-8')
+                tmp.replace(self.path)
+            except OSError:
+                pass
+
+    def summary(self):
+        data, month = self.read(), time.strftime('%Y-%m')
+        row = data.get(month, {})
+        return dict(month=month, usd=round(row.get('usd', 0), 4), calls=row.get('calls', 0), total=round(sum(r.get('usd', 0) for r in data.values()), 4))
+
+
+SPEND = Spend()
 
 
 SOURCE_NAMES = {'zh': 'tiếng Trung', 'en': 'tiếng Anh', 'auto': 'tiếng nước ngoài (tiếng Trung, tiếng Anh…)'}
@@ -1315,6 +1372,7 @@ class Store:
     def __init__(self, data_dir, settings_path, video_dir, audio_dir, encoder_args):
         self.root = Path(data_dir) / 'dub'
         self.root.mkdir(parents=True, exist_ok=True)
+        SPEND.path = self.root / 'openai_spend.json'
         self.settings_path = settings_path
         self.video_dir = Path(video_dir)
         self.audio_dir = Path(audio_dir)

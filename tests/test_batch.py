@@ -60,6 +60,22 @@ class CoverTests(unittest.TestCase):
         self.assertLess(self.border(dubbing.design_video(small, 720, 1280) + ['[framed]null[out]'], 720, 1280), 20)
 
 
+class SpendTests(unittest.TestCase):
+    def test_openai_calls_add_up_per_month(self):
+        import tempfile, json as j
+        with tempfile.TemporaryDirectory() as tmp:
+            spend = dubbing.Spend();spend.path = Path(tmp) / 'openai_spend.json'
+            spend.add('responses', j.dumps(dict(model='gpt-4.1-mini')).encode(), dict(usage=dict(input_tokens=1_000_000, output_tokens=500_000)))
+            spend.add('audio/transcriptions', b'multipart', dict(duration=120))
+            spend.add('responses', b'not json', dict())   # odd replies never break a job
+            got = spend.summary()
+            self.assertEqual(got['calls'], 3);self.assertAlmostEqual(got['usd'], .4 + .8 + .012, places=4)
+            data = j.loads(spend.path.read_text())
+            data.update({f'2000-{m:02d}': dict(usd=1, calls=1) for m in range(1, 13)});spend.path.write_text(j.dumps(data))
+            spend.add('audio/transcriptions', b'', dict(duration=60))
+            self.assertEqual(len(j.loads(spend.path.read_text())), 12)   # only a year of months is kept
+
+
 class BatchExportTests(test_dubbing.PipelineBase):
     def run_job(self, **opts):
         para = mock.MagicMock(side_effect=lambda *a, **k: dict(text='Xin chào.', file_name='video-thu-nghiem'))

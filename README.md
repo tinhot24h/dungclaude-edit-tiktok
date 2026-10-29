@@ -4,6 +4,14 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.28.0
+
+- **Xem số dư ngay trên thanh chạy (tab Lồng tiếng):** ô key hiện `OpenAI ✓ · đã dùng $1.23 | ai33 ✓ · còn ◆ 123.457`.
+  - **ai33:** số credit còn lại lấy trực tiếp từ ai33.pro.
+  - **OpenAI:** OpenAI không cho xem số dư bằng API key thường, nên app tự cộng chi phí các lần gọi của chính app trong tháng (token thực tế × bảng giá, Whisper theo phút). Đây là ước tính; số dư thật xem ở platform.openai.com → Billing. Rê chuột lên ô để xem chi tiết.
+  - Tự cập nhật mỗi phút, sau mỗi video xong và khi bấm vào ô.
+- **Lớp ảnh và Overlay ngẫu nhiên có công tắc bật/tắt ở tiêu đề**, giống Nền & khung / Tiêu đề / Nội dung / Điều chỉnh màu. Tắt thì giữ nguyên mọi thông số, chỉ không chèn vào video.
+
 ## Mới trong 0.27.6
 
 - **Hết viền mờ / viền đen ở cạnh khi chọn "Giữ toàn bộ":** "Cắt viền mép" làm video 9:16 lệch tỷ lệ một chút (1080×1920 → 1072×1912), nên "Giữ toàn bộ · viền đen" để lại dải đen 1–2 px và "Giữ toàn bộ · nền mờ" để lại dải mờ ở hai cạnh. Nay video gần đúng tỷ lệ khung (lệch ≤ 3%) luôn được phủ kín như "Lấp đầy", kể cả khi xoay; video khác hẳn tỷ lệ (16:9, 1:1…) vẫn giữ toàn bộ như cũ. Áp dụng cho Khung xuất, video trong mẫu thiết kế và khung xem trước.

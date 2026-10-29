@@ -494,6 +494,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(200,DUB.jobs_since(int(since) if since.isdigit() else 0))
         if path == '/dub/queue':
             return self.respond(200,DUB.queue_info())
+        if path == '/dub/spend':
+            return self.respond(200,dubbing.SPEND.summary())
         if path == '/dub/storage':
             return self.respond(200,DUB.storage())
         if path == '/dub/demucs':
