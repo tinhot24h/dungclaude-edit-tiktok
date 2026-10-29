@@ -59,6 +59,25 @@ class BatchExportTests(test_dubbing.PipelineBase):
         job = self.run_job(out_resolution='source', out_fps='60')
         self.assertEqual(self.video(self.data / 'dub' / job['id'] / 'dubbed.mp4')[:3], (180, 320, 60))
 
+    def test_edge_trim_removes_the_border_of_the_source(self):
+        src = self.data / self.vid / 'source'
+        framed = src.with_name('framed.mp4')
+        subprocess.run(['ffmpeg', '-v', 'error', '-y', '-f', 'lavfi', '-i', 'color=c=0x2060a0:s=172x312:r=30:d=4', '-f', 'lavfi', '-i', 'sine=frequency=300:duration=4',
+                        '-vf', 'pad=180:320:4:4:color=white', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-shortest', '-f', 'mp4', str(framed)], check=True)
+        framed.replace(src)
+        def column(job, x):
+            out = self.data / 'dub' / job['id'] / 'dubbed.mp4'
+            w = dubbing.probe(out)['video']['width']
+            return list(subprocess.run(['ffmpeg', '-v', 'error', '-ss', '1', '-i', str(out), '-frames:v', '1', '-vf', f'crop=2:ih:{w - 2 if x < 0 else x}:0,scale=1:1',
+                                        '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'], capture_output=True).stdout)
+        white = self.run_job(out_resolution='source')
+        self.assertGreater(min(column(white, -1)), 200)                    # the source's white border reaches the edge
+        clean = self.run_job(out_resolution='source', edge_trim=4)
+        right, left = column(clean, -1), column(clean, 0)
+        self.assertLess(right[0], 120);self.assertLess(left[0], 120)       # gone on both sides: the blue picture fills the frame
+        self.assertEqual(self.video(self.data / 'dub' / clean['id'] / 'dubbed.mp4')[:2], (180, 320))
+        with self.assertRaises(dubbing.DubError):dubbing.options(dict(edge_trim=41))
+
     def test_export_is_stored_once_and_reexport_never_touches_the_saved_file(self):
         job = self.run_job(out_resolution='source')
         folder, saved = self.data / 'dub' / job['id'], Path(job['outputs']['saved_path'])

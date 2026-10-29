@@ -19,6 +19,7 @@ KEYS = dict(title='System.Title', keywords='System.Keywords', rating='System.Rat
             directors='System.Video.Director', producers='System.Media.Producer', writers='System.Media.Writer',
             publisher='System.Media.Publisher', author_url='System.Media.AuthorUrl', promotion_url='System.Media.PromotionUrl',
             copyright='System.Copyright', content_provider='System.Media.ContentDistributor')
+GPS_READWRITE = 2
 LISTS = ('keywords', 'authors', 'directors', 'producers', 'writers')
 LABELS = dict(title='Tiêu đề', keywords='Tags', rating='Đánh giá', authors='Authors', directors='Directors', producers='Producers',
               writers='Writers', publisher='Publisher', author_url='Author URL', promotion_url='Promotion URL', copyright='Copyright',
@@ -75,28 +76,35 @@ def write(path, props):
 
 def main(job_file):
     """Each property on its own: one the handler refuses is reported by name, the others are still saved. Text is
-    VT_LPWSTR and lists VT_VECTOR|VT_LPWSTR (the MP4 handler refuses BSTR, which left every field empty)."""
+    VT_LPWSTR (VT_BSTR when refused) and lists VT_VECTOR of the same."""
     import pythoncom
-    from win32com.propsys import propsys, pscon
+    from win32com.propsys import propsys
     with open(job_file, encoding='utf-8') as f:
         job = json.load(f)
     pythoncom.CoInitialize()
     failed, saved = [], 0
     try:
-        store = propsys.SHGetPropertyStoreFromParsingName(job['path'], None, pscon.GPS_READWRITE, propsys.IID_IPropertyStore)
+        # GPS_READWRITE = 2 (not every pywin32 has pscon.GPS_READWRITE)
+        store = propsys.SHGetPropertyStoreFromParsingName(job['path'], None, GPS_READWRITE, propsys.IID_IPropertyStore)
         for name, value in job['props'].items():
             try:
                 key = propsys.PSGetPropertyKeyFromName(KEYS[name])
-                if name in LISTS:
-                    variant = propsys.PROPVARIANTType([str(v) for v in value], pythoncom.VT_VECTOR | pythoncom.VT_LPWSTR)
-                elif name == 'rating':
-                    variant = propsys.PROPVARIANTType(STARS[int(value)], pythoncom.VT_UI4)
+                if name == 'rating':
+                    tries = [(STARS[int(value)], pythoncom.VT_UI4)]
+                elif name in LISTS:
+                    tries = [([str(v) for v in value], pythoncom.VT_VECTOR | t) for t in (pythoncom.VT_LPWSTR, pythoncom.VT_BSTR)]
                 else:
-                    variant = propsys.PROPVARIANTType(str(value), pythoncom.VT_LPWSTR)
-                store.SetValue(key, variant)
+                    tries = [(str(value), t) for t in (pythoncom.VT_LPWSTR, pythoncom.VT_BSTR)]
+                for n, (data, kind) in enumerate(tries):   # the text kind the handler takes: LPWSTR, else BSTR
+                    try:
+                        store.SetValue(key, propsys.PROPVARIANTType(data, kind))
+                        break
+                    except Exception:
+                        if n == len(tries) - 1:
+                            raise
                 saved += 1
             except Exception as exc:
-                failed.append(f'{LABELS.get(name, name)} ({type(exc).__name__})')
+                failed.append(f'{LABELS.get(name, name)} ({type(exc).__name__}: {str(exc)[:60]})')
         if saved:
             store.Commit()
     finally:

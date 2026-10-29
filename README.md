@@ -1,8 +1,14 @@
-# Review Studio 0.27.1
+# Review Studio 0.27.2
 
 Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: chọn nhiều MP4 tiếng Trung → OpenAI nhận diện lời, dịch, viết tiêu đề / nội dung / tên file → ai33.pro đọc giọng Việt → FFmpeg ghép nền, khung, chữ, overlay và xuất MP4 hoàn chỉnh vào thư mục của bạn.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.27.2
+
+- **Sửa lỗi metadata Windows không ghi** (chỉ có Title và ngày): bản pywin32 trên máy không có hằng `pscon.GPS_READWRITE` nên bước ghi dừng ngay. Nay dùng giá trị 2 như script gốc; mỗi trường thử kiểu chữ LPWSTR rồi BSTR. Tags, đánh giá, Directors, Producers, Writers, Publisher, Content provider, Author URL, Promotion URL được ghi.
+- **Trả lại các nút của mục Cắt & vị trí video** bị mất ở 0.27.0: căn trái / giữa ngang / phải / trên / giữa dọc / dưới, **⊕ Giữa khung**, kích thước nhanh (Lấp đầy 9:16, Giữ toàn bộ hình, Vừa chiều ngang / dọc), zoom 100–200 %, xoay 90° / 180°.
+- **Cắt viền mép video gốc** (0–40 px mỗi cạnh): bỏ mép nhòe hoặc viền sáng / đen của video tải về trước khi đặt vào khung; thường 2–6 px là đủ. Lưu trong mẫu.
 
 ## Mới trong 0.27.1
 

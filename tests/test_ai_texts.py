@@ -185,16 +185,18 @@ class MetadataTests(test_dubbing.PipelineBase):
             def SetValue(self, key, variant):
                 if key == 'System.Media.ContentDistributor':
                     raise RuntimeError('refused')
+                if key == 'System.Media.Publisher' and variant[1] == 31:
+                    raise TypeError('LPWSTR not taken')
                 calls.append((key, variant))
             def Commit(self):
                 calls.append(('commit', None))
         propsys = types.SimpleNamespace(SHGetPropertyStoreFromParsingName=lambda *a: Store(), IID_IPropertyStore=1,
                                         PSGetPropertyKeyFromName=lambda name: name, PROPVARIANTType=lambda v, t: (v, t))
         pythoncom = types.SimpleNamespace(VT_LPWSTR=31, VT_BSTR=8, VT_VECTOR=0x1000, VT_UI4=19, CoInitialize=lambda: None, CoUninitialize=lambda: None)
-        win32com = types.ModuleType('win32com');win32com.propsys = types.SimpleNamespace(propsys=propsys, pscon=types.SimpleNamespace(GPS_READWRITE=2))
+        win32com = types.ModuleType('win32com');win32com.propsys = types.SimpleNamespace(propsys=propsys)   # no pscon: some pywin32 builds lack GPS_READWRITE
         fake = {'pythoncom': pythoncom, 'win32com': win32com, 'win32com.propsys': win32com.propsys}
         with tempfile.NamedTemporaryFile('w', suffix='.json', delete=False, encoding='utf-8') as f:
-            json.dump(dict(path='x.mp4', props=dict(directors=['Kênh A'], author_url='https://www.tiktok.com/@a', rating=5, content_provider='Shop A')), f)
+            json.dump(dict(path='x.mp4', props=dict(directors=['Kênh A'], author_url='https://www.tiktok.com/@a', rating=5, content_provider='Shop A', publisher='Shop A')), f)
         try:
             with mock.patch.dict(sys.modules, fake), self.assertRaises(SystemExit) as end, mock.patch('builtins.print') as out:
                 dubbing.win_meta.main(f.name)
@@ -204,6 +206,7 @@ class MetadataTests(test_dubbing.PipelineBase):
         got = dict(calls)
         self.assertEqual(got['System.Video.Director'], (['Kênh A'], 0x1000 | 31));self.assertEqual(got['System.Media.AuthorUrl'], ('https://www.tiktok.com/@a', 31))
         self.assertEqual(got['System.Rating'], (99, 19));self.assertIn('commit', got)                # the other fields are still saved
+        self.assertEqual(got['System.Media.Publisher'], ('Shop A', 8))                               # LPWSTR refused → saved as BSTR
 
     def test_metadata_options_validation(self):
         for bad in (dict(meta_url='tiktok.com/@a'), dict(meta_rating=6), dict(meta_author='x' * 301), dict(meta_author='a\nb'),

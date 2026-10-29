@@ -1,27 +1,31 @@
 {
  "app": "ReviewStudio",
- "version": "0.27.1",
- "notes": "## Mới trong 0.27.1\n\n- **Sửa lỗi thông tin file trống ở nhóm Origin:** Windows từ chối kiểu dữ liệu chữ cũ nên cả lần ghi bị hủy (Directors, Producers, Writers, Publisher, Author URL, Promotion URL trống). Nay dùng đúng kiểu, ghi từng trường riêng: trường nào Windows từ chối thì báo tên trong hàng đợi, các trường khác vẫn lưu.\n- **Không ghi nhóm Media:** bỏ Contributing artists (trước bị tách link thành \"https:; www.tiktok.com; …\") và Year. Tác giả → Directors / Producers / Writers; Link kênh → Author URL / Promotion URL; Nhà phát hành → Publisher / **Content provider** (mới). Hộp xuất ghi rõ ô nào vào trường nào.",
+ "version": "0.27.2",
+ "notes": "## Mới trong 0.27.2\n\n- **Sửa lỗi metadata Windows không ghi** (chỉ có Title và ngày): bản pywin32 trên máy không có hằng `pscon.GPS_READWRITE` nên bước ghi dừng ngay. Nay dùng giá trị 2 như script gốc; mỗi trường thử kiểu chữ LPWSTR rồi BSTR. Tags, đánh giá, Directors, Producers, Writers, Publisher, Content provider, Author URL, Promotion URL được ghi.\n- **Trả lại các nút của mục Cắt & vị trí video** bị mất ở 0.27.0: căn trái / giữa ngang / phải / trên / giữa dọc / dưới, **⊕ Giữa khung**, kích thước nhanh (Lấp đầy 9:16, Giữ toàn bộ hình, Vừa chiều ngang / dọc), zoom 100–200 %, xoay 90° / 180°.\n- **Cắt viền mép video gốc** (0–40 px mỗi cạnh): bỏ mép nhòe hoặc viền sáng / đen của video tải về trước khi đặt vào khung; thường 2–6 px là đủ. Lưu trong mẫu.",
  "files": {
+  "video_tools.js": {
+   "sha256": "217dc997759d9b7b26fccfb7abaa35ebf82b5eb333f816dc83fcf67b06781706",
+   "size": 4542
+  },
   "tests/test_batch.py": {
-   "sha256": "e06fee55e917941d6a4a249f2919a3f2e14fbda7c7ab5b0f41aa1a76643d0406",
-   "size": 8908
+   "sha256": "0bde03ee1025867da84b4628bd76eda34764db55c4fc4c6f7d7671e18c9e06ee",
+   "size": 10472
   },
   "win_meta.py": {
-   "sha256": "6d824bb6c47d16ff80adeed07e0e8ecc1fa9c5d36d8deb813691f4e97a36ebbd",
-   "size": 5730
+   "sha256": "dc7abe84528ffb57d5f5ff89f23c0b09fc5f63c6d64f6adaec11b8a2e8c4c0e8",
+   "size": 6106
   },
   "ai_texts.py": {
    "sha256": "5b5eb191c3435a43e72a0d89191fb9f418c1dec561b62ad41fd489740881ed9f",
    "size": 4901
   },
   "tests/test_ai_texts.py": {
-   "sha256": "485c62199b6a2b4341906c10b2642abbb846056a184885728ddc4ba53b137997",
-   "size": 23445
+   "sha256": "122239b2db5d4abdb581cb4e9d81fcc818f601b6d9a683b99ec706325db6b0f4",
+   "size": 23737
   },
   "design_tab.js": {
-   "sha256": "01dfd065c454e70d19ef87f81cd6ff196ae6b2bf54a59c713bfc2964210581cd",
-   "size": 37375
+   "sha256": "ff8df9de97533f0522280666f6fc5abb5c0bc8b2488199ce45b626f4c208c03e",
+   "size": 37612
   },
   "local_files.js": {
    "sha256": "b9a975e980db7f5f013f6046d58228fb39817b6959e8caaf9505c4ba3cc898a7",
@@ -48,8 +52,8 @@
    "size": 5181
   },
   "dub_ui.js": {
-   "sha256": "afe6d55a9261e10f34393b50d8c0c07fbdb81853196b308fb8615f939ffadf2d",
-   "size": 122065
+   "sha256": "2b960bbf1437f78e8344ef64a758cb7655014d3b2dbdd6e9e6702b422f593cc5",
+   "size": 122248
   },
   "key_ui.js": {
    "sha256": "4c1833943a21476f6e515115af555c36a4d763bbc5c1122f111cad0a5065574d",
@@ -60,8 +64,8 @@
    "size": 2610
   },
   "dubbing.py": {
-   "sha256": "f70eaaa43312fd3980ec36daa818c2fb8962fdb0158453d133142f6ddcc23cdb",
-   "size": 179731
+   "sha256": "ff359e30aee499d4877838dda2d32005ddd0be6ea8c63a70d175ea7fe2f7a2ce",
+   "size": 180174
   },
   "tests/test_dubbing.py": {
    "sha256": "958db5bb2daac3cf9f40b89d846e9e5b1a23ba9611617e0e1747b23432edb3ce",
@@ -112,8 +116,8 @@
    "size": 13961
   },
   "app.py": {
-   "sha256": "7fdf2eb34a3ec611e67a87cc0b03dfd51848de01b1006bc158e11f9f94e6834e",
-   "size": 61708
+   "sha256": "fdda7072e360225ad90a95d64ab0ff79d9f0887ce73d8839815b0f6b4b8d61eb",
+   "size": 61726
   },
   "ai33_audio.py": {
    "sha256": "bf91eee837ea08e1b3e96495f68f87b621f0d68abfeedfdbc4a53f8a13b21b7d",
@@ -148,31 +152,31 @@
    "size": 5352
   },
   "index.html": {
-   "sha256": "b3cd70dc8b0610421d5aa7968fedad809bd683d7fbd4136c76521f76dc60b681",
-   "size": 24040
+   "sha256": "06b94ab77da8bc8efbe6a6c8b8a78517d142a84358a7cb8ca4d4413e8c3d7236",
+   "size": 24079
   },
   "launch.py": {
    "sha256": "283210c4d7b6b1485fa3443ef11b2d51dc3a00a67384b18efb169e391e7522f3",
    "size": 5006
   },
   "build_package.py": {
-   "sha256": "c47698fd1986902c5f6528217ccb0ff6b1d9c562b6f5b876ee966080f0693774",
-   "size": 3197
+   "sha256": "0a7d3492fd8179fb91c924519a247b92cc6a3f1ac9a229f5fa86cff43d63e03e",
+   "size": 3215
   },
   "START_WINDOWS.bat": {
    "sha256": "616ecf0e4d9a41995c509f79bd5e1a01d1dce7ba76356a801417e08747847c4e",
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "fe0bd24226aec47c658b5beefe349c6f7c0103a1c3f23f5d400ff1ee08ebedcc",
-   "size": 8489
+   "sha256": "ccf3ca86c9e968a4cc0116cc52a1c48c15875ab9e8c8dd29bd2afc53cac30294",
+   "size": 8917
   },
   "README.md": {
-   "sha256": "de78bca702d15257adf4dfb32c618bef6da312ff92519d48a59f00bd101c3eef",
-   "size": 12290
+   "sha256": "6c6d2dadfccfd12d6032936b11812e7151c1cb6f3f4fcf000455598702dc84cb",
+   "size": 13217
   },
   "VERSION": {
-   "sha256": "452979b753d5298bbafeeec3188b8a1b5c6bf5e8a05b658604caa5273ed72e57",
+   "sha256": "c0472ebd5e87101546086b873029c8e6b5b99460b97c596aa992fccbfb52027a",
    "size": 7
   },
   ".gitignore": {

@@ -58,7 +58,7 @@ DEFAULTS = dict(language='zh', model=ai_translate.DEFAULT_MODEL, rate=4.2, prono
                 adjust=False, adjust_brightness=0, adjust_contrast=0, adjust_saturation=0, adjust_sharpen=0,
                 vision=True, title_style='auto', reuse=True,
                 meta=True, meta_strip=True, meta_author='', meta_url='', meta_publisher='', meta_copyright='', meta_rating=0, meta_back_min=5, meta_back_max=7,
-                out_resolution='1080', out_fps='30', out_quality='high')
+                out_resolution='1080', out_fps='30', out_quality='high', edge_trim=0)
 TEXT_SOURCES = ('ai', 'fixed', 'file', 'none')
 PRONOUNS = {'neutral': 'xưng hô trung tính, hạn chế đại từ', 'ban': 'gọi người xem là "bạn"', 'minh-ban': 'người nói xưng "mình", gọi người xem là "bạn"'}
 
@@ -108,7 +108,7 @@ def options(raw):
     if isinstance(count, bool) or not isinstance(count, int) or not 1 <= count <= 3:
         raise DubError('Số overlay mỗi video phải từ 1 đến 3.')
     out['overlay_count'] = count
-    for key, lo, hi in (('title_chars', 5, 160), ('body_min_chars', 0, 600), ('body_max_chars', 10, 600)):
+    for key, lo, hi in (('title_chars', 5, 160), ('body_min_chars', 0, 600), ('body_max_chars', 10, 600), ('edge_trim', 0, 40)):
         v = raw.get(key, DEFAULTS[key])
         if isinstance(v, bool) or not isinstance(v, int) or not lo <= v <= hi:
             raise DubError('Thông số không hợp lệ: ' + key)
@@ -1063,14 +1063,14 @@ def source_fps(video):
         return 0.0
 
 
-def design_video(design, W, H, stretch=1, duration=0, adjust=()):
+def design_video(design, W, H, stretch=1, duration=0, adjust=(), trim=()):
     """With a design the video sits in the design's video box exactly as in the editor (x/y/width/height/zoom in
     720×1280 design pixels, cover/contain/stretch, camera zoom in/out over the video, flip, rotation) on the
     background colour → [framed]."""
     scale = W / design_mod.W
     box = design_mod.video_box(design)
     vw, vh = max(2, round(box['width'] * scale / 2) * 2), max(2, round(box['height'] * scale / 2) * 2)
-    chain = '[0:v:0]' + (f'setpts=PTS*{stretch:.6f},' if stretch != 1 else '') + 'fps=30,' + ''.join(a + ',' for a in adjust) + 'format=rgba,'
+    chain = '[0:v:0]' + ''.join(t + ',' for t in trim) + (f'setpts=PTS*{stretch:.6f},' if stretch != 1 else '') + 'fps=30,' + ''.join(a + ',' for a in adjust) + 'format=rgba,'
     fit = design.get('video_fit', 'cover')
     if fit == 'cover':
         chain += f'scale={vw}:{vh}:force_original_aspect_ratio=increase,crop={vw}:{vh},'
@@ -1093,6 +1093,12 @@ def design_video(design, W, H, stretch=1, duration=0, adjust=()):
     x, y = box['x'] * scale, box['y'] * scale
     return [chain, f'color=c={color}:s={W}x{H}:r=30,format=rgba[dbase]',
             f'[dbase][clip]overlay=x={x}+({vw}-overlay_w)/2:y={y}+({vh}-overlay_h)/2:shortest=1:format=auto[framed]']
+
+
+def edge_crop(settings):
+    """"Cắt viền mép": px cut off every side of the source picture (blurred or light borders of downloaded videos)."""
+    e = int(settings.get('edge_trim') or 0)
+    return [f'crop=iw-{2 * e}:ih-{2 * e}:{e}:{e}'] if e else []
 
 
 def frame_identity(settings):
@@ -1119,8 +1125,8 @@ def frame_graph(settings, video, before, after):
     centre, place it at the offset on black or a blurred copy. Same order as the CSS preview, so both match."""
     W, H = frame_size(settings, video)
     tail = ','.join(after + ['format=yuv420p'])
-    pre = list(before) + ['hflip'] * ('h' in settings['frame_flip']) + ['vflip'] * ('v' in settings['frame_flip'])
-    if frame_identity(settings):
+    pre = edge_crop(settings) + list(before) + ['hflip'] * ('h' in settings['frame_flip']) + ['vflip'] * ('v' in settings['frame_flip'])
+    if frame_identity(settings) and not settings.get('edge_trim'):
         size = [f'scale={W}:{H}:flags=lanczos'] if (W, H) != (int(video.get('width') or 0) // 2 * 2, int(video.get('height') or 0) // 2 * 2) else []
         return ['[0:v:0]' + ','.join(pre + size + [tail]) + '[vout]'], (W, H)
     z = settings['frame_zoom'] / 100
@@ -2682,14 +2688,14 @@ class Store:
         fps = int(settings['out_fps'])
         lower_fps = source_fps(video) > fps + .5
         same_size = frame_size(settings, video) == (int(video.get('width') or 0) // 2 * 2, int(video.get('height') or 0) // 2 * 2)
-        copy = stretch == 1 and identity and same_size and not lower_fps and not isinstance(source, Clip) and not chosen and not image and not design and not adjust \
+        copy = stretch == 1 and identity and same_size and not settings['edge_trim'] and not lower_fps and not isinstance(source, Clip) and not chosen and not image and not design and not adjust \
             and video.get('codec_name') == 'h264' and video.get('pix_fmt') in ('yuv420p', 'yuvj420p')
         filters = not copy
         if filters:
             width, height = frame_size(settings, video)
             # frame → random overlays
             if design:
-                lines = design_video(design, width, height, stretch, duration, adjust)
+                lines = design_video(design, width, height, stretch, duration, adjust, edge_crop(settings))
             else:
                 lines, _ = frame_graph(settings, video, ([f'setpts=PTS*{stretch:.6f}'] if stretch != 1 else []) + adjust, [])
                 lines[-1] = lines[-1][:-len('[vout]')] + '[framed]'

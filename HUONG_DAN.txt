@@ -1,4 +1,4 @@
-REVIEW STUDIO 0.27.1 — DỰNG & LỒNG TIẾNG VIDEO TIKTOK HÀNG LOẠT
+REVIEW STUDIO 0.27.2 — DỰNG & LỒNG TIẾNG VIDEO TIKTOK HÀNG LOẠT
 
 CẬP NHẬT
 Từ bản 0.13: không cần tải lại ZIP. Trong ứng dụng bấm nút ⟳ (góc phải
@@ -64,6 +64,11 @@ Video nguồn, hàng đợi, MP3, mẫu nằm trong .local. Video không dùng q
 khi mở app (đặt REVIEW_KEEP_DAYS=0 để tắt), trừ video còn trong hàng đợi chưa xong.
 Chỉ dùng trên máy này. Chưa gọi thử OpenAI / ai33 thật, NVENC và ghi Tags của Windows
 trên máy thật: hãy chạy thử 1–2 video trước khi chạy lô lớn.
+
+NÂNG CẤP 0.27.2
+- Sửa lỗi "Windows không ghi được Tags / đánh giá / link kênh (… GPS_READWRITE)": nay ghi được nhóm Origin, Tags, đánh giá.
+- Mục Cắt & vị trí video có lại nút căn chỉnh (⊕ Giữa khung, căn trái/phải/trên/dưới), kích thước nhanh, zoom, xoay.
+- Ô "Cắt viền mép" (px mỗi cạnh): bỏ mép nhòe / viền sáng của video gốc, thường 2–6 px.
 
 NÂNG CẤP 0.27.1
 - Sửa lỗi Directors / Producers / Writers / Publisher / Author URL / Promotion URL trống; thêm Content provider.

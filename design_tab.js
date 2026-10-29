@@ -189,7 +189,8 @@ function ccOverlay(){const body=$('sec-overlay').querySelector('.dub-sec-body');
  ccHideRest(body,null);body.append(panel)}
 // Cắt đầu / cuối (used with and without a design) as the first group of "Cắt & vị trí video"
 function ccTrim(){const body=$('sec-frame').querySelector('.dub-sec-body'),first=body.firstElementChild;if(first.classList.contains('cc-group'))return;
- const g=ccGroup('Cắt',ccRow('Cắt đầu',labelled('giây',$('dub-trim-start'))),ccRow('Cắt cuối',labelled('giây',$('dub-trim-end'))));
+ const g=ccGroup('Cắt',ccRow('Cắt đầu',labelled('giây',$('dub-trim-start'))),ccRow('Cắt cuối',labelled('giây',$('dub-trim-end'))),
+  ccRow('Cắt viền mép',labelled('px mỗi cạnh',$('dub-edge'))),el('p',{className:'helper',textContent:'Bỏ vài px ở 4 mép video gốc (mép nhòe, viền sáng/đen của video tải về). Thường 2–6 px là đủ.'}));
  body.insertBefore(g,first);first.classList.add('cc-hide')}
 // without a design: the dub page's own frame tools (khung xuất, zoom, vị trí, xoay, lật) in the same layout
 function ccDubFrame(){const body=$('sec-frame').querySelector('.dub-sec-body');if(body.querySelector('.cc-dubframe'))return;
