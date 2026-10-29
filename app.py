@@ -70,7 +70,7 @@ MIME={'.mp4':'video/mp4','.m4v':'video/mp4','.mov':'video/quicktime','.mkv':'vid
       '.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.gif':'image/gif','.srt':'application/x-subrip'}
 # every "add file" endpoint also accepts X-Local-Path: the file is read where it is on this computer, nothing uploaded
 LOCAL_UPLOADS={'/upload':VIDEO_EXT,'/audio/upload':AUDIO_EXT+VIDEO_EXT,'/frame-upload':('.png',),'/image-upload':IMAGE_EXT,
-               '/dub/images/upload':IMAGE_EXT,'/overlays/upload':VIDEO_EXT+IMAGE_EXT}
+               '/dub/images/upload':IMAGE_EXT,'/overlays/upload':VIDEO_EXT+IMAGE_EXT,'/dub/music/upload':AUDIO_EXT}
 PICK_TYPES={'video':[('Video','*.mp4 *.mov *.m4v *.mkv *.webm *.avi *.flv *.ts')],'audio':[('Âm thanh','*.mp3 *.wav *.m4a *.aac *.flac *.ogg *.opus')],
             'image':[('Ảnh','*.png *.jpg *.jpeg *.webp *.gif')],'srt':[('Phụ đề SRT','*.srt')],'json':[('JSON','*.json')]}
 
@@ -466,6 +466,13 @@ class Handler(BaseHTTPRequestHandler):
             try:src=local_file({'path':parse_qs(urlparse(self.path).query).get('path',[''])[0]},MEDIA_EXT)
             except ValueError as exc:return self.respond(404,{'error':str(exc)})
             return self.serve_audio(src,False,MIME[src.suffix.lower()],src.name)
+        if path == '/dub/music':
+            return self.respond(200,{'music':DUB.music_tracks()})
+        dmus=re.fullmatch(r'/dub/music/([a-f0-9]{32})/file',path)
+        if dmus:
+            item=DUB.music_track(dmus[1])
+            if not item:return self.respond(404,{'error':'Không tìm thấy bài nhạc.'})
+            f=DUB.music_dir/item['file'];return self.serve_audio(f,False,MIME.get(f.suffix.lower(),'audio/mpeg'),item['name'])
         if path == '/dub/images':
             return self.respond(200,{'images':DUB.images()})
         dimg=re.fullmatch(r'/dub/images/([a-f0-9]{32})/file',path)
@@ -724,6 +731,28 @@ class Handler(BaseHTTPRequestHandler):
                     try:return self.respond(200,DUB.import_image(temp,name))
                     except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
                 finally:temp.unlink(missing_ok=True)
+            if path == '/dub/music/upload':
+                if not 0 < size <= 300*1024*1024:raise ValueError('File nhạc tối đa 300 MB.')
+                name=asset_store.clean_name(unquote(self.headers.get('X-Filename','music.mp3')),'music.mp3')
+                temp=DUB.music_dir/(uuid.uuid4().hex+'.upload')
+                try:
+                    with temp.open('wb') as out:
+                        remaining=size
+                        while remaining:
+                            chunk=self.rfile.read(min(1024*1024,remaining))
+                            if not chunk:break
+                            out.write(chunk);remaining-=len(chunk)
+                    try:return self.respond(200,DUB.import_music(temp,name))
+                    except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
+                finally:temp.unlink(missing_ok=True)
+            dmus_act=re.fullmatch(r'/dub/music/([a-f0-9]{32})/(delete|styles)',path)
+            if dmus_act:
+                raw=json.loads(self.rfile.read(size)) if 0<size<=65536 else {}
+                try:
+                    if dmus_act[2]=='delete':DUB.delete_music(dmus_act[1])
+                    else:DUB.set_music_styles(dmus_act[1],raw.get('styles') if isinstance(raw,dict) else None)
+                except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
+                return self.respond(200,{'music':DUB.music_tracks()})
             dimg_del=re.fullmatch(r'/dub/images/([a-f0-9]{32})/delete',path)
             if dimg_del:
                 try:DUB.delete_image(dimg_del[1])

@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import subprocess
 import threading
 import unittest
@@ -58,6 +59,59 @@ class CoverTests(unittest.TestCase):
         # a box smaller than the frame is left as placed
         small = dict(units='px', video_x=100, video_y=100, video_width=400, video_height=700, video_zoom=100, video_rotation=5, video_fit='cover', background='color', color='#000000')
         self.assertLess(self.border(dubbing.design_video(small, 720, 1280) + ['[framed]null[out]'], 720, 1280), 20)
+
+
+class CaptionMusicTests(test_dubbing.PipelineBase):
+    def run_job(self, **opts):
+        para = mock.MagicMock(side_effect=lambda *a, **k: dict(text='Chào cả nhà. Hôm nay mình giới thiệu món đồ rất hay.', file_name='video-thu-nghiem'))
+        with mock.patch.object(dubbing, 'paragraph_request', para), mock.patch.object(dubbing, 'video_frames', return_value=[]):
+            job = self.job(mode='paragraph', background='remove', subtitles='none', out_resolution='source', **opts)
+            self.store.process(job, dict(openai='sk', ai33='k'), threading.Event())
+        self.assertEqual(job['state'], 'done', job['message'])
+        return job, self.data / 'dub' / job['id']
+
+    def test_words_share_the_time_and_light_up_one_by_one(self):
+        words = dubbing.caption_words([dict(start=0, end=2, vi='một hai ba bốn năm sáu')], 3)
+        self.assertEqual(len(words), 6);self.assertEqual(words[0][2], ['một', 'hai', 'ba']);self.assertEqual(words[3][2], ['bốn', 'năm', 'sáu'])
+        self.assertEqual((words[0][0], words[-1][1]), (0, 2));self.assertEqual([w[3] for w in words], [0, 1, 2, 0, 1, 2])
+        o = dubbing.options(dict(captions=True, caption_style='box', caption_upper=True))
+        text, n = dubbing.captions_ass([dict(start=0, end=1, vi='xin {chào}')], o, 1080, 1920)
+        self.assertEqual(n, 2);self.assertIn('XIN', text);self.assertNotIn('{CHÀO}', text);self.assertIn('Be Vietnam Pro Black', text)
+        with self.assertRaises(dubbing.DubError):dubbing.options(dict(caption_hi='yellow'))
+        row = [dict(start=0, end=1, vi='một hai ba')]
+        ev = lambda st: [l for l in dubbing.captions_ass(row, dubbing.options(dict(captions=True, caption_style=st)), 1080, 1920)[0].splitlines() if l.startswith('Dialogue: 1')]
+        self.assertEqual(ev('karaoke')[2].count('\\c&H004DE1FF}'), 3)          # every word read so far stays lit
+        self.assertIn('\\alpha&HFF&', ev('reveal')[0]);self.assertNotIn('\\alpha&HFF&', ev('reveal')[2])
+        self.assertTrue(all(l.count(' ') <= 1 + l.count('{') for l in ev('single')));self.assertNotIn('hai', ev('single')[0].split('}')[-2])
+        for st in dubbing.CAPTION_STYLES:
+            self.assertEqual(len(ev(st)), 3, st)
+
+    def test_captions_are_burned_in_with_their_font(self):
+        job, folder = self.run_job(captions=True, caption_y=50, caption_size=60)
+        graph = (folder / 'export.ffgraph').read_text()
+        self.assertIn('ass=captions.ass:fontsdir=capfonts', graph);self.assertEqual(len(list((folder / 'capfonts').iterdir())), 1)
+        self.assertIn('Dialogue:', (folder / 'captions.ass').read_text(encoding='utf-8'))
+        off, folder2 = self.run_job()
+        self.assertNotIn('ass=', (folder2 / 'export.ffgraph').read_text())
+
+    def test_music_from_the_library_by_style_ducked_under_the_voice(self):
+        src = Path(self.tmp.name) / 'beat.mp3'
+        subprocess.run(['ffmpeg', '-v', 'error', '-y', '-f', 'lavfi', '-i', 'sine=frequency=220:duration=2', str(src)], check=True)
+        tmp = Path(self.tmp.name) / 'beat.upload';shutil.copyfile(src, tmp)
+        track = self.store.import_music(tmp, 'beat.mp3')
+        other = Path(self.tmp.name) / 'b2.upload';shutil.copyfile(src, other);news = self.store.import_music(other, 'tin.mp3')
+        self.store.set_music_styles(news['id'], ['news'])
+        with self.assertRaises(dubbing.DubError):self.store.set_music_styles(track['id'], ['rock'])
+        job, folder = self.run_job(music=True, style='news', music_volume=30)
+        self.assertEqual(job['music']['id'], news['id'])                      # the track tagged with the văn phong
+        graph = (folder / 'export.ffgraph').read_text()
+        self.assertIn('sidechaincompress', graph);self.assertIn('amix=inputs=2', graph)
+        self.assertAlmostEqual(dubbing.probe(folder / 'dubbed.mp4')['duration'], job.get('output_duration', job['duration']), delta=.2)   # the music never makes the video longer
+        job2, folder2 = self.run_job(music=True, music_duck=False, music_ids=[track['id']])
+        self.assertEqual(job2['music']['id'], track['id']);self.assertNotIn('sidechaincompress', (folder2 / 'export.ffgraph').read_text())
+        self.store.delete_music(track['id']);self.store.delete_music(news['id'])
+        job3, _ = self.run_job(music=True)
+        self.assertTrue(any(w.startswith('Nhạc nền') for w in job3['warnings']))
 
 
 class SpendTests(unittest.TestCase):

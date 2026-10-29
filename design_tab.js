@@ -183,6 +183,7 @@ function ccImage(){const body=$('sec-image').querySelector('.dub-sec-body');if(b
  ccHideRest(body,null);body.append(panel);refreshers.forEach(f=>f())}
 function ccOverlay(){const body=$('sec-overlay').querySelector('.dub-sec-body');if(body.querySelector('.cc-panel'))return;
  headSwitch($('sec-overlay'),$('dub-overlay'),'Bật/tắt video overlay');
+ headSwitch($('sec-captions'),$('dub-cap'),'Bật/tắt phụ đề chữ chạy');headSwitch($('sec-music'),$('dub-music'),'Bật/tắt nhạc nền');
  const panel=el('div',{className:'cc-panel'},
   ccGroup('Thư viện overlay',body.querySelector('.result-actions'),$('dub-ov-bulk'),$('dub-ov-list'),$('dub-ov-note')),
   ccGroup('Hòa trộn',ccRow('Chế độ',ccBare('dub-ov-blend')),ccRow('Độ mờ',ccBare('dub-ov-opacity'))),
@@ -259,7 +260,7 @@ function overlayLayer(){window.dubLayers?.z();const still=$('dub-ovi');let img=$
 // image layer and TikTok safe zone: the dub page's boxes move onto the stage (image under the frame and text, like the export)
 function stageLayers(use){const box=$('dub-imgbox'),safe=$('dub-safe').checked;
  if(use){const o=api.settings(),scene=$('scene'),anchor=$('frame-art');if(box.parentNode!==scene||box.nextSibling!==anchor)scene.insertBefore(box,anchor);
-  api.drawImage(o,720,1280)}
+  api.drawImage(o,720,1280);window.dubCaption?.($('scene'),720)}
  else{const frame=$('dub-frame');if(box.parentNode!==frame)frame.insertBefore(box,$('dub-frame-empty'))}
  // the stage's own TikTok safe zone (720×1280 design pixels) follows the "Vùng an toàn TikTok" box of this page
  if($('safe-zone'))$('safe-zone').hidden=!(use&&safe);$('dub-safezone').hidden=use||!safe}

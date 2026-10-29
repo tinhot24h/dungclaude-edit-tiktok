@@ -33,6 +33,13 @@ FONTS = {
     'itim': ('Itim-Regular.ttf', 'Itim', 'Itim · dễ thương'),
     'mali': ('Mali-Bold.ttf', 'MaliBold', 'Mali · dễ thương đậm'),
     'krub': ('Krub-Bold.ttf', 'KrubBold', 'Krub · hiện đại'),
+    'montserrat': ('Montserrat-ExtraBold.ttf', 'MontserratXB', 'Montserrat · hiện đại đậm'),
+    'nunito': ('Nunito-Black.ttf', 'NunitoBlack', 'Nunito · tròn mềm'),
+    'lexend': ('Lexend-ExtraBold.ttf', 'LexendXB', 'Lexend · dễ đọc'),
+    'oswald': ('Oswald-Bold.ttf', 'OswaldBold', 'Oswald · cao gọn'),
+    'baloo': ('Baloo2-ExtraBold.ttf', 'Baloo2XB', 'Baloo 2 · tròn vui'),
+    'quicksand': ('Quicksand-Bold.ttf', 'QuicksandBold', 'Quicksand · nhẹ nhàng'),
+    'fira': ('FiraSans-Black.ttf', 'FiraBlack', 'Fira Sans · rất đậm'),
     # kept for older templates: DejaVu Sans Mono lacks some Vietnamese letters (ẳ ế ố ở ử…)
     'mono': ('DejaVuSansMono.ttf', 'Mono', 'Mono đều nét · thiếu vài dấu'),
     'mono-bold': ('DejaVuSansMono-Bold.ttf', 'MonoBold', 'Mono đậm · thiếu vài dấu'),
@@ -112,3 +119,26 @@ def wrap(text, font, size, max_width, spacing=0, letter=0):
                 line += character
         result.append(line)
     return result
+
+
+@lru_cache(maxsize=64)
+def family(font):
+    """The font's own full name (name table, ID 4, else 1): what libass matches for the burned-in captions."""
+    raw = (ROOT / 'assets' / FONTS[font][0]).read_bytes()
+    u16 = lambda p: struct.unpack_from('>H', raw, p)[0]
+    for i in range(u16(4)):
+        tag, _, offset, _ = struct.unpack_from('>4sIII', raw, 12+16*i)
+        if tag == b'name':
+            break
+    else:
+        return FONTS[font][1]
+    count, strings = u16(offset+2), offset+u16(offset+4)
+    found = {}
+    for i in range(count):
+        platform, encoding, _, name_id, length, at = struct.unpack_from('>HHHHHH', raw, offset+6+12*i)
+        if name_id in (1, 4) and platform in (0, 3):
+            try:
+                found.setdefault(name_id, raw[strings+at:strings+at+length].decode('utf-16-be'))
+            except UnicodeDecodeError:
+                pass
+    return found.get(4) or found.get(1) or FONTS[font][1]

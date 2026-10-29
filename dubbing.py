@@ -28,6 +28,7 @@ from pathlib import Path
 from urllib import request, error
 import ai33_audio
 import ai_translate
+import fonts as fonts_mod
 from ai_texts import text_targets, words_for, TITLE_STYLES, TITLE_COUNT, BODY_COUNT, slug_name, DANGLING, limit_chars, text_problems, pick_text
 import audio_files
 import output_folder
@@ -54,6 +55,9 @@ DEFAULTS = dict(language='zh', model=ai_translate.DEFAULT_MODEL, rate=4.2, prono
                 overlay=False, overlay_ids=[], overlay_count=1, overlay_blend='screen', overlay_opacity=60, overlay_timing='loop', end_with_voice=True,
                 image=False, image_id='', image_x=0, image_y=0, image_w=60, image_h=0, image_rotate=0, image_flip='none', image_blend='normal',
                 image_opacity=100, image_layer='below', layer_order='',
+                captions=False, caption_style='classic', caption_font='bvp-black', caption_size=68, caption_y=70, caption_words=5,
+                caption_color='#ffffff', caption_hi='#ffe14d', caption_upper=False,
+                music=False, music_ids=[], music_volume=18, music_duck=True,
                 design=None, title_source='ai', body_source='ai', title_chars=30, body_min_chars=50, body_max_chars=100, review_texts=False, design_bg=True, design_title=True, design_body=True,
                 adjust=False, adjust_brightness=0, adjust_contrast=0, adjust_saturation=0, adjust_sharpen=0,
                 vision=True, title_style='auto', reuse=True,
@@ -100,6 +104,29 @@ def options(raw):
         if v not in allowed:
             raise DubError('Thông số không hợp lệ: ' + key)
         out[key] = v
+    # "Phụ đề chữ chạy" (burned-in, the spoken word lights up) and "Nhạc nền" (a track from the music library)
+    for key in ('captions', 'caption_upper', 'music', 'music_duck'):
+        v = raw.get(key, DEFAULTS[key])
+        if not isinstance(v, bool):
+            raise DubError('Thông số không hợp lệ: ' + key)
+        out[key] = v
+    for key, lo, hi in (('caption_size', 24, 160), ('caption_y', 5, 95), ('caption_words', 1, 8), ('music_volume', 0, 100)):
+        v = raw.get(key, DEFAULTS[key])
+        if isinstance(v, bool) or not isinstance(v, (int, float)) or not lo <= v <= hi:
+            raise DubError('Thông số không hợp lệ: ' + key)
+        out[key] = int(v)
+    if raw.get('caption_style', DEFAULTS['caption_style']) not in CAPTION_STYLES or raw.get('caption_font', DEFAULTS['caption_font']) not in fonts_mod.FONTS:
+        raise DubError('Thông số không hợp lệ: kiểu phụ đề')
+    out['caption_style'], out['caption_font'] = raw.get('caption_style', DEFAULTS['caption_style']), raw.get('caption_font', DEFAULTS['caption_font'])
+    for key in ('caption_color', 'caption_hi'):
+        v = raw.get(key, DEFAULTS[key])
+        if not isinstance(v, str) or not re.fullmatch(r'#[0-9a-fA-F]{6}', v):
+            raise DubError('Thông số không hợp lệ: ' + key)
+        out[key] = v.lower()
+    music_ids = raw.get('music_ids', [])
+    if not isinstance(music_ids, list) or len(music_ids) > 500 or not all(isinstance(i, str) and re.fullmatch('[a-f0-9]{32}', i) for i in music_ids):
+        raise DubError('Danh sách nhạc nền không hợp lệ.')
+    out['music_ids'] = music_ids
     order = raw.get('layer_order', '')
     if order and (not isinstance(order, str) or sorted(order.split(',')) != sorted(LAYERS)):
         raise DubError('Thông số không hợp lệ: layer_order')
@@ -1199,6 +1226,102 @@ def near_fit(sw, sh, W, H):
 
 
 LAYERS = ('video', 'background', 'overlay', 'image')
+
+# "Phụ đề chữ chạy": a few words at a time, the word being read lights up (like CapCut auto captions)
+CAPTION_STYLES = {'classic': 'Viền đen · từ đang đọc đổi màu', 'box': 'Nền hộp mờ', 'pop': 'Từ đang đọc phóng to', 'neon': 'Phát sáng',
+                  'karaoke': 'Tô màu dần như karaoke', 'marker': 'Nền màu dưới từ đang đọc', 'shadow': 'Bóng đổ dày',
+                  'reveal': 'Hiện dần từng chữ', 'single': 'Từng chữ một, chữ to'}
+
+
+_ASS = []
+
+
+def ASS_FILTER():
+    """Whether this FFmpeg has libass (the "full" builds have it); asked once."""
+    if not _ASS:
+        try:
+            out = subprocess.run(['ffmpeg', '-hide_banner', '-filters'], capture_output=True, text=True, timeout=20).stdout
+        except (OSError, subprocess.SubprocessError):
+            out = ''
+        _ASS.append(bool(re.search(r'^\s*\S+\s+ass\s', out, re.M)))
+    return _ASS[0]
+
+
+def ass_color(hex_color, alpha=0):
+    """#rrggbb → ASS &HAABBGGRR."""
+    r, g, b = hex_color[1:3], hex_color[3:5], hex_color[5:7]
+    return f'&H{alpha:02X}{b}{g}{r}'.upper()
+
+
+def caption_words(rows, words_per, upper=False):
+    """[(start, end, [words], index of the word being read)] for every word: each subtitle row is cut into chunks
+    of `words_per` words and its time is shared between the words by their length (long words are read longer)."""
+    out = []
+    for row in rows:
+        text = ' '.join(str(row.get('vi') or '').split())
+        if not text or row['end'] <= row['start']:
+            continue
+        words = (text.upper() if upper else text).split()
+        weights = [len(w.strip('.,!?…:;"\'')) + 2 for w in words]
+        total, at = sum(weights), row['start']
+        times = []
+        for w in weights:
+            span = (row['end'] - row['start']) * w / total
+            times.append((at, at + span))
+            at += span
+        for c in range(0, len(words), words_per):
+            chunk = words[c:c + words_per]
+            for i in range(len(chunk)):
+                a, b = times[c + i]
+                out.append((round(a, 3), round(b, 3), chunk, i))
+    return out
+
+
+def captions_ass(rows, settings, W, H):
+    """The .ass file burned in by FFmpeg's libass (ass filter). Sizes are given for a 1080 px wide frame.
+    "Nền hộp" draws one box per chunk on its own layer (a box per word would overlap and leave dark seams);
+    "Phát sáng" keeps white letters with a soft glow that turns full on the word being read."""
+    k = W / 1080
+    size, style = round(settings['caption_size'] * k), settings['caption_style']
+    base, hi = ass_color(settings['caption_color']), ass_color(settings['caption_hi'])
+    outline, out_color, blur = round(5 * k), '&H00000000', 0
+    if style == 'box':
+        outline = 0
+    elif style == 'neon':
+        outline, out_color, blur = round(4 * k), ass_color(settings['caption_hi'], 0x90), 5
+    shadow = round(7 * k) if style == 'shadow' else 0
+    name = fonts_mod.family(settings['caption_font'])
+    margin = round(W * .08)
+    head = ('[Script Info]\nScriptType: v4.00+\nWrapStyle: 0\nScaledBorderAndShadow: yes\n'
+            f'PlayResX: {W}\nPlayResY: {H}\n\n[V4+ Styles]\n'
+            'Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, '
+            'ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n'
+            f'Style: Cap,{name},{size},{base},{base},{out_color},&H50000000,0,0,0,0,100,100,0,0,1,{outline},{shadow},5,{margin},{margin},0,1\n'
+            f'Style: Box,{name},{size},&HFF000000,&HFF000000,&H66000000,&H00000000,0,0,0,0,100,100,0,0,3,{round(14 * k)},0,5,{margin},{margin},0,1\n\n'
+            '[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n')
+    stamp = lambda t: f'{int(t // 3600)}:{int(t % 3600 // 60):02d}:{t % 60:05.2f}'
+    clean = lambda w: w.replace('\\', '').replace('{', '(').replace('}', ')')
+    pos = f'\\an5\\pos({W // 2},{round(H * settings["caption_y"] / 100)})'
+    lit = {'pop': f'{{\\c{hi}\\fscx118\\fscy118}}', 'single': f'{{\\c{hi}\\fscx180\\fscy180}}',
+           'neon': f'{{\\3a&H00&\\bord{outline * 2}\\fscx108\\fscy108}}', 'marker': f'{{\\3c{hi}\\c&H151515&\\bord{round(16 * k)}}}'}.get(style, f'{{\\c{hi}}}')
+    back_to = {'pop': f'{{\\c{base}\\fscx100\\fscy100}}', 'single': f'{{\\c{base}\\fscx100\\fscy100}}',
+               'neon': f'{{\\3a&H90&\\bord{outline}\\fscx100\\fscy100}}', 'marker': f'{{\\3c&H000000&\\c{base}\\bord{outline}}}'}.get(style, f'{{\\c{base}}}')
+    lines, boxes = [], {}
+    for a, b, chunk, i in caption_words(rows, 1 if style == 'single' else settings['caption_words'], settings['caption_upper']):
+        if style == 'karaoke':      # every word read so far keeps the colour
+            text = ' '.join((lit + clean(w) + back_to) if n <= i else clean(w) for n, w in enumerate(chunk))
+        elif style == 'reveal':     # words appear one by one; the rest are there but invisible so the line does not move
+            text = ' '.join(lit + clean(w) + back_to if n == i else clean(w) if n < i else '{\\alpha&HFF&}' + clean(w) + '{\\alpha&H00&}' for n, w in enumerate(chunk))
+        else:
+            text = ' '.join(lit + clean(w) + back_to if n == i else clean(w) for n, w in enumerate(chunk))
+        lines.append(f'Dialogue: 1,{stamp(a)},{stamp(b)},Cap,,0,0,0,,{{{pos}' + (f'\\blur{blur}' if blur else '') + f'}}{text}')
+        if style == 'box':
+            key = (id(chunk), ' '.join(chunk))
+            first = boxes.setdefault(key, [a, b])
+            first[1] = b
+    for (_, words), (a, b) in boxes.items():
+        lines.append(f'Dialogue: 0,{stamp(a)},{stamp(b)},Box,,0,0,0,,{{{pos}}}{clean(words)}')
+    return head + '\n'.join(lines) + '\n', sum(1 for l in lines if ',Cap,' in l)
 
 
 def layer_stack(settings, design=True):
@@ -2837,12 +2960,28 @@ class Store:
             args += ['-i', 'background.wav']
         if subs == 'soft':
             args += ['-i', 'vi.srt']
-        graph = [f'[1:a]aresample=48000,aformat=channel_layouts=stereo,volume={settings["voice_volume"] / 100}[voice]']
+        track = self.pick_music(job)
+        if track:
+            # a long track starts somewhere in the middle (kept per video), loops if the video is longer
+            args += ['-stream_loop', '-1', '-ss', str((job.get('music') or {}).get('start', 0)), '-i', str(self.music_dir / track['file'])]
+        music_in = 2 + has_bg + (subs == 'soft')
+        graph = [f'[1:a]aresample=48000,aformat=channel_layouts=stereo,volume={settings["voice_volume"] / 100}' + ('[voice0]' if track else '[voice]')]
+        mix = ['[voice]']
         if has_bg:
             graph.append(f'[2:a]aresample=48000,' + (tempo_filter(1 / stretch) + ',' if stretch != 1 else '') + f'volume={settings["background_volume"] / 100},apad[bg]')
-            graph.append('[bg][voice]amix=inputs=2:duration=longest:normalize=0[mixed]')
-        else:
-            graph.append('[voice]anull[mixed]')
+            mix.insert(0, '[bg]')
+        if track:
+            fade = max(0.0, duration - 1.5)
+            graph.append(f'[{music_in}:a]aresample=48000,aformat=channel_layouts=stereo,volume={settings["music_volume"] / 100:.3f},'
+                         f'afade=t=in:d=1,afade=t=out:st={fade:.3f}:d=1.5,atrim=duration={duration:.3f}' + ('[music0]' if settings['music_duck'] else '[music]'))
+            if settings['music_duck']:
+                # "Tự giảm khi có giọng": the voice squeezes the music down while it speaks
+                graph.append('[voice0]asplit=2[voice][vkey]')
+                graph.append('[music0][vkey]sidechaincompress=threshold=0.02:ratio=8:attack=20:release=400[music]')
+            else:
+                graph.append('[voice0]anull[voice]')
+            mix.append('[music]')
+        graph.append(''.join(mix) + (f'amix=inputs={len(mix)}:duration=longest:normalize=0[mixed]' if len(mix) > 1 else 'anull[mixed]'))
         finish = ('loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000,' if settings['loudness'] == 'tiktok' else '') + 'alimiter=limit=0.95:level=false'
         graph.append(f'[mixed]{finish},atrim=duration={duration}[aout]')
         video = info['video']
@@ -2857,7 +2996,7 @@ class Store:
         fps = int(settings['out_fps'])
         lower_fps = source_fps(video) > fps + .5
         same_size = frame_size(settings, video) == (int(video.get('width') or 0) // 2 * 2, int(video.get('height') or 0) // 2 * 2)
-        copy = stretch == 1 and identity and same_size and not settings['edge_trim'] and not lower_fps and not isinstance(source, Clip) and not chosen and not image and not design and not adjust \
+        copy = stretch == 1 and identity and same_size and not settings['edge_trim'] and not lower_fps and not isinstance(source, Clip) and not chosen and not image and not design and not adjust and not settings['captions'] \
             and video.get('codec_name') == 'h264' and video.get('pix_fmt') in ('yuv420p', 'yuvj420p')
         filters = not copy
         if filters:
@@ -2878,7 +3017,7 @@ class Store:
                 # something under the video: start from the background colour, put the video in its place later
                 graph.extend(lines[:-1])
                 base, video_line = 'dbase', lines[-1]
-            index = 2 + has_bg + (subs == 'soft')
+            index = 2 + has_bg + (subs == 'soft') + bool(track)
             scale = width / design_mod.W
             art = design_mod.artwork_layers(design) if design else None   # (nền PNG, khung PNG)
             def add_background(base, index):
@@ -2948,7 +3087,8 @@ class Store:
                     base, index, text = design_layers(folder, design, args, graph, base, index, scale, duration, frame_file, self.images_dir, font_dir='')
                 except ValueError as exc:
                     raise DubError('Thiết kế: ' + str(exc)) from None
-            graph.append(f'[{base}]' + ('' if text == 'null' else text + ',') + 'format=yuv420p[vout]')
+            burn = self.caption_filter(job, folder, subtitle_rows or [], width, height)
+            graph.append(f'[{base}]' + ('' if text == 'null' else text + ',') + burn + 'format=yuv420p[vout]')
         (folder / 'export.ffgraph').write_text(';\n'.join(graph), encoding='utf-8')
         args += ['-filter_complex_script', 'export.ffgraph', '-map', '[vout]' if filters else '0:v:0', '-map', '[aout]']
         if subs == 'soft':
@@ -3087,6 +3227,111 @@ class Store:
             raise DubError('Không tìm thấy ảnh.', 404)
         for path in (self.image_dir / item['file'], self.image_dir / (key + '.json')):
             path.unlink(missing_ok=True)
+
+    def caption_filter(self, job, folder, rows, W, H):
+        """"Phụ đề chữ chạy": captions.ass + the one font it uses in its own folder (libass loads every file of
+        fontsdir, so never the job folder with its audio). '' when off or nothing is spoken."""
+        settings = job['options']
+        job['warnings'] = [w for w in job.get('warnings') or [] if not w.startswith('Phụ đề chữ chạy')]
+        if not settings['captions']:
+            return ''
+        if not ASS_FILTER():
+            job['warnings'].append('Phụ đề chữ chạy: bản FFmpeg này thiếu libass (bộ lọc ass) nên video được xuất không có phụ đề chữ chạy. Cài bản FFmpeg "full" theo HUONG_DAN.txt.')
+            return ''
+        text, count = captions_ass(rows, settings, W, H)
+        if not count:
+            job['warnings'].append('Phụ đề chữ chạy: video không có lời đọc tiếng Việt nên không có chữ để hiện.')
+            return ''
+        (folder / 'captions.ass').write_text(text, encoding='utf-8')
+        fonts = folder / 'capfonts'
+        shutil.rmtree(fonts, ignore_errors=True)
+        fonts.mkdir()
+        shutil.copyfile(fonts_mod.ROOT / 'assets' / fonts_mod.FONTS[settings['caption_font']][0], fonts / fonts_mod.FONTS[settings['caption_font']][0])
+        return 'ass=captions.ass:fontsdir=capfonts,'
+
+    # ---- music library ("Nhạc nền"): tracks tagged with the văn phong they suit; one is picked per video
+    MUSIC_TYPES = ('.mp3', '.wav', '.m4a', '.aac', '.flac', '.ogg', '.opus')
+
+    @property
+    def music_dir(self):
+        folder = self.root.parent / 'dub-music'
+        folder.mkdir(parents=True, exist_ok=True)
+        return folder
+
+    def music_tracks(self):
+        rows = []
+        for meta in self.music_dir.glob('*.json'):
+            try:
+                item = json.loads(meta.read_text(encoding='utf-8'))
+            except (OSError, ValueError):
+                continue
+            if isinstance(item, dict) and item.get('id') == meta.stem and (self.music_dir / item.get('file', '')).is_file():
+                rows.append(item)
+        return sorted(rows, key=lambda r: r.get('created', ''), reverse=True)
+
+    def music_track(self, key):
+        if not isinstance(key, str) or not re.fullmatch('[a-f0-9]{32}', key):
+            return None
+        meta = self.music_dir / (key + '.json')
+        try:
+            item = json.loads(meta.read_text(encoding='utf-8'))
+        except (OSError, ValueError):
+            return None
+        return item if (self.music_dir / item.get('file', '')).is_file() else None
+
+    def import_music(self, upload, name):
+        ext = Path(str(name)).suffix.lower()
+        if ext not in self.MUSIC_TYPES:
+            raise DubError('Nhạc nền cần là MP3, WAV, M4A, AAC, FLAC hoặc OGG.')
+        key = uuid.uuid4().hex
+        target = self.music_dir / (key + ext)
+        shutil.move(str(upload), target)
+        info = probe(target)
+        if not info.get('audio') or not info.get('duration'):
+            target.unlink(missing_ok=True)
+            raise DubError('Không đọc được file nhạc.')
+        item = dict(id=key, name=re.sub(r'[\x00-\x1f<>:"/\\|?*]', '_', Path(str(name)).name)[:120], file=target.name,
+                    duration=round(float(info['duration']), 2), styles=[], created=time.strftime('%Y-%m-%dT%H:%M:%S'))
+        (self.music_dir / (key + '.json')).write_text(json.dumps(item, ensure_ascii=False), encoding='utf-8')
+        return item
+
+    def set_music_styles(self, key, styles):
+        item = self.music_track(key)
+        if not item:
+            raise DubError('Không tìm thấy bài nhạc.', 404)
+        if not isinstance(styles, list) or not all(x in ai_translate.STYLES for x in styles):
+            raise DubError('Văn phong không hợp lệ.')
+        item['styles'] = sorted(set(styles))
+        (self.music_dir / (key + '.json')).write_text(json.dumps(item, ensure_ascii=False), encoding='utf-8')
+        return item
+
+    def delete_music(self, key):
+        item = self.music_track(key)
+        if not item:
+            raise DubError('Không tìm thấy bài nhạc.', 404)
+        for path in (self.music_dir / item['file'], self.music_dir / (key + '.json')):
+            path.unlink(missing_ok=True)
+
+    def pick_music(self, job):
+        """A track for this video (kept in the job so a re-export sounds the same): from the chosen tracks, or else
+        every track; those tagged with the video's văn phong first, then untagged ones, then any."""
+        settings = job['options']
+        if not settings['music']:
+            return None
+        job['warnings'] = [w for w in job.get('warnings') or [] if not w.startswith('Nhạc nền')]
+        sign = json.dumps([settings['music_ids'], settings['style']])
+        kept = self.music_track((job.get('music') or {}).get('id'))
+        if kept and job.get('music_sign') == sign:
+            return kept
+        tracks = [t for t in self.music_tracks() if not settings['music_ids'] or t['id'] in settings['music_ids']]
+        pool = [t for t in tracks if settings['style'] in t.get('styles', [])] or [t for t in tracks if not t.get('styles')] or tracks
+        if not pool:
+            job['warnings'].append('Nhạc nền đang bật nhưng kho nhạc trống nên video được xuất không có nhạc nền.')
+            job['music'], job['music_sign'] = None, None
+            return None
+        track = random.choice(pool)
+        job['music'], job['music_sign'] = dict(id=track['id'], name=track['name'], start=round(random.uniform(0, max(0, track['duration'] - 60)), 1) if track['duration'] > 90 else 0), sign
+        return track
 
     # ---- overlay library (videos/GIF/PNG put on top of dubbed videos, picked at random per video)
     def overlays(self):

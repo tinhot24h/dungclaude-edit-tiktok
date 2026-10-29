@@ -4,6 +4,29 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.30.0
+
+**💬 Phụ đề chữ chạy (mới, có công tắc)**
+- Phụ đề in thẳng lên video, mỗi lần vài chữ, từ đang đọc sáng lên theo giọng đọc tiếng Việt (giống phụ đề tự động của CapCut).
+- 9 kiểu hiệu ứng: Viền đen, Nền hộp, Phóng to từ, Phát sáng, Karaoke tô dần, Nền màu từ, Bóng đổ, Hiện dần, Từng chữ.
+- 12 mẫu nhanh, mỗi mẫu đặt sẵn kiểu, phông và màu chỉ với 1 lần bấm (TikTok vàng, Hộp đen, Pop xanh, Neon hồng, Karaoke, Marker đỏ, Bóng đổ, Hiện dần, Từng chữ, Viết tay, Truyện tranh, Dễ thương).
+- Chỉnh phông, số chữ mỗi lần, cỡ chữ, vị trí dọc (kéo chữ mẫu trên khung xem trước), màu chữ, màu từ đang đọc, viết hoa.
+- Khung xem trước chạy một câu mẫu với đúng kiểu và màu đã chọn, vì chữ thật chỉ có sau khi AI dịch xong. Video xuất dùng đúng lời đọc của từng video.
+- Cần FFmpeg có libass (bản "full"). Nếu thiếu, video vẫn xuất nhưng không có phụ đề, và hàng đợi báo rõ lý do.
+
+**🆕 7 phông chữ mới có đủ dấu tiếng Việt:** Montserrat, Nunito, Lexend, Oswald, Baloo 2, Quicksand, Fira Sans. Dùng được cho phụ đề và cho tiêu đề / nội dung.
+
+**🎶 Nhạc nền (mới, có công tắc)**
+- Kho nhạc riêng: thêm MP3/WAV/M4A…, nghe thử, xóa, gắn văn phong cho từng bài.
+- Mỗi video tự chọn 1 bài hợp văn phong của nó (không có thì lấy bài chưa gắn, rồi bất kỳ bài nào). Tick "Dùng" để giới hạn những bài được chọn.
+- Bài dài bắt đầu ở một đoạn ngẫu nhiên, bài ngắn tự lặp; có lên và xuống nhỏ dần ở đầu, cuối.
+- Chỉnh được âm lượng; "Tự giảm nhạc khi có giọng đọc" làm nhạc nhỏ đi khi đang nói.
+- Bài đã chọn được giữ cho video đó: xuất lại vẫn đúng bài cũ.
+
+**🧪 Chạy thử 1 video**
+- Có từ 2 video trở lên thì hiện nút "Chạy thử 1 video": chạy riêng video đầu tiên.
+- Xong sẽ hiện thanh "Xem video thử" và "Ưng rồi · chạy N video còn lại". Chưa ưng thì sửa thông số rồi bấm chạy thử lại.
+
 ## Mới trong 0.29.0
 
 **Thứ tự lớp (mới)**

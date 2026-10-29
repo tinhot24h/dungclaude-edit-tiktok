@@ -65,6 +65,12 @@ khi mở app (đặt REVIEW_KEEP_DAYS=0 để tắt), trừ video còn trong hà
 Chỉ dùng trên máy này. Chưa gọi thử OpenAI / ai33 thật, NVENC và ghi Tags của Windows
 trên máy thật: hãy chạy thử 1–2 video trước khi chạy lô lớn.
 
+NÂNG CẤP 0.30.0
+- Phụ đề chữ chạy (mục 💬, có công tắc): từ đang đọc sáng lên, 9 kiểu + 12 mẫu nhanh, kéo chữ mẫu trên xem trước để đặt vị trí. Cần FFmpeg bản "full" (có libass).
+- 7 phông mới có đủ dấu tiếng Việt.
+- Nhạc nền (mục 🎶, có công tắc): kho nhạc riêng, gắn văn phong cho từng bài, tự giảm khi có giọng.
+- Nút "🧪 Chạy thử 1 video" trước khi chạy cả lô.
+
 NÂNG CẤP 0.29.0
 - Thứ tự lớp: ô dưới khung xem trước, bấm ‹ › để xếp Video / Nền / Video overlay / Lớp ảnh; xem trước đổi ngay.
 - Hàng đợi mới: thanh tiến độ + thời gian còn lại, tick chọn nhiều video (chạy, dừng, ưu tiên, xuất lại, xóa), tìm kiếm, lọc theo bước, lỗi gom nhóm có cách xử lý, báo khi cả lô xong.
