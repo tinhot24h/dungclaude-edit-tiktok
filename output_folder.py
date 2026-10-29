@@ -74,14 +74,17 @@ def unique(folder,name,alts=()):
 
 
 def deliver(path,source,name,alts=()):
-    """Copy a finished MP4 into the chosen folder without overwriting older exports."""
+    """Put a finished MP4 into the chosen folder without overwriting older exports (hard link when possible)."""
     settings=load(path)
     folder=check_dir(settings['output_dir'])
     with LOCK:
         target=unique(folder,name,alts)
         partial=target.with_name('.'+target.name+'.part')
         try:
-            shutil.copyfile(source,partial);partial.replace(target)
+            # same drive: a hard link (the file is stored once); another drive: a copy
+            try:os.link(source,partial)
+            except OSError:shutil.copyfile(source,partial)
+            partial.replace(target)
         except OSError:
             partial.unlink(missing_ok=True)
             raise ValueError('Không chép được video vào thư mục đã chọn (đầy ổ đĩa hoặc không có quyền ghi). Vẫn có thể tải về.') from None

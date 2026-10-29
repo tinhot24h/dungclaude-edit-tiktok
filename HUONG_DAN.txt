@@ -1,4 +1,4 @@
-REVIEW STUDIO 0.19.5 — VIDEO / DỊCH AI / ÂM THANH AI33
+REVIEW STUDIO 0.27.0 — DỰNG & LỒNG TIẾNG VIDEO TIKTOK HÀNG LOẠT
 
 CẬP NHẬT
 Từ bản 0.13: không cần tải lại ZIP. Trong ứng dụng bấm nút ⟳ (góc phải
@@ -27,148 +27,52 @@ tắt bằng Ctrl+C trong cửa sổ đó hoặc nút nguồn ở góc phải th
 Trình duyệt tự mở http://127.0.0.1:8000. Mở lần nữa khi đang chạy chỉ mở lại trình duyệt. Cổng bận: đóng bản cũ hoặc chọn cổng khác:
   PowerShell: $env:PORT='8001'; python launch.py
 
-DỊCH VÀ VIẾT CHỮ
-Từ 0.24 không còn tab Dịch & biên tập AI. Tab Dựng & lồng tiếng tự nhận diện lời,
-dịch, viết tiêu đề / nội dung / tên file cho từng video bằng OpenAI (1 lần gọi mỗi video).
-Sửa quy tắc viết ở mục Nhận diện, dịch & viết chữ → "Sửa mẫu ›". Nhập key OpenAI và
-ai33 ở nút API key trên thanh trên cùng. Không gửi key trong chat.
+CÁC BƯỚC DÙNG
+1. API KEY: bấm "API key" trên thanh trên cùng, dán key OpenAI và ai33.pro, bấm Lưu.
+   Key lưu trong thư mục .local trên máy này (không vào ZIP, không vào bản cập nhật).
+   Không gửi key trong chat.
+2. VIDEO ĐẦU VÀO: kéo thả MP4, chọn file hoặc "Thư mục trên máy" (không chép video).
+   Nút 💡 trên từng video: gợi ý sản phẩm cho AI. Ô 💡 đầu danh sách: gợi ý chung cho cả lô.
+3. GIAO DIỆN VIDEO: Nền & khung, Tiêu đề, Nội dung, Cắt & vị trí video, Điều chỉnh màu,
+   Overlay, Lớp ảnh. Mỗi nhóm có công tắc bật/tắt; khung xem trước cập nhật ngay, kéo
+   hộp chữ / ảnh trực tiếp. Ctrl+Z / Ctrl+Y hoàn tác, Alt + mũi tên dịch hộp đang chọn.
+4. NHẬN DIỆN, DỊCH & VIẾT CHỮ: văn phong, xưng hô, model OpenAI, kiểu tiêu đề, giới hạn
+   ký tự. "Sửa mẫu ›" để sửa câu lệnh gửi AI. AI xem 3 khung hình của video và viết
+   3 tiêu đề + 2 nội dung + tên file + tags trong 1 lần gọi.
+5. GIỌNG ĐỌC AI33: chọn giọng, ▶ Nghe thử, chọn từ điển phát âm (↻ để tải danh sách).
+6. THÔNG SỐ VIDEO XUẤT (nút "1080 × 1920 · 30 FPS" trên thanh trên): độ phân giải,
+   khung hình tối đa, chất lượng, bộ mã hóa (tự dùng card NVIDIA nếu có), âm lượng,
+   thư mục lưu, thông tin file (tác giả, link kênh, bản quyền, đánh giá, ngày tạo).
+7. LƯU MẪU: lưu mọi thông số trên, cả câu lệnh. Chọn mẫu là áp dụng lại tất cả.
+8. BẮT ĐẦU: hộp kiểm tra hiện thời lượng, chi phí ước tính, video dùng lại kết quả cũ.
+   Hàng đợi chạy 1–4 video cùng lúc (mục "Xuất & chạy hàng loạt"). Bật "Dừng lại để
+   duyệt chữ AI" thì duyệt / sửa tiêu đề, nội dung, tên file trong một bảng rồi Xuất tất cả.
 
-DỰNG VIDEO 0.7
-1. Chọn nguồn: video tối đa 500 MB / 30 phút, MP4 H.264 khuyến nghị.
-   Đặt tên dự án. Nhập MP3 tối đa 100 MB hoặc chọn audio đã tạo từ ai33.
-   WAV/M4A/FLAC/Ogg được chuẩn hóa sang MP3 khi nhập.
-2. Cắt & khớp âm thanh: kéo hai đầu track hoặc nhập giây đầu/cuối.
-   Cuối = 0 dùng hết nguồn. Mỗi track hiện giữ một đoạn liên tục.
-   Tốc độ hai nguồn độc lập 0,25–4x; âm lượng 0–300%, trễ MP3 theo giây.
-   Chọn tiếng gốc, thay bằng MP3 hoặc trộn cả hai. MP3 giữ cao độ.
-   Theo MP3: giữ hình cuối nếu thiếu. Theo video: cắt/đệm im lặng MP3.
-   Ngắn hơn: cắt phần dư. Có nút khớp tốc độ tính theo thời lượng.
-3. Thiết kế: nền một/chuyển hai màu, hòa nền alpha mềm; sáu mẫu khung
-   hoặc PNG tĩnh nhập máy (5 MB, 4096 px/cạnh, 8 triệu điểm ảnh).
-   Nhấp đúp chữ trên preview để sửa; Ctrl+Enter xác nhận, Escape hủy.
-   Kéo hộp để di chuyển, kéo góc dưới phải để chỉnh kích thước.
-   Chỉnh X/Y/W/H, font, cỡ, màu, viền, căn trái/giữa/phải/đều hai bên.
-   H chữ = 0 tự động. Chữ tràn viền đỏ phải chỉnh vừa mới xuất được.
-   Video: X/Y/W/H, zoom 25–400%, xoay -180 đến 180 độ, phủ kín/vừa/kéo giãn.
-4. Xuất H.264/AAC: 720x1280, 1080x1920, 2K 1440x2560, 4K 2160x3840;
-   nén tiêu chuẩn/chất lượng cao. Tọa độ thiết kế luôn 720x1280.
-   Nguồn thấp không có thêm chi tiết khi xuất 4K. Nghe/xem lại file xuất.
-Chưa ghép nhiều clip/MP3 hoặc cắt bỏ nhiều đoạn giữa nguồn, chưa tự
-nhận lời nói/OCR. Không thêm CTA. Baseline/viền chữ có thể chênh nhẹ
-so với preview. Đổi thư mục cần chọn lại nguồn; file cũ không tự chuyển.
+HÀNG ĐỢI
+- Bấm vào video: xem video xuất, sửa tên file, đổi phương án chữ AI, sửa bản dịch.
+- Lỗi mạng tạm thời tự thử lại 3 lần. Đóng/mở lại app thì tự chạy tiếp video đang dở
+  (tắt được). Chạy lại cùng video chỉ đổi giao diện thì dùng lại bản dịch và giọng.
+- Nút 💾 Dọn file tạm: xóa file tạm của video đã xong (giữ giọng, bản dịch, video xuất).
+- Video xuất lưu 1 bản trong thư mục xuất (cùng ổ đĩa không tốn thêm chỗ).
+
+TÁCH GIỌNG AI (DEMUCS)
+Mục Âm thanh gốc → "Cài Demucs tự động" (1–3 GB, một lần). Mỗi video cần khoảng
+3–4 GB RAM/VRAM; chọn số video tách cùng lúc ở mục "Xuất & chạy hàng loạt" (mặc định 1).
 
 DỮ LIỆU VÀ GIỚI HẠN
-Thiết kế/văn bản AI tự lưu trên trình duyệt, có nút xóa văn bản AI.
-Clip, PNG và kết quả ở .local trong thư mục ứng dụng. Video không dùng
-quá 30 ngày tự bị xóa khi mở ứng dụng (đặt REVIEW_KEEP_DAYS=0 để tắt);
-nút Dọn video cũ xóa theo số ngày bạn chọn, nút Xóa MP3 đã chọn xóa
-từng MP3. MP3 không bao giờ tự bị xóa. Hãy tải video kết quả về máy.
-Chỉ dùng cục bộ; chưa có đăng nhập, ghép nhiều clip hoặc tự đăng TikTok.
+Video nguồn, hàng đợi, MP3, mẫu nằm trong .local. Video không dùng quá 30 ngày tự xóa
+khi mở app (đặt REVIEW_KEEP_DAYS=0 để tắt), trừ video còn trong hàng đợi chưa xong.
+Chỉ dùng trên máy này. Chưa gọi thử OpenAI / ai33 thật, NVENC và ghi Tags của Windows
+trên máy thật: hãy chạy thử 1–2 video trước khi chạy lô lớn.
 
-TẠO GIỌNG VỚI AI33.PRO
-1. Mở tab Âm thanh ai33, nhập AI33 API KEY trong ứng dụng. Chỉ nhập giá
-   trị key, không nhập cả chuỗi xi-api-key:. Không gửi key trong chat.
-   Không dùng key OpenAI ở đây. Có thể cấu hình biến máy chủ trước khi
-   chạy: REVIEW_AI33_KEY hoặc AI33_API_KEY.
-2. Dán văn bản tiếng Việt cần đọc.
-3. Bấm Kiểm tra số dư credit để đọc số dư (tùy chọn). Tạo giọng có thể
-   trừ credit ai33, không phải chức năng dịch miễn API.
-4. Chọn thư viện và Tải thư viện giọng, tự tải các trang; có bộ lọc/tìm kiếm.
-   Chọn giọng hoặc dán voice_id đã có prefix nhà cung cấp. Giọng mẫu
-   edge_vi-VN-HoaiMyNeural từ tài liệu; quyền dùng phụ thuộc tài khoản.
-5. Chọn tốc độ 0,5–1,5. Mục tùy chọn bổ sung nhận tên file gợi ý và ID
-   từ điển phát âm đã có. Từ điển chỉ ảnh hưởng cách đọc.
-6. Bấm Tạo audio. Tool nhận task_id, tự kiểm tra mỗi 5 giây. Chờ trạng
-   thái done rồi tải/chuẩn hóa MP3. Khi error, tool dừng; không tự tạo
-   lại để tránh trừ credit trùng.
-7. Nghe và Tải MP3 về máy. Bấm Dùng MP3 này trong video để chọn sang trình dựng.
-8. Nếu chờ lâu hoặc reload: nhập key lại, dùng task_id hoặc tải lịch sử
-   để lấy lại kết quả. Không cần tạo audio mới. Dừng tự kiểm tra chỉ
-   dừng theo dõi, không hủy tác vụ bên ai33. Tự theo dõi tối đa 15 phút
-   mỗi đợt; có thể kiểm tra lại tác vụ cũ.
-
-AI33 cho phép văn bản tối đa 1.000.000 ký tự theo tài liệu. File nguồn
-tải cục bộ tối đa 100 MB; kịch bản rất dài nên chia đoạn. Cần Internet
-HTTPS tới api.ai33.pro và máy chủ lưu audio do ai33 trả về.
-Key không lưu localStorage/file/ZIP, không gửi tới CDN hoặc media host.
-MP3 cache ở .local/audio; task_id và văn bản có thể lưu trên trình duyệt.
-Đổi thư mục/máy có thể cần tải lại MP3 bằng task_id/key.
-Chưa có hội thoại nhiều giọng, tạo clone mới, CRUD từ điển, xóa/refund
-tác vụ, tải transcript.
-
-KIỂM THỬ AI33
-Đã thử bằng phản hồi API giả lập theo ảnh tài liệu bạn cung cấp, với
-chuyển MP3 thật bằng FFmpeg, phát/tua/tải trong Chromium và phục hồi
-cache. Chưa gọi API ai33 thật vì môi trường chưa có key và bị chặn
-truy cập host. Bạn cần key có quyền/credit để xác minh giọng thực tế.
-
-KHẮC PHỤC TẢI AUDIO AI33
-Nếu web đã tạo thành công: chọn tác vụ cũ, bấm Kiểm tra tiến độ để
-lấy link mới. Không tạo lại audio. Lỗi mới có mã HTTP/mạng/TLS/định dạng.
-Nút Mở audio gốc bằng trình duyệt cho phép lưu file rồi nhập MP3 ở
-bước Chọn nguồn nếu tool không tải được. Link không lưu trên ổ đĩa.
-Danh sách giọng tự tải các trang cho nhà cung cấp/bộ lọc hiện tại;
-100 trang/10.000 giọng mỗi đợt, báo rõ nếu còn. Có thể thu hẹp bộ lọc.
-Tên gửi ai33, tên MP3 và task_id được giữ để đối chiếu. Tác vụ cũ thiếu
-tên từ API sẽ dùng task_id. Nút Dùng MP3 này trong video chọn audio
-đã tạo vào trình dựng; không cần tải về rồi nhập lại.
-
-NÂNG CẤP 0.8 — TIMELINE TRỰC QUAN
-Ảnh nhỏ video và sóng âm MP3 tạo trên máy, không tải lên dịch vụ.
-Zoom timeline 1–12x; bấm/kéo đầu phát để tua. Kéo mép clip để cắt,
-kéo thân MP3 để đổi thời điểm vào. Chọn track, chỉnh tốc độ/âm lượng
-bằng thanh trượt hoặc bấm Nhập số chính xác. Cắt trước/sau đầu phát,
-hoàn tác/làm lại tối đa 60 bước chỉnh track (không bao gồm thiết kế).
-Focus timeline: trái/phải từng khung hình, Shift=10 khung, Space phát/dừng.
-Sóng âm phóng theo biên độ tương đối để dễ nhìn, không đổi âm lượng.
-Mỗi track giữ một đoạn liên tục; chưa tách/ghép nhiều đoạn giữa nguồn.
-
-Tiêu đề/nội dung: chọn Căn dọc trong hộp Trên/Giữa/Dưới; đặt H lớn
-hơn chiều cao chữ để thấy hiệu ứng. H=0 tự vừa nội dung.
-
-Nhập key ai33 xong tự tải giọng và lịch sử; lịch sử cập nhật 30 giây
-khi tab Âm thanh ai33 đang hiển thị và sau tạo/lấy audio. Thẻ lịch sử
-có Lấy audio đã tạo: không tạo lại TTS. Không tự tải mọi MP3 về máy.
-Key chỉ giữ trong phiên. Đổi/xóa key sẽ xóa danh sách lịch sử đang xem.
-
-Khi xuất, bấm Hủy xuất video để dừng FFmpeg/bỏ lượt chờ và file dở.
-Đợi báo Đã hủy rồi xuất lại. Giữ nguồn/thiết kế, không hủy tác vụ ai33.
-
-NÂNG CẤP 0.9 — EDIT NHANH KIỂU CAPCUT
-Màn hình: trái = Nguồn & xuất / Thư viện / Dự án & mẫu; giữa = Thuộc tính
-(chọn mẫu theo loại video); phải = Trình phát; dưới = Timeline.
-Thư mục lưu: ở mục xuất video bấm Chọn… (hoặc dán đường dẫn). Xuất xong
-video tự lưu vào đó, không cần bấm tải về. Bấm Mở thư mục để xem file.
-Mặc định: thư mục Videos\ReviewStudio của máy.
-Phím tắt (bấm ? trong ứng dụng): Space/K phát-dừng, J/L lùi-tới 1 giây,
-←/→ từng khung, S tách, Delete xóa đoạn, M mốc, I/O cắt trước/sau đầu phát,
-Ctrl+Z hoàn tác, Ctrl+S lưu dự án, P xuất thử 5 giây, G vùng an toàn TikTok.
-Dịch AI: kết quả có thêm tiêu đề và nội dung ngắn vừa khung chữ; bấm
-"Đưa tiêu đề + nội dung lên video". Prompt thủ công cũ vẫn nhập được.
-
-NÂNG CẤP 0.9.2
-Âm thanh ai33: nhập key ở mục Kết nối (cột phải). Bấm ô giọng nói để mở
-thư viện, nghe thử rồi chọn. Chế độ Hội thoại: gõ A> / B> đầu mỗi câu,
-chọn giọng cho từng người nói. Từ điển phát âm: bấm Quản lý để tạo quy
-tắc đọc tên riêng. Lịch sử: nghe, tải MP3/SRT, dùng ngay trong video.
-Khung PNG: bấm vào khung trên trình phát rồi kéo; kéo ô vuông ở góc/cạnh
-để đổi cỡ (giữ tỷ lệ). Tab Khung có các nút căn và Phủ toàn khung.
-Phím tắt timeline: Q/W cắt phía trước/sau, kéo đoạn để đổi thứ tự.
-
-NÂNG CẤP 0.10 — GIAO DIỆN MỚI
-Thanh trên cùng: tên dự án (bấm để sửa), Lưu, nút ◧ ▥ ⛶ ẩn/hiện cột, Xuất bản.
-Cột trái chia nhóm: Media, Âm thanh, Chữ, Xuất, Thư viện, Dự án, Góp ý.
-Kéo thanh ngang phía trên timeline để đổi chiều cao timeline.
-Timeline: bấm clip rồi Delete để xóa (đoạn video, video, MP3, nhạc nền);
-Shift+bấm chọn nhiều đoạn; nút 🔊 tắt tiếng track, 🔒 khóa track.
-Space phát/dừng. Phím C bật Góp ý: bấm lên hình để ghim ghi chú.
-Đo bản xuất: xem LUFS/True Peak của video vừa xuất.
-
-NÂNG CẤP 0.10.1 — DỊCH & BIÊN TẬP
-Mở "⚙ Tùy chỉnh câu lệnh" để sửa quy tắc viết; bấm "Lưu thành mẫu…" để
-giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh gốc. Mẫu gốc đã
-cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
-Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
+NÂNG CẤP 0.27.0
+- Độ phân giải, khung hình, chất lượng trong Thông số video xuất áp dụng cho video hàng loạt
+  (thêm "Theo video gốc"). Bộ mã hóa và âm lượng chỉ còn một chỗ.
+- Cắt đầu/cuối không nén thêm lần nào; mỗi video xuất lưu 1 bản.
+- Không xóa video gốc còn trong hàng đợi; tự chạy tiếp hàng đợi khi mở lại app.
+- CPU dùng hết số nhân; chọn số video tách giọng Demucs cùng lúc; hàng đợi nhẹ hơn.
+- Nút 💾 Dọn file tạm; chọn từ điển phát âm theo tên; Ctrl+Z / Alt+mũi tên trên khung xem trước.
+- Gỡ trình dựng 1 video cũ không còn dùng.
 
 NÂNG CẤP 0.26.1
 - Ngày tạo (Media created) trong thông tin file: lùi ngẫu nhiên 5–7 ngày so với ngày xuất, chỉnh được ở ô Ngày tạo (0 – 0 = ngày xuất).
@@ -198,281 +102,3 @@ NÂNG CẤP 0.23.0
 - Chạy lại cùng video chỉ đổi giao diện thì dùng lại bản dịch và giọng cũ, không tốn API (tắt được).
 - Mục Giọng đọc có nút ▶ Nghe thử một câu bằng giọng đang chọn.
 - Tab Dịch & biên tập AI làm lại 3 cột, cùng quy tắc chữ với tab Dựng.
-
-NÂNG CẤP 0.22.5
-- Mục mới "Điều chỉnh màu": độ sáng, độ tương phản, độ bão hòa, độ sắc nét cho video gốc (xem trước ngay, video xuất giống vậy).
-  Bật/tắt bằng công tắc ở tiêu đề mục; tắt thì giữ số đã chỉnh nhưng video không bị chỉnh.
-
-NÂNG CẤP 0.22.4
-- Các mục Nền & khung, Cắt & vị trí video, Lớp ảnh, Overlay dùng chung bố cục kiểu CapCut như Tiêu đề / Nội dung
-  (Biến đổi: vị trí, kích thước, xoay, lật, nút căn, ↺; Hòa trộn: chế độ, độ mờ). Bỏ các nút trùng nhau.
-
-NÂNG CẤP 0.22.3
-- Mục Tiêu đề / Nội dung có bảng kiểu CapCut: phông chữ, cỡ chữ, B đậm, TT/tt/Tt, màu, độ mờ, khoảng cách ký tự/từ/dòng,
-  căn chỉnh; Biến đổi: vị trí X/Y, rộng/cao, 6 nút căn khung, ↺ về mặc định.
-- Bấm "💾 Lưu mẫu" là lưu hết mọi thông số (bỏ ô "Kiểu chữ của tôi").
-- Cột giữa là khung xem trước, hàng đợi ở ngoài cùng bên phải.
-- Video xuất được đặt tên theo sản phẩm (AI đặt cùng lần dịch, 15–30 ký tự), ví dụ quan-ao-nu-hottrend.mp4.
-  Trùng tên thì tự thêm -2, -3… không ghi đè.
-- Trên khung xem trước: bấm tiêu đề/nội dung để chọn, kéo để di chuyển, kéo ô vuông cạnh trái/phải để đổi độ rộng.
-- Sửa lỗi bấm phát mà video xem trước đứng hình.
-
-NÂNG CẤP 0.22.2
-- AI viết tiêu đề/nội dung đúng giới hạn ký tự hơn (prompt ghi rõ giới hạn, số từ, yêu cầu tự đếm).
-  Dài quá thì nội dung cắt ở cuối câu, tiêu đề không bị cụt ở từ nối.
-- Chữ dài không vừa ô của mẫu: tự thu nhỏ chữ, video vẫn xuất (không còn báo Lỗi).
-
-NÂNG CẤP 0.22.1
-- Sửa lỗi mất thuộc tính chữ của Tiêu đề/Nội dung (font, cỡ, màu, vị trí…) và có lúc mất bảng Khung, Video.
-
-NÂNG CẤP 0.22.0 — MỘT TAB "DỰNG & LỒNG TIẾNG"
-- Chỉ còn 1 tab cho cả dựng và lồng tiếng (bỏ tab Lồng tiếng riêng và tab Timeline).
-  Chọn thư mục video → bấm "Lồng tiếng N video": app tự nhận diện, dịch (OpenAI), đọc giọng Việt (ai33),
-  thêm nền, khung, tiêu đề, nội dung và xuất file hoàn thiện. Không cần file MP3.
-- API key: bấm "API key" trên thanh trên, dán key OpenAI và ai33 rồi bấm Lưu. Mọi chức năng dùng chung.
-- Nền & khung, Tiêu đề, Nội dung là 3 mục riêng; công tắc ở tiêu đề mục để bật/tắt cả nhóm.
-- Giới hạn chữ AI tính theo số ký tự: tiêu đề tối đa 30, nội dung 50–100 (đổi được).
-- Mục Tiêu đề/Nội dung có "Khoảng cách giữa các từ" và ô chọn font hiện mẫu chữ (nhiều font tiếng Việt mới).
-- "💾 Lưu mẫu" lưu mọi thông số bên trái; chọn mẫu trong ô "Mẫu" để dùng lại cho cả lô.
-
-NÂNG CẤP 0.21.1
-- Khớp thời lượng "Tự động": giọng và video cùng đổi tốc độ một chút (trong giới hạn giọng 0.98–1.1×, video 0.85–1.2×).
-  Vẫn không khớp: video dài hơn thì cắt bớt video; giọng dài hơn thì cắt bớt cuối giọng. Không lặp video/MP3.
-  Áp dụng cho cả tab Dựng video và tab Lồng tiếng (chế độ Đoạn văn liền).
-- Giọng (MP3 cùng tên, giọng ai33) giữ nguyên tần số gốc 44.1/48 kHz, rõ hơn.
-
-NÂNG CẤP 0.21.0
-- Bấm Xuất: hiện bảng "Kiểm tra trước khi chạy" (thời lượng, chi phí ước tính, key, cảnh báo). Bấm Xuất để chạy.
-- Duyệt chữ AI: mục "Tiêu đề & nội dung", tích "Dừng lại để duyệt chữ AI trước khi xuất".
-  Khi AI viết xong, hàng đợi hiện "Mở bảng duyệt chữ": sửa chữ mọi video trong một bảng rồi bấm "Xuất tất cả".
-- Bấm vào tên video trong danh sách để xem trước video đó. Bấm video đã dựng trong hàng đợi để xem với chữ của nó.
-- Video đã dựng: nút "✎ Chỉnh chi tiết" mở video đó ở tab Timeline với nền, khung, chữ để chỉnh kỹ.
-- Mục "Xuất": chọn số video chạy cùng lúc (1–4) và bộ mã hóa (card đồ họa hoặc CPU).
-  Máy RAM 8 GB nên để 1–2 video; card đồ họa NVIDIA chọn "NVIDIA NVENC" để xuất nhanh hơn.
-
-NÂNG CẤP 0.20.1
-- Tab "Dựng video", mục "Lớp ảnh": ảnh hiện ngay trên khung xem trước. Kéo ảnh để đặt vị trí, kéo ô vuông
-  góc dưới phải để đổi cỡ. Ảnh nằm dưới khung và chữ, giống video xuất ra.
-
-NÂNG CẤP 0.20.0 — GỘP DỰNG VIDEO VÀ LỒNG TIẾNG
-- Tab "Dựng video" nay giống tab "Lồng tiếng": cột trái cài đặt, giữa hàng đợi, phải xem trước.
-  1) Chọn mẫu dựng (hoặc tự chỉnh Nền & khung, Tiêu đề & nội dung).
-  2) Bấm "📂 Thư mục trên máy" chọn thư mục video. MP3 cùng tên (vd: a.mp4 + a.mp3) tự ghép làm giọng đọc.
-  3) Bấm Xuất. Video xong lưu tên "...-dung.mp4".
-- Nền: Kiểu nền (Một màu / Chuyển hai màu / Tắt), Màu chính, Màu chuyển, Hòa nền (bắt đầu từ trên,
-  chiều cao vùng chuyển, độ đục) — video mờ dần vào nền như trước.
-- Chữ: kéo/đổi cỡ tiêu đề, nội dung trực tiếp trên khung xem trước, hoặc nhập số ở bảng bên trái.
-- Nguồn chữ: AI (viết cùng lần dịch, cần key OpenAI), Cố định, Tên file, Không có.
-  Giới hạn: tiêu đề tối đa 6 từ, nội dung 10–20 từ (đổi được). Dài quá thì tự cắt và có cảnh báo.
-- Ở hàng đợi, mở một video để sửa chữ: "Lưu chữ & xuất lại" hoặc "Viết lại chữ AI" (không tạo lại giọng).
-- Tab "Lồng tiếng": mục "Nền & khung", tích "Thêm nền, khung, tiêu đề & nội dung… (kết hợp)" để video lồng tiếng có thêm nền, khung, chữ.
-- Trình dựng chi tiết cũ chuyển sang tab "Timeline · chỉnh 1 video".
-
-NÂNG CẤP 0.19.5
-- Bỏ MO_REVIEW_STUDIO.vbs và TAO_LOI_TAT_DESKTOP.vbs. Mở ứng dụng bằng START_WINDOWS.bat (có cửa sổ cmd).
-  Khi cập nhật, hai file này tự được xóa khỏi thư mục ứng dụng.
-
-NÂNG CẤP 0.19.4
-- Mở bản mới mà bản cũ còn chạy ẩn: ứng dụng tự tắt bản cũ rồi chạy bản mới (trước đây vẫn thấy bản cũ).
-
-NÂNG CẤP 0.19.3
-- Mọi nút thêm file mở hộp chọn file của Windows; ứng dụng đọc file ngay trên máy, không tải lên.
-  (Kéo thả file vào trình duyệt vẫn phải tải lên; dùng nút thêm file để nhanh nhất.)
-
-NÂNG CẤP 0.19.2
-- Sửa lỗi bấm ⟳ không thấy bản mới (nếu đang ở 0.19.0/0.19.1: tắt ứng dụng rồi mở lại một lần trước khi bấm ⟳).
-- Thanh trên cùng: nút cập nhật, nút tắt, thông số xuất nằm gọn bên phải; nút tắt không còn hiện ô vuông.
-- Ảnh nhỏ của overlay nền trong suốt hiện trên nền caro.
-
-NÂNG CẤP 0.19.1
-- "📂 Thư mục trên máy": chọn thư mục video/overlay, ứng dụng đọc ngay trên máy, không phải tải lên.
-  File SRT cùng tên video được dùng tự động.
-- "Theo timestamp (SRT)": chỉ tạo 1 file giọng ai33, app tự cắt theo từng câu và đặt đúng mốc thời gian.
-- Overlay trên khung xem trước phát, dừng, tua cùng video.
-- Mục ✂: Vị trí X/Y, căn 9 điểm, kéo video trên khung xem trước.
-- Xóa hàng loạt: video trong danh sách, overlay (chọn tất cả/xóa đang chọn/xóa toàn bộ), tác vụ (đã xong/lỗi/tất cả).
-
-NÂNG CẤP 0.19.0
-- Chỉ dùng trên Windows. Mở không hiện cmd: MO_REVIEW_STUDIO.vbs. Tạo lối tắt Desktop: TAO_LOI_TAT_DESKTOP.vbs.
-  Tắt ứng dụng bằng nút nguồn ở góc phải thanh trên cùng.
-- Lồng tiếng hàng loạt không giới hạn 50 video; mỗi video tải lên và chạy ngay; file lỗi không chặn file khác.
-- Chọn model dịch có gợi ý giá và mục đích dùng (mục 🗣 Nhận diện & dịch).
-- Ngôn ngữ nói: thêm tiếng Anh.
-- Cách dịch:
-  + "Theo timestamp (SRT)": app dịch từng dòng, giữ mốc thời gian.
-  + "ai33 lồng tiếng theo timestamp": ai33 tự nhận diện, dịch và đọc theo SRT (không cần OpenAI key;
-    quy tắc không nhắc giá của app không áp dụng).
-
-NÂNG CẤP 0.18.0 — BỐ CỤC 3 CỘT, LỚP ẢNH, VÙNG AN TOÀN
-- Tab Lồng tiếng: thông số bên trái, hàng đợi ở giữa, xem trước bên phải.
-- Mục 🖼 Lớp ảnh (không bắt buộc): thêm ảnh PNG/JPG, chỉnh rộng/cao, giữ tỷ lệ, vừa/lấp đầy/kéo giãn khung,
-  căn 9 điểm, kéo trên khung xem trước, xoay, lật, chế độ hòa trộn, độ đục, nằm dưới/trên overlay video.
-- Xem trước: tick "Vùng an toàn TikTok" để thấy chỗ bị giao diện TikTok che.
-- Video dài hơn giọng (sau khi đã chỉnh tốc độ) thì cắt video sau câu cuối; tắt được ở mục 🎙.
-
-NÂNG CẤP 0.17.9 — OVERLAY KIỂU CAPCUT
-- Nhận file overlay tới 4 GB (MOV ProRes nền trong suốt thường rất nặng).
-- Thêm overlay nền trong suốt thì độ đục tự lên 100%, chữ bình luận hiện rõ như CapCut.
-
-NÂNG CẤP 0.17.8 — SỬA LỖI CẬP NHẬT
-- Sửa lỗi "HUONG_DAN.txt lớn bất thường; dừng cập nhật" (bộ nhớ đệm GitHub chưa đồng bộ ngay sau khi có bản mới).
-  Trình cập nhật tải mọi file theo cùng một commit. Lỗi này không làm hỏng gì: app dừng trước khi thay file.
-
-NÂNG CẤP 0.17.7 — GIỚI HẠN TỰ KHỚP, SỐ THẬP PHÂN
-- Mục 🎙 Giọng đọc: giới hạn tự khớp. Giọng 0.98–1.1×, video 0.85–1.2× (sửa được bằng số).
-  Quá giới hạn mà vẫn dài hơn video thì cắt phần cuối giọng theo độ dài video.
-- Xoay, zoom, dịch, độ đục, âm lượng đặt được số thập phân (ví dụ 0.5°).
-- Sửa ô số bị cắt chữ; sửa lỗi FFmpeg khi cần cắt giọng dài hơn video.
-
-NÂNG CẤP 0.17.6 — OVERLAY NỀN TRONG SUỐT, XEM VIDEO TRONG HÀNG ĐỢI
-- File overlay MOV/WebM/PNG nền trong suốt được nhận tự động ("· trong suốt").
-  Khi xuất, overlay luôn phủ full khung phía trên video, giữ đúng nền trong suốt.
-- Khung xem trước hiện overlay MOV (app tự tạo bản WebM xem trước; khi xuất vẫn dùng file gốc).
-- Hàng đợi: bấm dòng đã Hoàn tất hoặc nút "▶ Xem" để phát video ngay tại chỗ.
-
-NÂNG CẤP 0.17.5
-- Tab Lồng tiếng: mục 🎵 Âm thanh gốc nằm trước 🎙 Giọng đọc ai33.
-
-NÂNG CẤP 0.17.4 — NHẬP SỐ, SỬA OVERLAY KHÔNG HIỆN
-- Mỗi thanh trượt ở tab Lồng tiếng có ô số bên cạnh: gõ số rồi Enter để đặt đúng giá trị.
-- Thêm file overlay giờ tự bật "Thêm overlay": overlay hiện trên khung xem trước và có trong video xuất.
-  Bỏ tick nếu không muốn dùng.
-
-NÂNG CẤP 0.17.3 — SỬA TÁCH GIỌNG AI (DEMUCS)
-- Mục 🎵 Âm thanh gốc có nút "⬇ Cài Demucs tự động". Bấm một lần, chờ vài phút; lần đầu tải khoảng 1–3 GB.
-  App cài vào thư mục .local/demucs-env của ứng dụng, không đụng tới Python của máy.
-- Nếu đã tự cài bằng pip: bấm "↻ Kiểm tra lại". App tự tìm cả khi lệnh demucs không nằm trong PATH.
-- Sửa lỗi Demucs dừng ở bước cuối với torchaudio mới (cần torchcodec). App lưu kết quả bằng soundfile.
-
-NÂNG CẤP 0.17.2 — BỎ CHÈN PHỤ ĐỀ LÊN VIDEO
-- Tab Lồng tiếng không còn chèn chữ phụ đề lên hình. Mục "Xuất & file phụ đề" chỉ còn: file .srt đi kèm, kênh phụ đề trong MP4, hoặc không.
-- Cấu hình cũ đang chọn "Chèn chữ lên video" tự chuyển sang file .srt đi kèm.
-
-NÂNG CẤP 0.17.1 — OVERLAY KHÔNG BẮT BUỘC, TỰ KHỚP THỜI LƯỢNG
-- Overlay mặc định TẮT. Muốn dùng thì tick "Thêm overlay ngẫu nhiên vào mỗi video".
-- Bật mà chưa có overlay nào: video vẫn xuất bình thường, chỉ hiện cảnh báo.
-- Overlay dài hơn video: tự cắt bằng video.
-- Overlay ngắn hơn video, chọn ở "Thời điểm":
-  + Lặp 1 overlay, cắt khớp.
-  + Ghép nối nhiều overlay ngẫu nhiên, cắt khớp.
-  + Một đoạn ngẫu nhiên.
-
-NÂNG CẤP 0.17 — TAB LỒNG TIẾNG MỚI, OVERLAY, KHUNG HÌNH
-------------------------------------------------------
-- Tab Lồng tiếng thiết kế lại cho gọn, dễ dùng:
-  - Thanh trên cùng (luôn hiện khi cuộn): chọn/lưu/xóa cấu hình lồng tiếng, trạng thái key (bấm vào để mở mục Kết nối) và nút ▶ Lồng tiếng N video.
-  - Cột trái chia mục theo thứ tự làm việc: 🎬 Video đầu vào → 🔑 Kết nối → ✂ Cắt & khung hình → ✨ Overlay → 🗣 Nhận diện & dịch → 🎵 Âm thanh gốc → 🎙 Giọng đọc → 📤 Xuất & phụ đề. Mỗi lần chỉ mở một mục; tiêu đề mỗi mục hiện tóm tắt thông số đang chọn.
-  - Cột phải là khung xem trước video đầu tiên và hàng đợi gọn. Khung xem trước có khung hình, nền mờ, xoay/lật/zoom, overlay mẫu và nút phát.
-- Xử lý hàng loạt không rối:
-  - Mỗi video là một dòng trong hàng đợi: trạng thái, 5 bước, tiến độ, nút chính. Bấm vào dòng để xem chi tiết và các nút khác.
-  - Lọc theo Tất cả / Đang chạy / Cần xử lý / Xong.
-  - Nút hàng loạt: Chạy lại lỗi, Dừng tất cả, Xóa đã xong.
-  - Video lỗi (ví dụ không có tiếng) không làm dừng các video khác.
-- Cắt đầu / cắt cuối video: ví dụ bỏ 0,5s đầu và 0,5s cuối. Áp dụng cho mọi video trong lô, cắt chính xác trước khi nhận diện.
-- Khung hình video khi lồng tiếng:
-  - Khung xuất: giữ gốc / 9:16 / 4:5 / 1:1 / 16:9.
-  - Cách đặt: lấp đầy, giữ toàn bộ (viền đen), giữ toàn bộ trên nền mờ.
-  - Zoom 25–300%, dịch ngang/dọc, xoay, nút ↺90° ↻90°, lật ngang/dọc, đặt lại.
-  - Bản xuất giống khung xem trước.
-- Overlay ngẫu nhiên:
-  - Thêm file hoặc cả thư mục overlay (video hiệu ứng, GIF, PNG/JPG), hoặc kéo thả vào mục ✨.
-  - Tích chọn overlay nào được dùng; mỗi video lấy ngẫu nhiên 1–3 overlay.
-  - Hòa trộn: Sáng (hiệu ứng nền đen như ánh sáng, bụi lấp lánh), Bình thường theo độ đục, hoặc Tách nền xanh.
-  - Thời gian: lặp suốt video hoặc một đoạn ngẫu nhiên. Phụ đề luôn nằm trên overlay.
-- Cấu hình lồng tiếng đã lưu: lưu toàn bộ thông số bên trái (giọng, văn phong, khung hình, overlay, phụ đề…) để chạy các lô sau giống hệt.
-
-NÂNG CẤP 0.16.2
----------------
-- ai33 chỉ tạo MP3: khi lồng tiếng, ứng dụng không còn yêu cầu ai33 tạo SRT/JSON phụ đề, tránh làm lỗi tác vụ.
-  - Phụ đề tiếng Việt do ứng dụng tự tính: chia đoạn văn thành câu theo độ dài, rồi đặt điểm chuyển câu vào khoảng lặng gần nhất trong file giọng, để chữ đổi đúng lúc giọng ngắt nghỉ.
-- Bỏ khu bản dịch khỏi hàng đợi: mặc định chỉ còn danh sách tác vụ. Khi cần sửa câu, bấm ✎ Bản dịch trên tác vụ để mở, bấm ✕ Đóng bản dịch để ẩn.
-
-NÂNG CẤP 0.16.1
----------------
-- Sửa lỗi "ai33 đã tạo MP3 nhưng ứng dụng không tự lấy về":
-  - Hỏi trạng thái ai33 gặp lỗi tạm thời (HTTP 5xx, mất mạng, quá nhiều yêu cầu) thì ứng dụng chờ rồi hỏi lại, tối đa khoảng 10 phút, thay vì dừng ngay. Thông báo hiện số lần thử và mã lỗi HTTP.
-  - Nếu cách hỏi theo mã tác vụ không được, ứng dụng tìm tác vụ trong lịch sử ai33 để lấy link MP3.
-  - Chỉ dừng ngay khi key sai, hết credit hoặc bị từ chối quyền.
-  - Thêm nút ⬆ Dùng MP3 đã tạo trên tác vụ bị lỗi hoặc đang dừng: tải file MP3 lấy từ lịch sử ai33 lên, ứng dụng căn giọng và xuất video luôn, không tạo giọng lại.
-
-NÂNG CẤP 0.16 — LỒNG TIẾNG 1 FILE
---------------------------------
-- Lồng tiếng thành 1 file giọng (mặc định): dịch toàn bộ lời Trung thành một đoạn văn tiếng Việt liền mạch, gửi ai33 một tác vụ, nhận một file giọng.
-  - Muốn khớp khẩu hình hơn thì chọn chế độ cũ "Từng câu theo thời gian".
-- Khớp thời lượng giọng ↔ video (bước 04):
-  - Giữ tốc độ giọng, chỉ đọc nhanh khi giọng dài hơn video.
-  - MP3 khớp video: co giãn giọng (0,8× đến mức tối đa) để kết thúc cùng video.
-  - Video khớp MP3: tua nhanh hoặc làm chậm video (0,25–4×), nhạc nền đổi tốc độ theo.
-- Chọn giọng ai33 ngay trên trang Lồng tiếng: nút 🎙 Chọn giọng ai33 mở danh sách giọng (Edge, ElevenLabs, MiniMax, Vbee, Fish Audio, Kokoro, giọng clone), có tìm kiếm và lọc nam/nữ. Bấm ▶ nghe thử, bấm Chọn để dùng.
-- Chạy tự động 1 bước: bấm "Bắt đầu" là chạy hết từ nhận diện tới video xuất, không dừng giữa chừng để hỏi. Ô "Dừng sau bước dịch để tự duyệt câu" vẫn còn nếu bạn cần.
-- Xem trước video đầu tiên: trên hàng đợi hiện video đầu tiên đã chọn. Âm nền nghe như sau khi xử lý.
-- Khu duyệt câu dịch: thanh tiêu đề luôn hiện trên cùng khi cuộn, gồm trạng thái, các bước và nút Tiếp tục / Dừng / Tải MP4. Ở chế độ đoạn văn: lời Trung bên trái, đoạn văn Việt sửa được bên phải (đếm số tiếng/giới hạn), phụ đề theo giọng bấm vào để tua.
-- Mẫu văn phong dịch (dùng chung trang Dịch AI và Lồng tiếng): Review sản phẩm, Gia dụng · nhà cửa, Trải nghiệm thực tế, Tin tức · thời sự, Chia sẻ mẹo, Giới thiệu sản phẩm, Làm đẹp · chăm sóc, Công nghệ · điện tử, Ẩm thực, Thời trang, Giải trí · hài hước. Mỗi mẫu có cách mở đầu (hook) riêng.
-- Luôn áp dụng, không tắt được: không nhắc giá, thương hiệu, khối lượng, kích thước, thể tích, công suất chính xác; chỉ dùng từ ngữ chung chung.
-
-NÂNG CẤP 0.15
--------------
-- Lưu API key: bên dưới mỗi ô key (OpenAI, Gemini, ai33) có nút 💾 Lưu key trên máy này, nên lần sau không phải nhập lại.
-  - Không bấm lưu thì key chỉ giữ trong phiên như trước.
-  - Key được lưu trong .local/secrets.json trên máy bạn, không nằm trong ZIP hay bản cập nhật. Giao diện chỉ hiện 4 ký tự cuối.
-  - Có nút Xóa key đã lưu. Người dùng chung máy hoặc chung tài khoản Windows cũng dùng được key đã lưu.
-- Câu lệnh dịch dùng chung: trang Lồng tiếng dùng luôn mẫu câu lệnh đã sửa ở trang Dịch & biên tập AI (phần quy tắc nội dung và văn phong).
-  - Quy tắc cố định cho mọi mẫu: tuyệt đối không nêu giá, tên thương hiệu, tên shop, mã model, kích thước, thể tích, dung tích, khối lượng, công suất chính xác; chỉ dùng từ chung chung ("giá mềm", "nhỏ gọn", "dung tích lớn"…).
-  - Câu có con số kèm cm, ml, lít, kg, W, mAh… sẽ hiện cảnh báo.
-- Chỉnh video gốc (tab Khung hình):
-  - Căn trái/giữa/phải, trên/giữa/dưới, đặt giữa khung.
-  - Kích thước nhanh: Lấp đầy 9:16, Giữ toàn bộ hình, Vừa chiều ngang/dọc theo đúng tỷ lệ video gốc.
-  - Zoom 100–200%, thanh xoay kèm nút ↺90° ↻90° 180° 0°, lật ngang/lật dọc. Bản xuất giống bản xem trước.
-- MP3: bảng Giọng đọc và Nhạc nền có thanh và nút nhanh cho tốc độ (0.75×–1.5×) và âm lượng (Tắt/50/100/150/200%). Nhạc nền có thêm tốc độ riêng.
-- Tự khớp thời lượng (bảng Giọng đọc): "MP3 khớp video" hoặc "Video khớp MP3". Ứng dụng tự đổi tốc độ sau mỗi lần cắt/sửa để hai track kết thúc cùng lúc.
-- Mục Xuất sắp xếp theo thứ tự: ① Thông số xuất → ② Cấu hình đã lưu → ③ Xuất video đang dựng → ④ Xuất hàng loạt.
-  - Cấu hình đã lưu: lưu cả thiết kế, âm thanh, tốc độ, tự khớp, nhạc nền và độ phân giải để dùng lại.
-  - Xuất hàng loạt: tích nhiều video trong kho. Chọn MP3 (tự tìm MP3 cùng tên / không dùng / dùng MP3 đang chọn) và chữ (giữ chữ / tiêu đề = tên video / không chữ). Mỗi video xuất đủ độ dài với cùng thông số, tự khớp MP3 nếu bật, có tiến độ từng video và nút Dừng tất cả.
-
-NÂNG CẤP 0.14 — LỒNG TIẾNG + GIAO DIỆN MỚI
-------------------------------------------
-- Trang Lồng tiếng (mới): tự động lồng tiếng video tiếng Trung sang tiếng Việt theo 5 bước:
-  1. Nhận diện: OpenAI Whisper nhận lời nói, xuất SRT tiếng Trung có thời gian (khoảng 0,006 USD/phút). Có sẵn file .srt cùng tên thì bỏ qua bước này.
-  2. Dịch OpenAI: dịch tự nhiên, mỗi câu giới hạn số tiếng theo thời gian nói (mặc định 4,2 tiếng/giây), không đọc giá chính xác, có ghi chú văn phong và cách xưng hô.
-  3. Tách âm thanh gốc: giảm tiếng gốc khi có lời (giữ nhạc nền), lọc giọng giữa (thử nghiệm), tách giọng AI bằng Demucs (bấm "Cài Demucs tự động" một lần), giữ nguyên hoặc xóa hẳn tiếng gốc.
-  4. Lồng tiếng ai33: gộp câu thành đoạn tự nhiên, tạo giọng Việt, tự đọc nhanh hơn (tối đa 1,3×) cho vừa chỗ trống rồi đặt đúng thời điểm.
-  5. Xuất: MP4 H.264 + AAC, phụ đề Việt dạng file .srt, kênh phụ đề trong MP4 (không chèn chữ lên hình); tự lưu vào thư mục xuất.
-- Chọn 1 video, nhiều video hoặc cả thư mục (kéo thả được), hoặc lấy từ kho Media; các video chạy lần lượt trong hàng đợi.
-- Mặc định dừng sau bước dịch để duyệt: bảng câu Trung ↔ Việt có đếm số tiếng/giới hạn (đỏ khi quá dài), sửa xong bấm Tiếp tục. Sửa câu sau khi đã xong thì chỉ câu đó được tạo giọng lại.
-- Tiến độ và mã tác vụ ai33 được lưu lại: dừng giữa chừng hoặc tắt ứng dụng thì bấm Tiếp tục, không tạo trùng giọng (không mất credit hai lần). Key API chỉ giữ trong phiên.
-- Mở trong trình dựng: đưa video (chỉ còn nhạc nền) và giọng Việt sang trang Dựng video để thêm chữ, logo, khung rồi xuất như bình thường.
-- Giao diện trang dựng mới (tham khảo TaoClip):
-  - Thanh công cụ dọc bên trái: Media · Âm thanh · Văn bản · Ảnh/Logo · Xuất.
-  - Kho media có nút "＋ Nhập media" / "＋ Nhập ảnh", mỗi thẻ có nút "Thêm vào timeline".
-  - Bảng thuộc tính theo ngữ cảnh: chỉ hiện các tab của lớp đang chọn, kèm tên lớp và nút "Thiết kế chung". Clip video có tab Cắt & tốc độ (nút 0.5× 1× 1.5× 2× 4×, hiện độ dài) và tab Khung hình.
-  - Trình phát có nút phát lặp ⟲ và thanh âm lượng xem trước.
-  - Timeline có nút chữ "✂ Tách", "Snap: bật/tắt", "Vừa khung", mã track V1/A1/A2; nút ↶ ↷ trên thanh dự án.
-
-NÂNG CẤP 0.13 — CẬP NHẬT TỰ ĐỘNG
---------------------------------
-- Cập nhật không cần tải lại toàn bộ: nút ⟳ ở góc phải trên cùng tự kiểm tra GitHub khi mở ứng dụng; có bản mới thì hiện ⬆ Có bản …. Bấm Cập nhật ngay: ứng dụng chỉ tải các file đã thay đổi, kiểm tra mã SHA-256 từng file, sao lưu bản cũ vào .local/update, rồi bấm Khởi động lại là dùng được bản mới. Video, MP3, dự án, kiểu chữ và cài đặt trong .local được giữ nguyên.
-- Cập nhật ngoài ứng dụng: bấm đúp UPDATE_WINDOWS.bat, hoặc chạy python update.py (--check để chỉ xem thay đổi). Thư mục là bản git clone thì dùng git pull.
-- Từ 0.13 trở đi mới cập nhật được kiểu này: bản 0.12.1 trở về trước cần tải ZIP 0.13 một lần.
-
-NÂNG CẤP 0.12.1
----------------
-- Bỏ mục tìm nhạc miễn phí (Openverse). Tải nhạc thủ công (ví dụ Thư viện âm thanh YouTube) rồi nhập vào kho Media.
-
-NÂNG CẤP 0.12
--------------
-- Lớp ảnh / logo / sticker: nhập PNG, JPG, WebP hoặc GIF vào kho Media (lọc "Ảnh & logo"), bấm ＋ hoặc kéo thẻ thả lên khung hình. Trên khung hình: kéo để di chuyển, kéo ô vuông ở góc/cạnh để đổi cỡ (giữ tỷ lệ), kéo nút tròn để xoay. Tab Ảnh có X/Y/W/H, góc xoay, độ đục, thời gian hiện, căn lề, "Góc logo", lên trên/xuống dưới, nhân bản, xóa. Mỗi ảnh có một thanh trên timeline để đổi thời gian hiện; Delete để xóa. Nút ▭ trên thẻ ảnh dùng ảnh đó làm khung PNG.
-- Tốc độ riêng từng đoạn video: tách đoạn (S), bấm một đoạn (Shift+bấm để chọn nhiều), chỉnh ở bảng Clip video → "Tốc độ đoạn đang chọn" (0,25×–4×, nút 0.5×…3×, "Áp dụng cho mọi đoạn"). Tiếng gốc đổi tốc độ theo, giữ cao độ; đoạn có tốc độ khác hiện nhãn "2×" trên timeline.
-- Theo dõi tiến độ xuất: thẻ tiến độ trong mục Xuất, thông báo nổi góc dưới phải (phần trăm, thời gian còn lại, nút Hủy), nút "Xuất bản" và tiêu đề tab trình duyệt hiện %. Xuất xong có âm báo, thông báo "Video đã xuất xong" với nút Mở thư mục / Tải về, và thông báo hệ thống nếu đang ở cửa sổ khác.
-- Thông số xuất gọn: bấm ô "1080 × 1920 · 30 FPS" ở góc phải trên cùng (hoặc ô tóm tắt trong mục Xuất) để chỉnh độ phân giải, FPS, chất lượng, bộ mã hóa, âm lượng tổng và thư mục lưu trong một bảng nhỏ.
-- Bỏ "Xuất thử 5 giây" (và phím P).
-- Sửa chữ trong tab Tiêu đề / Nội dung: ô nhập nội dung nằm ngay đầu tab (kèm đếm ký tự). Mục Chữ bên trái liệt kê các lớp chữ, bấm để mở. Kéo chữ trực tiếp trên khung hình (có viền gợi ý khi rê chuột), nhấp đúp để sửa tại chỗ.
-- Kiểu chữ của tôi: trong mỗi tab chữ, "Lưu kiểu này" lưu font, cỡ, màu, căn lề, viền, nền hộp, độ rộng; áp dụng cho bất kỳ lớp chữ nào.
-- Thiết kế của tôi: ở cuối bảng thuộc tính, lưu/áp dụng/xóa cả thiết kế (nền, khung, kiểu chữ, vị trí, lớp ảnh/logo), không kèm nội dung chữ hay video/MP3.
-- Trang Dịch: "Tạo câu lệnh" xóa kết quả cũ; "Nhập kết quả" thay toàn bộ kịch bản, hook, tiêu đề, nội dung theo câu trả lời mới. Nhập được cả câu trả lời có chữ giải thích hoặc json bao quanh, xuống dòng trong chuỗi, dấu ngoặc kép cong, dấu phẩy thừa.
-
-NÂNG CẤP 0.11
-Tab Media: bấm ＋ Nhập (chọn nhiều file) hoặc kéo file vào; bấm ＋ trên thẻ
-hoặc kéo thẻ xuống track trên timeline để dùng. ♪ = làm nhạc nền.
-Chữ: phím T hoặc nút T+ thêm lớp chữ; trên timeline kéo thanh cam để đổi
-thời gian hiện. Trong thuộc tính chữ, mục "Nền chữ (hộp)" bật hộp nền.
-Kiểu nền: chọn "Tắt" nếu chỉ muốn video, không có nền màu.

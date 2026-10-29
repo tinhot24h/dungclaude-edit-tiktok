@@ -57,7 +57,8 @@ DEFAULTS = dict(language='zh', model=ai_translate.DEFAULT_MODEL, rate=4.2, prono
                 design=None, title_source='ai', body_source='ai', title_chars=30, body_min_chars=50, body_max_chars=100, review_texts=False, design_bg=True, design_title=True, design_body=True,
                 adjust=False, adjust_brightness=0, adjust_contrast=0, adjust_saturation=0, adjust_sharpen=0,
                 vision=True, title_style='auto', reuse=True,
-                meta=True, meta_strip=True, meta_author='', meta_url='', meta_publisher='', meta_copyright='', meta_rating=0, meta_back_min=5, meta_back_max=7)
+                meta=True, meta_strip=True, meta_author='', meta_url='', meta_publisher='', meta_copyright='', meta_rating=0, meta_back_min=5, meta_back_max=7,
+                out_resolution='1080', out_fps='30', out_quality='high')
 TEXT_SOURCES = ('ai', 'fixed', 'file', 'none')
 PRONOUNS = {'neutral': 'xưng hô trung tính, hạn chế đại từ', 'ban': 'gọi người xem là "bạn"', 'minh-ban': 'người nói xưng "mình", gọi người xem là "bạn"'}
 
@@ -93,7 +94,8 @@ def options(raw):
                          ('loudness', ('off', 'tiktok')), ('pronoun', tuple(PRONOUNS)), ('mode', ('paragraph', 'lines', 'ai33', 'design')), ('align', ('auto', 'voice', 'video')), ('style', tuple(ai_translate.STYLES)), ('frame_canvas', tuple(CANVAS)), ('frame_fit', ('cover', 'contain', 'blur')),
                          ('frame_flip', ('none', 'h', 'v', 'hv')), ('overlay_blend', ('normal', 'screen', 'key')), ('overlay_timing', ('loop', 'sequence', 'random')),
                          ('image_flip', ('none', 'h', 'v', 'hv')), ('image_blend', tuple(IMAGE_BLENDS)), ('image_layer', ('below', 'above')),
-                         ('title_source', TEXT_SOURCES), ('body_source', TEXT_SOURCES), ('title_style', tuple(TITLE_STYLES))):
+                         ('title_source', TEXT_SOURCES), ('body_source', TEXT_SOURCES), ('title_style', tuple(TITLE_STYLES)),
+                         ('out_resolution', (*RESOLUTIONS, 'source')), ('out_fps', FPS), ('out_quality', ('standard', 'high'))):
         v = raw.get(key, DEFAULTS[key])
         if v not in allowed:
             raise DubError('Thông số không hợp lệ: ' + key)
@@ -242,6 +244,11 @@ REUSE_LEVELS = dict(paragraph=(('voice', ('asr', 'translate', 'tts')), ('trans',
 REUSE_LABELS = dict(voice='lời gốc, bản dịch và giọng đọc', trans='lời gốc và bản dịch', texts='lời gốc, tiêu đề và nội dung', asr='lời gốc đã nhận diện')
 
 
+def cpu_threads(videos):
+    """libx264 threads per video: all cores shared by the videos that encode at the same time (at least 2)."""
+    return max(2, (os.cpu_count() or 4) // max(1, videos))
+
+
 def parallel_count(value):
     if not isinstance(value, int) or isinstance(value, bool) or not 1 <= value <= MAX_PARALLEL:
         raise DubError(f'Số video chạy cùng lúc phải từ 1 đến {MAX_PARALLEL}.')
@@ -270,6 +277,32 @@ DEMUCS_PACKAGES = ['demucs', 'soundfile']
 _demucs = {}
 INSTALL = dict(state='idle', log='', error='')
 _install_lock = threading.Lock()
+
+
+class Slots:
+    """At most `limit` holders at a time; the limit can change while jobs wait (Demucs videos at the same time)."""
+    def __init__(self, limit=1):
+        self.limit, self.busy, self.cond = limit, 0, threading.Condition()
+
+    def set(self, limit):
+        with self.cond:
+            self.limit = limit
+            self.cond.notify_all()
+
+    def acquire(self, blocking=True, timeout=None):
+        with self.cond:
+            if self.busy >= self.limit and (not blocking or not self.cond.wait_for(lambda: self.busy < self.limit, timeout)):
+                return False
+            self.busy += 1
+            return True
+
+    def release(self):
+        with self.cond:
+            self.busy -= 1
+            self.cond.notify_all()
+
+
+DEMUCS_SLOT = Slots(1)
 
 
 def env_python(env):
@@ -877,8 +910,29 @@ def run(cmd, cancel=None, timeout=7200, cwd=None, name='FFmpeg'):
             raise DubError(name + ' xử lý lỗi: ' + err.decode('utf-8', 'replace').strip()[-300:])
 
 
+class Clip:
+    """The source video with "Cắt đầu / cắt cuối" applied when it is read (-ss / -t before -i), so nothing is
+    encoded twice: FFmpeg seeks exactly when it re-encodes the export, and audio reads are exact anyway."""
+    def __init__(self, path, start, length):
+        self.path, self.start, self.length = Path(path), start, length
+
+    def input(self):
+        return ['-ss', f'{self.start:.3f}', '-t', f'{self.length:.3f}', '-i', str(self.path)]
+
+    def __str__(self):
+        return str(self.path)
+
+
+def inp(source):
+    """FFmpeg input arguments for the source (a Clip carries its cut)."""
+    return source.input() if isinstance(source, Clip) else ['-i', str(source)]
+
+
 def probe(path):
-    out = subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration:stream=codec_type,codec_name,width,height,channels,pix_fmt,sample_rate',
+    if isinstance(path, Clip):
+        info = probe(path.path)
+        return dict(info, duration=min(info['duration'], path.length) if info['duration'] else path.length)
+    out = subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration:stream=codec_type,codec_name,width,height,channels,pix_fmt,sample_rate,avg_frame_rate,r_frame_rate',
                           '-of', 'json', str(path)], capture_output=True, text=True, timeout=30)
     data = json.loads(out.stdout or '{}')
     streams = data.get('streams', [])
@@ -892,9 +946,9 @@ def video_frames(source, duration, count=3):
     import base64
     out = []
     for n in range(count):
-        at = max(0.0, duration * (n + 1) / (count + 1))
+        at = max(0.0, duration * (n + 1) / (count + 1)) + (source.start if isinstance(source, Clip) else 0)
         try:
-            data = subprocess.run(['ffmpeg', '-hide_banner', '-nostdin', '-loglevel', 'error', '-ss', f'{at:.2f}', '-i', str(source), '-frames:v', '1',
+            data = subprocess.run(['ffmpeg', '-hide_banner', '-nostdin', '-loglevel', 'error', '-ss', f'{at:.2f}', '-i', str(source.path if isinstance(source, Clip) else source), '-frames:v', '1',
                                    '-vf', 'scale=512:512:force_original_aspect_ratio=decrease', '-q:v', '5', '-f', 'image2pipe', '-vcodec', 'mjpeg', '-'],
                                   capture_output=True, timeout=60).stdout
         except (OSError, subprocess.SubprocessError):
@@ -978,9 +1032,35 @@ def fit(groups, duration, max_tempo):
     return warnings
 
 
+# Thông số video xuất: the short side of the output (9:16 → 720×1280, 1080×1920, 1440×2560, 2160×3840)
+RESOLUTIONS = {'720': 720, '1080': 1080, '2k': 1440, '4k': 2160}
+FPS = ('30', '60')
+
+
+def even(v):
+    return max(2, int(round(v / 2)) * 2)
+
+
 def frame_size(settings, video):
+    """Output size: the chosen frame (9:16, 1:1…) or the source's own shape, scaled so the short side matches the
+    chosen resolution."""
     w, h = int(video.get('width') or 720), int(video.get('height') or 1280)
-    return CANVAS.get(settings.get('frame_canvas', 'source')) or (w // 2 * 2, h // 2 * 2)
+    short = RESOLUTIONS.get(settings.get('out_resolution'))
+    base = CANVAS.get(settings.get('frame_canvas', 'source'))
+    if base:
+        return (even(base[0] * short / 1080), even(base[1] * short / 1080)) if short else base
+    if short and min(w, h) != short:
+        f = short / min(w, h)
+        return even(w * f), even(h * f)
+    return w // 2 * 2, h // 2 * 2
+
+
+def source_fps(video):
+    try:
+        a, b = str(video.get('avg_frame_rate') or video.get('r_frame_rate') or '0/1').split('/')
+        return float(a) / float(b) if float(b) else 0.0
+    except (ValueError, ZeroDivisionError):
+        return 0.0
 
 
 def design_video(design, W, H, stretch=1, duration=0, adjust=()):
@@ -1041,7 +1121,8 @@ def frame_graph(settings, video, before, after):
     tail = ','.join(after + ['format=yuv420p'])
     pre = list(before) + ['hflip'] * ('h' in settings['frame_flip']) + ['vflip'] * ('v' in settings['frame_flip'])
     if frame_identity(settings):
-        return ['[0:v:0]' + ','.join(pre + [tail]) + '[vout]'], (W, H)
+        size = [f'scale={W}:{H}:flags=lanczos'] if (W, H) != (int(video.get('width') or 0) // 2 * 2, int(video.get('height') or 0) // 2 * 2) else []
+        return ['[0:v:0]' + ','.join(pre + size + [tail]) + '[vout]'], (W, H)
     z = settings['frame_zoom'] / 100
     bw, bh = max(2, round(W * z / 2) * 2), max(2, round(H * z / 2) * 2)
     fit = settings['frame_fit']
@@ -1206,22 +1287,66 @@ class Store:
         self.wake = threading.Event()
         self.running = 0
         try:
-            self.parallel = parallel_count(json.loads((self.root / 'queue.json').read_text(encoding='utf-8')).get('parallel'))
-        except (OSError, ValueError, AttributeError, DubError):
+            saved = json.loads((self.root / 'queue.json').read_text(encoding='utf-8'))
+        except (OSError, ValueError):
+            saved = {}
+        saved = saved if isinstance(saved, dict) else {}
+        try:
+            self.parallel = parallel_count(saved.get('parallel'))
+        except DubError:
             self.parallel = 1
+        self.resume = saved.get('resume', True) is not False
+        try:
+            self.demucs = parallel_count(saved.get('demucs', 1))
+        except DubError:
+            self.demucs = 1
+        DEMUCS_SLOT.set(self.demucs)
         for _ in range(MAX_PARALLEL):
             threading.Thread(target=self.worker, daemon=True).start()
 
-    def set_parallel(self, value):
-        """How many videos are processed at the same time (the steps of one job stay in order)."""
+    def set_parallel(self, value, resume=None, demucs=None):
+        """How many videos are processed at the same time (the steps of one job stay in order), and whether the
+        queue goes on by itself when the app is opened again."""
         with self.lock:
-            self.parallel = parallel_count(value)
-            (self.root / 'queue.json').write_text(json.dumps(dict(parallel=self.parallel)), encoding='utf-8')
+            if value is not None:
+                self.parallel = parallel_count(value)
+            if resume is not None:
+                if not isinstance(resume, bool):
+                    raise DubError('Thông số không hợp lệ: resume')
+                self.resume = resume
+            if demucs is not None:
+                self.demucs = parallel_count(demucs)
+                DEMUCS_SLOT.set(self.demucs)
+            (self.root / 'queue.json').write_text(json.dumps(dict(parallel=self.parallel, resume=self.resume, demucs=self.demucs)), encoding='utf-8')
         self.wake.set()
         return self.queue_info()
 
     def queue_info(self):
-        return dict(parallel=self.parallel, max=MAX_PARALLEL, running=self.running, waiting=len(self.queue))
+        return dict(parallel=self.parallel, max=MAX_PARALLEL, running=self.running, waiting=len(self.queue), resume=self.resume, demucs=self.demucs)
+
+    def resume_interrupted(self):
+        """Opened again after a restart or a crash: jobs that were waiting or running go back into the queue in
+        their order, with the saved API keys (no TTS task is bought twice: their ids are in job.json)."""
+        rows = []
+        for meta in self.root.glob('*/job.json'):
+            try:
+                raw = json.loads(meta.read_text(encoding='utf-8'))
+            except (OSError, ValueError):
+                continue
+            if isinstance(raw, dict) and raw.get('state') in ('running', 'queued') and re.fullmatch('[a-f0-9]{32}', str(raw.get('id'))):
+                rows.append((raw.get('created') or '', raw['id']))
+        if not self.resume:
+            return 0
+        done = 0
+        for _, key in sorted(rows):
+            try:
+                self.enqueue(key, {})
+                done += 1
+            except DubError as exc:
+                job = self.load(key)
+                job['message'] = 'Ứng dụng đã mở lại nhưng chưa chạy tiếp được: ' + str(exc)
+                self.save(job)
+        return done
 
     # -- persistence
     def path(self, key):
@@ -1245,7 +1370,7 @@ class Store:
 
     def save(self, job):
         folder = self.path(job['id'])
-        tmp = folder / 'job.json.tmp'
+        tmp = folder / f'job.json.{uuid.uuid4().hex[:8]}.tmp'   # own name per write: two writers never share it
         with self.lock:
             tmp.write_text(json.dumps(job, ensure_ascii=False), encoding='utf-8')
             tmp.replace(folder / 'job.json')
@@ -1255,19 +1380,83 @@ class Store:
                dict(texts=self.texts_for(job) if job.get('options', {}).get('design') else None, mp3=bool(job.get('mp3')), mode=job.get('options', {}).get('mode', 'lines'), lines=len(job.get('segments') or []), translated=len(job.get('segments') or []) if job.get('paragraph') else sum(1 for s in job.get('segments') or [] if s.get('vi')))
 
     def jobs(self):
-        # summaries are cached by job.json's modification time: hundreds of finished jobs stay cheap to list
-        rows, cache = [], self.__dict__.setdefault('_summaries', {})
+        return self.jobs_since(0)['jobs']
+
+    def jobs_since(self, since=0):
+        """The queue list. With `since` (the stamp of the previous answer) only jobs that changed are sent (plus the
+        running and waiting ones, whose progress lives in memory) and `ids` gives the full order, so a queue of a
+        thousand videos is not sent again every 1.5 s. Summaries are cached by job.json's modification time."""
+        rows, cache, top = [], self.__dict__.setdefault('_summaries', {}), 0
         for folder in self.root.iterdir():
             meta = folder / 'job.json'
             if folder.is_dir() and re.fullmatch('[a-f0-9]{32}', folder.name) and meta.is_file():
                 try:
                     stamp = meta.stat().st_mtime_ns
-                    if folder.name in self.live or cache.get(folder.name, (None,))[0] != stamp:
+                    live = self.live.get(folder.name)
+                    moving = bool(live) and live.get('state') in ('running', 'queued')
+                    if moving or cache.get(folder.name, (None,))[0] != stamp:
                         cache[folder.name] = (stamp, self.summary(self.load(folder.name)))
-                    rows.append(cache[folder.name][1])
+                    top = max(top, stamp)
+                    rows.append((stamp, moving, cache[folder.name][1]))
                 except (DubError, OSError):
                     pass
-        return sorted(rows, key=lambda r: r.get('created') or '', reverse=True)
+        rows.sort(key=lambda r: r[2].get('created') or '', reverse=True)
+        changed = [r[2] for r in rows if not since or r[1] or r[0] >= since]
+        return dict(jobs=changed, ids=[r[2]['id'] for r in rows], stamp=top, full=not since)
+
+    # files of a finished job that are worth keeping: its state, subtitles, the voice (reused by "Dùng lại kết quả
+    # cũ" and by a re-export) and the export itself; everything else is made again when needed
+    KEEP = re.compile(r'(job\.json|.*\.srt|g\d+\.wav|master\.wav|voice-src\..*|dubbed\.mp4)$')
+
+    def storage(self):
+        """Disk used by the queue: all of it, and the temporary part that "Dọn file tạm" can free. A video that
+        is the same file as the one in the output folder (hard link) costs nothing extra."""
+        total = temp = 0
+        for folder in self.root.iterdir():
+            if not (folder.is_dir() and re.fullmatch('[a-f0-9]{32}', folder.name)):
+                continue
+            for item in folder.rglob('*'):
+                try:
+                    st = item.stat()
+                except OSError:
+                    continue
+                if not item.is_file() or (item.name == 'dubbed.mp4' and st.st_nlink > 1):
+                    continue
+                total += st.st_size
+                if not self.KEEP.fullmatch(item.name) or item.parent != folder:
+                    temp += st.st_size
+        return dict(total=total, temp=temp, jobs=sum(1 for f in self.root.iterdir() if f.is_dir() and re.fullmatch('[a-f0-9]{32}', f.name)))
+
+    def sweep(self, days=0):
+        """Dọn file tạm: finished jobs untouched for `days` lose their temporary files (background, mixed voice,
+        PCM, graphs, copied fonts/pictures). Exporting one again makes them anew."""
+        cutoff, freed, count = time.time() - days * 86400, 0, 0
+        for folder in list(self.root.iterdir()):
+            meta = folder / 'job.json'
+            if not (folder.is_dir() and re.fullmatch('[a-f0-9]{32}', folder.name) and meta.is_file()):
+                continue
+            try:
+                if meta.stat().st_mtime > cutoff or self.load(folder.name).get('state') != 'done':
+                    continue
+            except (OSError, DubError):
+                continue
+            cleaned = False
+            for item in list(folder.iterdir()):
+                if self.KEEP.fullmatch(item.name):
+                    continue
+                try:
+                    size = item.stat().st_size if item.is_file() else sum(f.stat().st_size for f in item.rglob('*') if f.is_file())
+                    shutil.rmtree(item) if item.is_dir() else item.unlink()
+                    freed += size
+                    cleaned = True
+                except OSError:
+                    pass
+            count += cleaned
+        return dict(self.storage(), freed=freed, cleaned=count)
+
+    def videos_in_use(self):
+        """Source videos of jobs that are not finished (the 30-day clean-up must keep them)."""
+        return {j['video_id'] for j in self.jobs() if j.get('state') != 'done' and j.get('video_id')}
 
     # -- commands
     def create(self, raw):
@@ -1762,6 +1951,11 @@ class Store:
         if not source.is_file():
             raise DubError('Video nguồn đã bị xóa khỏi kho.')
         settings = job['options']
+        # after "Dọn file tạm" the background and the mixed voice are made again (the voice itself is kept)
+        if job['steps'].get('separate') == 'done' and settings['background'] != 'remove' and not (folder / 'background.wav').is_file() and job.get('background_used') != 'none':
+            job['steps']['separate'] = 'pending'
+        if job['steps'].get('mix') == 'done' and not (folder / 'voice.wav').is_file():
+            job['steps']['mix'] = 'pending'
         source = self.trimmed(job, folder, source, cancel)
         info = probe(source)
         job['duration'] = info['duration'] or job['duration']
@@ -1796,7 +1990,7 @@ class Store:
             if not info['audio']:
                 raise DubError('Video không có âm thanh để nhận diện. Hãy nhập SRT lời gốc có sẵn.')
             self.progress(job, 'asr', .1, 'Đang tách âm thanh để nhận diện…')
-            run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(source), '-vn', '-map', '0:a:0', '-ac', '1', '-ar', '16000',
+            run(['ffmpeg', '-hide_banner', '-nostdin', '-y', *inp(source), '-vn', '-map', '0:a:0', '-ac', '1', '-ar', '16000',
                  '-c:a', 'libmp3lame', '-b:a', '48k', str(folder / 'asr.mp3')], cancel)
             if (folder / 'asr.mp3').stat().st_size > 25 * 1024 * 1024:
                 raise DubError('Âm thanh quá dài cho OpenAI (25 MB). Cắt video ngắn hơn 60 phút.')
@@ -1990,15 +2184,25 @@ class Store:
             return
         self.progress(job, 'separate', .1, 'Đang xử lý âm thanh gốc…')
         self.save(job)
-        base = ['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(source), '-vn', '-map', '0:a:0', '-ac', '2', '-ar', '48000']
+        base = ['ffmpeg', '-hide_banner', '-nostdin', '-y', *inp(source), '-vn', '-map', '0:a:0', '-ac', '2', '-ar', '48000']
         if mode == 'demucs':
             command = demucs_command()
             if not command:
                 raise DubError('Chưa cài Demucs. Bấm "Cài Demucs tự động" ở mục 🎵 Âm thanh gốc hoặc chọn cách xử lý nền khác.')
             run(base + [str(folder / 'original.wav')], cancel)
-            self.progress(job, 'separate', .3, 'Đang tách giọng bằng Demucs (có thể mất vài phút)…')
-            self.save(job)
-            run(command + ['--two-stems=vocals', '-o', str(folder / 'demucs'), str(folder / 'original.wav')], cancel, name='Demucs')
+            # Demucs needs a lot of RAM / VRAM: at most "Tách giọng AI cùng lúc" videos, the other steps go on
+            if not DEMUCS_SLOT.acquire(blocking=False):
+                self.progress(job, 'separate', .2, f'Đang chờ lượt tách giọng AI (tối đa {DEMUCS_SLOT.limit} video cùng lúc)…')
+                self.save(job)
+                while not DEMUCS_SLOT.acquire(timeout=1):
+                    if cancel.is_set():
+                        raise Cancelled()
+            try:
+                self.progress(job, 'separate', .3, 'Đang tách giọng bằng Demucs (có thể mất vài phút)…')
+                self.save(job)
+                run(command + ['--two-stems=vocals', '-o', str(folder / 'demucs'), str(folder / 'original.wav')], cancel, name='Demucs')
+            finally:
+                DEMUCS_SLOT.release()
             found = next((folder / 'demucs').rglob('no_vocals.wav'), None)
             if not found:
                 raise DubError('Demucs không tạo được nhạc nền.')
@@ -2013,13 +2217,13 @@ class Store:
                 return self.separate(job, folder, source, info, cancel)
             (folder / 'center.ffgraph').write_text('[0:a:0]aformat=channel_layouts=stereo,asplit=2[a][b];[a]pan=stereo|c0=c0-c1|c1=c1-c0[side];'
                                                    '[b]lowpass=f=150,volume=0.8[bass];[side][bass]amix=inputs=2:normalize=0[out]', encoding='utf-8')
-            run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(source), '-filter_complex_script', str(folder / 'center.ffgraph'),
+            run(['ffmpeg', '-hide_banner', '-nostdin', '-y', *inp(source), '-filter_complex_script', str(folder / 'center.ffgraph'),
                  '-map', '[out]', '-ar', '48000', str(target)], cancel)
         elif mode == 'duck':
             level = job['options']['duck_level'] / 100
             spans = '+'.join(f'between(t,{max(0, s["start"] - .15):.2f},{s["end"] + .15:.2f})' for s in job['segments']) or '0'
             (folder / 'duck.ffgraph').write_text(f"[0:a:0]aformat=channel_layouts=stereo,volume={level}:enable='{spans}'[out]", encoding='utf-8')
-            run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(source), '-filter_complex_script', str(folder / 'duck.ffgraph'),
+            run(['ffmpeg', '-hide_banner', '-nostdin', '-y', *inp(source), '-filter_complex_script', str(folder / 'duck.ffgraph'),
                  '-map', '[out]', '-ar', '48000', str(target)], cancel)
         else:
             run(base + [str(target)], cancel)
@@ -2240,7 +2444,7 @@ class Store:
             self.progress(job, 'tts', .05, 'Đang gửi âm thanh gốc lên ai33.pro để lồng tiếng theo timestamp…')
             self.save(job)
             upload = folder / 'dub-source.mp3'
-            run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(source), '-vn', '-map', '0:a:0', '-ac', '2', '-ar', '44100',
+            run(['ffmpeg', '-hide_banner', '-nostdin', '-y', *inp(source), '-vn', '-map', '0:a:0', '-ac', '2', '-ar', '44100',
                  '-c:a', 'libmp3lame', '-b:a', '128k', str(upload)], cancel)
             try:
                 g['task_id'] = ai33_audio.create_dubbing(keys['ai33'], upload.read_bytes(), settings['language'], 'vi', settings['voice_id'])['task_id']
@@ -2359,8 +2563,8 @@ class Store:
         return self.load(key)
 
     def trimmed(self, job, folder, source, cancel):
-        """Cut trim_start seconds off the beginning and trim_end off the end (frame-accurate re-encode) before anything
-        else, so recognition, voice and subtitles all use the trimmed timeline. Changing the cut restarts the job."""
+        """Cut trim_start seconds off the beginning and trim_end off the end: every later read of the video uses the
+        cut timeline (recognition, voice, subtitles, export) without encoding it first. Changing the cut restarts the job."""
         settings = job['options']
         a, b = settings.get('trim_start', 0), settings.get('trim_end', 0)
         target = folder / 'trimmed.mp4'
@@ -2380,16 +2584,12 @@ class Store:
             job['trim_sign'] = sign
         if not a and not b:
             return source
-        if not target.is_file():
-            total = probe(source)['duration']
-            keep = total - a - b
-            if keep < 1:
-                raise DubError(f'Cắt đầu {a}s và cuối {b}s thì video còn quá ngắn ({max(0, keep):.1f}s).')
-            self.progress(job, job['step'] if job['step'] in STEPS else 'asr', 0, f'Đang cắt video: bỏ {a}s đầu, {b}s cuối…')
-            self.save(job)
-            run(['ffmpeg', '-hide_banner', '-nostdin', '-y', '-ss', f'{a:.3f}', '-i', str(source), '-t', f'{keep:.3f}', '-map', '0:v:0', '-map', '0:a?',
-                 *self.encoder_args('cpu', 'high'), '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', str(target)], cancel)
-        return target
+        target.unlink(missing_ok=True)   # made by versions before 0.27 (the cut was encoded once more)
+        total = probe(source)['duration']
+        keep = total - a - b
+        if keep < 1:
+            raise DubError(f'Cắt đầu {a}s và cuối {b}s thì video còn quá ngắn ({max(0, keep):.1f}s).')
+        return Clip(source, a, keep)
 
     def place_paragraph(self, job, folder, cancel):
         """Put the single voice file at the first spoken line and make it end with the video.
@@ -2455,7 +2655,9 @@ class Store:
         has_bg = background.is_file()
         subs = settings['subtitles']
         (folder / 'vi.srt').write_text(to_srt(subtitle_rows or [], 'vi'), encoding='utf-8')
-        args = ['ffmpeg', '-hide_banner', '-nostdin', '-y', '-i', str(source), '-i', 'voice.wav']
+        # the previous export may be the same file as the one in the output folder (hard link): never write into it
+        (folder / 'dubbed.mp4').unlink(missing_ok=True)
+        args = ['ffmpeg', '-hide_banner', '-nostdin', '-y', *inp(source), '-i', 'voice.wav']
         if has_bg:
             args += ['-i', 'background.wav']
         if subs == 'soft':
@@ -2476,7 +2678,12 @@ class Store:
             job['warnings'] = [w for w in job['warnings'] if not w.startswith('Lớp ảnh')] + ['Lớp ảnh đang bật nhưng chưa chọn ảnh nên video xuất không có lớp ảnh.']
         design = self.design_for(job, folder) if settings.get('design') else None
         adjust = adjust_filters(settings)
-        copy = stretch == 1 and identity and not chosen and not image and not design and not adjust and video.get('codec_name') == 'h264' and video.get('pix_fmt') in ('yuv420p', 'yuvj420p')
+        # 30/60 fps is a ceiling: a 60 fps source becomes 30 fps, a 25 fps source stays 25 fps
+        fps = int(settings['out_fps'])
+        lower_fps = source_fps(video) > fps + .5
+        same_size = frame_size(settings, video) == (int(video.get('width') or 0) // 2 * 2, int(video.get('height') or 0) // 2 * 2)
+        copy = stretch == 1 and identity and same_size and not lower_fps and not isinstance(source, Clip) and not chosen and not image and not design and not adjust \
+            and video.get('codec_name') == 'h264' and video.get('pix_fmt') in ('yuv420p', 'yuvj420p')
         filters = not copy
         if filters:
             width, height = frame_size(settings, video)
@@ -2552,7 +2759,7 @@ class Store:
         args += ['-filter_complex_script', 'export.ffgraph', '-map', '[vout]' if filters else '0:v:0', '-map', '[aout]']
         if subs == 'soft':
             args += ['-map', str(3 if has_bg else 2) + ':s:0', '-c:s', 'mov_text', '-metadata:s:s:0', 'language=vie']
-        args += (['-c:v', 'copy'] if copy else self.encoder_args(settings['encoder'], 'high')) + ['-c:a', 'aac', '-b:a', '192k',
+        args += (['-c:v', 'copy'] if copy else self.video_codec(settings['encoder'], settings['out_quality']) + (['-r', str(fps)] if lower_fps else [])) + ['-c:a', 'aac', '-b:a', '192k',
                  '-t', str(duration), '-movflags', '+faststart', *self.metadata_args(job), 'dubbed.mp4']
         try:
             run(args, cancel, cwd=folder)
@@ -2562,7 +2769,7 @@ class Store:
             args = [a for a in args]
             i = args.index('-c:a')
             start = max(j for j in range(i) if args[j] == '-c:v')
-            run(args[:start] + self.encoder_args('cpu', 'high') + args[i:], cancel, cwd=folder)
+            run(args[:start] + self.video_codec('cpu', settings['out_quality']) + (['-r', str(fps)] if lower_fps else []) + args[i:], cancel, cwd=folder)
         job['outputs'] = dict(video=f'/dub/{job["id"]}/download', srt=f'/dub/{job["id"]}/srt/vi', srt_zh=f'/dub/{job["id"]}/srt/zh')
         if settings['meta']:
             self.progress(job, 'export', .97, 'Đang ghi thông tin file (Tags, đánh giá, link kênh)…')
@@ -2575,10 +2782,25 @@ class Store:
                 saved = output_folder.deliver(self.settings_path, folder / 'dubbed.mp4', job.get('file_name') or job['name'] + ('-dung' if settings['mode'] == 'design' else '-long-tieng'),
                                               [job['file_name_alt']] if job.get('file_name') and job.get('file_name_alt') else [])
                 job['outputs']['saved_path'] = str(saved)
+                try:
+                    linked = os.path.samefile(saved, folder / 'dubbed.mp4')
+                except OSError:
+                    linked = False
+                if not linked:
+                    # another drive: keep only the copy in the output folder (the player and download use it)
+                    (folder / 'dubbed.mp4').unlink(missing_ok=True)
                 if subs in ('file', 'soft'):
                     shutil.copyfile(folder / 'vi.srt', saved.with_suffix('.srt'))
         except (ValueError, OSError) as exc:
             job['warnings'].append(str(exc))
+
+    def video_codec(self, encoder, quality):
+        """Encoder arguments; the CPU encoder gets the machine's cores shared by the videos running together
+        (it was fixed at 2 threads, so one video at a time left most of the CPU idle)."""
+        args = list(self.encoder_args(encoder, quality))
+        if '-threads' in args:
+            args[args.index('-threads') + 1] = str(cpu_threads(max(1, min(self.parallel, self.running or 1))))
+        return args
 
     def meta_title(self, job):
         texts = self.texts_for(job) if job['options'].get('design') else {}

@@ -78,13 +78,16 @@ ${section('voice','🎙','Giọng đọc ai33',`<label for="dub-voice">Giọng �
  <div class="dub-limit-row"><span>Tốc độ giọng</span><input id="dub-tempo-min" type="number" min="0.5" max="1" step="0.01" aria-label="Tốc độ giọng thấp nhất"><i>–</i><input id="dub-tempo" type="number" min="1" max="1.6" step="0.01" aria-label="Tốc độ giọng cao nhất"><small>×</small></div>
  <div class="dub-limit-row"><span>Tốc độ video</span><input id="dub-vspeed-min" type="number" min="0.25" max="1" step="0.01" aria-label="Tốc độ video thấp nhất"><i>–</i><input id="dub-vspeed-max" type="number" min="1" max="4" step="0.01" aria-label="Tốc độ video cao nhất"><small>×</small></div>
  <label class="check-row"><input id="dub-end-voice" type="checkbox" checked> Video vẫn dài hơn giọng thì cắt video theo giọng (kết thúc sau câu cuối ~0.4s)</label></div>
- <div class="two-col"><div><label for="dub-voice-volume">Âm lượng giọng <output id="dub-voice-value"></output></label><input id="dub-voice-volume" type="range" min="50" max="200" step="0.1"></div><div><label for="dub-dict">ID từ điển phát âm</label><input id="dub-dict" type="number" min="1" placeholder="không dùng"></div></div>`)}
-${section('export','📤','Xuất & file phụ đề',`<div class="two-col"><div><label for="dub-subs">Phụ đề tiếng Việt</label><select id="dub-subs"><option value="file">File .srt đi kèm</option><option value="soft">Kênh phụ đề trong MP4 + .srt</option><option value="none">Không</option></select></div><div><label for="dub-loud">Âm lượng tổng</label><select id="dub-loud"><option value="tiktok">Chuẩn −14 LUFS</option><option value="off">Giữ nguyên</option></select></div></div>
- <div class="two-col"><div><label for="dub-parallel">Số video chạy cùng lúc</label><select id="dub-parallel"><option value="1">1 video (máy yếu)</option><option value="2">2 video</option><option value="3">3 video</option><option value="4">4 video (máy mạnh)</option></select></div><div><label for="dub-encoder">Bộ mã hóa video</label><select id="dub-encoder"></select></div></div>
+ <div class="two-col"><div><label for="dub-voice-volume">Âm lượng giọng <output id="dub-voice-value"></output></label><input id="dub-voice-volume" type="range" min="50" max="200" step="0.1"></div><div><label for="dub-dict-pick">Từ điển phát âm</label><div class="folder-row"><select id="dub-dict-pick"><option value="">Không dùng</option></select><button type="button" id="dub-dict-load" class="outline-action small-action" title="Tải danh sách từ điển của tài khoản ai33 (tạo/sửa ở tab Âm thanh ai33)">↻</button></div><input id="dub-dict" type="number" min="1" hidden></div></div>`)}
+${section('export','📤','Xuất & chạy hàng loạt',`<div class="two-col"><div><label for="dub-subs">Phụ đề tiếng Việt</label><select id="dub-subs"><option value="file">File .srt đi kèm</option><option value="soft">Kênh phụ đề trong MP4 + .srt</option><option value="none">Không</option></select></div><div><label for="dub-parallel">Số video chạy cùng lúc</label><select id="dub-parallel"><option value="1">1 video (máy yếu)</option><option value="2">2 video</option><option value="3">3 video</option><option value="4">4 video (máy mạnh)</option></select></div></div>
+ <select id="dub-loud" aria-label="Âm lượng tổng" hidden><option value="tiktok">Chuẩn hóa −14 LUFS (TikTok)</option><option value="off">Giữ nguyên</option></select>
+ <div class="two-col"><div><label for="dub-demucs-n">Tách giọng AI (Demucs) cùng lúc</label><select id="dub-demucs-n"><option value="1">1 video (an toàn)</option><option value="2">2 video</option><option value="3">3 video</option><option value="4">4 video (RAM/VRAM lớn)</option></select></div><div></div></div>
+ <label class="check-row"><input id="dub-resume" type="checkbox" checked> Mở lại ứng dụng thì tự chạy tiếp các video đang chờ/đang chạy dở</label>
+ <div class="dub-out-summary"><span id="dub-out-text"></span><button type="button" id="dub-out-edit" class="outline-action small-action">Thông số xuất ›</button></div>
  <p class="helper" id="dub-run-note"></p>
- <p class="helper" id="dub-export-note">Video lưu vào thư mục xuất (nút thông số xuất ở góc trên) với tên “…-long-tieng.mp4”.</p>`)}
+ <p class="helper" id="dub-export-note">Video lưu vào thư mục xuất với tên AI đặt theo sản phẩm (sửa được trong hàng đợi); trùng tên thì dùng tên dự phòng rồi mới thêm -2.</p>`)}
 </section>
-<div class="panel dub-jobs"><div class="dub-queue-head"><h2>Hàng đợi</h2><div class="dub-filters" id="dub-filters"></div><div class="dub-bulk"><button type="button" id="dub-retry" class="outline-action small-action">▶ Chạy lại lỗi</button><button type="button" id="dub-stop-all" class="outline-action small-action">■ Dừng tất cả</button><button type="button" id="dub-clean" class="outline-action small-action">🧹 Xóa đã xong</button><button type="button" id="dub-clean-err" class="outline-action small-action">🧹 Xóa lỗi</button><button type="button" id="dub-clean-all" class="outline-action small-action danger-action" title="Xóa mọi tác vụ không đang chạy">🗑 Xóa tất cả</button></div></div>
+<div class="panel dub-jobs"><div class="dub-queue-head"><h2>Hàng đợi</h2><div class="dub-filters" id="dub-filters"></div><div class="dub-bulk"><button type="button" id="dub-retry" class="outline-action small-action">▶ Chạy lại lỗi</button><button type="button" id="dub-stop-all" class="outline-action small-action">■ Dừng tất cả</button><button type="button" id="dub-sweep" class="outline-action small-action" title="Xóa file tạm (nhạc nền, giọng đã trộn, file đồ họa) của video đã xong. Giữ giọng đọc, bản dịch và video xuất.">💾 Dọn file tạm</button><button type="button" id="dub-clean" class="outline-action small-action">🧹 Xóa đã xong</button><button type="button" id="dub-clean-err" class="outline-action small-action">🧹 Xóa lỗi</button><button type="button" id="dub-clean-all" class="outline-action small-action danger-action" title="Xóa mọi tác vụ không đang chạy">🗑 Xóa tất cả</button></div></div>
   <div id="dub-review-bar" class="dub-review-bar" hidden><span id="dub-review-count"></span><button type="button" id="dub-review-open" class="primary-action small-action">✎ Mở bảng duyệt chữ</button></div>
   <div id="dub-queue" class="dub-queue"></div><div id="dub-detail" class="dub-detail" hidden></div></div>
 <dialog id="dub-rules" class="dub-dialog wide"><div class="dub-review-head"><h2>Mẫu câu lệnh</h2><small class="helper">quy tắc nội dung &amp; văn phong gửi OpenAI cho mọi video</small></div>
@@ -105,7 +108,8 @@ $('dub-background').replaceChildren(...BG.map(([v,t,h])=>el('label',{className:'
 for(const d of view.querySelectorAll('.dub-sec'))d.addEventListener('toggle',()=>{if(d.open)for(const o of view.querySelectorAll('.dub-sec'))if(o!==d)o.open=false});
 
 // ---- settings (no keys) remembered per browser and in saved configurations
-const S={language:'dub-language',model:'dub-model',pronoun:'dub-pronoun',rate:'dub-rate',notes:'dub-notes',no_price:'dub-no-price',review:'dub-review',duck_level:'dub-duck',background_volume:'dub-bg-volume',voice_id:'dub-voice',voice_speed:'dub-speed',max_tempo:'dub-tempo',min_tempo:'dub-tempo-min',video_speed_min:'dub-vspeed-min',video_speed_max:'dub-vspeed-max',voice_volume:'dub-voice-volume',dictionary_id:'dub-dict',subtitles:'dub-subs',loudness:'dub-loud',mode:'dub-mode',align:'dub-align',style:'dub-style',
+let dictList=[];   // ai33 pronunciation dictionaries (loaded when the voice section opens)
+const S={out_resolution:'resolution',out_fps:'fps',out_quality:'quality',language:'dub-language',model:'dub-model',pronoun:'dub-pronoun',rate:'dub-rate',notes:'dub-notes',no_price:'dub-no-price',review:'dub-review',duck_level:'dub-duck',background_volume:'dub-bg-volume',voice_id:'dub-voice',voice_speed:'dub-speed',max_tempo:'dub-tempo',min_tempo:'dub-tempo-min',video_speed_min:'dub-vspeed-min',video_speed_max:'dub-vspeed-max',voice_volume:'dub-voice-volume',dictionary_id:'dub-dict',subtitles:'dub-subs',loudness:'dub-loud',mode:'dub-mode',align:'dub-align',style:'dub-style',
  trim_start:'dub-trim-start',trim_end:'dub-trim-end',frame_canvas:'dub-canvas',frame_fit:'dub-fit',frame_zoom:'dub-zoom',frame_x:'dub-x',frame_y:'dub-y',frame_rotate:'dub-rotate',frame_flip:'dub-flip',overlay:'dub-overlay',overlay_count:'dub-ov-count',overlay_blend:'dub-ov-blend',overlay_opacity:'dub-ov-opacity',overlay_timing:'dub-ov-timing',end_with_voice:'dub-end-voice',image:'dub-img',image_id:'dub-img-pick',image_x:'dub-img-x',image_y:'dub-img-y',image_w:'dub-img-w',image_h:'dub-img-h',image_rotate:'dub-img-rot',image_flip:'dub-img-flip',image_blend:'dub-img-blend',image_opacity:'dub-img-op',image_layer:'dub-img-layer',image_keep:'dub-img-keep',adjust:'dub-adj-on',adjust_brightness:'dub-adj-bright',adjust_contrast:'dub-adj-contrast',adjust_saturation:'dub-adj-sat',adjust_sharpen:'dub-adj-sharp',vision:'dub-vision',reuse:'dub-reuse',meta:'meta-on',meta_strip:'meta-strip',meta_author:'meta-author',meta_url:'meta-url',meta_publisher:'meta-publisher',meta_copyright:'meta-copyright',meta_rating:'meta-rating',meta_back_min:'meta-back-min',meta_back_max:'meta-back-max'};
 const NUM=new Set(['meta_rating','meta_back_min','meta_back_max','rate','duck_level','background_volume','voice_speed','max_tempo','min_tempo','video_speed_min','video_speed_max','voice_volume','dictionary_id','trim_start','trim_end','image_x','image_y','image_w','image_h','image_rotate','image_opacity','frame_zoom','frame_x','frame_y','frame_rotate','overlay_count','overlay_opacity','adjust_brightness','adjust_contrast','adjust_saturation','adjust_sharpen']);
 let ovUse=new Set(),ovAll=true;
@@ -113,7 +117,7 @@ function settings(){const o={};for(const[k,id]of Object.entries(S)){const e=$(id
  o.background=view.querySelector('[name=dub-bg]:checked')?.value||'duck';o.instructions=template();o.overlay_ids=ovAll?[]:[...ovUse].filter(id=>overlays.some(x=>x.id===id));
  for(const k of ['trim_start','trim_end'])o[k]=Math.max(0,Math.min(120,o[k]||0));if(o.image_keep)o.image_h=0;const enc=$('encoder')?.value;o.encoder=enc==='auto'?(window.hardwareEncoder||'cpu'):(enc||'cpu');window.dubProfile?.extend?.(o);return o}
 function apply(o){if(o.subtitles==='burn')o={...o,subtitles:'file'};if(o.rules_saved&&typeof o.instructions==='string')setRules(o.instructions,o.rules_name||'');if(o.image_h===0)o={...o,image_h:null,image_keep:true};for(const[k,id]of Object.entries(S)){if(o[k]==null||(k==='mode'&&o[k]==='design'))continue;const e=$(id);if(e.type==='checkbox')e.checked=!!o[k];else e.value=o[k]}const r=view.querySelector(`[name=dub-bg][value="${o.background}"]`);if(r)r.checked=true;
- if(Array.isArray(o.overlay_ids)){ovAll=!o.overlay_ids.length;ovUse=new Set(o.overlay_ids);drawOverlays()}window.dubProfile?.apply?.(o);window.exportMetaRefresh?.();labels();preview()}
+ if(Array.isArray(o.overlay_ids)){ovAll=!o.overlay_ids.length;ovUse=new Set(o.overlay_ids);drawOverlays()}window.dubProfile?.apply?.(o);window.exportMetaRefresh?.();if($('dub-dict-pick'))dictOptions(dictList);labels();preview();if($('dub-out-text'))runNote()}
 function remember(){try{localStorage.setItem(storeKey(),JSON.stringify({...settings(),instructions:undefined,_v:3}))}catch{}labels()}
 const pct=v=>(v>0?'+':'')+v+'%';
 for(const range of view.querySelectorAll('input[type=range]:not(#dub-pv-seek)')){const box=el('input',{type:'number',className:'dub-numbox',min:range.min,max:range.max,step:range.step||1,value:range.value,title:'Nhập số chính xác'});box.setAttribute('aria-label',(range.labels?.[0]?.textContent||'Giá trị').trim());
@@ -159,6 +163,13 @@ $('dub-demucs-check').onclick=async()=>{$('dub-demucs-check').disabled=true;try{
 function pickVoice(quiet){try{const a=JSON.parse(localStorage.getItem('review-audio-v7')||'{}');if(a.voice?.voice_id){$('dub-voice').value=a.voice.voice_id;setVoiceName(a.voice.name||a.voice.voice_id);remember();return}}catch{}if(!quiet)$('dub-voice-note').textContent='Chưa chọn giọng ở trang Âm thanh. Bấm 🎙 Chọn giọng ai33.'}
 function setVoiceName(name){$('dub-voice-note').textContent='Giọng: '+name;$('dub-voice-note').dataset.name=name;labels()}
 $('dub-voice-pick').onclick=e=>{e.preventDefault();pickVoice(false)};
+// pronunciation dictionaries of the ai33 account, picked by name (the id is what the job keeps)
+function dictOptions(list){dictList=list||[];const pick=$('dub-dict-pick'),id=$('dub-dict').value;pick.replaceChildren(new Option('Không dùng',''),...(list||[]).map(d=>new Option(`${d.name||'Từ điển'} · ${d.rules?.length||0} từ`,String(d.id))));
+ if(id&&![...pick.options].some(o=>o.value===id))pick.append(new Option('Từ điển ID '+id,id));pick.value=id}
+async function loadDicts(quiet){try{const d=await json('/audio/dictionaries',{api_key:ai33Key()});dictOptions(d.dictionaries);if(!quiet)say(`Đã tải ${d.dictionaries.length} từ điển phát âm.`)}catch(e){dictOptions([]);if(!quiet)say(e.message)}}
+$('dub-dict-load').onclick=()=>loadDicts(false);
+$('dub-dict-pick').onchange=()=>{$('dub-dict').value=$('dub-dict-pick').value;$('dub-dict').dispatchEvent(new Event('input',{bubbles:true}));remember();preview()};
+let dictsLoaded=false;document.addEventListener('toggle',e=>{if(e.target.id==='sec-voice'&&e.target.open&&!dictsLoaded){dictsLoaded=true;loadDicts(true)}},true);
 // nghe thử: one sentence read by the chosen voice + speed + dictionary; the server keeps it, listening again is free
 const sampleAudio=new Audio();
 $('dub-sample').onclick=async()=>{const b=$('dub-sample'),o=settings();if(!sampleAudio.paused){sampleAudio.pause();b.textContent='▶ Nghe thử';return}
@@ -360,7 +371,7 @@ async function precheck(o){const dlg=$('dub-check'),body=$('dub-check-body'),bui
   ...row('OpenAI',usd?`≈ $${usd.toFixed(3)} · ~${vnd(usd)} đ · ${openaiUse}`:'0 đ · '+openaiUse),...row('ai33',voice),
   ...row('Key',`OpenAI ${openai?'✓':'✗'} · ai33 ${build?'không cần':ai33?'✓':'✗'}`,(usd&&!openai)||(!build&&!ai33)?'bad':'ok'),
   ...(reuseText?row('Dùng lại',reuseText,'ok'):[]),...(o.vision&&usd?row('AI xem hình','3 khung hình mỗi video (đã tính vào giá)'):[]),
-  ...row('Chạy',`${$('dub-parallel').value} video cùng lúc · ${$('dub-encoder').selectedOptions[0]?.textContent||'CPU'}`),
+  ...row('Chạy',`${$('dub-parallel').value} video cùng lúc · ${$('encoder')?.selectedOptions[0]?.textContent||'CPU'}`),
   ...(o.review_texts&&aiTexts?row('Duyệt chữ','dừng lại để duyệt tiêu đề/nội dung trước khi xuất'):[])),
   ...(warn.length?[el('div',{className:'group-label',textContent:'CẢNH BÁO'}),el('ul',{className:'dub-check-warn'},...warn.map(w=>el('li',{textContent:w})))]:[el('p',{className:'dub-check-ok',textContent:'✓ Không có cảnh báo.'})]),
   el('p',{className:'helper',textContent:'Giá là ước tính theo bảng giá OpenAI và độ dài câu lệnh thật, có thể chênh. Lỗi mạng tạm thời được tự thử lại 3 lần. Video lỗi không chặn các video khác.'}));
@@ -462,7 +473,10 @@ function filters(){reviewBar();$('dub-filters').replaceChildren(...Object.entrie
  $('dub-retry').disabled=!jobs.some(GROUP.todo[1]);$('dub-stop-all').disabled=!jobs.some(GROUP.active[1]);$('dub-clean').disabled=!jobs.some(GROUP.done[1])}
 // long queues show the newest 60 rows first; the rest on demand (keeps the 1.5 s refresh light)
 let queueMax=60;function moreButton(n){const b=el('button',{type:'button',className:'outline-action small-action dub-more',textContent:`Hiện thêm ${Math.min(60,n)} / còn ${n} tác vụ`});b.onclick=()=>{queueMax+=60;refresh()};return b}
-async function refresh(){clearTimeout(poll);try{jobs=(await request('/dub/jobs')).jobs;filters();const shown=jobs.filter(GROUP[filter][1]);
+// the server sends only what changed since the last answer (+ running jobs); the full order comes as ids
+const jobMap=new Map();let jobStamp=0;
+async function refresh(){clearTimeout(poll);try{const d=await request('/dub/jobs?since='+jobStamp);if(d.full)jobMap.clear();for(const j of d.jobs)jobMap.set(j.id,j);
+  const keep=new Set(d.ids);for(const id of [...jobMap.keys()])if(!keep.has(id))jobMap.delete(id);jobStamp=d.ids.every(id=>jobMap.has(id))?d.stamp||0:0;jobs=d.ids.map(id=>jobMap.get(id)).filter(Boolean);filters();const shown=jobs.filter(GROUP[filter][1]);
   const more=shown.length-queueMax;$('dub-queue').replaceChildren(...(shown.length?[...shown.slice(0,queueMax).map(card),...(more>0?[moreButton(more)]:[])]:[el('div',{className:'note-empty'},el('div',{textContent:'🎙'}),el('strong',{textContent:jobs.length?'Không có tác vụ trong nhóm này':'Chưa có video nào'}),el('p',{className:'helper',textContent:jobs.length?'Chọn nhóm khác ở trên.':'Chọn video ở mục 🎬 rồi bấm Bắt đầu lồng tiếng.'}))]));
   if(current&&openDetail===current)await showDetail();else $('dub-detail').hidden=true}catch(e){say(e.message)}
  if(jobs.some(j=>['queued','running'].includes(j.state))&&!view.hidden)poll=setTimeout(refresh,1500)}
@@ -473,6 +487,11 @@ async function cleanJobs(list,label){if(!list.length){say('Không có tác vụ 
  let n=0;for(const j of list){await json(`/dub/${j.id}/delete`).then(()=>n++).catch(()=>{});if(n%20===0)say(`Đang xóa ${n}/${list.length}…`)}if(list.some(j=>j.id===current)){current='';detail=null}say(`Đã xóa ${n} tác vụ.`);refresh()}
 $('dub-clean-err').onclick=()=>cleanJobs(jobs.filter(j=>j.state==='error'),'lỗi');
 $('dub-clean-all').onclick=()=>cleanJobs(jobs.filter(j=>!['queued','running'].includes(j.state)),'(trừ đang chạy)');
+// disk used by the queue; "Dọn file tạm" frees the temporary part of finished videos (also done by itself after 3 days)
+const mb=b=>b>=1073741824?(b/1073741824).toFixed(1)+' GB':Math.round(b/1048576)+' MB';
+async function storage(){try{const d=await request('/dub/storage');$('dub-sweep').textContent=`💾 Dọn file tạm · ${mb(d.temp)}`;$('dub-sweep').title=`Hàng đợi chiếm ${mb(d.total)} (${d.jobs} video), trong đó ${mb(d.temp)} là file tạm của video. Dọn file tạm của video đã xong: giữ giọng đọc, bản dịch và video xuất; xuất lại sẽ tự tạo lại.`;$('dub-sweep').disabled=!d.temp}catch{}}
+$('dub-sweep').onclick=async()=>{try{const d=await json('/dub/sweep',{days:0});say(`Đã dọn file tạm của ${d.cleaned} video, giải phóng ${mb(d.freed)}. Hàng đợi còn chiếm ${mb(d.total)}.`);storage()}catch(e){say(e.message)}};
+document.addEventListener('view-change',e=>{if(e.detail==='dub')storage()});storage();
 $('dub-clean').onclick=async()=>{const list=jobs.filter(GROUP.done[1]);if(!confirm(`Xóa ${list.length} tác vụ đã xong khỏi hàng đợi? Video đã lưu ra thư mục xuất vẫn giữ.`))return;for(const j of list)await json(`/dub/${j.id}/delete`).catch(()=>{});refresh()};
 
 // ---- translation panel (closed by default; "✎ Bản dịch" on a job opens it)
@@ -551,14 +570,20 @@ $('dub-pv-mute').onclick=()=>{fg.dataset.mute=fg.dataset.mute==='1'?'0':'1';$('d
 window.dubApi={drawImage:(o,W,H)=>drawImage(o,null,W,H),startLabel:()=>startLabel(),settings,apply,remember,labels,preview:()=>preview(),refresh:()=>refresh(),draw:()=>draw(),say,files:()=>files,loadPresets:()=>loadPresets(),
  load:()=>{let saved={};try{saved=JSON.parse(localStorage.getItem(storeKey())||'null')||mergedOld()}catch{}apply({...caps.defaults,...saved})},jobs:()=>jobs,localImport:f=>localImport(f)};
 draw();loadOverlays();loadImages();
-// how many videos run at the same time (server setting) and the video encoder (same as the header's export settings)
-function encoders(){const src=$('encoder'),dst=$('dub-encoder');if(!src)return;dst.replaceChildren(...[...src.options].map(o=>new Option(o.textContent,o.value)));dst.value=src.value;runNote()}
-function runNote(){const p=+$('dub-parallel').value,enc=$('dub-encoder').value,hw=enc!=='cpu'&&(enc!=='auto'||window.hardwareEncoder);
- $('dub-run-note').textContent=`${p===1?'Chạy lần lượt từng video.':`Chạy ${p} video cùng lúc: nhanh hơn khi máy nhiều nhân/RAM (mỗi video thêm khoảng 1–2 GB RAM).`} ${hw?'Mã hóa bằng card đồ họa: nhanh hơn, ít tốn CPU.':'Mã hóa bằng CPU: chậm hơn card đồ họa nhưng chạy mọi máy.'}`}
-if($('encoder')){new MutationObserver(encoders).observe($('encoder'),{childList:true});$('encoder').addEventListener('change',encoders);encoders()}
+// how many videos run at the same time (server setting); the video settings themselves live in the export popover
+// of the header (resolution, fps, quality, encoder, loudness, folder, file info): one place for every export setting
+{const old=$('loudness');if(old){const cell=old.closest('.cc-items')||old.parentElement;old.hidden=true;$('dub-loud').hidden=false;cell.append($('dub-loud'))}}
+function runNote(){const p=+$('dub-parallel').value,enc=$('encoder')?.value||'cpu',hw=enc!=='cpu'&&(enc!=='auto'||window.hardwareEncoder);
+ $('dub-run-note').textContent=`${p===1?'Chạy lần lượt từng video.':`Chạy ${p} video cùng lúc: nhanh hơn khi máy nhiều nhân/RAM (mỗi video thêm khoảng 1–2 GB RAM).`} ${hw?'Mã hóa bằng card đồ họa: nhanh hơn, ít tốn CPU.':'Mã hóa bằng CPU: chậm hơn card đồ họa nhưng chạy mọi máy.'} Tách giọng AI (Demucs): tối đa ${$('dub-demucs-n').value} video cùng lúc, mỗi video Demucs cần khoảng 3–4 GB RAM (hoặc VRAM khi có card).`;
+ const o=settings(),sel=id=>$(id)?.selectedOptions[0]?.textContent.replace(/\s*[·(].*$/,'')||'';
+ $('dub-out-text').textContent=`Xuất: ${sel('resolution')} · tối đa ${o.out_fps} fps · ${o.out_quality==='high'?'chất lượng cao':'tiêu chuẩn'} · ${sel('encoder')} · ${o.loudness==='tiktok'?'−14 LUFS':'giữ âm lượng'}${o.meta?' · ghi thông tin file':''}`}
+$('dub-out-edit').onclick=e=>{e.stopPropagation();$('export-badge')?.click()};
+for(const id of ['resolution','fps','quality','encoder','dub-loud'])$(id)?.addEventListener('change',()=>{remember();runNote()});
+if($('encoder'))new MutationObserver(runNote).observe($('encoder'),{childList:true});
 // Thông tin file lives in the export settings popover (outside this tab): changes are remembered and go into templates
-for(const id of ['meta-on','meta-strip','meta-author','meta-url','meta-publisher','meta-copyright','meta-rating','meta-back-min','meta-back-max'])$(id)?.addEventListener('change',remember);
-$('dub-encoder').onchange=()=>{const src=$('encoder');if(src){src.value=$('dub-encoder').value;src.dispatchEvent(new Event('change',{bubbles:true}))}runNote()};
-request('/dub/queue').then(q=>{$('dub-parallel').value=String(q.parallel);runNote()}).catch(()=>{});
+for(const id of ['meta-on','meta-strip','meta-author','meta-url','meta-publisher','meta-copyright','meta-rating','meta-back-min','meta-back-max'])$(id)?.addEventListener('change',()=>{remember();runNote()});
+$('dub-resume').onchange=async()=>{try{const q=await json('/dub/queue',{resume:$('dub-resume').checked});$('dub-resume').checked=q.resume}catch(e){say(e.message)}};
+request('/dub/queue').then(q=>{$('dub-parallel').value=String(q.parallel);$('dub-resume').checked=q.resume!==false;$('dub-demucs-n').value=String(q.demucs||1);runNote()}).catch(()=>{});
+$('dub-demucs-n').onchange=async()=>{try{const q=await json('/dub/queue',{demucs:+$('dub-demucs-n').value});$('dub-demucs-n').value=String(q.demucs);say(`Tách giọng AI tối đa ${q.demucs} video cùng lúc.`)}catch(e){say(e.message)}runNote()};
 $('dub-parallel').onchange=async()=>{try{const q=await json('/dub/queue',{parallel:+$('dub-parallel').value});$('dub-parallel').value=String(q.parallel);say(`Đã đặt chạy ${q.parallel} video cùng lúc.`)}catch(e){say(e.message)}runNote()};
 })();

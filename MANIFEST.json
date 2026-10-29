@@ -1,8 +1,12 @@
 {
  "app": "ReviewStudio",
- "version": "0.26.1",
- "notes": "## Mới trong 0.26.1\n\n- **Ngày tạo trong thông tin file lùi ngẫu nhiên** (Thông số video xuất → Thông tin file → Ngày tạo): mặc định lùi 5–7 ngày so với ngày xuất, mỗi video một ngày ngẫu nhiên (ví dụ xuất ngày 15/7/2026 → ngày tạo 8/7 đến 10/7/2026). Xuất lại giữ nguyên ngày đã chọn; đặt 0 – 0 để dùng ngày xuất. Lưu trong mẫu.",
+ "version": "0.27.0",
+ "notes": "## Mới trong 0.27.0\n\n- **Thông số xuất áp dụng thật cho video hàng loạt:** độ phân giải (720p / 1080p / 2K / 4K hoặc **Theo video gốc**), khung hình tối đa (30 / 60 fps: nguồn 60 fps → 30 fps, nguồn 25 fps giữ 25), chất lượng (tiêu chuẩn / cao). Trước đây hộp này chỉ có bộ mã hóa là có tác dụng.\n- **Một chỗ cho mọi thông số xuất:** Bộ mã hóa và Âm lượng tổng chỉ còn trong hộp Thông số video xuất; mục \"Xuất & chạy hàng loạt\" hiện tóm tắt và nút \"Thông số xuất ›\".\n- **Cắt đầu / cuối không nén thêm lần nào:** đoạn cắt được áp ngay khi đọc video gốc, chỉ nén 1 lần lúc xuất (nhanh hơn, giữ chất lượng).\n- **Mỗi video chỉ lưu 1 bản:** thư mục xuất cùng ổ đĩa thì dùng liên kết cứng (không tốn thêm chỗ); khác ổ đĩa thì chỉ giữ bản trong thư mục xuất. Xuất lại không bao giờ ghi vào file đã lưu trước.\n- **Không xóa video gốc còn trong hàng đợi chưa xong** khi tự dọn video cũ sau 30 ngày.\n- **Tự chạy tiếp khi mở lại ứng dụng** (tắt được): video đang chờ / đang chạy dở được xếp lại hàng với key đã lưu, không mua giọng trùng.\n- **Nhanh hơn khi chạy nhiều video:** CPU chia hết số nhân cho các video đang xuất (trước cố định 2 luồng); **Tách giọng AI (Demucs) cùng lúc** chọn được 1–4 video (mặc định 1, tránh hết RAM/VRAM); hàng đợi chỉ gửi phần thay đổi thay vì cả danh sách mỗi 1,5 giây.\n- **Dọn file tạm:** nút 💾 trong hàng đợi hiện dung lượng file tạm và dọn của video đã xong (giữ giọng đọc, bản dịch, video xuất); tự dọn video xong quá 3 ngày. Xuất lại sau khi dọn tự tạo lại nhạc nền / giọng trộn, không gọi lại AI hay ai33.\n- **Từ điển phát âm chọn theo tên** (tải từ tài khoản ai33) thay vì gõ ID.\n- **Phím tắt trên khung xem trước:** Ctrl+Z / Ctrl+Y hoàn tác thiết kế, Alt + mũi tên dịch hộp đang chọn.\n- Gỡ trình dựng 1 video cũ (timeline, kho media, xuất lô kiểu cũ…) còn tải ngầm; tài liệu viết lại theo luồng hiện tại.",
  "files": {
+  "tests/test_batch.py": {
+   "sha256": "e06fee55e917941d6a4a249f2919a3f2e14fbda7c7ab5b0f41aa1a76643d0406",
+   "size": 8908
+  },
   "win_meta.py": {
    "sha256": "3e44bda1a50159ca17886a5b4cf280b0d6efc24d80945c1576e680b495ff2683",
    "size": 4586
@@ -44,80 +48,48 @@
    "size": 5181
   },
   "dub_ui.js": {
-   "sha256": "51caf198aa73ebba66f77a05264287956ed63545c28aada2073a9602d872a298",
-   "size": 117080
-  },
-  "layout_ui.js": {
-   "sha256": "31474a69f54710df46c2483f9711e36d487d11437085b2b563f97b1f18ab711e",
-   "size": 14902
+   "sha256": "afe6d55a9261e10f34393b50d8c0c07fbdb81853196b308fb8615f939ffadf2d",
+   "size": 122065
   },
   "key_ui.js": {
    "sha256": "4c1833943a21476f6e515115af555c36a4d763bbc5c1122f111cad0a5065574d",
    "size": 5667
-  },
-  "batch_ui.js": {
-   "sha256": "445a53eb9368ba07349ec73b51e6c3e1d8ac5316889ae06b2b8b12d38243bfbf",
-   "size": 11057
   },
   "secrets_store.py": {
    "sha256": "fce1367bbdd2c6103533bc3d3a61242b3093b253655bd29597bca79f1c517b23",
    "size": 2610
   },
   "dubbing.py": {
-   "sha256": "bd2f2d8720c516675d60074f5ef2d0e9de7d19594243417458b8155b9c4a5969",
-   "size": 168539
+   "sha256": "8c63ad74730c07ca37249ec9e304a9dfc62b03e385b0f1fc928de1cb048b0b36",
+   "size": 179538
   },
   "tests/test_dubbing.py": {
-   "sha256": "c33c7af1f9899e53fa7a5fdc67c4f49eb01e4b839552d8d61a37e114f410af0f",
-   "size": 50920
+   "sha256": "958db5bb2daac3cf9f40b89d846e9e5b1a23ba9611617e0e1747b23432edb3ce",
+   "size": 50946
   },
   "image_ui.js": {
    "sha256": "b8e2a905501aedea84033a7c962b180251e06dc018e6133241f0310b474ed8e9",
    "size": 13416
   },
   "export_ui.js": {
-   "sha256": "a8b5b1465d4e1812fada4ee5540d2fc1d81e41f3bda6994e3c571dff7db65367",
-   "size": 13536
-  },
-  "style_ui.js": {
-   "sha256": "38fb4eaea0632ee304a5411f2c4ddd48c4110269146f82d8fe4d3353b7890910",
-   "size": 7809
-  },
-  "media_bin.js": {
-   "sha256": "245a57ef168a26579f647868bdefa336217290b60b971d6d363239a611bf9ee4",
-   "size": 15918
-  },
-  "studio_shell.js": {
-   "sha256": "e5a2c956be5ec4bf24ff896dc9cdf0b6fd1b624dbdd40edbb1172dfa6eb72461",
-   "size": 18518
-  },
-  "clip_ui.js": {
-   "sha256": "e6bcca3f9c0d9bcc91d016b40f624e165faf97130ed97f481a24820ab3cafce1",
-   "size": 5435
+   "sha256": "69da544da2a5737b635bd872f951ef47b0c91330455cfb75027d66a07693a3a3",
+   "size": 7734
   },
   "output_folder.py": {
-   "sha256": "3b35f4bcdee1b3120432005e6813e95ee1a0051ea2fd544df5fa84d2c14d4e22",
-   "size": 6719
+   "sha256": "10be6efb141e1b209533c2268735adb9964cff3d955360cd9d6178bd504c59b3",
+   "size": 6898
   },
   "library_store.py": {
    "sha256": "8e5aa00350374c88245b8d2c0fc009e182d3c2a77487015e6cef6e1aff48e342",
    "size": 3666
   },
   "history_ui.js": {
-   "sha256": "a01656d6c164f613015896ae7d076c26160287b169073f2ee0937974265cec0a",
-   "size": 7832
-  },
-  "workspace_ui.js": {
-   "sha256": "1fbbf52698e8db65f141d27c53b9621ec0fef18abfc0461ef627efce2a1d8fd2",
-   "size": 17636
+   "sha256": "cd85a6aed733565e262043d275a2765a86376f5ba1fa645d57b302975f03aa77",
+   "size": 5749
   },
   "media_preview.py": {
    "sha256": "a9209c714103e4fefe1c562570804a3afb601ed9ca1d0339a9b9b2849f2a65c9",
    "size": 1872
-  },
-  "timeline_ui.js": {
-   "sha256": "325658fd8e3c24285e496cecb547bc9024aac6c967bece2d627489ded603d551",
-   "size": 35300
   },
   "tests/test_editor_controls.py": {
    "sha256": "376782c32b1e0a90392eadbe445304222f5fa04fd622e452bdf026a3966dbb86",
@@ -140,8 +112,8 @@
    "size": 13961
   },
   "app.py": {
-   "sha256": "064347630674d0be3dfe0d039471069de0bfa930e0ce07d4002ef3ffcdf420c5",
-   "size": 60788
+   "sha256": "7fdf2eb34a3ec611e67a87cc0b03dfd51848de01b1006bc158e11f9f94e6834e",
+   "size": 61708
   },
   "ai33_audio.py": {
    "sha256": "bf91eee837ea08e1b3e96495f68f87b621f0d68abfeedfdbc4a53f8a13b21b7d",
@@ -160,8 +132,8 @@
    "size": 5241
   },
   "studio.css": {
-   "sha256": "3d62dcc3180fe234121ab9603fe971ca583890f17f4ac0c6cdcd4cb4ec1b4581",
-   "size": 94366
+   "sha256": "d400cf5a89cccf6bf2ecf3aa9cd533ee11873116fb1f36f8cf01ebf67a28fb37",
+   "size": 94642
   },
   "studio.js": {
    "sha256": "88660710a1bdbc6d29b18e06a4464c1111d0de7db68e6e74bd8d1963e0e76c22",
@@ -176,31 +148,31 @@
    "size": 5352
   },
   "index.html": {
-   "sha256": "33c4129528744677b9fb2191b159719996dff8f664aeb28e4f93ec2b85731d98",
-   "size": 24340
+   "sha256": "44dc0ad8c6c771c9d01007ad5c40201b548914e31615679b58f7cf6079636488",
+   "size": 24040
   },
   "launch.py": {
    "sha256": "283210c4d7b6b1485fa3443ef11b2d51dc3a00a67384b18efb169e391e7522f3",
    "size": 5006
   },
   "build_package.py": {
-   "sha256": "9f3a91138a4c0662cbfd379dc911af0e914c1abe723caa14a3ea075012b0e6b7",
-   "size": 3306
+   "sha256": "c47698fd1986902c5f6528217ccb0ff6b1d9c562b6f5b876ee966080f0693774",
+   "size": 3197
   },
   "START_WINDOWS.bat": {
    "sha256": "616ecf0e4d9a41995c509f79bd5e1a01d1dce7ba76356a801417e08747847c4e",
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "6eceb1ba2808eabcd229f6c347e39c010d1c61bbba5f9fcb81ae445836c6322a",
-   "size": 43251
+   "sha256": "173b046d6a54f480e2fc4a24f4ad610b2925bd9c5f089beb17052ff461244d01",
+   "size": 8147
   },
   "README.md": {
-   "sha256": "6ffcfec0a10f56ada28a01ac2f4bf84718dd213bf95324d247213730118381cb",
-   "size": 70482
+   "sha256": "6ce9ce47226cd877759c44731fd8c792720e3ce3029023a9e30f224752e5841f",
+   "size": 11556
   },
   "VERSION": {
-   "sha256": "f635cb36f28e15f2f0b8d31cab9a8eb1dfbaa628d282e9d55dd80669d23c0602",
+   "sha256": "8056838d30429d7dff5aab40c0cbae02afaa75c7016b6cc9cd586563d31bea17",
    "size": 7
   },
   ".gitignore": {

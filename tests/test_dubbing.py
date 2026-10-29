@@ -92,7 +92,7 @@ class PipelineBase(unittest.TestCase):
     def job(self,**opts):
         key=uuid=None
         with mock.patch.object(self.store,'enqueue'):
-            key=self.store.create(dict(video_ids=[self.vid],options=dict(voice_id='edge_vi-VN-HoaiMyNeural',**{'reuse':False,**opts})))[0]
+            key=self.store.create(dict(video_ids=[self.vid],options=dict(voice_id='edge_vi-VN-HoaiMyNeural',**{'reuse':False,'out_resolution':'source',**opts})))[0]
         return self.store.load(key)
 
 class PipelineTests(PipelineBase):

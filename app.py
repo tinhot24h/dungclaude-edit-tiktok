@@ -213,9 +213,12 @@ def storage():
 
 
 def cleanup(days):
-    """Remove video projects idle for `days` and temp files left by a crash; never touches the MP3 library."""
+    """Remove video projects idle for `days` and temp files left by a crash; never touches the MP3 library or a
+    video the dubbing queue still needs."""
     cutoff=time.time()-days*86400;removed=freed=0
+    busy=DUB.videos_in_use()   # videos still waiting, paused, failed or in review in the dubbing queue stay
     for folder in projects():
+        if folder.name in busy:continue
         try:
             last=max([folder.stat().st_mtime]+[item.stat().st_mtime for item in folder.iterdir()])
             if last>=cutoff:continue
@@ -400,7 +403,7 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == '/':
             return self.respond(200, (ROOT / 'index.html').read_bytes(), 'text/html; charset=utf-8')
-        if path in ('/studio.css','/studio.js','/local_files.js','/design_tab.js','/audio_ui.js','/editor_ui.js','/timeline_ui.js','/history_ui.js','/workspace_ui.js','/clip_ui.js','/studio_shell.js','/media_bin.js','/image_ui.js','/export_ui.js','/style_ui.js','/update_ui.js','/dub_ui.js','/layout_ui.js','/key_ui.js','/batch_ui.js'):
+        if path in ('/studio.css','/studio.js','/local_files.js','/design_tab.js','/audio_ui.js','/editor_ui.js','/history_ui.js','/image_ui.js','/export_ui.js','/update_ui.js','/dub_ui.js','/key_ui.js'):
             mime = 'text/css' if path.endswith('.css') else 'text/javascript'
             return self.respond(200, (ROOT/path.lstrip('/')).read_bytes(), mime+'; charset=utf-8')
         if path in ('/assets/'+font[0] for font in FONTS.values()):
@@ -487,9 +490,12 @@ class Handler(BaseHTTPRequestHandler):
             mime={'.mp4':'video/mp4','.m4v':'video/mp4','.mov':'video/quicktime','.webm':'video/webm','.mkv':'video/x-matroska','.gif':'image/gif','.png':'image/png','.webp':'image/webp','.jpg':'image/jpeg','.jpeg':'image/jpeg'}[ext]
             return self.serve_audio(DATA/'overlays'/item['file'],False,mime,item['name'])
         if path == '/dub/jobs':
-            return self.respond(200,{'jobs':DUB.jobs()})
+            since=parse_qs(urlparse(self.path).query).get('since',['0'])[0]
+            return self.respond(200,DUB.jobs_since(int(since) if since.isdigit() else 0))
         if path == '/dub/queue':
             return self.respond(200,DUB.queue_info())
+        if path == '/dub/storage':
+            return self.respond(200,DUB.storage())
         if path == '/dub/demucs':
             return self.respond(200,dubbing.demucs_status('refresh' in parse_qs(urlparse(self.path).query)))
         if path == '/dub/capabilities':
@@ -507,6 +513,8 @@ class Handler(BaseHTTPRequestHandler):
             folder=DATA/'dub'/dub[1]
             if dub[2]=='download':
                 target=folder/'dubbed.mp4'
+                if not target.is_file():   # kept only in the output folder (another drive)
+                    target=Path(job.get('outputs',{}).get('saved_path') or folder/'dubbed.mp4')
                 if not target.is_file():return self.respond(404,{'error':'Chưa có video lồng tiếng.'})
                 return self.serve_audio(target,'download=1' in urlparse(self.path).query,'video/mp4',(job.get('file_name') or job['name']+'-long-tieng')+'.mp4')
             target=folder/(dub[2][-2:]+'.srt')
@@ -762,15 +770,16 @@ class Handler(BaseHTTPRequestHandler):
                     except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
                 finally:temp.unlink(missing_ok=True)
             if path=='/dub/demucs/install':return self.respond(200,dubbing.install_demucs())
-            if path in ('/dub/queue','/dub/review','/dub/estimate','/dub/sample'):
+            if path in ('/dub/queue','/dub/review','/dub/estimate','/dub/sample','/dub/sweep'):
                 size=int(self.headers.get('Content-Length',0) or 0)
                 if size>4*1024*1024:return self.respond(413,{'error':'Yêu cầu quá lớn.'})
                 raw=json.loads(self.rfile.read(size)) if size else {}
                 if not isinstance(raw,dict):return self.respond(400,{'error':'Yêu cầu không hợp lệ.'})
                 try:
-                    if path=='/dub/queue':return self.respond(200,DUB.set_parallel(raw.get('parallel')))
+                    if path=='/dub/queue':return self.respond(200,DUB.set_parallel(raw.get('parallel'),raw.get('resume'),raw.get('demucs')))
                     if path=='/dub/review':return self.respond(200,DUB.review(raw))
                     if path=='/dub/sample':return self.respond(200,DUB.voice_sample(raw))
+                    if path=='/dub/sweep':return self.respond(200,DUB.sweep(raw.get('days',0) if isinstance(raw.get('days',0),int) and 0<=raw.get('days',0)<=3650 else 0))
                     return self.respond(200,DUB.estimate(raw))
                 except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
             dub=re.fullmatch(r'/dub/(start|([a-f0-9]{32})/(continue|lines|texts|name|cancel|delete|editor))',path)
@@ -973,6 +982,8 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == '__main__':
     address = ('127.0.0.1', int(os.environ.get('PORT', '8000')))
+    threading.Thread(target=DUB.resume_interrupted,daemon=True).start()   # Tự chạy tiếp hàng đợi khi mở lại ứng dụng
+    threading.Thread(target=DUB.sweep,args=(3,),daemon=True).start()   # file tạm of videos finished over 3 days ago
     if keep_days():
         swept = cleanup(keep_days())
         if swept['removed']:
