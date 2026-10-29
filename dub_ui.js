@@ -14,7 +14,7 @@ let sel=0,files=[],jobs=[],current='',detail=null,poll=0,caps={demucs:false,open
 const section=(id,icon,title,body,open=false)=>`<details class="dub-sec" id="sec-${id}"${open?' open':''}><summary><span class="dub-sec-icon">${icon}</span><span class="dub-sec-title">${title}</span><small class="dub-sec-sum" id="sum-${id}"></small></summary><div class="dub-sec-body">${body}</div></details>`;
 view.innerHTML=`<div class="dub-bar"><div class="dub-bar-title"><div class="eyebrow">LỒNG TIẾNG TỰ ĐỘNG · TRUNG · ANH → VIỆT</div><h1>Lồng tiếng video</h1></div>
  <div class="dub-bar-tools"><select id="dub-preset" aria-label="Cấu hình lồng tiếng đã lưu"></select><button type="button" id="dub-preset-save" class="outline-action small-action" title="Lưu toàn bộ thông số bên trái thành cấu hình">💾 Lưu cấu hình</button><button type="button" id="dub-preset-delete" class="outline-action small-action danger-action" title="Xóa cấu hình đang chọn">✕</button>
- <span class="dub-key-chip" id="dub-key-state"></span><button type="button" id="dub-trial" class="outline-action" title="Chạy 1 video đầu tiên để xem kết quả (giọng, chữ, khung); ưng rồi mới chạy cả lô" hidden>🧪 Chạy thử 1 video</button><button type="button" id="dub-start" class="primary-action">▶ Bắt đầu lồng tiếng</button></div></div>
+ <span class="dub-key-chip" id="dub-key-state"></span><div class="dub-run"><button type="button" id="dub-trial" class="dub-trial" title="Chạy 1 video đầu tiên để xem kết quả (giọng, chữ, khung); ưng rồi mới chạy cả lô" hidden>🧪 Chạy thử 1</button><button type="button" id="dub-start" class="primary-action">▶ Bắt đầu lồng tiếng</button></div></div></div>
 <p id="dub-status" class="helper dub-status" role="status"></p>
 <div class="dub-layout"><section class="panel dub-setup">
 ${section('input','🎬','Video đầu vào',`<div class="dub-drop" id="dub-drop" tabindex="0">Kéo thả video hoặc cả thư mục vào đây · .srt cùng tên sẽ bỏ qua bước nhận diện</div>
@@ -408,14 +408,14 @@ async function precheck(o){const dlg=$('dub-check'),body=$('dub-check-body'),bui
 async function run(o,only=null){
  if(o.overlay&&!overlays.some(x=>ovAll||ovUse.has(x.id))){o.overlay=false;say('Chưa chọn overlay nào nên video xuất không có overlay (overlay không bắt buộc).')}
  // each video is uploaded and queued on its own: processing starts with the first one, and a bad file does not stop the rest
- $('dub-start').disabled=true;const list=only?[only]:[...files],total=list.length,failed=[];let queued=0,first='';
+ $('dub-start').disabled=$('dub-trial').disabled=true;const list=only?[only]:[...files],total=list.length,failed=[];let queued=0,first='';
  try{for(const f of list){say(`Đang tải và xếp hàng ${queued+failed.length+1}/${total}: ${f.name}…`);
    try{if(!f.id){const d=f.path?await localImport(f):await upload(f);f.id=d.id;f.progress=null}
     const r=await json('/dub/start',{video_ids:[f.id],srt:f.srt?{[f.id]:f.srt}:{},hints:hintOf(f)?{[f.id]:hintOf(f)}:{},options:o,...keys()});first=first||r.jobs[0];queued++;files.splice(files.indexOf(f),1);f.row?.remove()}
    catch(e){f.error=e.message;f.progress=null;failed.push(f);if(f.row){const t=f.row.querySelector('small');t.textContent='lỗi: '+e.message.slice(0,60);t.title=e.message}}
    if(queued%10===1)refresh()}
   say(`Đã thêm ${queued}/${total} video vào hàng đợi; ứng dụng chạy ${$('dub-parallel').value==='1'?'lần lượt từng video':$('dub-parallel').value+' video cùng lúc'}.`+(failed.length?` ${failed.length} video lỗi vẫn nằm trong danh sách (di chuột vào chữ "lỗi" để xem lý do).`:''));
-  sel=0;draw();if(first)current=first;filter='all';if(only)trial={id:first?.id||first,left:files.length};trialBar();refresh()}finally{$('dub-start').disabled=false;startLabel()}}
+  sel=0;draw();if(first)current=first;filter='all';if(only)trial={id:first?.id||first,left:files.length};trialBar();refresh()}finally{$('dub-start').disabled=$('dub-trial').disabled=false;startLabel()}}
 // ---- 🧪 "Chạy thử 1 video": the first video runs alone; when it is done the bar offers the rest of the list
 $('dub-trial').onclick=()=>{if(!files.length)return;const o=settings();if(o.mode!=='design'&&!o.voice_id){say('Chọn giọng đọc ở mục 🎙.');$('sec-voice').open=true;return}say('Chạy thử video đầu tiên; xong sẽ hiện nút chạy phần còn lại.');run(o,files[0])};
 function trialBar(){const bar=$('dub-trial-bar');if(!trial){bar.hidden=true;return}const j=jobMap.get(trial.id),n=files.length;bar.hidden=false;

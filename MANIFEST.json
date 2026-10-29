@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.30.1",
- "notes": "## Mới trong 0.30.1\n\n- **Sắp lại các mục theo đúng trình tự làm việc:** 🎬 Video đầu vào → Nhận diện, dịch & viết chữ → Giọng đọc ai33 → Âm thanh gốc → Nhạc nền → Cắt & vị trí video → Điều chỉnh màu → Nền & khung → Tiêu đề → Nội dung → Phụ đề chữ chạy → Lớp ảnh → Overlay ngẫu nhiên → Xuất & chạy hàng loạt. Trước đây \"Phụ đề chữ chạy\" và \"Nhạc nền\" bị nằm trên cả \"Video đầu vào\".",
+ "version": "0.30.2",
+ "notes": "## Mới trong 0.30.2\n\n- **Nút chạy gọn một hàng:** \"🧪 Chạy thử 1\" và \"▶ Lồng tiếng N video\" ghép thành một cụm nút trên thanh trên cùng (không còn nút chạy thử dài cả hàng, nút chính rớt xuống dòng dưới). Khi đang xếp hàng, cả hai nút cùng khóa.",
  "files": {
   "video_tools.js": {
    "sha256": "217dc997759d9b7b26fccfb7abaa35ebf82b5eb333f816dc83fcf67b06781706",
@@ -52,8 +52,8 @@
    "size": 5181
   },
   "dub_ui.js": {
-   "sha256": "462a614a62caa7f6aa4dfa67dffea36aa53ddb4b98af83a81e0b2cc03adf5acb",
-   "size": 153889
+   "sha256": "d7d501365e514d1715935a03aca04177d1668d502e4b783880cde7a74b5e35f4",
+   "size": 153953
   },
   "key_ui.js": {
    "sha256": "4c1833943a21476f6e515115af555c36a4d763bbc5c1122f111cad0a5065574d",
@@ -136,8 +136,8 @@
    "size": 13467
   },
   "studio.css": {
-   "sha256": "2324cf0ec057c389ad60c81840ecb092ab523bf6287565966f879768ae0c878f",
-   "size": 100960
+   "sha256": "9ebba607d333dc3e3bd987a3f52dd04982bca95ef9503cd7cb769c81c1889ba6",
+   "size": 101681
   },
   "studio.js": {
    "sha256": "606d2f4b4825a547cc13cd5bc91af2cb4a802960047a4bcae3ff5ad0aa1e2973",
@@ -152,7 +152,7 @@
    "size": 6858
   },
   "index.html": {
-   "sha256": "c2e4c5e3a7f98e4b593abf620666642ee7c54fa9d5acaf922185ef4cf239311a",
+   "sha256": "c98d8eb3a91e8990659fa66706043638c8f605464dc7ac12f976931212342921",
    "size": 24079
   },
   "launch.py": {
@@ -168,15 +168,15 @@
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "79fbc2c88cba8032b670309740e70e28df1cd55c5d44198d2f9006e7c5947ae8",
-   "size": 11277
+   "sha256": "82ae0bcab67c96799cd7bde8673de7ffae4a5c979f22f90ef063afb386ff9931",
+   "size": 11399
   },
   "README.md": {
-   "sha256": "3624dd416096bcf3be933844dc169ca6d1a7522208678f2afcda3a8f4e755495",
-   "size": 22369
+   "sha256": "5e5a00514eede0ea6c888a6239456b8b718b1d3fceb5dfe5d59fd65310f9c8db",
+   "size": 22679
   },
   "VERSION": {
-   "sha256": "3b2234b65d3aa488b122baba61669c187293385c0c348b8c80a775459ccea55e",
+   "sha256": "bde134662aa859bedc0a5aa2c7ec894cf75ba27906b897bbc62a4f6b9fbe4868",
    "size": 7
   },
   ".gitignore": {
