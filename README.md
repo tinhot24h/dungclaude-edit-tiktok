@@ -4,6 +4,11 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.39.0
+
+- **Hàng đợi phân trang:** thanh trang ở đáy khung (‹ 1 2 3 … 14 ›), chọn **10 / 20 / 50 / 100 video mỗi trang** (nhớ lựa chọn), hiện "21–40 / 269". Đổi nhóm (Tất cả / Đang chạy / Cần xử lý / Xong), ô tìm hoặc bước thì về trang 1.
+- **Khung hàng đợi không còn tràn màn hình:** khung tự cao vừa cửa sổ, danh sách video cuộn bên trong khung; phần đầu (tiến độ, nhóm, tìm, chọn nhiều) và thanh trang luôn hiện.
+
 ## Mới trong 0.38.0
 
 - **Video overlay không còn chồng lên nhau:** mỗi lúc chỉ 1 overlay. Overlay ngắn hơn video thì **ghép nối thêm overlay ngẫu nhiên** phía sau cho đủ (không lặp lại, không chồng), dài hơn thì cắt bằng video. Bỏ ô "Số overlay mỗi video"; cài đặt cũ 2–3 overlay hoặc "lặp 1 overlay" được chuyển sang cách mới (vẫn chọn lại "lặp" được ở *Thời gian*).

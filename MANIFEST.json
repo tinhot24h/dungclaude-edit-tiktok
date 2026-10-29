@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.38.0",
- "notes": "## Mới trong 0.38.0\n\n- **Video overlay không còn chồng lên nhau:** mỗi lúc chỉ 1 overlay. Overlay ngắn hơn video thì **ghép nối thêm overlay ngẫu nhiên** phía sau cho đủ (không lặp lại, không chồng), dài hơn thì cắt bằng video. Bỏ ô \"Số overlay mỗi video\"; cài đặt cũ 2–3 overlay hoặc \"lặp 1 overlay\" được chuyển sang cách mới (vẫn chọn lại \"lặp\" được ở *Thời gian*).\n- **Rà lại toàn bộ nút căn:**\n  - Video (*Cắt & vị trí video*): căn đúng mép khi video khác tỷ lệ khung (vd 4:3, 16:9 vào 9:16), khi \"Giữ toàn bộ\" / \"Nền mờ\" và khi xoay bất kỳ góc nào. Video đang vừa khít khung thì báo cần đổi Tỷ lệ thay vì im lặng.\n  - Video trong chế độ thiết kế: các nút Căn trái / phải / trên / dưới / giữa tính theo hình thật đang hiện (kể cả \"Giữ toàn bộ hình\" và xoay), trước đây video 16:9 bấm \"Căn trên\" không nhúc nhích.\n  - Lớp ảnh và video overlay: lưới căn 9 điểm tính cả góc xoay.\n  - Căn dọc Trên / Giữa / Dưới của chữ: khi Cao = 0 (hộp vừa khít chữ) nút mờ đi và bấm vào sẽ chỉ cách (nhập Cao, hoặc dùng ⤒ ở Căn khung) thay vì như bị hỏng.\n  - Kết quả căn được làm tròn đúng từng px của video xuất.",
+ "version": "0.39.0",
+ "notes": "## Mới trong 0.39.0\n\n- **Hàng đợi phân trang:** thanh trang ở đáy khung (‹ 1 2 3 … 14 ›), chọn **10 / 20 / 50 / 100 video mỗi trang** (nhớ lựa chọn), hiện \"21–40 / 269\". Đổi nhóm (Tất cả / Đang chạy / Cần xử lý / Xong), ô tìm hoặc bước thì về trang 1.\n- **Khung hàng đợi không còn tràn màn hình:** khung tự cao vừa cửa sổ, danh sách video cuộn bên trong khung; phần đầu (tiến độ, nhóm, tìm, chọn nhiều) và thanh trang luôn hiện.",
  "files": {
   "ffmpeg_setup.py": {
    "sha256": "f66eb85abf503510412af3b364a9e5e10558cc92a8caa4153aa07bbc44a227ab",
@@ -72,8 +72,8 @@
    "size": 5181
   },
   "dub_ui.js": {
-   "sha256": "d8addd02b4ee7bd49c26c0dc6df48572085f63ca2a8333f80e26d4d8c5944f34",
-   "size": 177256
+   "sha256": "5bd11c9153a63068455d1e70181f32657f8176ef5d262da1e3a4b57a5abf9dfb",
+   "size": 179305
   },
   "key_ui.js": {
    "sha256": "4c1833943a21476f6e515115af555c36a4d763bbc5c1122f111cad0a5065574d",
@@ -156,8 +156,8 @@
    "size": 13467
   },
   "studio.css": {
-   "sha256": "7f84c03565f618b8aa5d195ecb67242dc707612632db750cb648312e466a0698",
-   "size": 108091
+   "sha256": "99c2a83e6deb8c42284525759e0404372e9dc396738dbf4cfbf189632a78305a",
+   "size": 109371
   },
   "studio.js": {
    "sha256": "e2ebb2f8bb72ba3bee02faa67609c6859a96a3ad16be04fe28e6aba60519f7bc",
@@ -172,7 +172,7 @@
    "size": 6858
   },
   "index.html": {
-   "sha256": "7b6710aae64f463311f148f8236bb7056c2c677596a4f185f0d29cc01b6e6622",
+   "sha256": "ff8dce94167baea43d17a97e79b827841e045b7fc13c025b1aeb30a50d6b0b6d",
    "size": 24220
   },
   "launch.py": {
@@ -188,15 +188,15 @@
    "size": 1411
   },
   "HUONG_DAN.txt": {
-   "sha256": "aab17c8bdfd1c298ceef189aada01874f1a553a2c19f22d5e2d33fedba1dbbec",
-   "size": 15506
+   "sha256": "a02d977cf551a14805f8883118c098e8f00da9c9e2a743ab12a424ccab62427f",
+   "size": 15640
   },
   "README.md": {
-   "sha256": "490edab6ebd6beab9f682eaf1721ae71921df0995c48f9c4d13edebfbd6fe1a4",
-   "size": 38502
+   "sha256": "dd87ba6469e89ca9286c43c188737140e7dcf8ae9b8ba24e0d8ff38674fea1d2",
+   "size": 39030
   },
   "VERSION": {
-   "sha256": "8ca1b0be262e3278f47eb53b592f649318b926a5ce9d6a4ceca65ce4e8be8629",
+   "sha256": "f7ada3982d4e3ce9f5b135992938383496e4dbfda2468d51dd676d1dd86f24a0",
    "size": 7
   },
   ".gitignore": {

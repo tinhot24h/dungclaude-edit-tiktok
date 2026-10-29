@@ -115,7 +115,7 @@ ${section('export','📤','Xuất & chạy hàng loạt',`<label class="check-ro
  <div id="dq-select" class="dq-selectbar"><label class="dq-all"><input type="checkbox" id="dq-all"> <span id="dq-count">Chọn nhiều</span></label><span id="dq-sel-actions" class="dq-sel-actions" hidden><button type="button" data-a="run" class="primary-action small-action">▶ Chạy</button><button type="button" data-a="cancel" class="outline-action small-action">■ Dừng</button><button type="button" data-a="top" class="outline-action small-action" title="Đưa lên đầu hàng chờ">⤒ Ưu tiên</button><button type="button" data-a="bottom" class="outline-action small-action" title="Đưa xuống cuối hàng chờ">⤓ Xuống cuối</button><button type="button" data-a="edit" class="primary-action small-action" title="Mở video đầu tiên trong số đã chọn để chỉnh trực quan, rồi xuất lại tất cả với cùng thông số (giữ giọng và chữ)">✎ Sửa &amp; xuất lại</button><button type="button" data-a="delete" class="outline-action small-action danger-action">🗑 Xóa</button><button type="button" data-a="clear" class="icon-button" title="Bỏ chọn">✕</button></span></div></div>
   <div id="dub-trial-bar" class="dub-review-bar dub-trial-bar" hidden></div>
   <div id="dub-review-bar" class="dub-review-bar" hidden><span id="dub-review-count"></span><button type="button" id="dub-review-open" class="primary-action small-action">✎ Mở bảng duyệt chữ</button></div>
-  <div id="dub-queue" class="dub-queue"></div><div id="dub-detail" class="dub-detail" hidden></div></div>
+  <div class="dq-scroll" id="dq-scroll"><div id="dub-queue" class="dub-queue"></div><div id="dub-detail" class="dub-detail" hidden></div></div><div id="dq-pager" class="dq-pager" hidden></div></div>
 <dialog id="dub-rules" class="dub-dialog wide"><div class="dub-review-head"><h2>Mẫu câu lệnh</h2><small class="helper">quy tắc nội dung &amp; văn phong gửi OpenAI cho mọi video</small></div>
  <div class="ai-rules-bar"><select id="dub-rules-list" aria-label="Mẫu câu lệnh đã lưu"></select><button id="dub-rules-save" type="button" class="chip-button">Lưu thành mẫu…</button><button id="dub-rules-delete" type="button" class="chip-button">Xóa mẫu</button><button id="dub-rules-reset" type="button" class="chip-button">Khôi phục mặc định</button></div>
  <textarea id="dub-rules-text" spellcheck="false" rows="14" aria-label="Quy tắc viết gửi cho AI"></textarea><div class="ai-rules-foot"><span id="dub-rules-count" class="helper"></span><span class="helper">Sửa là áp dụng ngay cho lần chạy sau</span></div>
@@ -627,7 +627,7 @@ function selectBar(){for(const id of [...selected])if(!jobMap.has(id))selected.d
  $('dq-count').textContent=n?`Đã chọn ${n}`:'Chọn nhiều';$('dq-all').checked=!!list.length&&list.every(j=>selected.has(j.id));$('dq-all').indeterminate=n>0&&!$('dq-all').checked;$('dq-sel-actions').hidden=!n;
  const btn=a=>$('dq-sel-actions').querySelector(`[data-a="${a}"]`);btn('run').disabled=!has(['error','paused']);btn('cancel').disabled=!has(['queued','running']);btn('top').disabled=btn('bottom').disabled=!has(['queued']);btn('edit').disabled=!has(['done','error','paused']);btn('delete').disabled=!has(['error','paused','review','done'])}
 function filters(){reviewBar();overview();errorGroups();
- $('dub-filters').replaceChildren(...Object.entries(GROUP).map(([k,[t,f]])=>{const n=jobs.filter(f).length,b=el('button',{type:'button',className:'chip-button',textContent:`${t} ${n}`});b.setAttribute('aria-pressed',String(filter===k));b.onclick=()=>{filter=k;refresh()};return b}));
+ $('dub-filters').replaceChildren(...Object.entries(GROUP).map(([k,[t,f]])=>{const n=jobs.filter(f).length,b=el('button',{type:'button',className:'chip-button',textContent:`${t} ${n}`});b.setAttribute('aria-pressed',String(filter===k));b.onclick=()=>{filter=k;page=1;refresh()};return b}));
  const any=st=>jobs.some(j=>st.includes(j.state));
  $('dub-retry').disabled=!any(['error']);$('dub-stop-all').disabled=!any(['queued','running']);$('dub-clean').disabled=!any(['done']);$('dub-clean-err').disabled=!any(['error']);$('dub-clean-all').disabled=!any(['error','paused','review','done']);
  $('dub-retry').textContent=`↻ Chạy lại lỗi${any(['error'])?' ('+jobs.filter(j=>j.state==='error').length+')':''}`;selectBar()}
@@ -637,13 +637,27 @@ async function batch(action,ids,extra={}){if(!ids.length){say('Không có tác v
   say(`Đã ${names[action]} ${r.done} tác vụ`+(r.skipped?` · bỏ qua ${r.skipped} (không đúng trạng thái)`:'')+(r.errors.length?` · ${r.errors.reduce((a,e)=>a+e.ids.length,0)} lỗi: ${r.errors[0].error}`:'')+'.');
   noAiTexts=r.no_ai_texts||[];if(noAiTexts.length)say(`${noAiTexts.length} video chọn “AI viết” nhưng chưa có chữ AI nên đang dùng tên file. Bấm “✍ Viết chữ AI” ở thanh Đang sửa (mỗi video 1 lần gọi OpenAI), hoặc chọn nguồn chữ Cố định / Tên file.`);if(editing)editBar();
   if(action==='delete'&&ids.includes(current)){current='';detail=null}if(action==='delete')for(const id of ids)selected.delete(id)}catch(e){say(e.message)}refresh()}
-// long queues show the newest 60 rows first; the rest on demand (keeps the 1.5 s refresh light)
-let queueMax=60;function moreButton(n){const b=el('button',{type:'button',className:'outline-action small-action dub-more',textContent:`Hiện thêm ${Math.min(60,n)} / còn ${n} tác vụ`});b.onclick=()=>{queueMax+=60;refresh()};return b}
+// pages: 10 / 20 / 50 / 100 rows per page (remembered), ‹ 1 … 4 5 6 … 12 › under the list; the list scrolls inside
+// the panel so a long queue never runs past the window. A new filter, search or step starts again at page 1.
+let page=1,pageSize=20;try{pageSize=[10,20,50,100].includes(+localStorage.getItem('dq-size'))?+localStorage.getItem('dq-size'):20}catch{}
+function goPage(n){page=n;refresh();$('dq-scroll').scrollTop=0}
+// the panel ends at the window's bottom edge wherever it starts (under the page title, or stuck at the top)
+function fitQueue(){const box=document.querySelector('.dub-jobs');if(!box||view.hidden)return;if(innerWidth<=900){box.style.maxHeight='';return}
+ const room=innerHeight-Math.max(10,box.getBoundingClientRect().top)-10;box.style.maxHeight=(room<innerHeight*.55?innerHeight-20:room)+'px'}   // low on the page: full height once scrolled to
+addEventListener('scroll',fitQueue,{passive:true});addEventListener('resize',fitQueue);
+function pager(total){const box=$('dq-pager'),pages=Math.max(1,Math.ceil(total/pageSize));box.hidden=!total;if(!total)return;
+ const btn=(t,n,title,on)=>{const b=el('button',{type:'button',className:'dq-page'+(on?' on':''),textContent:t,title:title||'Trang '+n,disabled:n<1||n>pages||on});b.onclick=()=>goPage(n);return b};
+ const nums=[];const add=n=>{if(!nums.includes(n)&&n>=1&&n<=pages)nums.push(n)};add(1);for(let n=page-1;n<=page+1;n++)add(n);add(pages);nums.sort((a,b)=>a-b);
+ const list=[];nums.forEach((n,i)=>{if(i&&n-nums[i-1]>1)list.push(el('span',{className:'dq-gap',textContent:'…'}));list.push(btn(String(n),n,'',n===page))});
+ const size=el('select',{className:'dq-size',title:'Số video mỗi trang'},...[10,20,50,100].map(v=>new Option(v+' / trang',v,false,v===pageSize)));
+ size.onchange=()=>{const first=(page-1)*pageSize;pageSize=+size.value;try{localStorage.setItem('dq-size',pageSize)}catch{}goPage(Math.floor(first/pageSize)+1)};
+ const from=(page-1)*pageSize+1,to=Math.min(total,page*pageSize);
+ box.replaceChildren(el('div',{className:'dq-pages'},btn('‹',page-1,'Trang trước'),...list,btn('›',page+1,'Trang sau')),el('div',{className:'dq-pageinfo'},el('span',{textContent:`${from}–${to} / ${total}`}),size))}
 // the server sends only what changed since the last answer (+ running jobs); the full order comes as ids
 const jobMap=new Map();let jobStamp=0;
 async function refresh(){clearTimeout(poll);try{const d=await request('/dub/jobs?since='+jobStamp);if(d.full)jobMap.clear();if(!d.full&&d.jobs.some(j=>j.state==='done'&&jobMap.get(j.id)?.state!=='done'))loadBalance();for(const j of d.jobs)jobMap.set(j.id,j);
   const keep=new Set(d.ids);for(const id of [...jobMap.keys()])if(!keep.has(id))jobMap.delete(id);jobStamp=d.ids.every(id=>jobMap.has(id))?d.stamp||0:0;jobs=d.ids.map(id=>jobMap.get(id)).filter(Boolean);waiting=d.waiting||[];parallel=d.parallel||1;filters();batchDone();trialBar();if(editing&&noAiTexts.length)editBar();const shown=visible();
-  const more=shown.length-queueMax;$('dub-queue').replaceChildren(...(shown.length?[...shown.slice(0,queueMax).map(card),...(more>0?[moreButton(more)]:[])]:[el('div',{className:'note-empty'},el('div',{textContent:'🎙'}),el('strong',{textContent:jobs.length?'Không có tác vụ phù hợp':'Chưa có video nào'}),el('p',{className:'helper',textContent:jobs.length?'Đổi nhóm, bước hoặc từ khóa tìm ở trên.':'Chọn video ở mục 🎬 rồi bấm Bắt đầu lồng tiếng.'}))]));
+  page=Math.min(Math.max(1,page),Math.max(1,Math.ceil(shown.length/pageSize)));pager(shown.length);fitQueue();$('dub-queue').replaceChildren(...(shown.length?shown.slice((page-1)*pageSize,page*pageSize).map(card):[el('div',{className:'note-empty'},el('div',{textContent:'🎙'}),el('strong',{textContent:jobs.length?'Không có tác vụ phù hợp':'Chưa có video nào'}),el('p',{className:'helper',textContent:jobs.length?'Đổi nhóm, bước hoặc từ khóa tìm ở trên.':'Chọn video ở mục 🎬 rồi bấm Bắt đầu lồng tiếng.'}))]));
   if(current&&openDetail===current)await showDetail();else $('dub-detail').hidden=true}catch(e){say(e.message)}
  if(jobs.some(j=>['queued','running'].includes(j.state))&&!view.hidden)poll=setTimeout(refresh,1500)}
 $('dub-review-open').onclick=()=>openReview();
@@ -654,7 +668,7 @@ $('dub-clean-err').onclick=()=>cleanJobs(jobs.filter(j=>j.state==='error'),'lỗ
 $('dub-clean-all').onclick=()=>cleanJobs(jobs.filter(j=>!['queued','running'].includes(j.state)),'(trừ đang chạy)');
 $('dub-clean').onclick=()=>cleanJobs(jobs.filter(GROUP.done[1]),'đã xong');
 for(const b of document.querySelectorAll('.dq-menu-list button'))b.addEventListener('click',()=>b.closest('details').open=false);
-$('dq-search').oninput=()=>{search=$('dq-search').value;refresh()};$('dq-step').onchange=()=>{stepFilter=$('dq-step').value;refresh()};
+$('dq-search').oninput=()=>{search=$('dq-search').value;page=1;refresh()};$('dq-step').onchange=()=>{stepFilter=$('dq-step').value;page=1;refresh()};
 $('dq-all').onchange=()=>{const list=visible();if($('dq-all').checked)list.forEach(j=>selected.add(j.id));else selected.clear();refresh()};
 $('dq-sel-actions').onclick=e=>{const a=e.target.closest('button')?.dataset.a;if(!a)return;const ids=[...selected],sel=jobs.filter(j=>selected.has(j.id));
  if(a==='clear'){selected.clear();refresh();return}

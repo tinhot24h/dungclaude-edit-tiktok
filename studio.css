@@ -893,3 +893,15 @@ details.cc-group>summary.cc-head{cursor:pointer;margin:0}details.cc-group[open]>
 .dub-range.dub-pxrow .dub-numbox{flex:1;width:auto!important;background:transparent;border:0;padding:9px;min-width:0}
 .cc-bare.dub-range.dub-pxrow{min-width:110px}
 .cc-seg.cc-dim button{opacity:.45}.cc-flash{outline:2px solid var(--accent);outline-offset:2px;border-radius:7px;transition:outline-color .3s}
+/* Hàng đợi: pages + the list scrolls inside the panel (the panel never runs past the window on a wide screen) */
+.dq-pager{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 2px 2px;border-top:1px solid var(--border);margin-top:8px}
+.dq-pages{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.dq-page{min-width:32px;height:30px;padding:0 8px;border-radius:7px;border:1px solid #344052;background:#141b26;color:#bed0e5;font:600 12px system-ui;cursor:pointer}
+.dq-page:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}.dq-page.on{background:#173a34;border-color:var(--accent);color:var(--text);cursor:default}.dq-page:disabled:not(.on){opacity:.35;cursor:default}
+.dq-gap{color:var(--muted);padding:0 2px}
+.dq-pageinfo{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}.dq-size{width:auto;padding:5px 8px;font-size:12px;height:30px}
+@media (min-width:901px){
+ .dub-layout>.dub-jobs{position:sticky;top:10px;display:flex;flex-direction:column;max-height:calc(100vh - 20px);overflow:hidden}
+ .dub-jobs>.dub-queue-head,.dub-jobs>.dub-review-bar,.dub-jobs>.dq-pager{flex:none}
+ .dub-jobs>.dq-scroll{flex:1 1 auto;min-height:120px;overflow:auto;margin-right:-6px;padding-right:6px}
+}
