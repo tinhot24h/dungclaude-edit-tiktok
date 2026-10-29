@@ -162,8 +162,24 @@ class MetadataTests(test_dubbing.PipelineBase):
         (moved.parent / 'trung-ten.mp4').write_bytes(b'x')
         self.assertEqual(Path(self.store.rename(key, dict(file_name='trung ten'))['outputs']['saved_path']).name, 'trung-ten-2.mp4')   # never over another file
 
+    def test_creation_date_is_5_to_7_days_back_and_stays(self):
+        import datetime
+        job = dict(id='x', name='clip', options=dubbing.options({}), warnings=[])
+        first = self.store.meta_date(job)
+        when = datetime.datetime.strptime(first['at'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=datetime.timezone.utc)
+        back = (datetime.datetime.now(datetime.timezone.utc) - when).total_seconds() / 86400
+        self.assertTrue(4.99 < back < 7.01, back);self.assertIn(first['days'], (5, 6, 7))
+        self.assertEqual(self.store.meta_date(job), first)                                     # exporting again: same date
+        args = self.store.metadata_args(job)
+        self.assertIn('creation_time=' + first['at'] + 'Z', args);self.assertIn('date=' + first['at'][:4], args)
+        job['options'] = dubbing.options(dict(meta_back_min=0, meta_back_max=0))
+        self.assertEqual(self.store.meta_date(job)['days'], 0)                                 # 0–0 = the export day
+        days = {self.store.meta_date(dict(id='y', options=dubbing.options({})))['days'] for _ in range(60)}
+        self.assertEqual(days, {5, 6, 7})
+
     def test_metadata_options_validation(self):
-        for bad in (dict(meta_url='tiktok.com/@a'), dict(meta_rating=6), dict(meta_author='x' * 301), dict(meta_author='a\nb')):
+        for bad in (dict(meta_url='tiktok.com/@a'), dict(meta_rating=6), dict(meta_author='x' * 301), dict(meta_author='a\nb'),
+                    dict(meta_back_min=8, meta_back_max=7), dict(meta_back_max=400), dict(meta_back_min=None)):
             with self.assertRaises(dubbing.DubError, msg=bad):dubbing.options(bad)
         self.assertEqual(dubbing.win_meta.write('x.mp4', {}), None)
         if os.name != 'nt':

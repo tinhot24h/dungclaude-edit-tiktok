@@ -57,7 +57,7 @@ DEFAULTS = dict(language='zh', model=ai_translate.DEFAULT_MODEL, rate=4.2, prono
                 design=None, title_source='ai', body_source='ai', title_chars=30, body_min_chars=50, body_max_chars=100, review_texts=False, design_bg=True, design_title=True, design_body=True,
                 adjust=False, adjust_brightness=0, adjust_contrast=0, adjust_saturation=0, adjust_sharpen=0,
                 vision=True, title_style='auto', reuse=True,
-                meta=True, meta_strip=True, meta_author='', meta_url='', meta_publisher='', meta_copyright='', meta_rating=0)
+                meta=True, meta_strip=True, meta_author='', meta_url='', meta_publisher='', meta_copyright='', meta_rating=0, meta_back_min=5, meta_back_max=7)
 TEXT_SOURCES = ('ai', 'fixed', 'file', 'none')
 PRONOUNS = {'neutral': 'xưng hô trung tính, hạn chế đại từ', 'ban': 'gọi người xem là "bạn"', 'minh-ban': 'người nói xưng "mình", gọi người xem là "bạn"'}
 
@@ -154,6 +154,14 @@ def options(raw):
     if isinstance(rating, bool) or not isinstance(rating, int) or not 0 <= rating <= 5:
         raise DubError('Đánh giá sao phải từ 0 đến 5.')
     out['meta_rating'] = rating
+    # Ngày tạo: a random day this many days before the export (0–0 = the export day)
+    for key in ('meta_back_min', 'meta_back_max'):
+        v = raw.get(key, DEFAULTS[key])
+        if isinstance(v, bool) or not isinstance(v, int) or not 0 <= v <= 365:
+            raise DubError('Số ngày lùi ngày tạo phải từ 0 đến 365.')
+        out[key] = v
+    if out['meta_back_min'] > out['meta_back_max']:
+        raise DubError('Ngày tạo: số ngày lùi "từ" phải nhỏ hơn hoặc bằng "đến".')
     model = raw.get('model') or DEFAULTS['model']
     if not isinstance(model, str) or not re.fullmatch('[A-Za-z0-9][A-Za-z0-9._:-]{0,99}', model):
         raise DubError('Tên model OpenAI không hợp lệ.')
@@ -2577,6 +2585,19 @@ class Store:
         # the AI's Vietnamese video title first (written for this), then the title on the video, then the file name
         return ' '.join(str(job.get('video_title') or texts.get('title') or job.get('file_name') or job['name']).split())[:200]
 
+    def meta_date(self, job):
+        """Ngày tạo of this video (UTC): picked once at random in the chosen range of days before the export and
+        kept, so exporting again gives the same date; a new range picks a new day."""
+        import datetime
+        o, saved = job['options'], job.get('meta_date') or {}
+        span = [o['meta_back_min'], o['meta_back_max']]
+        if saved.get('range') != span or not saved.get('at'):
+            days = random.randint(*span)
+            when = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=days)
+            saved = dict(range=span, days=days, at=when.strftime('%Y-%m-%dT%H:%M:%S'))
+            job['meta_date'] = saved
+        return saved
+
     def metadata_args(self, job):
         """FFmpeg tags of the exported MP4. "Không chép metadata gốc" drops everything the source carried (its
         title, device, other people's links); the muxer's own encoder tag is never written (bitexact)."""
@@ -2584,9 +2605,9 @@ class Store:
         if not o['meta']:
             return []
         args = ['-map_metadata', '-1', '-map_metadata:s:v', '-1', '-map_metadata:s:a', '-1'] if o['meta_strip'] else []
-        now = time.strftime('%Y-%m-%dT%H:%M:%S')
+        when = self.meta_date(job)['at']
         tags = dict(title=self.meta_title(job), artist=o['meta_author'], author=o['meta_author'], copyright=o['meta_copyright'],
-                    date=now[:4], creation_time=now + 'Z', keywords=', '.join(job.get('tags') or []))
+                    date=when[:4], creation_time=when + 'Z', keywords=', '.join(job.get('tags') or []))
         for k, v in tags.items():
             if v:
                 args += ['-metadata', f'{k}={v}']

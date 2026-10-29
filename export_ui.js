@@ -35,11 +35,17 @@ const fields=el('div',{className:'meta-fields'},el('label',{className:'check-row
  row('Tác giả',input('meta-author','Tên bạn hoặc tên kênh')),row('Link kênh',input('meta-url','https://www.tiktok.com/@ten_kenh')),
  row('Nhà phát hành',input('meta-publisher','Tên shop / kênh (không bắt buộc)')),row('Bản quyền',input('meta-copyright','© 2026 Tên kênh')),
  row('Đánh giá',stars,starNote,rating),
- el('p',{className:'helper',textContent:'Mỗi video tự có: Tiêu đề = tiêu đề AI viết, Tags = từ khóa AI viết (cùng lần dịch), ngày tạo = ngày xuất. Tags, đánh giá, link kênh, nhà phát hành được Windows ghi sau khi xuất (tự cài pywin32 lần đầu, cần Internet).'}));
+ row('Ngày tạo',el('span',{className:'helper',textContent:'lùi'}),el('input',{type:'number',id:'meta-back-min',min:0,max:365,value:5,'aria-label':'Lùi ít nhất (ngày)'}),el('span',{className:'helper',textContent:'–'}),el('input',{type:'number',id:'meta-back-max',min:0,max:365,value:7,'aria-label':'Lùi nhiều nhất (ngày)'}),el('span',{className:'helper',textContent:'ngày'})),
+ el('p',{className:'helper',id:'meta-date-note'}),
+ el('p',{className:'helper',textContent:'Mỗi video tự có: Tiêu đề = tiêu đề AI viết, Tags = từ khóa AI viết (cùng lần dịch), ngày tạo theo ô Ngày tạo. Tags, đánh giá, link kênh, nhà phát hành được Windows ghi sau khi xuất (tự cài pywin32 lần đầu, cần Internet).'}));
 const meta=group('Thông tin file (metadata)',fields);meta.querySelector('.cc-head').append(toggle,metaOn);meta.id='meta-group';
 function drawMeta(){toggle.classList.toggle('on',metaOn.checked);toggle.setAttribute('aria-pressed',String(metaOn.checked));fields.classList.toggle('off',!metaOn.checked);for(const e of fields.querySelectorAll('input,button'))e.disabled=!metaOn.checked}
 toggle.onclick=()=>{metaOn.checked=!metaOn.checked;drawMeta();metaOn.dispatchEvent(new Event('change',{bubbles:true}))};
-window.exportMetaRefresh=()=>{drawMeta();drawStars()};drawMeta();drawStars();
+// example with today's date: 5–7 → each video gets one random day 5, 6 or 7 days before the export
+function drawDate(){const lo=Math.max(0,+$('meta-back-min').value||0),hi=Math.max(lo,+$('meta-back-max').value||0),d=n=>{const t=new Date();t.setDate(t.getDate()-n);return t.toLocaleDateString('vi-VN')};
+ $('meta-date-note').textContent=hi?`Mỗi video lấy ngẫu nhiên một ngày, ví dụ hôm nay ${new Date().toLocaleDateString('vi-VN')} → ${lo===hi?d(lo):d(hi)+' đến '+d(lo)}. Xuất lại giữ nguyên ngày đã chọn.`:'0 – 0: ngày tạo = ngày xuất.'}
+for(const id of ['meta-back-min','meta-back-max'])$(id).addEventListener('input',drawDate);
+window.exportMetaRefresh=()=>{drawMeta();drawStars();drawDate()};drawMeta();drawStars();drawDate();
 const summary=el('button',{type:'button',id:'export-summary',className:'export-summary',title:'Chỉnh thông số xuất'});pane.querySelector('.pane-title').after(summary);
 function text(){const [w,h]=SIZES[$('resolution').value]||[1080,1920],fps=$('fps').value,q=$('quality').value==='high'?'Chất lượng cao':'Tiêu chuẩn',enc=$('encoder').selectedOptions[0]?.textContent.replace(/\s*\(.*\)/,'')||'';
  badge.innerHTML='';badge.append(el('span',{textContent:`${w} × ${h}`}),el('i'),el('span',{textContent:`${fps} FPS`}),el('b',{textContent:'⚙'}));badge.title=`Thông số xuất: ${w}×${h} · ${fps} fps · ${q} · ${enc} — bấm để chỉnh`;

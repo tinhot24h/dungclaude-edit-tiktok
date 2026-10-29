@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.26.0",
- "notes": "## Mới trong 0.26.0\n\n- **Sửa tên file tay:** mở một video trong hàng đợi → ô **Tên file** → Đổi tên (gõ có dấu cũng được, app tự đổi sang dạng `ten-khong-dau`, xem trước tên `.mp4`). Video đã lưu trong thư mục xuất được đổi tên luôn (cả file `.srt`), không bao giờ ghi đè file khác. Bảng **Duyệt chữ AI** có ô tên file cho từng video. Tên gõ tay không bị AI thay khi viết lại chữ.\n- **Tiêu đề có dấu trong thông tin file:** AI trả thêm tên video tiếng Việt có dấu (30–80 ký tự) trong cùng lần gọi, dùng cho Title của file (ví dụ \"Đệm lót giày TPU mềm gót, tiện lợi khi vận động\"); hàng đợi hiện kèm tiêu đề file và tags.",
+ "version": "0.26.1",
+ "notes": "## Mới trong 0.26.1\n\n- **Ngày tạo trong thông tin file lùi ngẫu nhiên** (Thông số video xuất → Thông tin file → Ngày tạo): mặc định lùi 5–7 ngày so với ngày xuất, mỗi video một ngày ngẫu nhiên (ví dụ xuất ngày 15/7/2026 → ngày tạo 8/7 đến 10/7/2026). Xuất lại giữ nguyên ngày đã chọn; đặt 0 – 0 để dùng ngày xuất. Lưu trong mẫu.",
  "files": {
   "win_meta.py": {
    "sha256": "3e44bda1a50159ca17886a5b4cf280b0d6efc24d80945c1576e680b495ff2683",
@@ -12,8 +12,8 @@
    "size": 4901
   },
   "tests/test_ai_texts.py": {
-   "sha256": "93a007363c8477d7d9aaed31454dc62c9bd5a28b84ba3111d5de5072c8be7766",
-   "size": 20106
+   "sha256": "426d4f5d70391d98c4401edfb25eba9a989a719c7b4b9a32da03079daedf9081",
+   "size": 21360
   },
   "design_tab.js": {
    "sha256": "01dfd065c454e70d19ef87f81cd6ff196ae6b2bf54a59c713bfc2964210581cd",
@@ -44,8 +44,8 @@
    "size": 5181
   },
   "dub_ui.js": {
-   "sha256": "79291808df0e8158a50d64ddd84bdd9913e24e6d0e316d03eada40ad493aea16",
-   "size": 116956
+   "sha256": "51caf198aa73ebba66f77a05264287956ed63545c28aada2073a9602d872a298",
+   "size": 117080
   },
   "layout_ui.js": {
    "sha256": "31474a69f54710df46c2483f9711e36d487d11437085b2b563f97b1f18ab711e",
@@ -64,8 +64,8 @@
    "size": 2610
   },
   "dubbing.py": {
-   "sha256": "aee776105f0824a47b29c2b8a33bea6104b0bb78a6c55d0053cecc7052d90299",
-   "size": 167271
+   "sha256": "bd2f2d8720c516675d60074f5ef2d0e9de7d19594243417458b8155b9c4a5969",
+   "size": 168539
   },
   "tests/test_dubbing.py": {
    "sha256": "c33c7af1f9899e53fa7a5fdc67c4f49eb01e4b839552d8d61a37e114f410af0f",
@@ -76,8 +76,8 @@
    "size": 13416
   },
   "export_ui.js": {
-   "sha256": "ea44c7643bfca02068540771e2c199b22564dd8d00844a9c69d21be5298ac288",
-   "size": 12390
+   "sha256": "a8b5b1465d4e1812fada4ee5540d2fc1d81e41f3bda6994e3c571dff7db65367",
+   "size": 13536
   },
   "style_ui.js": {
    "sha256": "38fb4eaea0632ee304a5411f2c4ddd48c4110269146f82d8fe4d3353b7890910",
@@ -160,8 +160,8 @@
    "size": 5241
   },
   "studio.css": {
-   "sha256": "31b48aa894661e2741226ac2cbb09e7f574e2aa1d30fa4980a62c4b0ec0dea14",
-   "size": 94266
+   "sha256": "3d62dcc3180fe234121ab9603fe971ca583890f17f4ac0c6cdcd4cb4ec1b4581",
+   "size": 94366
   },
   "studio.js": {
    "sha256": "88660710a1bdbc6d29b18e06a4464c1111d0de7db68e6e74bd8d1963e0e76c22",
@@ -176,7 +176,7 @@
    "size": 5352
   },
   "index.html": {
-   "sha256": "20799818a6866ef65a2034c3456ffc2a29381bb1f280b0e8fde60d76ca241206",
+   "sha256": "33c4129528744677b9fb2191b159719996dff8f664aeb28e4f93ec2b85731d98",
    "size": 24340
   },
   "launch.py": {
@@ -192,15 +192,15 @@
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "f0082d09ac63808c01fabaa2db3c3c26db806e51bab52fc6cc23573f95d83558",
-   "size": 43062
+   "sha256": "6eceb1ba2808eabcd229f6c347e39c010d1c61bbba5f9fcb81ae445836c6322a",
+   "size": 43251
   },
   "README.md": {
-   "sha256": "6edb277d07cc3eafa58718f142fae83b9aa054896e9e5c66358c694965817742",
-   "size": 70066
+   "sha256": "6ffcfec0a10f56ada28a01ac2f4bf84718dd213bf95324d247213730118381cb",
+   "size": 70482
   },
   "VERSION": {
-   "sha256": "8cbb8cbe0eca7be97a239a2dd808c0b06f9f7b9bf40b38291bdd78eced81164b",
+   "sha256": "f635cb36f28e15f2f0b8d31cab9a8eb1dfbaa628d282e9d55dd80669d23c0602",
    "size": 7
   },
   ".gitignore": {

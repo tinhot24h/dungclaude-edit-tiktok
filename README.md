@@ -1,8 +1,12 @@
-# Review Studio 0.26.0
+# Review Studio 0.26.1
 
 Dựng và lồng tiếng video review 9:16 hàng loạt: OpenAI nhận diện + dịch + viết chữ, ai33.pro đọc giọng, FFmpeg xuất video hoàn thiện.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.26.1
+
+- **Ngày tạo trong thông tin file lùi ngẫu nhiên** (Thông số video xuất → Thông tin file → Ngày tạo): mặc định lùi 5–7 ngày so với ngày xuất, mỗi video một ngày ngẫu nhiên (ví dụ xuất ngày 15/7/2026 → ngày tạo 8/7 đến 10/7/2026). Xuất lại giữ nguyên ngày đã chọn; đặt 0 – 0 để dùng ngày xuất. Lưu trong mẫu.
 
 ## Mới trong 0.26.0
 

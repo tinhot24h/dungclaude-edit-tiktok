@@ -170,6 +170,9 @@ giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh g�
 cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
 Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
 
+NÂNG CẤP 0.26.1
+- Ngày tạo (Media created) trong thông tin file: lùi ngẫu nhiên 5–7 ngày so với ngày xuất, chỉnh được ở ô Ngày tạo (0 – 0 = ngày xuất).
+
 NÂNG CẤP 0.26.0
 - Đổi tên file: bấm vào video trong hàng đợi → ô Tên file → Đổi tên (đổi luôn file đã lưu). Bảng duyệt chữ cũng có ô tên file.
 - Title trong thông tin file là tên video tiếng Việt có dấu do AI viết.
