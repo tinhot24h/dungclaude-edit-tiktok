@@ -4,6 +4,12 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.35.0
+
+- **🩺 Kiểm tra hệ thống** trên thanh trên cùng (cạnh 🔑 API key): chấm xanh = ổn, vàng = có mục cần chú ý, đỏ = có lỗi. Lúc mở app tự kiểm tra nhanh để tô màu chấm.
+- Bấm vào để kiểm tra đầy đủ: Python, FFmpeg/FFprobe và các tính năng xuất video cần (chữ, H.264, MP3, nhạc nền tự giảm, hòa trộn lớp), libass (phụ đề chữ chạy), card đồ họa, Demucs, OpenAI key và ai33 key (thử thật 1 lần miễn phí, hiện số credit còn lại), thư mục xuất, dung lượng ổ đĩa, phông chữ, công cụ ghi thông tin file Windows.
+- Mục lỗi xếp lên đầu, mỗi mục có **Cách sửa**; mục key có nút mở thẳng 🔑 API key. **📋 Copy báo cáo** để gửi khi cần hỗ trợ (báo cáo không chứa key).
+
 ## Mới trong 0.34.0
 
 - **Khung xem trước vừa màn hình:** chiều cao khung tự tính theo chỗ trống thực tế của cửa sổ (trừ tiêu đề trang, thứ tự lớp, thanh phát), không còn cao quá màn hình laptop. Khung 16:9 / 1:1 tự lấy theo chiều ngang cột, không méo. Đổi cỡ cửa sổ là khung tự co giãn.

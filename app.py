@@ -27,6 +27,7 @@ import output_folder
 import update
 import dubbing
 import secrets_store
+import system_check
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / '.local'
@@ -403,7 +404,7 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == '/':
             return self.respond(200, (ROOT / 'index.html').read_bytes(), 'text/html; charset=utf-8')
-        if path in ('/studio.css','/compat.js','/studio.js','/local_files.js','/design_tab.js','/video_tools.js','/audio_ui.js','/editor_ui.js','/history_ui.js','/image_ui.js','/export_ui.js','/update_ui.js','/dub_ui.js','/key_ui.js'):
+        if path in ('/studio.css','/compat.js','/studio.js','/local_files.js','/design_tab.js','/video_tools.js','/audio_ui.js','/editor_ui.js','/history_ui.js','/image_ui.js','/export_ui.js','/update_ui.js','/dub_ui.js','/key_ui.js','/system_ui.js'):
             mime = 'text/css' if path.endswith('.css') else 'text/javascript'
             return self.respond(200, (ROOT/path.lstrip('/')).read_bytes(), mime+'; charset=utf-8')
         if path in ('/assets/'+font[0] for font in FONTS.values()):
@@ -458,6 +459,9 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(200,{'images':images()})
         if path == '/secrets':
             return self.respond(200,secrets_store.status())
+        if path == '/system/check':
+            quick='quick' in parse_qs(urlparse(self.path).query)
+            return self.respond(200,system_check.run(ROOT,DATA,SETTINGS,network=not quick))
         if path == '/app/info':
             return self.respond(200,{'version':VERSION,'root':str(ROOT)})
         if path == '/local/file':

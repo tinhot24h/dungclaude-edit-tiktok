@@ -1,11 +1,23 @@
 {
  "app": "ReviewStudio",
- "version": "0.34.0",
- "notes": "## Mới trong 0.34.0\n\n- **Khung xem trước vừa màn hình:** chiều cao khung tự tính theo chỗ trống thực tế của cửa sổ (trừ tiêu đề trang, thứ tự lớp, thanh phát), không còn cao quá màn hình laptop. Khung 16:9 / 1:1 tự lấy theo chiều ngang cột, không méo. Đổi cỡ cửa sổ là khung tự co giãn.\n- **Thanh phát kiểu CapCut** (khung thường và khung thiết kế): thanh tua ở trên; bên dưới là thời gian · nút phát ở giữa · **Tỷ lệ ▾** và **⛶ toàn màn hình** bên phải.\n- **Đổi khung ngay trên xem trước:** menu Tỷ lệ chọn 9:16 (TikTok, Reels), 16:9 (YouTube), 1:1, 4:5 hoặc Gốc; đổi luôn \"Khung xuất\" của video. Mẫu thiết kế (nền, khung, tiêu đề, nội dung) chỉ có 9:16 nên các tỷ lệ khác bị khóa khi đang bật.\n- Thứ tự lớp gọn hơn; dòng hướng dẫn dưới xem trước rút còn 2 dòng (rê chuột để xem hết).\n- Không còn báo nhầm \"Lỗi giao diện: ResizeObserver loop…\" (thông báo vô hại của trình duyệt khi khung tự co giãn).",
+ "version": "0.35.0",
+ "notes": "## Mới trong 0.35.0\n\n- **🩺 Kiểm tra hệ thống** trên thanh trên cùng (cạnh 🔑 API key): chấm xanh = ổn, vàng = có mục cần chú ý, đỏ = có lỗi. Lúc mở app tự kiểm tra nhanh để tô màu chấm.\n- Bấm vào để kiểm tra đầy đủ: Python, FFmpeg/FFprobe và các tính năng xuất video cần (chữ, H.264, MP3, nhạc nền tự giảm, hòa trộn lớp), libass (phụ đề chữ chạy), card đồ họa, Demucs, OpenAI key và ai33 key (thử thật 1 lần miễn phí, hiện số credit còn lại), thư mục xuất, dung lượng ổ đĩa, phông chữ, công cụ ghi thông tin file Windows.\n- Mục lỗi xếp lên đầu, mỗi mục có **Cách sửa**; mục key có nút mở thẳng 🔑 API key. **📋 Copy báo cáo** để gửi khi cần hỗ trợ (báo cáo không chứa key).",
  "files": {
   "ffmpeg_setup.py": {
    "sha256": "f66eb85abf503510412af3b364a9e5e10558cc92a8caa4153aa07bbc44a227ab",
    "size": 4524
+  },
+  "system_check.py": {
+   "sha256": "ae10d7f9ff0124fd6dea04c73554ec8079b4b6dfc11058ef5a2d2272ebb67ce8",
+   "size": 8367
+  },
+  "system_ui.js": {
+   "sha256": "39b55dde76cd18b5f225dac525b69de6bf3de0018e3feca3b5f0659e5be58f54",
+   "size": 3758
+  },
+  "tests/test_system_check.py": {
+   "sha256": "72bdf3b1aa757c30a96b15260176271b255a9efa0d347351b48ed65a3cb91ad6",
+   "size": 2191
   },
   "compat.js": {
    "sha256": "a8ddbb6481917d970691f2f6185f28f2a2234c7c6e9052395ff9c43f4130b395",
@@ -124,8 +136,8 @@
    "size": 13961
   },
   "app.py": {
-   "sha256": "d76d194449928c40d09fb364c78f3e97cc83b0ae8a86ba3b955c9f8b81cd49d2",
-   "size": 63917
+   "sha256": "a3c8a232e95ebbb6679ce3aa2cfb78b901a655d33b4ce5ef943de6d7beb8a86e",
+   "size": 64146
   },
   "ai33_audio.py": {
    "sha256": "64c870ef291fbd725d4cdae68bc841d437040110ca83e429e1ff0b15ebf1fe5b",
@@ -144,8 +156,8 @@
    "size": 13467
   },
   "studio.css": {
-   "sha256": "b76355e33b28316df2a2c6b6616d36ebb94ca6f0d83264cdb99b21dc7232c0df",
-   "size": 105531
+   "sha256": "2cb292e451b7971dc3c98437ba2a012941f1654b2017c6e750b9c27c58d109b8",
+   "size": 106830
   },
   "studio.js": {
    "sha256": "e2ebb2f8bb72ba3bee02faa67609c6859a96a3ad16be04fe28e6aba60519f7bc",
@@ -160,31 +172,31 @@
    "size": 6858
   },
   "index.html": {
-   "sha256": "d89d66c02dfdc40a35525e4071e7d68d9124f2c6a15d1e1fc67396f2913cf0e5",
-   "size": 24183
+   "sha256": "2822929580c3e7db0b6f178ec9d6bbd35a411b2fdf2dace13a401d5d13bff2f9",
+   "size": 24220
   },
   "launch.py": {
    "sha256": "814bd4588f0bfc55db86c73e870ad4f5edf1655cc285058064497fd6f677b859",
    "size": 5088
   },
   "build_package.py": {
-   "sha256": "ac0f676561e139cce94e2c255353dea69c39de65457c91868c3d432b2d1b0ba2",
-   "size": 3247
+   "sha256": "fe0260b1f0f6301d0bbf0e1b6ffea714807db6dddb853a21063f563cccada57a",
+   "size": 3312
   },
   "START_WINDOWS.bat": {
    "sha256": "45917335d9a938e178467107e9ceeaed5daecef10ca9351015867336746a6957",
    "size": 1411
   },
   "HUONG_DAN.txt": {
-   "sha256": "5ab2f765b56f38b0c1d6b3bc9aabadf20b75c7d06eb932e48f1de47481d3d6cc",
-   "size": 14331
+   "sha256": "9dec9bad3e944a6d59bc9c8c9ab746e75132ccd154a47960c6f89e570d2ed018",
+   "size": 14488
   },
   "README.md": {
-   "sha256": "c3e47fbdaf946b2131064de9fc3dbe6aaaa14905dfed052d6279ad61b33478dc",
-   "size": 33193
+   "sha256": "8d9880afea51c861827dc6da47387ad3b85bf8c44721908bc15fcc8b64739cea",
+   "size": 34053
   },
   "VERSION": {
-   "sha256": "a341550457891be148045ef7560e7499da6063d012ce8163bf6e6db2f08d2466",
+   "sha256": "eb16b5510966aa3f5ea607e5f41f799667f344fd3f47bdd81913b8e9c1a33921",
    "size": 7
   },
   ".gitignore": {
