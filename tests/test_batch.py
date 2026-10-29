@@ -252,6 +252,17 @@ class Batch2Tests(test_dubbing.PipelineBase):
         with self.assertRaises(dubbing.DubError):self.store.batch(dict(action='format', ids=[]))
         with self.assertRaises(dubbing.DubError):self.store.batch(dict(action='delete', ids=['../x']))
 
+    def test_reexport_changes_only_the_look(self):
+        a = self.job(mode='paragraph', style='review', frame_zoom=100)
+        a['state'] = 'done';a['steps'] = {k: 'done' for k in a['steps']};self.store.save(a)
+        with mock.patch.object(self.store, 'enqueue') as enqueue:
+            got = self.store.batch(dict(action='reexport', ids=[a['id']], options=dict(frame_zoom=110, captions=True, style='news', voice_id='other', mode='lines', trim_start=3)))
+        self.assertEqual(got['done'], 1);enqueue.assert_called_once()
+        job = self.store.load(a['id'])
+        self.assertEqual((job['options']['frame_zoom'], job['options']['captions']), (110, True))          # the look is new
+        self.assertEqual((job['options']['style'], job['options']['mode'], job['options']['trim_start']), ('review', 'paragraph', 0))   # the content is not
+        self.assertEqual(job['steps']['export'], 'pending');self.assertEqual(job['steps']['tts'], 'done')   # only the export runs again
+
     def test_queue_sends_only_changes(self):
         a = self.job(mode='paragraph');b = self.job(mode='paragraph')
         first = self.store.jobs_since(0)

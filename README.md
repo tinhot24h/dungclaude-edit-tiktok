@@ -4,6 +4,15 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.31.0
+
+**✎ Sửa & xuất lại (không gọi lại API)**
+- Ở mỗi video xong / lỗi / tạm dừng trong hàng đợi có nút "✎ Sửa": app nạp lại thông số của video đó vào bên trái, mở video gốc ở khung xem trước để chỉnh trực quan (khung, zoom, xoay, màu, nền, chữ, phụ đề chữ chạy, lớp ảnh, overlay, nhạc nền, thông số xuất), rồi bấm "⟳ Xuất lại video này".
+- Sửa hàng loạt: tick nhiều video rồi bấm "✎ Sửa & xuất lại" trên thanh chọn. Khung xem trước hiện video đầu tiên; "⟳ Xuất lại N video" xuất lại tất cả với cùng thông số. Có nút "＋ Thêm video đã tick" để thêm video vào lần sửa đang làm.
+- Chỉ đổi phần hình và tiếng nền. Lời nhận diện, bản dịch, tiêu đề / nội dung AI, giọng đọc và cắt đầu / cuối giữ nguyên, nên không tốn thêm tiền OpenAI hay credit ai33. Dù bên trái đang để văn phong, giọng hay chế độ khác, các thông số đó cũng không bị đổi khi xuất lại.
+- Mỗi lần xuất lại tạo file mới trong thư mục xuất (file cũ không bị ghi đè). Bấm ✕ để thoát sửa và trả lại thông số trước đó.
+- Thêm video cũ vào lại (bật "Dùng lại kết quả cũ") vẫn dùng lại được giọng và chữ như trước; nút "✎ Sửa" nhanh hơn vì không cần chọn lại file.
+
 ## Mới trong 0.30.3
 
 - **Sửa lỗi mất nút căn ở "Cắt & vị trí video" (khi không dùng mẫu thiết kế):** dòng "Căn" trống và hàng nút nhanh (⊕ Giữa, xoay 90°, lật, Zoom 110%, Đặt lại) biến mất vì bị ẩn nhầm khi dựng khung CapCut. Nay hiện lại đủ lưới căn 9 ô và hàng nút nhanh. Chế độ có mẫu thiết kế vẫn có "⊕ Giữa khung" như trước.

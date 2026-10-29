@@ -2140,6 +2140,12 @@ class Store:
     BATCH = dict(retry=('error',), resume=('paused',), cancel=('queued', 'running'), delete=('error', 'paused', 'review', 'done'),
                  top=('queued',), bottom=('queued',), reexport=('done', 'error', 'paused'))
 
+    # options that belong to the steps before the export: a re-export never changes them (no new API call)
+    KEEP_ON_REEXPORT = ('mode', 'language', 'model', 'style', 'energy', 'pronoun', 'rate', 'notes', 'instructions', 'no_price', 'vision', 'reuse',
+                        'voice_id', 'voice_speed', 'dictionary_id', 'title_source', 'body_source', 'title_chars', 'body_min_chars', 'body_max_chars',
+                        'title_style', 'trim_start', 'trim_end', 'background', 'align', 'min_tempo', 'max_tempo', 'video_speed_min', 'video_speed_max',
+                        'end_with_voice', 'review', 'review_texts')
+
     def batch(self, raw):
         """One request for many jobs (the queue's toolbar and the ticked rows): retry = errors only (a job waiting
         for review is never exported unseen), resume = paused, cancel, delete, top/bottom = order of the waiting
@@ -2165,8 +2171,10 @@ class Store:
                 if action in ('retry', 'resume', 'reexport'):
                     more = dict(**{k: v for k, v in raw.items() if k in ('openai_key', 'ai33_key')})
                     if action == 'reexport':
-                        # the look changed (frame, layers, overlays, export settings): the voice and texts are kept
-                        more.update({'from': 'export', **({'options': raw['options']} if isinstance(raw.get('options'), dict) else {})})
+                        # the look changed (frame, layers, overlays, captions, music, export settings): what the earlier
+                        # steps made (recognised speech, translation, title/body, voice, timing) stays as it was
+                        look = {k: v for k, v in raw['options'].items() if k not in self.KEEP_ON_REEXPORT} if isinstance(raw.get('options'), dict) else None
+                        more.update({'from': 'export', **({'options': look} if look else {})})
                     self.proceed(key, more)
                 elif action == 'cancel':
                     self.cancel(key)

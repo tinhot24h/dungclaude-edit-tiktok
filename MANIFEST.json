@@ -1,15 +1,15 @@
 {
  "app": "ReviewStudio",
- "version": "0.30.3",
- "notes": "## Mới trong 0.30.3\n\n- **Sửa lỗi mất nút căn ở \"Cắt & vị trí video\" (khi không dùng mẫu thiết kế):** dòng \"Căn\" trống và hàng nút nhanh (⊕ Giữa, xoay 90°, lật, Zoom 110%, Đặt lại) biến mất vì bị ẩn nhầm khi dựng khung CapCut. Nay hiện lại đủ lưới căn 9 ô và hàng nút nhanh. Chế độ có mẫu thiết kế vẫn có \"⊕ Giữa khung\" như trước.",
+ "version": "0.31.0",
+ "notes": "## Mới trong 0.31.0\n\n**✎ Sửa & xuất lại (không gọi lại API)**\n- Ở mỗi video xong / lỗi / tạm dừng trong hàng đợi có nút \"✎ Sửa\": app nạp lại thông số của video đó vào bên trái, mở video gốc ở khung xem trước để chỉnh trực quan (khung, zoom, xoay, màu, nền, chữ, phụ đề chữ chạy, lớp ảnh, overlay, nhạc nền, thông số xuất), rồi bấm \"⟳ Xuất lại video này\".\n- Sửa hàng loạt: tick nhiều video rồi bấm \"✎ Sửa & xuất lại\" trên thanh chọn. Khung xem trước hiện video đầu tiên; \"⟳ Xuất lại N video\" xuất lại tất cả với cùng thông số. Có nút \"＋ Thêm video đã tick\" để thêm video vào lần sửa đang làm.\n- Chỉ đổi phần hình và tiếng nền. Lời nhận diện, bản dịch, tiêu đề / nội dung AI, giọng đọc và cắt đầu / cuối giữ nguyên, nên không tốn thêm tiền OpenAI hay credit ai33. Dù bên trái đang để văn phong, giọng hay chế độ khác, các thông số đó cũng không bị đổi khi xuất lại.\n- Mỗi lần xuất lại tạo file mới trong thư mục xuất (file cũ không bị ghi đè). Bấm ✕ để thoát sửa và trả lại thông số trước đó.\n- Thêm video cũ vào lại (bật \"Dùng lại kết quả cũ\") vẫn dùng lại được giọng và chữ như trước; nút \"✎ Sửa\" nhanh hơn vì không cần chọn lại file.",
  "files": {
   "video_tools.js": {
    "sha256": "217dc997759d9b7b26fccfb7abaa35ebf82b5eb333f816dc83fcf67b06781706",
    "size": 4542
   },
   "tests/test_batch.py": {
-   "sha256": "29c83d85d00592c24305291fc54f986ef78413a25686ea00ceffb4b01b1dac66",
-   "size": 20606
+   "sha256": "4beb9ad5b11d8c9577e1bb7272cd0083c1e8a15f8bcfe3e5c44e250cbddaa978",
+   "size": 21595
   },
   "win_meta.py": {
    "sha256": "228d18deb126f8965807b7c3a7d2249007da30d88f3a6bbf04493deb52b989a8",
@@ -52,8 +52,8 @@
    "size": 5181
   },
   "dub_ui.js": {
-   "sha256": "d7d501365e514d1715935a03aca04177d1668d502e4b783880cde7a74b5e35f4",
-   "size": 153953
+   "sha256": "adabc9d51354537a03509daab32937972e7fa578ff5465c95d0f1739935c3b5e",
+   "size": 157783
   },
   "key_ui.js": {
    "sha256": "4c1833943a21476f6e515115af555c36a4d763bbc5c1122f111cad0a5065574d",
@@ -64,8 +64,8 @@
    "size": 2610
   },
   "dubbing.py": {
-   "sha256": "ab50c0ea8a8eac3c4df0fbbffae57af3749426301898dced01b78ef5b0d6a2e8",
-   "size": 205768
+   "sha256": "26a782cf14f0cccb039d78aaff59b7ab962f33c5e930633819060522b9e03ee2",
+   "size": 206626
   },
   "tests/test_dubbing.py": {
    "sha256": "8cfe463e82cae6857f9073341b8c4422f1d3174b2162f366d8b1801342e2fc14",
@@ -136,8 +136,8 @@
    "size": 13467
   },
   "studio.css": {
-   "sha256": "9ebba607d333dc3e3bd987a3f52dd04982bca95ef9503cd7cb769c81c1889ba6",
-   "size": 101681
+   "sha256": "e49580e9cb4a189f6e2ab95cef8dcb4c6c5ae97ee4313e34cf8966a0f7352dbd",
+   "size": 102050
   },
   "studio.js": {
    "sha256": "606d2f4b4825a547cc13cd5bc91af2cb4a802960047a4bcae3ff5ad0aa1e2973",
@@ -152,7 +152,7 @@
    "size": 6858
   },
   "index.html": {
-   "sha256": "410f3e147667653f264b7068ea7610a5f3703e59f1742d19c3319b258ada9476",
+   "sha256": "fd78d5ac451b99aabdf31cb4613a5ac818a196171a98556467bde2aba81348cd",
    "size": 24079
   },
   "launch.py": {
@@ -168,15 +168,15 @@
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "889629f9cfa8eabc1e34185b3e7776f40728795b3a54449785edadbfe4615b6c",
-   "size": 11531
+   "sha256": "08023af33e4239aedfcdbfa3d3435ad7fbb6ae4211d2f615ff11046f158a2d6e",
+   "size": 11881
   },
   "README.md": {
-   "sha256": "e7f7b47229a284d6d7240824cff0a42a529a844cc001b98b2f5e2f9e24f9e914",
-   "size": 23105
+   "sha256": "cf237ec85f6a3001e883732ed89fa12ccb21b1f21a0d8756090f41edf7bf81ed",
+   "size": 24591
   },
   "VERSION": {
-   "sha256": "ed309f2d3d36c45d2126ef27c0ab8448cd9d30e27d440c38b8c8b991647c7e3b",
+   "sha256": "8c4f709e958791f38fd4d06c953c9182f61a05abbc45508e281b907f08b52210",
    "size": 7
   },
   ".gitignore": {

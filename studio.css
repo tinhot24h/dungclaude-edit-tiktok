@@ -823,3 +823,7 @@ details.cc-group>summary.cc-head{cursor:pointer;margin:0}details.cc-group[open]>
  background:#10261f;color:var(--accent);font:inherit;font-size:13px;font-weight:650;white-space:nowrap;cursor:pointer}
 .dub-trial:hover{background:#163428}.dub-trial:disabled{opacity:.5;cursor:default}
 .dub-trial:not([hidden])+#dub-start{border-radius:0 9px 9px 0}
+
+.dub-edit-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;background:#10261f;border:1px solid var(--accent);border-radius:10px;padding:8px 10px;margin:6px 0 8px}
+.dub-edit-bar strong{display:block;font-size:13px;color:var(--accent)}.dub-edit-bar small{display:block;margin-top:2px}
+.dub-edit-bar .dub-actions{margin:0;gap:6px}

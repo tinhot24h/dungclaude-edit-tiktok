@@ -65,6 +65,10 @@ khi mở app (đặt REVIEW_KEEP_DAYS=0 để tắt), trừ video còn trong hà
 Chỉ dùng trên máy này. Chưa gọi thử OpenAI / ai33 thật, NVENC và ghi Tags của Windows
 trên máy thật: hãy chạy thử 1–2 video trước khi chạy lô lớn.
 
+NÂNG CẤP 0.31.0
+- "✎ Sửa" ở mỗi video trong hàng đợi: mở lại video gốc với thông số cũ, chỉnh khung / lớp / phụ đề / nhạc rồi xuất lại; giữ nguyên bản dịch và giọng (không gọi lại API).
+- Sửa hàng loạt: tick nhiều video → "✎ Sửa & xuất lại" → "⟳ Xuất lại N video".
+
 NÂNG CẤP 0.30.3
 - Hiện lại lưới căn 9 ô và các nút nhanh (Giữa, xoay, lật, zoom) ở "Cắt & vị trí video".
 
