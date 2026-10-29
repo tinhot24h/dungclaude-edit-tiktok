@@ -52,7 +52,7 @@ DEFAULTS = dict(language='zh', model=ai_translate.DEFAULT_MODEL, rate=4.2, prono
                 voice_id='', voice_speed=1.0, dictionary_id=None, max_tempo=1.1, min_tempo=0.98, video_speed_min=0.85, video_speed_max=1.2, background='duck', duck_level=12,
                 background_volume=100, voice_volume=100, subtitles='file', loudness='tiktok', review=False, encoder='cpu', instructions='', mode='paragraph', align='auto', style='review',
                 frame_canvas='source', frame_fit='cover', frame_zoom=100, frame_x=0, frame_y=0, frame_rotate=0, frame_flip='none', trim_start=0, trim_end=0,
-                overlay=False, overlay_ids=[], overlay_count=1, overlay_blend='screen', overlay_opacity=60, overlay_timing='loop', overlay_scale=100, overlay_x=0, overlay_y=0, overlay_rotate=0, overlay_flip='none', overlay_fit='cover', end_with_voice=True,
+                overlay=False, overlay_ids=[], overlay_count=1, overlay_blend='screen', overlay_opacity=60, overlay_timing='sequence', overlay_scale=100, overlay_x=0, overlay_y=0, overlay_rotate=0, overlay_flip='none', overlay_fit='cover', end_with_voice=True,
                 image=False, image_id='', image_x=0, image_y=0, image_w=60, image_h=0, image_rotate=0, image_flip='none', image_blend='normal',
                 image_opacity=100, image_layer='below', layer_order='',
                 captions=False, caption_style='classic', caption_font='bvp-black', caption_size=68, caption_y=70, caption_words=5,
@@ -138,7 +138,9 @@ def options(raw):
     count = raw.get('overlay_count', 1)
     if isinstance(count, bool) or not isinstance(count, int) or not 1 <= count <= 3:
         raise DubError('Số overlay mỗi video phải từ 1 đến 3.')
-    out['overlay_count'] = count
+    # one overlay at a time since 0.38 (2–3 stacked on top of each other looked messy): a short one is followed by
+    # other random overlays ("ghép nối"), never laid over another. Old saved settings with 2–3 become 1.
+    out['overlay_count'] = 1
     for key, lo, hi in (('title_chars', 5, 160), ('body_min_chars', 0, 600), ('body_max_chars', 10, 600), ('edge_trim', 0, 40)):
         v = raw.get(key, DEFAULTS[key])
         if isinstance(v, bool) or not isinstance(v, int) or not lo <= v <= hi:

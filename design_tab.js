@@ -137,6 +137,13 @@ function capcut(k){const sec=$('section-'+k);if(sec.querySelector('.cc-panel'))r
  // whatever the old section still holds (its headings, two centre buttons, saved caption styles) is not shown here
  for(const c of [...sec.children])c.classList.add('cc-hide');sec.append(panel);panel.classList.remove('cc-hide');
  for(const id of [k+'_font',k+'_case',k+'_align',k+'_valign'])$(id).addEventListener('change',()=>refreshers.forEach(f=>f()));
+ // Trên / Giữa / Dưới place the text inside a box taller than the text: with Cao = 0 the box is exactly the text's
+ // height, so they cannot move anything. Say so (and point at Cao) instead of a button that seems dead.
+ const vseg=[...panel.querySelectorAll('.cc-seg')].find(b=>b.querySelector('[data-v=middle]')),hgt=$(k+'_height');
+ if(vseg){const auto=()=>!(Number(hgt.value)>0);refreshers.push(()=>{vseg.classList.toggle('cc-dim',auto());vseg.title=auto()?'Căn dọc trong hộp: đặt Cao lớn hơn chiều cao chữ trước (Cao = 0 thì hộp vừa khít chữ)':'Căn dọc trong hộp'});
+  hgt.addEventListener('input',()=>refreshers.forEach(f=>f()));
+  vseg.addEventListener('click',e=>{if(!auto()||!e.target.closest('button'))return;e.stopPropagation();api.say?.('Căn dọc Trên/Giữa/Dưới cần hộp chữ cao hơn chữ: nhập Cao (vd 300) ở Biến đổi → Kích thước. Muốn đưa cả hộp chữ lên mép trên khung thì dùng nút ⤒ ở "Căn khung".');
+   hgt.focus();hgt.closest('.control,.cc-field')?.classList.add('cc-flash');setTimeout(()=>hgt.closest('.control,.cc-field')?.classList.remove('cc-flash'),1200)},true)}
  refreshers.forEach(f=>f())}
 // ---- the same CapCut layout for Nền & khung, Cắt & vị trí video, Overlay and Lớp ảnh (their own controls, regrouped)
 const ccGroup=(title,...rows)=>el('div',{className:'cc-group'},el('div',{className:'cc-head',textContent:title}),...rows.filter(Boolean));
@@ -198,7 +205,7 @@ function ccOverlay(){const body=$('sec-overlay').querySelector('.dub-sec-body');
  const panel=el('div',{className:'cc-panel'},
   ccGroup('Thư viện overlay',body.querySelector('.result-actions'),$('dub-ov-bulk'),$('dub-ov-list'),$('dub-ov-note')),
   ccGroup('Hòa trộn',ccRow('Chế độ',ccBare('dub-ov-blend')),ccRow('Độ mờ',ccBare('dub-ov-opacity'))),
-  ccGroup('Thời gian',ccRow('Số overlay',ccBare('dub-ov-count')),ccRow('Thời gian',ccBare('dub-ov-timing'))),
+  ccGroup('Thời gian',ccRow('Thời gian',ccBare('dub-ov-timing')),ccRow('',el('small',{className:'helper',textContent:'Mỗi lúc chỉ 1 overlay (không chồng lên nhau). Overlay ngắn hơn video thì ghép nối thêm overlay ngẫu nhiên khác cho đủ; dài hơn thì cắt bằng video.'}))),
   // Căn chỉnh like CapCut's "Biến đổi"; dragging on the preview works while this section is open
   ccGroup('Căn chỉnh',ccRow('Kiểu',ccSeg('dub-ov-fit',[['cover','Lấp đầy','Phủ kín khung của overlay, cắt phần thừa'],['contain','Vừa khung','Hiện trọn overlay, không cắt']])),
    ccRow('Thu phóng',ccBare('dub-ov-scale')),ccRow('Vị trí',labelled('X',ccBare('dub-ov-x')),labelled('Y',ccBare('dub-ov-y'))),ccRow('Căn',$('dub-ov-align')),

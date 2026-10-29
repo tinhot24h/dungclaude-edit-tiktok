@@ -40,8 +40,8 @@ ${section('adjust','🎚','Điều chỉnh màu',`<input id="dub-adj-on" type="c
 ${section('overlay','✨','Overlay ngẫu nhiên',`<label class="check-row"><input id="dub-overlay" type="checkbox"> Thêm overlay ngẫu nhiên vào mỗi video <small>(không bắt buộc)</small></label>
  <div class="result-actions"><label class="outline-action small-action file-button">＋ Thêm file overlay<input id="dub-ov-files" type="file" accept="video/*,image/png,image/gif,image/webp,image/jpeg" multiple hidden></label><button type="button" id="dub-ov-local" class="primary-action small-action" title="Đọc overlay ngay trên máy, không phải tải lên">📂 Thư mục overlay trên máy</button><label hidden class="outline-action small-action file-button">⬆ Tải thư mục lên<input id="dub-ov-folder" type="file" webkitdirectory multiple hidden></label></div>
  <div class="dub-bulkbar" id="dub-ov-bulk"><button type="button" data-b="all">☑ Chọn tất cả</button><button type="button" data-b="none">☐ Bỏ chọn tất cả</button><button type="button" data-b="del" class="danger">🗑 Xóa overlay đang chọn</button><button type="button" data-b="wipe" class="danger">🗑 Xóa toàn bộ thư viện</button></div><div id="dub-ov-list" class="dub-ov-list"></div><p class="helper" id="dub-ov-note"></p>
- <div class="two-col"><div><label for="dub-ov-count">Số overlay mỗi video</label><select id="dub-ov-count"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div><div><label for="dub-ov-blend">Hòa trộn</label><select id="dub-ov-blend"><option value="screen">Sáng (screen) · hiệu ứng nền đen</option><option value="normal">Bình thường · theo độ đục</option><option value="key">Tách nền xanh (green screen)</option></select></div></div>
- <div class="two-col"><div><label for="dub-ov-opacity">Độ đục <output id="dub-ov-opacity-value"></output></label><input id="dub-ov-opacity" type="range" min="5" max="100" step="0.1" value="60"></div><div><label for="dub-ov-timing">Thời gian</label><select id="dub-ov-timing"><option value="loop">Suốt video · lặp 1 overlay, cắt khớp</option><option value="sequence">Suốt video · ghép nối nhiều overlay ngẫu nhiên</option><option value="random">Một đoạn ngẫu nhiên</option></select></div></div>
+ <div class="two-col"><div hidden><label for="dub-ov-count">Số overlay mỗi video</label><select id="dub-ov-count"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div><div><label for="dub-ov-blend">Hòa trộn</label><select id="dub-ov-blend"><option value="screen">Sáng (screen) · hiệu ứng nền đen</option><option value="normal">Bình thường · theo độ đục</option><option value="key">Tách nền xanh (green screen)</option></select></div></div>
+ <div class="two-col"><div><label for="dub-ov-opacity">Độ đục <output id="dub-ov-opacity-value"></output></label><input id="dub-ov-opacity" type="range" min="5" max="100" step="0.1" value="60"></div><div><label for="dub-ov-timing">Thời gian</label><select id="dub-ov-timing"><option value="sequence">Suốt video · 1 overlay, thiếu thì ghép thêm ngẫu nhiên</option><option value="loop">Suốt video · lặp lại 1 overlay</option><option value="random">Một đoạn ngẫu nhiên</option></select></div></div>
  <div class="group-label">CĂN CHỈNH OVERLAY <small>· kéo overlay trên khung xem trước khi mục này đang mở, kéo góc để đổi cỡ</small></div>
  <div class="dub-btns" id="dub-ov-fitbtns"><button type="button" data-f="cover" title="Overlay phủ kín khung của nó (cắt phần thừa)">Lấp đầy</button><button type="button" data-f="contain" title="Hiện trọn overlay, không cắt">Vừa khung</button><select id="dub-ov-fit" hidden><option value="cover">Lấp đầy</option><option value="contain">Vừa khung</option></select></div>
  <label for="dub-ov-scale">Thu phóng <output id="dub-ov-scale-value"></output></label><input id="dub-ov-scale" type="range" min="10" max="400" step="0.1" value="100">
@@ -144,7 +144,7 @@ function settings(){const o={};for(const[k,id]of Object.entries(S)){const e=$(id
  for(const k of ['trim_start','trim_end'])o[k]=Math.max(0,Math.min(120,o[k]||0));if(o.image_keep)o.image_h=0;const enc=$('encoder')?.value;o.encoder=enc==='auto'?(window.hardwareEncoder||'cpu'):(enc||'cpu');window.dubProfile?.extend?.(o);return o}
 function apply(o){if(o.subtitles==='burn')o={...o,subtitles:'file'};if(o.rules_saved&&typeof o.instructions==='string')setRules(o.instructions,o.rules_name||'');if(o.image_h===0)o={...o,image_h:null,image_keep:true};for(const[k,id]of Object.entries(S)){if(o[k]==null||(k==='mode'&&o[k]==='design'))continue;const e=$(id);if(e.type==='checkbox')e.checked=!!o[k];else e.value=o[k]}const r=view.querySelector(`[name=dub-bg][value="${o.background}"]`);if(r)r.checked=true;
  if(Array.isArray(o.overlay_ids)){ovAll=!o.overlay_ids.length;ovUse=new Set(o.overlay_ids);drawOverlays()}if(Array.isArray(o.music_ids)){musUse=new Set(o.music_ids);drawMusic()}capStyleButtons();window.dubProfile?.apply?.(o);window.exportMetaRefresh?.();if($('dub-dict-pick'))dictOptions(dictList);labels();preview();if($('dub-out-text'))runNote()}
-function remember(){try{localStorage.setItem(storeKey(),JSON.stringify({...settings(),instructions:undefined,_v:3}))}catch{}labels()}
+function remember(){try{localStorage.setItem(storeKey(),JSON.stringify({...settings(),instructions:undefined,_v:4}))}catch{}labels()}
 const pct=v=>(v>0?'+':'')+v+'%';
 // X/Y of the video, the image layer and the video overlay are typed in pixels of the exported video (the range keeps
 // the stored value: frame_x/y = % of half the frame, image/overlay = % of the frame). ↑/↓ in the box = 1 px.
@@ -172,7 +172,7 @@ function labels(){setTimeout(()=>window.dubProfile?.labels?.());syncNumbers();ca
  const n=files.length,styles=$('dub-style').selectedOptions[0]?.textContent||'',bg=BG.find(b=>b[0]===o.background)?.[1]||'';
  t('sum-input',editing?`✎ sửa ${editing.items.length} video`:n?`${n} video${files.some(f=>f.srt)?' · có SRT':''}`:'chưa chọn');
  t('sum-frame',[o.trim_start||o.trim_end?`cắt ${o.trim_start}s đầu · ${o.trim_end}s cuối`:'',o.frame_canvas==='source'?'khung gốc':o.frame_canvas,o.frame_zoom!==100?`zoom ${o.frame_zoom}%`:'',o.frame_rotate?`xoay ${o.frame_rotate}°`:'',o.frame_flip!=='none'?'lật':''].filter(Boolean).join(' · '));
- t('sum-overlay',o.overlay?`${o.overlay_count} overlay · ${({screen:'sáng',normal:'thường',key:'tách nền xanh'})[o.overlay_blend]} ${o.overlay_opacity}% · ${ovAll?'tất cả '+overlays.length:ovUse.size+' đã chọn'}`:'tắt · không bắt buộc');
+ t('sum-overlay',o.overlay?`${({sequence:'1 overlay + ghép',loop:'1 overlay lặp',random:'1 đoạn'})[o.overlay_timing]||'1 overlay'} · ${({screen:'sáng',normal:'thường',key:'tách nền xanh'})[o.overlay_blend]} ${o.overlay_opacity}% · ${ovAll?'tất cả '+overlays.length:ovUse.size+' đã chọn'}`:'tắt · không bắt buộc');
  t('sum-translate',`${styles} · ${o.mode==='paragraph'?'đoạn văn, 1 file':'từng câu'} · ${o.rate} tiếng/s`);
  t('sum-voice',`${$('dub-voice-note').dataset.name||o.voice_id||'chưa chọn giọng'} · ${({auto:'giữ tốc độ',voice:'MP3 khớp video',video:'video khớp MP3'})[o.align]}`);
  {const a=[['sáng',o.adjust_brightness],['tương phản',o.adjust_contrast],['bão hòa',o.adjust_saturation],['sắc nét',o.adjust_sharpen]].filter(([,v])=>v);t('sum-adjust',!o.adjust?'tắt':a.length?a.map(([n,v])=>`${n} ${v>0?'+':''}${v}`).join(' · '):'bật · chưa chỉnh')}
@@ -194,7 +194,7 @@ request('/dub/capabilities').then(d=>{caps=d;setTimeout(loadBalance,500);$('dub-
  // 0.16: one-click automatic run by default — older saved settings had the review pause switched on
  if(!(saved._v>=2)){delete saved.review;delete saved.align;saved._v=2}
  // 0.17.7: speed limits 0.98–1.1× voice / 0.85–1.2× video replace the old 1.3× maximum
- if(!(saved._v>=3)){delete saved.max_tempo;saved._v=3}apply({...d.defaults,...saved});
+ if(!(saved._v>=3)){delete saved.max_tempo;saved._v=3}if(!(saved._v>=4)){if(saved.overlay_timing==='loop')saved.overlay_timing='sequence';saved.overlay_count=1;saved._v=4}apply({...d.defaults,...saved});
  demucsState({available:d.demucs,state:'idle'});models=d.models||[];drawModels();if(!$('dub-voice').value)pickVoice(true);labels();alignNote()}).catch(e=>say(e.message));
 // 0.22: "Dựng video" and "Lồng tiếng" became one tab; their saved settings are merged once
 function mergedOld(){const read=k=>{try{return JSON.parse(localStorage.getItem(k)||'{}')||{}}catch{return {}}},dub=read(STORE0),build=read(STORE0+'-design'),out={...dub};
@@ -703,9 +703,15 @@ function paragraphDetail(job,box,editable,video){const area=el('textarea',{class
  box.replaceChildren(detailHead(job,`${job.segments.length} câu gốc · ${time(job.duration)} · 1 file giọng${job.video_stretch&&job.video_stretch!==1?` · video ×${job.video_stretch}`:job.groups?.[0]?.tempo&&job.groups[0].tempo!==1?` · giọng ×${job.groups[0].tempo}`:''}`),video,el('div',{className:'dub-para'},el('div',{},el('div',{className:'group-label',textContent:'LỜI GỐC'}),zh),el('div',{},el('div',{className:'group-label',textContent:'ĐOẠN VĂN TIẾNG VIỆT · ĐỌC THÀNH 1 FILE'}),area,count,...(lines.length?[el('div',{className:'group-label',textContent:'PHỤ ĐỀ THEO GIỌNG ĐỌC'}),el('div',{className:'dub-subs'},...lines)]:[]))),tools)}
 
 // ---- source video position: 9-point align (edges of the scaled video on the frame edges) and drag on the preview
-function videoBox(o){const[W,H]=lastWH,vw=fg.videoWidth||W,vh=fg.videoHeight||H,z=o.frame_zoom/100,k=(o.frame_fit==='cover'?Math.max(W/vw,H/vh):Math.min(W/vw,H/vh))*z;let bw=vw*k,bh=vh*k;
- if(Math.abs((((o.frame_rotate%180)+180)%180)-90)<1)[bw,bh]=[bh,bw];return[bw,bh,W,H]}
+// size on screen of a w×h box turned by deg (the align buttons put that outline against the frame's edges)
+function turnedBox(w,h,deg){const r=deg*Math.PI/180,c=Math.abs(Math.cos(r)),s=Math.abs(Math.sin(r));return[w*c+h*s,w*s+h*c]}
+// the video as the export draws it: "Lấp đầy" = a box of frame × zoom (cut to it), "Giữ toàn bộ"/"Nền mờ" = the
+// whole picture fitted in that box; then the rotation
+function videoBox(o){const[W,H]=lastWH,vw=fg.videoWidth||W,vh=fg.videoHeight||H,z=o.frame_zoom/100,e=o.edge_trim||0;
+ const fit=o.frame_fit!=='cover'&&window.nearFit?.(vw-2*e,vh-2*e,W,H)?'cover':o.frame_fit;let bw=W*z,bh=H*z;
+ if(fit!=='cover'){const k=Math.min(W/vw,H/vh)*z;bw=vw*k;bh=vh*k}[bw,bh]=turnedBox(bw,bh,o.frame_rotate);return[bw,bh,W,H]}
 $('dub-frame-align').onclick=e=>{const b=e.target.closest('button');if(!b)return;const o=settings(),[bw,bh,W,H]=videoBox(o),a=b.dataset.a;
+ if(a!=='cc'&&Math.abs(bw-W)<1&&Math.abs(bh-H)<1)say('Video đang vừa khít khung xuất nên căn mép không đổi gì: giảm/tăng Tỷ lệ hoặc chọn "Giữ toàn bộ" rồi căn.');
  setNum('dub-x',a[0]==='l'?(bw-W)/W*100:a[0]==='r'?(W-bw)/W*100:0);setNum('dub-y',a[1]==='t'?(bh-H)/H*100:a[1]==='b'?(H-bh)/H*100:0);imgChanged()};
 $('dub-frame').addEventListener('pointerdown',e=>{if(!cur()||e.target.closest('#dub-imgbox,#dub-ovbox')||e.button)return;e.preventDefault();const frame=$('dub-frame'),box=frame.getBoundingClientRect(),start=settings(),x0=e.clientX,y0=e.clientY;frame.setPointerCapture(e.pointerId);frame.classList.add('moving');
  const move=ev=>{let nx=start.frame_x+(ev.clientX-x0)/box.width*200,ny=start.frame_y+(ev.clientY-y0)/box.height*200;if(Math.abs(nx)<2)nx=0;if(Math.abs(ny)<2)ny=0;setNum('dub-x',nx);setNum('dub-y',ny);syncNumbers();labels();preview()};
@@ -716,7 +722,7 @@ const imgMeta=()=>images.find(x=>x.id===$('dub-img-pick').value);
 const BLEND_CSS={normal:'normal',darken:'darken',multiply:'multiply',burn:'color-burn',lighten:'lighten',screen:'screen',dodge:'color-dodge',addition:'plus-lighter',overlay:'overlay',softlight:'soft-light',hardlight:'hard-light',difference:'difference',exclusion:'exclusion'};
 function imgRatioH(w){const m=imgMeta(),[W,H]=lastWH;return m?w*W*m.height/(m.width*H):w}  // height % of the frame that keeps the picture's ratio
 function imgRatioW(h){const m=imgMeta(),[W,H]=lastWH;return m?h*H*m.width/(m.height*W):h}
-function setNum(id,v){const e=$(id);e.value=String(Math.round(Math.min(+e.max,Math.max(+e.min,v))*10)/10)}
+function setNum(id,v){const e=$(id),c=Math.min(+e.max,Math.max(+e.min,v));if(PX[id]){const k=pxPer(id);e.value=String(Math.round(c*k)/k);return}e.value=String(Math.round(c*10)/10)}
 function imgChanged(){syncNumbers();remember();preview()}
 function keepSync(from){if(!$('dub-img-keep').checked)return;if(from==='h')setNum('dub-img-w',imgRatioW(+$('dub-img-h').value));else setNum('dub-img-h',imgRatioH(+$('dub-img-w').value))}
 $('dub-img-w').addEventListener('input',()=>keepSync('w'));$('dub-img-h').addEventListener('input',()=>keepSync('h'));$('dub-img-keep').addEventListener('change',()=>keepSync('w'));
@@ -806,7 +812,7 @@ $('dub-img-fit').onclick=e=>{const b=e.target.closest('button');if(!b||!needImag
  if(fit==='stretch'){$('dub-img-keep').checked=false;setNum('dub-img-w',100);setNum('dub-img-h',100)}
  else{$('dub-img-keep').checked=true;const k=fit==='native'?1:fit==='contain'?Math.min(W/m.width,H/m.height):Math.max(W/m.width,H/m.height);setNum('dub-img-w',m.width*k/W*100);setNum('dub-img-h',m.height*k/H*100)}
  if(fit!=='native'){setNum('dub-img-x',0);setNum('dub-img-y',0)}imgChanged()};
-$('dub-img-align').onclick=e=>{const b=e.target.closest('button');if(!b||!needImage())return;const o=settings(),w=o.image_w,h=o.image_keep?imgRatioH(w):o.image_h,a=b.dataset.a;
+$('dub-img-align').onclick=e=>{const b=e.target.closest('button');if(!b||!needImage())return;const o=settings(),[W,H]=lastWH,[tw,th]=turnedBox(o.image_w*W/100,(o.image_keep?imgRatioH(o.image_w):o.image_h)*H/100,o.image_rotate),w=tw/W*100,h=th/H*100,a=b.dataset.a;
  setNum('dub-img-x',a[0]==='l'?w/2-50:a[0]==='r'?50-w/2:0);setNum('dub-img-y',a[1]==='t'?h/2-50:a[1]==='b'?50-h/2:0);imgChanged()};
 // on each button: the CapCut panel moves them out of #dub-img-turn
 for(const b of $('dub-img-turn').querySelectorAll('button'))b.onclick=()=>{if(!needImage())return;const d=+b.dataset.r,v=d?((+$('dub-img-rot').value+d+540)%360)-180:0;setNum('dub-img-rot',v);imgChanged()};
@@ -821,8 +827,8 @@ $('dub-imgbox').addEventListener('pointerdown',e=>{e.preventDefault();e.stopProp
 // ---- Căn chỉnh overlay: fit, align, turn, reset, drag & resize on the preview
 function ovChanged(){syncNumbers();labels();remember();preview()}
 $('dub-ov-fitbtns').onclick=e=>{const b=e.target.closest('button');if(!b)return;$('dub-ov-fit').value=b.dataset.f;ovChanged()};
-$('dub-ov-align').onclick=e=>{const b=e.target.closest('button');if(!b)return;const w=+$('dub-ov-scale').value,a=b.dataset.a;
- setNum('dub-ov-x',a[0]==='l'?w/2-50:a[0]==='r'?50-w/2:0);setNum('dub-ov-y',a[1]==='t'?w/2-50:a[1]==='b'?50-w/2:0);ovChanged()};
+$('dub-ov-align').onclick=e=>{const b=e.target.closest('button');if(!b)return;const o=settings(),[W,H]=outWH(),[tw,th]=turnedBox(W*o.overlay_scale/100,H*o.overlay_scale/100,o.overlay_rotate),w=tw/W*100,h=th/H*100,a=b.dataset.a;
+ setNum('dub-ov-x',a[0]==='l'?w/2-50:a[0]==='r'?50-w/2:0);setNum('dub-ov-y',a[1]==='t'?h/2-50:a[1]==='b'?50-h/2:0);ovChanged()};
 for(const b of $('dub-ov-turn').querySelectorAll('button[data-r]'))b.onclick=()=>{const d=+b.dataset.r,v=d?((+$('dub-ov-rot').value+d+540)%360)-180:0;setNum('dub-ov-rot',v);ovChanged()};
 $('dub-ov-reset').onclick=()=>{setNum('dub-ov-scale',100);for(const id of ['dub-ov-x','dub-ov-y','dub-ov-rot'])setNum(id,0);$('dub-ov-flip').value='none';$('dub-ov-fit').value='cover';ovChanged()};
 $('sec-overlay').addEventListener('toggle',()=>preview());

@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.37.0",
- "notes": "## Mới trong 0.37.0\n\n- **Vị trí X/Y tính bằng px, chỉ dịch chuyển:** ở *Cắt & vị trí video*, *Lớp ảnh* và *Video overlay*, ô X / Y giờ là ô số có đuôi **px** (giống Biến đổi của tiêu đề / nội dung), tính theo pixel của video xuất (vd 1080×1920). 0 = chính giữa, số âm = sang trái / lên trên. Trong ô: ↑/↓ = 1 px, Shift + ↑/↓ = 10 px.\n- **Vị trí không còn kiêm zoom:** trước đây đổi X/Y của video thì app tự phóng to video để che viền đen, nên trông như bị zoom. Giờ X/Y chỉ dời video theo trục đúng số px; phần lộ ra ở mép là nền (đen hoặc nền mờ). Muốn phủ kín thì tăng **Tỷ lệ** (zoom) riêng. Xoay vẫn tự phủ kín các góc như cũ.",
+ "version": "0.38.0",
+ "notes": "## Mới trong 0.38.0\n\n- **Video overlay không còn chồng lên nhau:** mỗi lúc chỉ 1 overlay. Overlay ngắn hơn video thì **ghép nối thêm overlay ngẫu nhiên** phía sau cho đủ (không lặp lại, không chồng), dài hơn thì cắt bằng video. Bỏ ô \"Số overlay mỗi video\"; cài đặt cũ 2–3 overlay hoặc \"lặp 1 overlay\" được chuyển sang cách mới (vẫn chọn lại \"lặp\" được ở *Thời gian*).\n- **Rà lại toàn bộ nút căn:**\n  - Video (*Cắt & vị trí video*): căn đúng mép khi video khác tỷ lệ khung (vd 4:3, 16:9 vào 9:16), khi \"Giữ toàn bộ\" / \"Nền mờ\" và khi xoay bất kỳ góc nào. Video đang vừa khít khung thì báo cần đổi Tỷ lệ thay vì im lặng.\n  - Video trong chế độ thiết kế: các nút Căn trái / phải / trên / dưới / giữa tính theo hình thật đang hiện (kể cả \"Giữ toàn bộ hình\" và xoay), trước đây video 16:9 bấm \"Căn trên\" không nhúc nhích.\n  - Lớp ảnh và video overlay: lưới căn 9 điểm tính cả góc xoay.\n  - Căn dọc Trên / Giữa / Dưới của chữ: khi Cao = 0 (hộp vừa khít chữ) nút mờ đi và bấm vào sẽ chỉ cách (nhập Cao, hoặc dùng ⤒ ở Căn khung) thay vì như bị hỏng.\n  - Kết quả căn được làm tròn đúng từng px của video xuất.",
  "files": {
   "ffmpeg_setup.py": {
    "sha256": "f66eb85abf503510412af3b364a9e5e10558cc92a8caa4153aa07bbc44a227ab",
@@ -24,8 +24,8 @@
    "size": 4185
   },
   "video_tools.js": {
-   "sha256": "217dc997759d9b7b26fccfb7abaa35ebf82b5eb333f816dc83fcf67b06781706",
-   "size": 4542
+   "sha256": "bfb530363a3f15a63cc8c541fd9a18ea22fc684207007cb2167abf4747fac9cd",
+   "size": 5003
   },
   "tests/test_batch.py": {
    "sha256": "17e1d5331bdb1b717fe7c5068eaf0c3e11089252d3e93dd76b485b8112efbbb0",
@@ -44,8 +44,8 @@
    "size": 25049
   },
   "design_tab.js": {
-   "sha256": "c1844efe330921bd7f3eed52365cc1c8f435b2c17abc2a2ea75013f967748943",
-   "size": 41872
+   "sha256": "3a992ccac8843607509e8f9e7f25ff464432e8c5cbcb34cc8b591a927a07e4f1",
+   "size": 43236
   },
   "local_files.js": {
    "sha256": "b9a975e980db7f5f013f6046d58228fb39817b6959e8caaf9505c4ba3cc898a7",
@@ -72,8 +72,8 @@
    "size": 5181
   },
   "dub_ui.js": {
-   "sha256": "b212b145ebe94708c1b3c182f53e8c686c661b1004896e21d0dd5bcae95d5905",
-   "size": 176099
+   "sha256": "d8addd02b4ee7bd49c26c0dc6df48572085f63ca2a8333f80e26d4d8c5944f34",
+   "size": 177256
   },
   "key_ui.js": {
    "sha256": "4c1833943a21476f6e515115af555c36a4d763bbc5c1122f111cad0a5065574d",
@@ -84,12 +84,12 @@
    "size": 2610
   },
   "dubbing.py": {
-   "sha256": "2454ec5f51ec45e457f0088a03e60c638a49c6c700af9f05733297ba452b8a41",
-   "size": 212449
+   "sha256": "b0c7491eb9dad14c534b4b3de109d3fc1f12351984b0383b8c54ca915628fcc6",
+   "size": 212676
   },
   "tests/test_dubbing.py": {
-   "sha256": "8cfe463e82cae6857f9073341b8c4422f1d3174b2162f366d8b1801342e2fc14",
-   "size": 52744
+   "sha256": "8cfed9a4e9864a8e0341fdb2ea88e0def7e5a977eabe87d8414bb60f0563794e",
+   "size": 52852
   },
   "image_ui.js": {
    "sha256": "ef72d2cff35041a912eb2994e80bcf90082ab5f0a478c915f2b143f67ed81bae",
@@ -156,8 +156,8 @@
    "size": 13467
   },
   "studio.css": {
-   "sha256": "17ffc13591bd2dfbffa5409cd31d766784aed93b96d95c93d61ed8ec0e42068a",
-   "size": 107948
+   "sha256": "7f84c03565f618b8aa5d195ecb67242dc707612632db750cb648312e466a0698",
+   "size": 108091
   },
   "studio.js": {
    "sha256": "e2ebb2f8bb72ba3bee02faa67609c6859a96a3ad16be04fe28e6aba60519f7bc",
@@ -172,7 +172,7 @@
    "size": 6858
   },
   "index.html": {
-   "sha256": "863a8c4c26c23cf1dc03dfbe64d156ddad858e66921bdc7832580c9cf5963e52",
+   "sha256": "7b6710aae64f463311f148f8236bb7056c2c677596a4f185f0d29cc01b6e6622",
    "size": 24220
   },
   "launch.py": {
@@ -188,15 +188,15 @@
    "size": 1411
   },
   "HUONG_DAN.txt": {
-   "sha256": "1019685c40dafc6adc538cc6512c6d8f073ecf213bc027e7eeb79034cb2d487e",
-   "size": 15249
+   "sha256": "aab17c8bdfd1c298ceef189aada01874f1a553a2c19f22d5e2d33fedba1dbbec",
+   "size": 15506
   },
   "README.md": {
-   "sha256": "4747773a27598dfed1bd75ea6ed6b0365a3134d4d6f6def8e26291ae8c8e6cb0",
-   "size": 37123
+   "sha256": "490edab6ebd6beab9f682eaf1721ae71921df0995c48f9c4d13edebfbd6fe1a4",
+   "size": 38502
   },
   "VERSION": {
-   "sha256": "f1a49cdeb0cce1d8c2d7cde8b8ae660a88ddd2fe44f9e8c2aac95b5d4dad6105",
+   "sha256": "8ca1b0be262e3278f47eb53b592f649318b926a5ce9d6a4ceca65ce4e8be8629",
    "size": 7
   },
   ".gitignore": {

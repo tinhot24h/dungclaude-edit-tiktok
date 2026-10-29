@@ -6,15 +6,20 @@ const edit=window.editorState;
 const el=(tag,props={},...children)=>{const e=Object.assign(document.createElement(tag),props);e.append(...children);return e};
 {const sec=$('section-video'),N=id=>Number($(id).value)||0,design=window.studioApi;
  const set=values=>{for(const[k,v]of Object.entries(values)){const e=$(k);if(!e)continue;e.value=typeof v==='number'?Math.round(Math.max(Number(e.min||-1e9),Math.min(Number(e.max||1e9),v))*10)/10:v}design.schedule();window.appHistory?.checkpoint()};
- // what is drawn: W×H scaled by zoom around the box centre; aligning moves the box so the drawn video touches the edge
- const shown=()=>{const z=N('video_zoom')/100||1,w=N('video_width'),h=N('video_height');return {z,w,h,dw:w*z,dh:h*z,ox:w*(1-z)/2,oy:h*(1-z)/2}};
  const source=()=>{const v=edit.current();return v&&v.width&&v.height?v.width/v.height:9/16};
+ // what is seen: the box W×H scaled by zoom around its centre; "Giữ toàn bộ hình" shows the whole picture inside it
+ // (smaller than the box when the shapes differ), then the rotation. Aligning puts that outline against the edge:
+ // dw×dh = its size on screen, ox/oy = video_x/y that puts its left/top edge at 0.
+ const shown=()=>{const z=N('video_zoom')/100||1,w=N('video_width'),h=N('video_height');let pw=w*z,ph=h*z;
+  if($('video_fit')?.value==='contain'&&!window.nearFit?.(source(),1,pw/ph,1)){const r=source();if(pw/ph>r)pw=ph*r;else ph=pw/r}
+  const t=N('video_rotation')*Math.PI/180,c=Math.abs(Math.cos(t)),sn=Math.abs(Math.sin(t)),dw=pw*c+ph*sn,dh=pw*sn+ph*c;
+  return {z,w,h,dw,dh,ox:(dw-w)/2,oy:(dh-h)/2}};
  const group=(title,...buttons)=>el('div',{className:'video-tools'},el('div',{className:'group-label',textContent:title}),el('div',{className:'frame-tools'},...buttons));
  const btn=(text,title,fn)=>{const b=el('button',{type:'button',textContent:text,title,ariaLabel:title});b.onclick=fn;return b};
  const align=group('CĂN CHỈNH TRÊN KHUNG HÌNH',
-  btn('⇤','Căn trái',()=>{const s=shown();set({video_x:-s.ox})}),btn('↔','Căn giữa ngang',()=>{const s=shown();set({video_x:(720-s.dw)/2-s.ox})}),btn('⇥','Căn phải',()=>{const s=shown();set({video_x:720-s.dw-s.ox})}),
-  btn('⤒','Căn trên',()=>{const s=shown();set({video_y:-s.oy})}),btn('↕','Căn giữa dọc',()=>{const s=shown();set({video_y:(1280-s.dh)/2-s.oy})}),btn('⤓','Căn dưới',()=>{const s=shown();set({video_y:1280-s.dh-s.oy})}),
-  btn('⊕ Giữa khung','Đặt video vào chính giữa khung hình',()=>{const s=shown();set({video_x:(720-s.dw)/2-s.ox,video_y:(1280-s.dh)/2-s.oy})}));
+  btn('⇤','Căn trái',()=>{const s=shown();set({video_x:s.ox})}),btn('↔','Căn giữa ngang',()=>{const s=shown();set({video_x:(720-s.dw)/2+s.ox})}),btn('⇥','Căn phải',()=>{const s=shown();set({video_x:720-s.dw+s.ox})}),
+  btn('⤒','Căn trên',()=>{const s=shown();set({video_y:s.oy})}),btn('↕','Căn giữa dọc',()=>{const s=shown();set({video_y:(1280-s.dh)/2+s.oy})}),btn('⤓','Căn dưới',()=>{const s=shown();set({video_y:1280-s.dh+s.oy})}),
+  btn('⊕ Giữa khung','Đặt video vào chính giữa khung hình',()=>{const s=shown();set({video_x:(720-s.dw)/2+s.ox,video_y:(1280-s.dh)/2+s.oy})}));
  const fit=group('KÍCH THƯỚC NHANH',
   btn('Lấp đầy 9:16','Phủ kín khung 720×1280, cắt phần thừa',()=>{$('video-lock').checked=true;set({video_x:0,video_y:0,video_width:720,video_height:1280,video_zoom:100,video_fit:'cover'})}),
   btn('Giữ toàn bộ hình','Hiện đủ khung hình gốc, viền trống nếu khác tỷ lệ',()=>set({video_x:0,video_y:0,video_width:720,video_height:1280,video_zoom:100,video_fit:'contain'})),

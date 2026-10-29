@@ -4,6 +4,16 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.38.0
+
+- **Video overlay không còn chồng lên nhau:** mỗi lúc chỉ 1 overlay. Overlay ngắn hơn video thì **ghép nối thêm overlay ngẫu nhiên** phía sau cho đủ (không lặp lại, không chồng), dài hơn thì cắt bằng video. Bỏ ô "Số overlay mỗi video"; cài đặt cũ 2–3 overlay hoặc "lặp 1 overlay" được chuyển sang cách mới (vẫn chọn lại "lặp" được ở *Thời gian*).
+- **Rà lại toàn bộ nút căn:**
+  - Video (*Cắt & vị trí video*): căn đúng mép khi video khác tỷ lệ khung (vd 4:3, 16:9 vào 9:16), khi "Giữ toàn bộ" / "Nền mờ" và khi xoay bất kỳ góc nào. Video đang vừa khít khung thì báo cần đổi Tỷ lệ thay vì im lặng.
+  - Video trong chế độ thiết kế: các nút Căn trái / phải / trên / dưới / giữa tính theo hình thật đang hiện (kể cả "Giữ toàn bộ hình" và xoay), trước đây video 16:9 bấm "Căn trên" không nhúc nhích.
+  - Lớp ảnh và video overlay: lưới căn 9 điểm tính cả góc xoay.
+  - Căn dọc Trên / Giữa / Dưới của chữ: khi Cao = 0 (hộp vừa khít chữ) nút mờ đi và bấm vào sẽ chỉ cách (nhập Cao, hoặc dùng ⤒ ở Căn khung) thay vì như bị hỏng.
+  - Kết quả căn được làm tròn đúng từng px của video xuất.
+
 ## Mới trong 0.37.0
 
 - **Vị trí X/Y tính bằng px, chỉ dịch chuyển:** ở *Cắt & vị trí video*, *Lớp ảnh* và *Video overlay*, ô X / Y giờ là ô số có đuôi **px** (giống Biến đổi của tiêu đề / nội dung), tính theo pixel của video xuất (vd 1080×1920). 0 = chính giữa, số âm = sang trái / lên trên. Trong ô: ↑/↓ = 1 px, Shift + ↑/↓ = 10 px.

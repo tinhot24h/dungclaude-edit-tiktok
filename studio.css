@@ -892,3 +892,4 @@ details.cc-group>summary.cc-head{cursor:pointer;margin:0}details.cc-group[open]>
 .dub-range.dub-pxrow input[type=range]{display:none}
 .dub-range.dub-pxrow .dub-numbox{flex:1;width:auto!important;background:transparent;border:0;padding:9px;min-width:0}
 .cc-bare.dub-range.dub-pxrow{min-width:110px}
+.cc-seg.cc-dim button{opacity:.45}.cc-flash{outline:2px solid var(--accent);outline-offset:2px;border-radius:7px;transition:outline-color .3s}

@@ -67,6 +67,10 @@ khi mở app (đặt REVIEW_KEEP_DAYS=0 để tắt), trừ video còn trong hà
 Chỉ dùng trên máy này. Chưa gọi thử OpenAI / ai33 thật, NVENC và ghi Tags của Windows
 trên máy thật: hãy chạy thử 1–2 video trước khi chạy lô lớn.
 
+NÂNG CẤP 0.38.0
+- Overlay: mỗi lúc 1 overlay, thiếu thời lượng thì ghép nối thêm overlay ngẫu nhiên (không chồng lên nhau).
+- Sửa các nút căn của video, lớp ảnh, overlay, chữ (khác tỷ lệ, giữ toàn bộ, xoay).
+
 NÂNG CẤP 0.37.0
 - Vị trí X/Y của video, lớp ảnh, overlay nhập bằng px (theo video xuất); X/Y chỉ dời hình, không còn tự zoom. Zoom chỉnh riêng ở Tỷ lệ.
 

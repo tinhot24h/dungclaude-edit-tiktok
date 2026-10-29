@@ -298,7 +298,8 @@ class FrameOverlayTests(PipelineBase):
                          overlay=True,overlay_count=2,overlay_blend='screen',overlay_timing='random',overlay_opacity=50,end_with_voice=False)
             self.store.process(job,dict(openai='sk',ai33='k'),threading.Event())
         self.assertEqual(job['state'],'done',job['message'])
-        self.assertEqual(sorted(o['id'] for o in job['overlays']),sorted([sparkle['id'],logo['id']]))
+        # one overlay at a time since 0.38: an old "2 overlays" setting no longer stacks them
+        self.assertEqual(len(job['overlays']),1);self.assertIn(job['overlays'][0]['id'],(sparkle['id'],logo['id']))
         out=self.data/'dub'/job['id']/'dubbed.mp4';info=dubbing.probe(out)
         self.assertEqual((info['video']['width'],info['video']['height']),(1080,1920));self.assertAlmostEqual(info['duration'],4,delta=.2)
         graph=(self.data/'dub'/job['id']/'export.ffgraph').read_text()
