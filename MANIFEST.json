@@ -1,15 +1,15 @@
 {
  "app": "ReviewStudio",
- "version": "0.27.4",
- "notes": "## Mới trong 0.27.4\n\n- **Sửa lỗi \"UnicodeEncodeError: 'charmap' codec…\" khi ghi thông tin file:** bước ghi của Windows in thông báo tiếng Việt ra cửa sổ lệnh không hỗ trợ chữ có dấu nên bị lỗi và che mất tên trường bị từ chối. Nay luôn in UTF-8: hàng đợi báo đúng \"Windows chưa ghi được: <tên trường> (lý do)\", các trường khác vẫn được lưu.",
+ "version": "0.27.5",
+ "notes": "## Mới trong 0.27.5\n\n- **Hết góc đen / viền mờ khi xoay video:** ở chế độ \"Lấp đầy · cắt viền\", xoay nhẹ (vd 0,5°) cộng với dịch X/Y làm lộ góc đen dù đã zoom 103%. Nay app tự phóng thêm vừa đủ (thường chỉ 0,5–2%) để video luôn phủ kín khung, kể cả mép mờ do xoay; áp dụng cho cả \"Khung xuất\" ở tab Lồng tiếng và video trong mẫu thiết kế, xem trước khớp với bản xuất. Video bạn chủ động thu nhỏ hơn khung vẫn giữ nguyên.",
  "files": {
   "video_tools.js": {
    "sha256": "217dc997759d9b7b26fccfb7abaa35ebf82b5eb333f816dc83fcf67b06781706",
    "size": 4542
   },
   "tests/test_batch.py": {
-   "sha256": "0bde03ee1025867da84b4628bd76eda34764db55c4fc4c6f7d7671e18c9e06ee",
-   "size": 10472
+   "sha256": "e526bb244b11b05842364a9a9d4868e5eaa756ed228cfe6fc0ce44793d69c0e2",
+   "size": 12493
   },
   "win_meta.py": {
    "sha256": "228d18deb126f8965807b7c3a7d2249007da30d88f3a6bbf04493deb52b989a8",
@@ -52,8 +52,8 @@
    "size": 5181
   },
   "dub_ui.js": {
-   "sha256": "8b691869d030185933457b285ea6347c4912f180ce63fa459178507b9c7f531e",
-   "size": 122533
+   "sha256": "5766abe99ce95fe28bd65f219db68ff7c4c7d137d0fb32df80ce75eac44863f2",
+   "size": 122770
   },
   "key_ui.js": {
    "sha256": "4c1833943a21476f6e515115af555c36a4d763bbc5c1122f111cad0a5065574d",
@@ -64,8 +64,8 @@
    "size": 2610
   },
   "dubbing.py": {
-   "sha256": "df992186cd27c3c524ebd32a1ff10d4e31c6a84562be4401b500b0641e8dc8e7",
-   "size": 180364
+   "sha256": "18c02a3556195b0aab2ced81555a5eede54bab4a24dbdb7425c4897fa3b286a6",
+   "size": 181761
   },
   "tests/test_dubbing.py": {
    "sha256": "8cd68822606b18a8d11370683c39d369b81556379a4903d3f16801661a6591cd",
@@ -108,8 +108,8 @@
    "size": 21185
   },
   "editor_ui.js": {
-   "sha256": "a3a1235938349bbb0358b74141f92c4d4625f00c2ff8ec4b914a25aa454591eb",
-   "size": 39085
+   "sha256": "ea15dee7ba61e2dff83dedbfb8c86a549df03ad9c8ecce91fb9fffb41827ff5f",
+   "size": 39701
   },
   "tests/test_media_engine.py": {
    "sha256": "dd2e3b438d4df3b407ef3bb1df1ea6887ebf1c21d2806f4280b38d421ba673fe",
@@ -152,7 +152,7 @@
    "size": 5352
   },
   "index.html": {
-   "sha256": "07e8ef44422d82d42f10b8f555169e95a605953071491a682bc39328da192e8b",
+   "sha256": "5a4c3a50cd8f84da5262146ba2f4cf3a9d67de3e8d185fa89294df84427c23f6",
    "size": 24079
   },
   "launch.py": {
@@ -168,15 +168,15 @@
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "b8b6655777d0efc63a21b8aa4a682caaef269739b51164baf07fdeb5fedc2299",
-   "size": 9199
+   "sha256": "afaa556e99a6e4e269359bc3cf8bd58d7af4a1edb0b0e8f30597041ec5e54ce1",
+   "size": 9352
   },
   "README.md": {
-   "sha256": "0a5dcad0667bf49e5ed3e8de0bfa1160c9471dedc350b68691c5d6a8f1edbbbb",
-   "size": 14168
+   "sha256": "b773cbfcf97f21682294fb5c4473b9c49e1c0b58fd4901bffc4c32e9c3e0151a",
+   "size": 14710
   },
   "VERSION": {
-   "sha256": "8220e8fed948ca94c8d47bd635dec2025edfb1fbbbb0254a4a7903abeb4d3c52",
+   "sha256": "657223c1c1a140ddf75f93c8e4e242ee51f5460e8f04bb3bb845c4283c272217",
    "size": 7
   },
   ".gitignore": {

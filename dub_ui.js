@@ -324,7 +324,8 @@ function preview(){sel=Math.max(0,Math.min(sel,files.length-1));const ov=pickOve
  if(f?.path&&!f.id){if(!f.importing){f.importing=true;localImport(f).then(()=>preview()).catch(e=>{f.error=e.message;draw()})}}
  else if(f){const key=f.id||f.name+f.file?.size;if(key!==previewKey){previewKey=key;if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl=f.file?URL.createObjectURL(f.file):'';const src=previewUrl||'/media/video/'+f.id;fg.src=src;bgv.src=src}}
  const o=settings(),frame=$('dub-frame'),[W,H]=CANVAS[o.frame_canvas]||[fg.videoWidth||9,fg.videoHeight||16];frame.style.aspectRatio=`${W}/${H}`;
- const box=frame.getBoundingClientRect(),z=o.frame_zoom/100,fx=o.frame_flip.includes('h')?-1:1,fy=o.frame_flip.includes('v')?-1:1;
+ const box=frame.getBoundingClientRect(),fx=o.frame_flip.includes('h')?-1:1,fy=o.frame_flip.includes('v')?-1:1;
+ let z=o.frame_zoom/100;const dx=o.frame_x*box.width/200,dy=o.frame_y*box.height/200;if(o.frame_fit==='cover'&&z>=1&&box.width)z*=window.coverScale(box.width,box.height,box.width*z,box.height*z,box.width/2+dx,box.height/2+dy,o.frame_rotate,box.width/540);
  Object.assign(fg.style,{width:z*100+'%',height:z*100+'%',objectFit:o.frame_fit==='cover'?'cover':'contain',transform:`translate(-50%,-50%) translate(${o.frame_x*box.width/200}px,${o.frame_y*box.height/200}px) rotate(${o.frame_rotate}deg) scale(${fx},${fy})`});
  bgv.hidden=!f||o.frame_fit!=='blur';
  drawImage(o,box,W,H);$('dub-safezone').hidden=!$('dub-safe').checked;

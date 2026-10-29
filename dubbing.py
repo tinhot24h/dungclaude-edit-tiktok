@@ -1070,9 +1070,16 @@ def design_video(design, W, H, stretch=1, duration=0, adjust=(), trim=()):
     background colour → [framed]."""
     scale = W / design_mod.W
     box = design_mod.video_box(design)
-    vw, vh = max(2, round(box['width'] * scale / 2) * 2), max(2, round(box['height'] * scale / 2) * 2)
-    chain = '[0:v:0]' + ''.join(t + ',' for t in trim) + (f'setpts=PTS*{stretch:.6f},' if stretch != 1 else '') + 'fps=30,' + ''.join(a + ',' for a in adjust) + 'format=rgba,'
+    rad = math.radians(float(design.get('video_rotation', 0)))
     fit = design.get('video_fit', 'cover')
+    bx, by, bw, bh = box['x'] * scale, box['y'] * scale, box['width'] * scale, box['height'] * scale
+    if fit == 'cover' and bw >= W - 1 and bh >= H - 1:
+        # a box as big as the frame is meant to fill it: grow it about its centre so a rotation or a small X/Y
+        # offset never shows black corners or strips
+        grow = cover_scale(W, H, bw, bh, bx + bw / 2, by + bh / 2, rad)
+        bx, by, bw, bh = bx - bw * (grow - 1) / 2, by - bh * (grow - 1) / 2, bw * grow, bh * grow
+    vw, vh = max(2, round(bw / 2) * 2), max(2, round(bh / 2) * 2)
+    chain = '[0:v:0]' + ''.join(t + ',' for t in trim) + (f'setpts=PTS*{stretch:.6f},' if stretch != 1 else '') + 'fps=30,' + ''.join(a + ',' for a in adjust) + 'format=rgba,'
     if fit == 'cover':
         chain += f'scale={vw}:{vh}:force_original_aspect_ratio=increase,crop={vw}:{vh},'
     elif fit == 'contain':
@@ -1088,12 +1095,24 @@ def design_video(design, W, H, stretch=1, duration=0, adjust=(), trim=()):
                   f"crop={vw}:{vh}:x='(iw-{vw})/2':y='(ih-{vh})/2',")
     flip = design.get('video_flip', 'none')
     chain += ('hflip,' if 'h' in flip else '') + ('vflip,' if 'v' in flip else '')
-    rad = math.radians(float(design.get('video_rotation', 0)))
     chain += f'rotate={rad:.12f}:ow=rotw({rad:.12f}):oh=roth({rad:.12f}):c=none,setsar=1[clip]'
     color = '0x000000' if design.get('background') == 'none' else design['color'].replace('#', '0x')
-    x, y = box['x'] * scale, box['y'] * scale
+    cx, cy = bx + bw / 2, by + bh / 2
     return [chain, f'color=c={color}:s={W}x{H}:r=30,format=rgba[dbase]',
-            f'[dbase][clip]overlay=x={x}+({vw}-overlay_w)/2:y={y}+({vh}-overlay_h)/2:shortest=1:format=auto[framed]']
+            f'[dbase][clip]overlay=x={cx:.2f}-overlay_w/2:y={cy:.2f}-overlay_h/2:shortest=1:format=auto[framed]']
+
+
+def cover_scale(W, H, bw, bh, cx, cy, turn, margin=2):
+    """"Lấp đầy · cắt viền": how much a bw×bh box centred at (cx, cy) and rotated by `turn` rad must grow about its
+    centre so it still covers the whole W×H frame (rotation and X/Y offsets would show black corners). `margin` px
+    more on each side hides the soft anti-aliased edge of the rotation. 1 = already covers."""
+    cos, sin, need = math.cos(turn), math.sin(turn), 1.0
+    margin = margin if turn else 0   # a straight box has hard edges
+    for px, py in ((0, 0), (W, 0), (0, H), (W, H)):
+        x, y = px - cx, py - cy
+        qx, qy = x * cos + y * sin, -x * sin + y * cos
+        need = max(need, 2 * (abs(qx) + margin) / bw, 2 * (abs(qy) + margin) / bh)
+    return need if need > 1.0005 else 1.0
 
 
 def edge_crop(settings):
@@ -1131,17 +1150,19 @@ def frame_graph(settings, video, before, after):
         size = [f'scale={W}:{H}:flags=lanczos'] if (W, H) != (int(video.get('width') or 0) // 2 * 2, int(video.get('height') or 0) // 2 * 2) else []
         return ['[0:v:0]' + ','.join(pre + size + [tail]) + '[vout]'], (W, H)
     z = settings['frame_zoom'] / 100
-    bw, bh = max(2, round(W * z / 2) * 2), max(2, round(H * z / 2) * 2)
     fit = settings['frame_fit']
+    turn = math.radians(settings['frame_rotate'])
+    dx, dy = round(settings['frame_x'] * W / 200), round(settings['frame_y'] * H / 200)
+    if fit == 'cover' and z >= 1 and (turn or dx or dy):
+        z *= cover_scale(W, H, W * z, H * z, W / 2 + dx, H / 2 + dy, turn)   # never show black corners or strips
+    bw, bh = max(2, round(W * z / 2) * 2), max(2, round(H * z / 2) * 2)
     box = (f'scale={bw}:{bh}:force_original_aspect_ratio=increase,crop={bw}:{bh}' if fit == 'cover' else
            f'scale={bw}:{bh}:force_original_aspect_ratio=decrease,format=rgba,pad={bw}:{bh}:(ow-iw)/2:(oh-ih)/2:color=black@0')
-    turn = math.radians(settings['frame_rotate'])
     if turn:
         box += f',format=rgba,rotate={turn:.9f}:ow=rotw({turn:.9f}):oh=roth({turn:.9f}):c=none'
     lines = ['[0:v:0]' + ','.join(pre + ['setsar=1']) + (',split=2[fgsrc][bgsrc]' if fit == 'blur' else '[fgsrc]'), f'[fgsrc]{box}[fg]']
     lines.append(f'[bgsrc]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},boxblur=24:2,setsar=1[bg]' if fit == 'blur'
                  else f'color=c=black:s={W}x{H}:r=30,setsar=1[bg]')
-    dx, dy = round(settings['frame_x'] * W / 200), round(settings['frame_y'] * H / 200)
     lines.append(f'[bg][fg]overlay=x=(main_w-overlay_w)/2+({dx}):y=(main_h-overlay_h)/2+({dy}):shortest=1:format=auto,{tail}[vout]')
     return lines, (W, H)
 

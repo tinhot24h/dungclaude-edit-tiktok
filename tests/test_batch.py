@@ -24,6 +24,31 @@ class OutputSizeTests(unittest.TestCase):
         self.assertEqual(dubbing.source_fps(dict(avg_frame_rate='60000/1001')), 60000 / 1001)
 
 
+class CoverTests(unittest.TestCase):
+    """"Lấp đầy · cắt viền" + rotation 0.5° + zoom 103 % + an X/Y offset used to show black corners."""
+    def border(self, lines, W, H):
+        cmd = ['ffmpeg', '-v', 'error', '-f', 'lavfi', '-i', f'color=c=0xd0c0a0:s={W}x{H}:d=1', '-filter_complex', ';'.join(lines),
+               '-map', '[out]', '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'gray', '-']
+        px = subprocess.run(cmd, capture_output=True, check=True).stdout
+        rows = [px[y * W:(y + 1) * W] for y in (0, H - 1)]
+        cols = [bytes(px[y * W + x] for y in range(H)) for x in (0, W - 1)]
+        return min(min(r) for r in rows + cols)
+
+    def test_rotation_and_offset_never_show_black(self):
+        self.assertEqual(dubbing.cover_scale(720, 1280, 720, 1280, 360, 640, 0), 1.0)
+        for fx, fy, rot in ((0, 0, .5), (2, 0, .5), (4, -3, .5), (10, 5, 8)):
+            o = dubbing.options(dict(frame_canvas='9:16', frame_fit='cover', frame_zoom=103, frame_rotate=rot, frame_x=fx, frame_y=fy, out_resolution='720'))
+            lines, (W, H) = dubbing.frame_graph(o, dict(width=720, height=1280), [], [])
+            lines[-1] = lines[-1].replace('[vout]', '[out]')
+            self.assertGreater(self.border(lines, W, H), 150, (fx, fy, rot))
+        for vx, vy, rot in ((0, 0, .5), (13, -8, .5), (0, 0, -4)):
+            d = dict(units='px', video_x=vx, video_y=vy, video_width=720, video_height=1280, video_zoom=103, video_rotation=rot, video_fit='cover', background='color', color='#000000')
+            self.assertGreater(self.border(dubbing.design_video(d, 720, 1280) + ['[framed]null[out]'], 720, 1280), 150, (vx, vy, rot))
+        # a box smaller than the frame is left as placed
+        small = dict(units='px', video_x=100, video_y=100, video_width=400, video_height=700, video_zoom=100, video_rotation=5, video_fit='cover', background='color', color='#000000')
+        self.assertLess(self.border(dubbing.design_video(small, 720, 1280) + ['[framed]null[out]'], 720, 1280), 20)
+
+
 class BatchExportTests(test_dubbing.PipelineBase):
     def run_job(self, **opts):
         para = mock.MagicMock(side_effect=lambda *a, **k: dict(text='Xin chào.', file_name='video-thu-nghiem'))

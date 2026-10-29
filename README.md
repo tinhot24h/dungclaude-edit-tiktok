@@ -4,6 +4,10 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.27.5
+
+- **Hết góc đen / viền mờ khi xoay video:** ở chế độ "Lấp đầy · cắt viền", xoay nhẹ (vd 0,5°) cộng với dịch X/Y làm lộ góc đen dù đã zoom 103%. Nay app tự phóng thêm vừa đủ (thường chỉ 0,5–2%) để video luôn phủ kín khung, kể cả mép mờ do xoay; áp dụng cho cả "Khung xuất" ở tab Lồng tiếng và video trong mẫu thiết kế, xem trước khớp với bản xuất. Video bạn chủ động thu nhỏ hơn khung vẫn giữ nguyên.
+
 ## Mới trong 0.27.4
 
 - **Sửa lỗi "UnicodeEncodeError: 'charmap' codec…" khi ghi thông tin file:** bước ghi của Windows in thông báo tiếng Việt ra cửa sổ lệnh không hỗ trợ chữ có dấu nên bị lỗi và che mất tên trường bị từ chối. Nay luôn in UTF-8: hàng đợi báo đúng "Windows chưa ghi được: <tên trường> (lý do)", các trường khác vẫn được lưu.
