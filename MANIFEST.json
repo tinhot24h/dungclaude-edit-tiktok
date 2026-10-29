@@ -1,15 +1,19 @@
 {
  "app": "ReviewStudio",
- "version": "0.24.0",
- "notes": "## Mới trong 0.24.0\n\n- **Bỏ tab Dịch & biên tập AI** (cùng chế độ Thủ công và Gemini): việc dịch, tiêu đề, nội dung, tên file đã tự chạy cho từng video trong tab Dựng & lồng tiếng. Thanh trên còn 2 tab; hộp API key chỉ còn OpenAI và ai33 (key Gemini đã lưu được xóa khỏi máy).\n- **Sửa mẫu câu lệnh ngay trong tab Dựng:** link \"Sửa mẫu ›\" mở hộp sửa: chọn / lưu nhiều mẫu, xóa, khôi phục mặc định, xem phần luôn được thêm. Mẫu mặc định chỉ còn quy tắc nội dung; mẫu cũ của bạn vẫn dùng được (phần hook/kịch bản tự bỏ khi gửi).\n- **Mẫu câu lệnh lưu cùng \"Lưu mẫu\":** mỗi mẫu dựng nhớ luôn câu lệnh của nó, chọn mẫu là đổi cả giao diện lẫn câu lệnh.\n- **Gợi ý chung cho cả lô:** ô 💡 ở đầu danh sách video, dùng khi cả lô cùng một sản phẩm; video có gợi ý riêng thì dùng gợi ý riêng.\n- Tab Âm thanh bỏ nút \"Lấy kịch bản AI\" (lấy từ tab đã bỏ).",
+ "version": "0.25.0",
+ "notes": "## Mới trong 0.25.0\n\n- **Hộp \"Thông số video xuất\" chia nhóm** như các mục khác: Video · Âm thanh · Lưu file · Thông tin file.\n- **Thông tin file (metadata), có công tắc bật/tắt**, lưu trong mẫu:\n  - Không chép metadata của video gốc (link, thiết bị, tiêu đề cũ của người khác).\n  - Tiêu đề = tiêu đề AI viết (hoặc tên file); Tags = 3–6 từ khóa AI viết **trong cùng lần gọi dịch**; ngày tạo = ngày xuất.\n  - Cố định cho cả lô: Tác giả (cũng ghi vào Directors / Producers / Writers), Link kênh (Author URL + Promotion URL), Nhà phát hành, Bản quyền, Đánh giá sao.\n  - Không ghi \"Encoded by\".\n  - Tiêu đề, tác giả, bản quyền, năm ghi bằng FFmpeg; Tags, đánh giá, link kênh, nhà phát hành ghi bằng Windows sau khi xuất (tự cài pywin32 lần đầu, cần Internet; lỗi thì chỉ cảnh báo, video vẫn xuất).",
  "files": {
+  "win_meta.py": {
+   "sha256": "3e44bda1a50159ca17886a5b4cf280b0d6efc24d80945c1576e680b495ff2683",
+   "size": 4586
+  },
   "ai_texts.py": {
    "sha256": "5b5eb191c3435a43e72a0d89191fb9f418c1dec561b62ad41fd489740881ed9f",
    "size": 4901
   },
   "tests/test_ai_texts.py": {
-   "sha256": "4c04b1cba3f06717c9ab818bf1632ab1284e48a8a7122e5070209740aff19b2e",
-   "size": 14425
+   "sha256": "579540be49dec5bbdef79d29148eedc934d88df02d21c82c2696515e0e903c67",
+   "size": 17772
   },
   "design_tab.js": {
    "sha256": "01dfd065c454e70d19ef87f81cd6ff196ae6b2bf54a59c713bfc2964210581cd",
@@ -40,8 +44,8 @@
    "size": 5181
   },
   "dub_ui.js": {
-   "sha256": "1b8797cf3223cec189ee35bb8c5392704eac5f0bcd7883bc858b9b733ff429c8",
-   "size": 114408
+   "sha256": "5d74a76689fd075f70df1f100b00f81e55b9215560f188ce66ccac4944e06b67",
+   "size": 114905
   },
   "layout_ui.js": {
    "sha256": "31474a69f54710df46c2483f9711e36d487d11437085b2b563f97b1f18ab711e",
@@ -60,8 +64,8 @@
    "size": 2610
   },
   "dubbing.py": {
-   "sha256": "27e90041aac5c6ebf531f88eae1ce89a8b0bc24940cdc726877380f68f63da85",
-   "size": 160703
+   "sha256": "4179b5971e53cd6ce072d12b7238980aedfc9375b685ce106e49237c7bcf4ec5",
+   "size": 164742
   },
   "tests/test_dubbing.py": {
    "sha256": "c33c7af1f9899e53fa7a5fdc67c4f49eb01e4b839552d8d61a37e114f410af0f",
@@ -72,8 +76,8 @@
    "size": 13416
   },
   "export_ui.js": {
-   "sha256": "056944886a316daacacf36b322c3fbf70744208e7f569554bec049d1b2a06a22",
-   "size": 9679
+   "sha256": "ea44c7643bfca02068540771e2c199b22564dd8d00844a9c69d21be5298ac288",
+   "size": 12390
   },
   "style_ui.js": {
    "sha256": "38fb4eaea0632ee304a5411f2c4ddd48c4110269146f82d8fe4d3353b7890910",
@@ -156,8 +160,8 @@
    "size": 5241
   },
   "studio.css": {
-   "sha256": "ce6caab97bcefb7163cfb5e36576c260f24e5b990aa7cd2a9bf4bbd7c5306248",
-   "size": 92053
+   "sha256": "f2e20aff61cf96f88d78065113df71d1d1cfbecc8c54c08c1ba613de059f9e8f",
+   "size": 93844
   },
   "studio.js": {
    "sha256": "88660710a1bdbc6d29b18e06a4464c1111d0de7db68e6e74bd8d1963e0e76c22",
@@ -172,7 +176,7 @@
    "size": 5352
   },
   "index.html": {
-   "sha256": "5e72eacd15500331ccc3bd0de3a32aa5581b8d9c5938c33d3e367833801f9df1",
+   "sha256": "fcd4171603a2a7394f5e0376858fcbeec0e9c9e0de2e9f3c8b4177fdd9df0bdc",
    "size": 24340
   },
   "launch.py": {
@@ -180,23 +184,23 @@
    "size": 5006
   },
   "build_package.py": {
-   "sha256": "f30d62f9a490c2d08e2267364086aebf6d9085654dc30e0134de0a5cda3c36b7",
-   "size": 3291
+   "sha256": "9f3a91138a4c0662cbfd379dc911af0e914c1abe723caa14a3ea075012b0e6b7",
+   "size": 3306
   },
   "START_WINDOWS.bat": {
    "sha256": "616ecf0e4d9a41995c509f79bd5e1a01d1dce7ba76356a801417e08747847c4e",
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "022778c24efeffcdac91222594e8a7d99e97e50e861c01a2d0320d763bf7f0d6",
-   "size": 42196
+   "sha256": "d1741ef8a6032a6abd7240cc49efc8e04ca550030aa3549cfc07fad5ecaa7f61",
+   "size": 42793
   },
   "README.md": {
-   "sha256": "52328644d83b96e1d82b2b30abe3ea70fd6c0cea8c7f2c819a1209f5554182d9",
-   "size": 68336
+   "sha256": "f60f9a0d86869481779d660331fc2eea5c38fb572bbd6c5aa816d832735ed629",
+   "size": 69290
   },
   "VERSION": {
-   "sha256": "dbf81d3754264f6dce22444d551ef30913c3959a2ecc784a786162df068d5435",
+   "sha256": "4b67cac8ce2a6e82a4e11ba210c84b4adfc72db7f4629785f7d3d09d6147795d",
    "size": 7
   },
   ".gitignore": {

@@ -170,6 +170,12 @@ giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh g�
 cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
 Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
 
+NÂNG CẤP 0.25.0
+- Bấm nút thông số xuất (1080 × 1920 · 30 FPS) trên thanh trên: hộp chia nhóm Video / Âm thanh / Lưu file / Thông tin file.
+- Thông tin file có công tắc bật/tắt: điền Tác giả, Link kênh, Nhà phát hành, Bản quyền, Đánh giá sao một lần cho cả lô.
+  Tiêu đề và Tags mỗi video do AI viết. Không chép metadata của video gốc, không ghi "Encoded by".
+  Tags, đánh giá, link kênh cần pywin32: lần đầu ứng dụng tự cài (cần Internet). Xem kết quả: chuột phải file → Properties → Details.
+
 NÂNG CẤP 0.24.0
 - Bỏ tab Dịch & biên tập AI (cùng chế độ Thủ công, Gemini). Thanh trên còn Dựng & lồng tiếng và Âm thanh ai33.
 - Sửa mẫu câu lệnh: mục Nhận diện, dịch & viết chữ → "Sửa mẫu ›" (lưu nhiều mẫu, khôi phục mặc định).

@@ -733,3 +733,17 @@ details.cc-group>summary.cc-head{cursor:pointer;margin:0}details.cc-group[open]>
 .dub-sample{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;margin-top:6px}
 #dub-rules textarea{width:100%;min-height:300px;font-size:12px;line-height:1.5}#dub-rules .ai-rules-bar{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}#dub-rules .ai-rules-foot{display:flex;justify-content:space-between;margin:4px 0 8px}#dub-rules pre{white-space:pre-wrap;font-size:11px;color:var(--muted)}#dub-batch-hint{margin:2px 0 6px}
 #dub-rules{padding:18px 22px;width:min(980px,94vw)}
+/* 0.25: export settings in groups + Thông tin file (metadata) with its own switch */
+.export-pop .export-pop-body{gap:10px}.export-pop .cc-row{grid-template-columns:104px minmax(0,1fr)}
+.export-pop .cc-items select,.export-pop .cc-items input[type=text]{width:100%;padding:7px 9px;font-size:12.5px}
+.export-pop .cc-group>.helper,.export-pop #encoder-note{font-size:11px;margin:6px 0 0}
+.export-pop .output-folder label{margin-top:0}.export-pop .output-folder .result-actions{margin:6px 0 0}
+#meta-group .cc-head{display:flex;align-items:center;justify-content:space-between}
+.meta-switch{background:none;border:0;padding:0;cursor:pointer;width:auto;min-height:0}.meta-switch i{display:block;width:36px;height:20px;border-radius:11px;background:#39465a;position:relative;transition:background .15s}
+.meta-switch i:after{content:'';position:absolute;left:3px;top:3px;width:14px;height:14px;border-radius:50%;background:#dbe5f1;transition:left .15s}
+.meta-switch.on i{background:var(--accent)}.meta-switch.on i:after{left:19px}
+.meta-fields.off{opacity:.45}.meta-fields .check-row{margin:0 0 6px;font-size:12px}
+.meta-stars button{font-size:15px;padding:3px 9px;color:#6b7a8e}.meta-stars button.on{color:#ffc94d;background:#2a2a1b}
+.export-pop .output-folder{margin:0;padding:0;border:0;background:none}.export-pop .output-folder>label[for=output-dir]{display:none}.export-pop .output-folder .check-row{font-size:12px;margin:6px 0}.export-pop .output-folder .result-actions button{width:auto;padding:5px 12px;min-height:0}.export-pop #folder-note{font-size:11px;margin:4px 0 0}
+.export-pop #open-folder{width:auto;flex:0 0 auto}.export-pop .meta-stars+.helper{white-space:nowrap}.export-pop .cc-row:has(.meta-stars) .cc-items{flex-wrap:nowrap}
+.export-pop .meta-stars button{padding:3px 7px}

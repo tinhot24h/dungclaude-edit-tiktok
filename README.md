@@ -1,8 +1,18 @@
-# Review Studio 0.24.0
+# Review Studio 0.25.0
 
 Dựng và lồng tiếng video review 9:16 hàng loạt: OpenAI nhận diện + dịch + viết chữ, ai33.pro đọc giọng, FFmpeg xuất video hoàn thiện.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.25.0
+
+- **Hộp "Thông số video xuất" chia nhóm** như các mục khác: Video · Âm thanh · Lưu file · Thông tin file.
+- **Thông tin file (metadata), có công tắc bật/tắt**, lưu trong mẫu:
+  - Không chép metadata của video gốc (link, thiết bị, tiêu đề cũ của người khác).
+  - Tiêu đề = tiêu đề AI viết (hoặc tên file); Tags = 3–6 từ khóa AI viết **trong cùng lần gọi dịch**; ngày tạo = ngày xuất.
+  - Cố định cho cả lô: Tác giả (cũng ghi vào Directors / Producers / Writers), Link kênh (Author URL + Promotion URL), Nhà phát hành, Bản quyền, Đánh giá sao.
+  - Không ghi "Encoded by".
+  - Tiêu đề, tác giả, bản quyền, năm ghi bằng FFmpeg; Tags, đánh giá, link kênh, nhà phát hành ghi bằng Windows sau khi xuất (tự cài pywin32 lần đầu, cần Internet; lỗi thì chỉ cảnh báo, video vẫn xuất).
 
 ## Mới trong 0.24.0
 

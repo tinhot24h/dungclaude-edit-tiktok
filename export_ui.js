@@ -11,15 +11,35 @@ const old=document.querySelector('.canvas-badge');
 const badge=el('button',{type:'button',id:'export-badge',className:'export-badge',title:'Thông số video xuất'});badge.setAttribute('aria-haspopup','dialog');badge.setAttribute('aria-expanded','false');
 old?old.replaceWith(badge):document.querySelector('.app-header').append(badge);
 const pop=el('div',{id:'export-pop',className:'export-pop',hidden:true,role:'dialog',ariaLabel:'Thông số video xuất'});
-pop.innerHTML='<div class="export-pop-head"><strong>Thông số video xuất</strong><button type="button" id="export-pop-close" class="icon-button" aria-label="Đóng">✕</button></div><div class="export-pop-grid"></div><div class="export-pop-folder"></div>';
+pop.innerHTML='<div class="export-pop-head"><strong>Thông số video xuất</strong><button type="button" id="export-pop-close" class="icon-button" aria-label="Đóng">✕</button></div><div class="export-pop-body cc-panel"></div>';
 document.body.append(pop);
-const grid=pop.querySelector('.export-pop-grid'),cell=(...nodes)=>{const d=el('div',{className:'export-cell'});d.append(...nodes.filter(Boolean));grid.append(d);return d};
-const label=id=>document.querySelector(`label[for=${id}]`);
-cell(label('resolution'),$('resolution'));cell(label('fps'),$('fps'));cell(label('quality'),$('quality'));cell(label('encoder'),$('encoder'));
-const loud=cell(label('loudness'),$('loudness'));loud.classList.add('wide');
-const note=$('encoder-note'),help=note.nextElementSibling;grid.append(note);note.classList.add('wide');if(help?.classList.contains('helper')){help.classList.add('wide');grid.append(help)}
+// grouped like the other panels: Video · Âm thanh · Lưu file · Thông tin file (metadata, with its own switch)
+const body=pop.querySelector('.export-pop-body');
+const group=(title,...nodes)=>{const g=el('div',{className:'cc-group'},el('div',{className:'cc-head'},title));g.append(...nodes);body.append(g);return g};
+const row=(text,...nodes)=>el('div',{className:'cc-row'},el('span',{className:'cc-label',textContent:text}),el('div',{className:'cc-items'},...nodes));
+const take=id=>{document.querySelector(`label[for=${id}]`)?.remove();return $(id)};
+const note=$('encoder-note'),help=note.nextElementSibling;
+group('Video',row('Độ phân giải',take('resolution')),row('Khung hình',take('fps')),row('Chất lượng',take('quality')),row('Bộ mã hóa',take('encoder')),note,...(help?.classList.contains('helper')?[help]:[]));
+group('Âm thanh',row('Âm lượng tổng',take('loudness')));
 $('fps').closest('.two-col')?.remove();
-pop.querySelector('.export-pop-folder').append(document.querySelector('.output-folder'));
+group('Lưu file',document.querySelector('.output-folder'));
+// Thông tin file: the user's own details written into every exported MP4 (title / tags come from the AI per video)
+const input=(id,ph,max=300)=>el('input',{type:'text',id,maxLength:max,spellcheck:false,placeholder:ph});
+const metaOn=el('input',{type:'checkbox',id:'meta-on',checked:true,hidden:true}),strip=el('input',{type:'checkbox',id:'meta-strip',checked:true});
+const rating=el('input',{type:'hidden',id:'meta-rating',value:'0'});
+const stars=el('div',{className:'cc-seg meta-stars'},...[1,2,3,4,5].map(n=>{const b=el('button',{type:'button',textContent:'★',title:n+' sao'});b.onclick=()=>{rating.value=String(+rating.value===n?0:n);drawStars();rating.dispatchEvent(new Event('change',{bubbles:true}))};return b}));
+function drawStars(){[...stars.children].forEach((b,i)=>b.classList.toggle('on',i<+rating.value));starNote.textContent=+rating.value?rating.value+' sao':'không đánh giá'}
+const starNote=el('small',{className:'helper'});
+const toggle=el('button',{type:'button',className:'meta-switch',title:'Bật/tắt ghi thông tin file'},el('i'));
+const fields=el('div',{className:'meta-fields'},el('label',{className:'check-row'},strip,document.createTextNode(' Không chép metadata của video gốc (link, thiết bị, tiêu đề cũ)')),
+ row('Tác giả',input('meta-author','Tên bạn hoặc tên kênh')),row('Link kênh',input('meta-url','https://www.tiktok.com/@ten_kenh')),
+ row('Nhà phát hành',input('meta-publisher','Tên shop / kênh (không bắt buộc)')),row('Bản quyền',input('meta-copyright','© 2026 Tên kênh')),
+ row('Đánh giá',stars,starNote,rating),
+ el('p',{className:'helper',textContent:'Mỗi video tự có: Tiêu đề = tiêu đề AI viết, Tags = từ khóa AI viết (cùng lần dịch), ngày tạo = ngày xuất. Tags, đánh giá, link kênh, nhà phát hành được Windows ghi sau khi xuất (tự cài pywin32 lần đầu, cần Internet).'}));
+const meta=group('Thông tin file (metadata)',fields);meta.querySelector('.cc-head').append(toggle,metaOn);meta.id='meta-group';
+function drawMeta(){toggle.classList.toggle('on',metaOn.checked);toggle.setAttribute('aria-pressed',String(metaOn.checked));fields.classList.toggle('off',!metaOn.checked);for(const e of fields.querySelectorAll('input,button'))e.disabled=!metaOn.checked}
+toggle.onclick=()=>{metaOn.checked=!metaOn.checked;drawMeta();metaOn.dispatchEvent(new Event('change',{bubbles:true}))};
+window.exportMetaRefresh=()=>{drawMeta();drawStars()};drawMeta();drawStars();
 const summary=el('button',{type:'button',id:'export-summary',className:'export-summary',title:'Chỉnh thông số xuất'});pane.querySelector('.pane-title').after(summary);
 function text(){const [w,h]=SIZES[$('resolution').value]||[1080,1920],fps=$('fps').value,q=$('quality').value==='high'?'Chất lượng cao':'Tiêu chuẩn',enc=$('encoder').selectedOptions[0]?.textContent.replace(/\s*\(.*\)/,'')||'';
  badge.innerHTML='';badge.append(el('span',{textContent:`${w} × ${h}`}),el('i'),el('span',{textContent:`${fps} FPS`}),el('b',{textContent:'⚙'}));badge.title=`Thông số xuất: ${w}×${h} · ${fps} fps · ${q} · ${enc} — bấm để chỉnh`;

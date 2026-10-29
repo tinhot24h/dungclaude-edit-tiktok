@@ -1,4 +1,5 @@
 import json
+import os
 import tempfile
 import threading
 import unittest
@@ -104,6 +105,47 @@ CHỮ HIỂN THỊ TRÊN VIDEO (khác script dùng để đọc)
             dubbing.texts_request('k', 'custom-model', ['你好'], dubbing.options({}), ctx)
         self.assertEqual(len(seen), 2);self.assertIsInstance(seen[1]['input'][1]['content'], str);self.assertNotIn('- Ảnh:', seen[1]['input'][0]['content'])
         self.assertTrue(ctx['dropped_images'])
+
+
+class MetadataTests(test_dubbing.PipelineBase):
+    def tags(self, path):
+        import subprocess
+        out = subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format_tags:stream_tags', '-of', 'json', str(path)], capture_output=True, text=True).stdout
+        data = json.loads(out)
+        return data['format'].get('tags', {}), [st.get('tags', {}) for st in data.get('streams', [])]
+
+    def test_export_drops_source_metadata_and_writes_own_without_encoder(self):
+        import subprocess
+        src = self.data / self.vid / 'source'
+        tmp = src.with_name('tagged.mp4')
+        subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', str(src), '-c', 'copy', '-metadata', 'title=old title', '-metadata', 'comment=https://www.tiktok.com/@other',
+                        '-metadata', 'artist=other person', '-f', 'mp4', str(tmp)], check=True)
+        tmp.replace(src)
+        para = mock.MagicMock(side_effect=lambda *a, **k: dict(text='Xin chào.', file_name='dem-lot-giay-tpu', tags=['Đệm lót giày', '#êm chân', 'giá 99k', 'đệm lót giày']))
+        with mock.patch.object(dubbing, 'paragraph_request', para), mock.patch.object(dubbing, 'video_frames', return_value=[]):
+            with mock.patch.object(self.store, 'enqueue'):
+                key = self.store.create(dict(video_ids=[self.vid], options=dict(voice_id='edge_vi-VN-HoaiMyNeural', mode='paragraph', background='remove', subtitles='none', reuse=False,
+                                        meta_author='Kênh Xóm Review', meta_url='https://www.tiktok.com/@xom_review', meta_copyright='© 2026 Xóm Review', meta_rating=5)))[0]
+            job = self.store.load(key)
+            with mock.patch.object(dubbing.win_meta, 'write', return_value=None) as win:
+                self.store.process(job, dict(openai='sk', ai33='k'), threading.Event())
+        self.assertEqual(job['state'], 'done', job['message']);self.assertEqual(job['tags'], ['đệm lót giày', 'êm chân'])
+        fmt, streams = self.tags(self.data / 'dub' / job['id'] / 'dubbed.mp4')
+        self.assertEqual(fmt.get('title'), 'dem-lot-giay-tpu');self.assertEqual(fmt.get('artist'), 'Kênh Xóm Review');self.assertEqual(fmt.get('copyright'), '© 2026 Xóm Review')
+        self.assertNotIn('comment', fmt);self.assertNotIn('encoder', fmt)   # no "Encoded by" (the stream keeps only the codec name)
+        props = win.call_args[0][1]
+        self.assertEqual(props['keywords'], ['đệm lót giày', 'êm chân']);self.assertEqual(props['rating'], 5);self.assertEqual(props['promotion_url'], 'https://www.tiktok.com/@xom_review')
+        self.assertNotIn('encoded_by', props)
+        # switched off: nothing of ours, nothing stripped, no Windows step
+        job2 = dict(job, options=dubbing.options(dict(job['options'], meta=False)))
+        self.assertEqual(self.store.metadata_args(job2), [])
+
+    def test_metadata_options_validation(self):
+        for bad in (dict(meta_url='tiktok.com/@a'), dict(meta_rating=6), dict(meta_author='x' * 301), dict(meta_author='a\nb')):
+            with self.assertRaises(dubbing.DubError, msg=bad):dubbing.options(bad)
+        self.assertEqual(dubbing.win_meta.write('x.mp4', {}), None)
+        if os.name != 'nt':
+            self.assertIsNone(dubbing.win_meta.write('x.mp4', dict(title='a')))   # other systems: skipped quietly
 
 
 class RetryTests(unittest.TestCase):
