@@ -237,7 +237,9 @@ function apply(o){const had=!!o.design;
 
 // ---- preview: the editor stage shows the selected video with what is switched on, the overlay plays in sync
 let shownId='',current=null,jobShown=null;
-async function showVideo(f){if(!f)return;if(f.path&&!f.id){if(f.importing)return;f.importing=true;try{await api.localImport(f)}catch(e){f.error=e.message;api.draw();return}finally{f.importing=false}}
+// no video left in the list: the stage goes empty too (it kept showing the last one)
+function clearStage(){if(!shownId)return;shownId='';const v=$('video');v.pause();v.removeAttribute('src');v.load();$('placeholder').hidden=false}
+async function showVideo(f){if(!f){clearStage();return}if(f.path&&!f.id){if(f.importing)return;f.importing=true;try{await api.localImport(f)}catch(e){f.error=e.message;api.draw();return}finally{f.importing=false}}
  if(f.id&&f.id!==shownId){shownId=f.id;try{await edit.openVideo(f.id,true)}catch(e){api.say(e.message)}}
  else if(f.file&&!f.id&&shownId!==f.name){shownId=f.name;$('video').src=URL.createObjectURL(f.file);$('placeholder').hidden=true}}
 // what the stage shows = what the export will make: switched-off groups are left out, "tên file" shows the file name

@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.28.1",
- "notes": "## Mới trong 0.28.1\n\n- **Hết cảnh báo \"Windows chưa ghi được: Copyright (Access Denied)\":** Copyright đã được ghi khi xuất video (thẻ MP4 mà Windows đọc ra ở mục Copyright), bước ghi của Windows chỉ thử ghi đè lần nữa và bị Windows khóa. Nay bỏ lần ghi thừa đó; Copyright vẫn hiện đúng trong Properties → Details.",
+ "version": "0.28.2",
+ "notes": "## Mới trong 0.28.2\n\n- **Xem trước cập nhật ngay khi bỏ video đầu vào:** bỏ hết video (✕ hoặc \"Bỏ tất cả\") thì khung xem trước trống ngay, không còn giữ video cũ; áp dụng cho cả khung thiết kế và khung thường.",
  "files": {
   "video_tools.js": {
    "sha256": "217dc997759d9b7b26fccfb7abaa35ebf82b5eb333f816dc83fcf67b06781706",
@@ -24,8 +24,8 @@
    "size": 23885
   },
   "design_tab.js": {
-   "sha256": "6b1f10a0ce2ecb5f8973a3a632c5bbc1fdeb2aabfe400956c95763e06ed7e570",
-   "size": 37793
+   "sha256": "e4ae80c540f82b3cd8ac7433a15fc45b289b7537b4811501e3629c7950ac0765",
+   "size": 38039
   },
   "local_files.js": {
    "sha256": "b9a975e980db7f5f013f6046d58228fb39817b6959e8caaf9505c4ba3cc898a7",
@@ -52,8 +52,8 @@
    "size": 5181
   },
   "dub_ui.js": {
-   "sha256": "5098f5747e0c58845c53de0d27a92c085aef0d99b001659dfdb93027a0dfa24a",
-   "size": 124569
+   "sha256": "cc661c6dfe9b644758fdd4ffccde77cf0b9a642ae7624f4e7bef84f25c7199c6",
+   "size": 124734
   },
   "key_ui.js": {
    "sha256": "4c1833943a21476f6e515115af555c36a4d763bbc5c1122f111cad0a5065574d",
@@ -152,7 +152,7 @@
    "size": 5352
   },
   "index.html": {
-   "sha256": "c0777c8868052ef7b886c8c8f7e23320d58dc9893515cde4c0ebd8b692eb35de",
+   "sha256": "0dace0e940c1fb22c33fcc7d5df626d85386254a9ca1aa991e575b70ad54b50d",
    "size": 24079
   },
   "launch.py": {
@@ -168,15 +168,15 @@
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "94c564c76724f417403e29b9035646b366dd1ccbb339b47a8f12c02219331a1e",
-   "size": 9882
+   "sha256": "0c37e221b76a1efacf107bcc84a45ef25bcfd73bfb22abd5c0243be8c2de2121",
+   "size": 10002
   },
   "README.md": {
-   "sha256": "869a1cbef8850c3a1e98aae38920fbe5e442df938b1bc4a19e2e321192cfcb42",
-   "size": 16602
+   "sha256": "d5faed5cb9f2ac804a974c5add536c6f7693b3dc56781b74ec1a4bf1c3ef181f",
+   "size": 16866
   },
   "VERSION": {
-   "sha256": "ff80893efe44354b6fa06f18d79dfe7162bf0c2da514fc9c422e920225200fe4",
+   "sha256": "5a988f563b4e7f63fa09396db7bb2eed6011a42483ddf76464028588e5bd2d51",
    "size": 7
   },
   ".gitignore": {

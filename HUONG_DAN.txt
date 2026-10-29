@@ -65,6 +65,9 @@ khi mở app (đặt REVIEW_KEEP_DAYS=0 để tắt), trừ video còn trong hà
 Chỉ dùng trên máy này. Chưa gọi thử OpenAI / ai33 thật, NVENC và ghi Tags của Windows
 trên máy thật: hãy chạy thử 1–2 video trước khi chạy lô lớn.
 
+NÂNG CẤP 0.28.2
+- Bỏ hết video đầu vào thì khung xem trước trống ngay (không còn hiện video cũ).
+
 NÂNG CẤP 0.28.1
 - Bỏ cảnh báo Copyright "Access Denied" (Copyright vẫn được ghi đúng khi xuất).
 
