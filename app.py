@@ -773,7 +773,7 @@ class Handler(BaseHTTPRequestHandler):
                     if path=='/dub/sample':return self.respond(200,DUB.voice_sample(raw))
                     return self.respond(200,DUB.estimate(raw))
                 except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
-            dub=re.fullmatch(r'/dub/(start|([a-f0-9]{32})/(continue|lines|texts|cancel|delete|editor))',path)
+            dub=re.fullmatch(r'/dub/(start|([a-f0-9]{32})/(continue|lines|texts|name|cancel|delete|editor))',path)
             if dub:
                 if not 0 <= size <= 4*1024*1024:raise ValueError('Yêu cầu lồng tiếng quá lớn.')
                 raw=json.loads(self.rfile.read(size)) if size else {}
@@ -784,6 +784,7 @@ class Handler(BaseHTTPRequestHandler):
                     if action=='continue':return self.respond(200,DUB.proceed(key,raw))
                     if action=='lines':return self.respond(200,DUB.edit_paragraph(key,raw['paragraph']) if 'paragraph' in raw else DUB.edit_lines(key,raw.get('lines')))
                     if action=='texts':return self.respond(200,DUB.summary(DUB.edit_texts(key,raw)))
+                    if action=='name':return self.respond(200,DUB.summary(DUB.rename(key,raw)))
                     if action=='cancel':return self.respond(200,DUB.cancel(key))
                     if action=='delete':DUB.delete(key);return self.respond(200,{'jobs':DUB.jobs()})
                     vid=uuid.uuid4().hex;folder=DATA/vid;folder.mkdir()

@@ -1,8 +1,13 @@
-# Review Studio 0.25.0
+# Review Studio 0.26.0
 
 Dựng và lồng tiếng video review 9:16 hàng loạt: OpenAI nhận diện + dịch + viết chữ, ai33.pro đọc giọng, FFmpeg xuất video hoàn thiện.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) (tạo bằng `python build_package.py`; file ZIP không còn commit vào repo) · Cài/chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.26.0
+
+- **Sửa tên file tay:** mở một video trong hàng đợi → ô **Tên file** → Đổi tên (gõ có dấu cũng được, app tự đổi sang dạng `ten-khong-dau`, xem trước tên `.mp4`). Video đã lưu trong thư mục xuất được đổi tên luôn (cả file `.srt`), không bao giờ ghi đè file khác. Bảng **Duyệt chữ AI** có ô tên file cho từng video. Tên gõ tay không bị AI thay khi viết lại chữ.
+- **Tiêu đề có dấu trong thông tin file:** AI trả thêm tên video tiếng Việt có dấu (30–80 ký tự) trong cùng lần gọi, dùng cho Title của file (ví dụ "Đệm lót giày TPU mềm gót, tiện lợi khi vận động"); hàng đợi hiện kèm tiêu đề file và tags.
 
 ## Mới trong 0.25.0
 

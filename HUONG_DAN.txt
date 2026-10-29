@@ -170,6 +170,10 @@ giữ nhiều mẫu. "Khôi phục mặc định" để quay về câu lệnh g�
 cấm nêu giá cụ thể; nếu kết quả vẫn có giá, ứng dụng hiện cảnh báo vàng.
 Kết quả gồm Hook, Kịch bản đọc, Tiêu đề và Nội dung trên video.
 
+NÂNG CẤP 0.26.0
+- Đổi tên file: bấm vào video trong hàng đợi → ô Tên file → Đổi tên (đổi luôn file đã lưu). Bảng duyệt chữ cũng có ô tên file.
+- Title trong thông tin file là tên video tiếng Việt có dấu do AI viết.
+
 NÂNG CẤP 0.25.0
 - Bấm nút thông số xuất (1080 × 1920 · 30 FPS) trên thanh trên: hộp chia nhóm Video / Âm thanh / Lưu file / Thông tin file.
 - Thông tin file có công tắc bật/tắt: điền Tác giả, Link kênh, Nhà phát hành, Bản quyền, Đánh giá sao một lần cho cả lô.

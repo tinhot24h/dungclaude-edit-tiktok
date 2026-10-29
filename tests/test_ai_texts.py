@@ -140,6 +140,28 @@ class MetadataTests(test_dubbing.PipelineBase):
         job2 = dict(job, options=dubbing.options(dict(job['options'], meta=False)))
         self.assertEqual(self.store.metadata_args(job2), [])
 
+    def test_vietnamese_title_and_hand_typed_name(self):
+        para = mock.MagicMock(side_effect=lambda *a, **k: dict(text='Xin chào.', file_name='dem-lot-giay-tpu', file_name_alt='dem-lot-giay-em',
+                                                               video_title='Đệm lót giày TPU mềm gót, tiện lợi khi vận động', tags=['đệm lót giày']))
+        with mock.patch.object(dubbing, 'paragraph_request', para), mock.patch.object(dubbing, 'video_frames', return_value=[]), mock.patch.object(dubbing.win_meta, 'write', return_value=None):
+            with mock.patch.object(self.store, 'enqueue'):
+                key = self.store.create(dict(video_ids=[self.vid], options=dict(voice_id='edge_vi-VN-HoaiMyNeural', mode='paragraph', background='remove', subtitles='file', reuse=False)))[0]
+            job = self.store.load(key)
+            self.store.process(job, dict(openai='sk', ai33='k'), threading.Event())
+        self.assertEqual(job['video_title'], 'Đệm lót giày TPU mềm gót, tiện lợi khi vận động')
+        fmt, _ = self.tags(self.data / 'dub' / job['id'] / 'dubbed.mp4')
+        self.assertEqual(fmt.get('title'), 'Đệm lót giày TPU mềm gót, tiện lợi khi vận động')
+        saved = Path(job['outputs']['saved_path']);self.assertEqual(saved.name, 'dem-lot-giay-tpu.mp4');self.assertTrue(saved.with_suffix('.srt').is_file())
+        job = self.store.rename(key, dict(file_name='Đệm lót giày ÊM chân!'))
+        moved = Path(job['outputs']['saved_path'])
+        self.assertEqual(moved.name, 'dem-lot-giay-em-chan.mp4');self.assertTrue(moved.is_file());self.assertFalse(saved.exists());self.assertTrue(moved.with_suffix('.srt').is_file())
+        self.assertTrue(job['name_manual']);self.assertNotIn('file_name_alt', job)
+        dubbing.set_file_name(job, dict(file_name='ai-ten-khac', tags=['mới']))        # the AI never replaces a typed name
+        self.assertEqual((job['file_name'], job['tags']), ('dem-lot-giay-em-chan', ['mới']))
+        with self.assertRaises(dubbing.DubError):self.store.rename(key, dict(file_name='!!'))
+        (moved.parent / 'trung-ten.mp4').write_bytes(b'x')
+        self.assertEqual(Path(self.store.rename(key, dict(file_name='trung ten'))['outputs']['saved_path']).name, 'trung-ten-2.mp4')   # never over another file
+
     def test_metadata_options_validation(self):
         for bad in (dict(meta_url='tiktok.com/@a'), dict(meta_rating=6), dict(meta_author='x' * 301), dict(meta_author='a\nb')):
             with self.assertRaises(dubbing.DubError, msg=bad):dubbing.options(bad)
