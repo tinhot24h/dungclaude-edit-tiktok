@@ -1892,9 +1892,16 @@ class Store:
         job = self.load(key)
         if job['state'] in ('running', 'queued'):
             raise DubError('Tác vụ đang chạy.')
+        sound = (job['options'].get('background'), job['options'].get('duck_level'))
         if isinstance(raw.get('options'), dict):
             job['options'] = options({**job['options'], **raw['options']})
         start = raw.get('from')
+        if sound != (job['options'].get('background'), job['options'].get('duck_level')) and job['steps'].get('separate') in ('done', 'skipped'):
+            # "Âm thanh gốc" changed: the original sound is processed again (on this computer, no API call); the
+            # old background track goes first so "Bỏ tiếng gốc" really leaves it out
+            job['steps']['separate'] = 'pending'
+            (self.path(key) / 'background.wav').unlink(missing_ok=True)
+            job.pop('background_used', None)
         if start == 'texts':
             # rewrite only the title/body (one OpenAI call) and export again; the voice already made is kept
             job.pop('texts', None)
@@ -2153,9 +2160,10 @@ class Store:
                  top=('queued',), bottom=('queued',), reexport=('done', 'error', 'paused'))
 
     # options that belong to the steps before the export: a re-export never changes them (no new API call)
+    # (the title/body source and "Âm thanh gốc" may change: fixed text, file name, none and the sound need no API call)
     KEEP_ON_REEXPORT = ('mode', 'language', 'model', 'style', 'energy', 'pronoun', 'rate', 'notes', 'instructions', 'no_price', 'vision', 'reuse',
-                        'voice_id', 'voice_speed', 'dictionary_id', 'title_source', 'body_source', 'title_chars', 'body_min_chars', 'body_max_chars',
-                        'title_style', 'trim_start', 'trim_end', 'background', 'align', 'min_tempo', 'max_tempo', 'video_speed_min', 'video_speed_max',
+                        'voice_id', 'voice_speed', 'dictionary_id', 'title_chars', 'body_min_chars', 'body_max_chars',
+                        'title_style', 'trim_start', 'trim_end', 'align', 'min_tempo', 'max_tempo', 'video_speed_min', 'video_speed_max',
                         'end_with_voice', 'review', 'review_texts')
 
     def batch(self, raw):
@@ -2167,7 +2175,7 @@ class Store:
             raise DubError('Thao tác hàng loạt không hợp lệ.')
         if not isinstance(ids, list) or len(ids) > 5000 or not all(isinstance(i, str) and re.fullmatch('[a-f0-9]{32}', i) for i in ids):
             raise DubError('Danh sách tác vụ không hợp lệ.')
-        done, skipped, errors = 0, 0, {}
+        done, skipped, errors, missing = 0, 0, {}, []
         if action in ('top', 'bottom'):
             with self.lock:
                 moved = [k for k in ids if k in self.queue]
@@ -2187,7 +2195,11 @@ class Store:
                         # steps made (recognised speech, translation, title/body, voice, timing) stays as it was
                         look = {k: v for k, v in raw['options'].items() if k not in self.KEEP_ON_REEXPORT} if isinstance(raw.get('options'), dict) else None
                         more.update({'from': 'export', **({'options': look} if look else {})})
-                    self.proceed(key, more)
+                    job = self.proceed(key, more)
+                    if action == 'reexport':
+                        need = [k for k in ('title', 'body') if job['options'].get('design') and job['options'][k + '_source'] == 'ai' and not (job.get('texts') or {}).get(k)]
+                        if need and not job.get('texts_manual'):
+                            missing.append(key)
                 elif action == 'cancel':
                     self.cancel(key)
                 else:
@@ -2195,7 +2207,8 @@ class Store:
                 done += 1
             except (DubError, OSError) as exc:
                 errors.setdefault(str(exc), []).append(key)
-        return dict(done=done, skipped=skipped, errors=[dict(error=e, ids=k) for e, k in errors.items()], waiting=list(self.queue))
+        # no_ai_texts: asked for "AI viết" but the video has no AI title/body yet (its file name is used until written)
+        return dict(done=done, skipped=skipped, errors=[dict(error=e, ids=k) for e, k in errors.items()], waiting=list(self.queue), no_ai_texts=missing)
 
     def delete(self, key):
         job = self.load(key)
@@ -2235,7 +2248,7 @@ class Store:
             self.process(job, self.keys.get(key, {}), cancel)
             if job.get('state') == 'done':
                 job['finished'] = round(time.time())
-                job['spent'] = round(job.get('spent', 0) + time.time() - began)   # working seconds, for the batch ETA
+                job['spent'] = round(time.time() - began)   # working seconds of this run, for the batch ETA (a re-export counts alone)
         except Cancelled:
             job['state'] = 'paused'
             job['message'] = 'Đã dừng. Bấm Tiếp tục để chạy tiếp từ bước đang dở.'

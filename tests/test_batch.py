@@ -132,6 +132,32 @@ class CaptionMusicTests(test_dubbing.PipelineBase):
         self.assertEqual(Path(job['outputs']['saved_path']), first)                       # same name, no -2
         self.assertEqual(len([p for p in first.parent.glob(first.stem + '*.mp4')]), 1)
 
+    def test_reexport_takes_a_new_text_source_and_a_new_original_sound(self):
+        design = dict(background='solid', color='#203040', fade_start=50, fade_height=10, opacity=100, frame_style='none', title='CHỮ CỐ ĐỊNH', body='',
+                      title_y=10, title_size=40, title_color='#00ff00', body_y=80)
+        job, folder = self.run_job()                      # background='remove'
+        self.assertFalse((folder / 'background.wav').exists())
+        def again(**look):
+            with mock.patch.object(self.store, 'enqueue'):
+                r = self.store.batch(dict(action='reexport', ids=[job['id']], options=dict(job['options'], **look)))
+            j = self.store.load(job['id'])
+            with mock.patch.object(dubbing, 'video_frames', return_value=[]), mock.patch.object(dubbing, 'paragraph_request', side_effect=AssertionError('no AI')):
+                self.store.process(j, dict(openai='sk', ai33='k'), threading.Event())
+            self.assertEqual(j['state'], 'done', j['message'])
+            return j, r
+        # title turned on with a fixed text: that text is drawn (it used to be the file name)
+        j, r = again(design=design, design_bg=True, design_title=True, design_body=False, title_source='fixed')
+        self.assertEqual(self.store.texts_for(j)['title'], 'CHỮ CỐ ĐỊNH');self.assertEqual(r['no_ai_texts'], [])
+        # "AI viết" without AI texts: reported, so the page can offer to write them
+        _, r = again(design=design, design_bg=True, design_title=True, design_body=False, title_source='ai')
+        self.assertEqual(r['no_ai_texts'], [job['id']])
+        # "Âm thanh gốc": removed → ducked makes the background track again; ducked → removed takes it out
+        j, _ = again(background='duck', duck_level=20)
+        self.assertTrue((folder / 'background.wav').is_file());self.assertEqual(j['background_used'], 'duck')
+        j, _ = again(background='remove')
+        self.assertFalse((folder / 'background.wav').exists())
+        self.assertEqual(len(self.tasks), 1)                                    # never a new voice
+
     def test_music_from_the_library_by_style_ducked_under_the_voice(self):
         src = Path(self.tmp.name) / 'beat.mp3'
         subprocess.run(['ffmpeg', '-v', 'error', '-y', '-f', 'lavfi', '-i', 'sine=frequency=220:duration=2', str(src)], check=True)

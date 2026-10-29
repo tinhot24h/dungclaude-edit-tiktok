@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.33.0",
- "notes": "## Mới trong 0.33.0 · rà soát lỗi, nút bấm, chồng chéo\n\n**Lỗi đã sửa**\n- Thêm/xóa/chép lớp ảnh trong mẫu thiết kế không còn báo \"Lỗi giao diện\" (hàm báo trạng thái còn ghi vào ô gợi ý của Timeline cũ đã gỡ).\n- Báo thiếu key ai33 chỉ đúng chỗ: nút 🔑 API key (trước đây ghi \"mục Âm thanh\").\n- Thanh báo lỗi chỉ báo lỗi của chính app, không báo nhầm lỗi của tiện ích trình duyệt (chặn quảng cáo, dịch trang…).\n- Đang \"✎ Sửa & xuất lại\" mà thêm video mới: app tự thoát chế độ sửa (trả lại thông số trước đó) để video mới hiện và chạy đúng.\n\n**Bớt chồng chéo, dễ hiểu hơn**\n- Bỏ nút \"⟳ Xuất lại ngay\" trên thanh chọn (dễ áp nhầm thông số bên trái cho cả loạt); dùng \"✎ Sửa & xuất lại\".\n- \"Phụ đề tiếng Việt\" đổi tên thành \"File phụ đề .srt (không in lên hình)\"; mục 💬 Phụ đề chữ chạy chuyển xuống ngay trên mục Xuất, hai loại phụ đề nằm cạnh nhau.\n- \"Lấp đầy · cắt viền\" đổi tên thành \"Lấp đầy · không viền (cắt phần thừa)\".\n- \"Đặt lại lớp ảnh\" đặt lại cả thứ tự lớp.\n- Các nút Lớp ảnh (Vừa khung, Cỡ gốc, xoay, căn, xóa) báo \"chọn ảnh trước\" thay vì im lặng khi chưa chọn ảnh.\n\n**Kiểm tra trước khi chạy đầy đủ hơn** (báo ngay, không đợi xuất xong): FFmpeg thiếu libass mà bật phụ đề chữ chạy · bật nhạc nền mà kho nhạc trống · bật lớp ảnh mà chưa chọn ảnh · phụ đề đè lên tiêu đề/nội dung · phụ đề nằm ở vùng TikTok che (dưới 80% hoặc sát thanh trên).\n\n**Mới**\n- Khi đang ✎ Sửa một video, khung xem trước chạy phụ đề chữ chạy bằng lời thật của video đó (thay cho câu mẫu).\n- \"Ghi đè file cũ khi xuất lại\" (mục Xuất): xuất lại thay file cũ cùng tên thay vì sinh thêm -2, -3…\n- Mở app bằng lối tắt ẩn mà cần tải FFmpeg: hiện hộp thông báo đang tải (trước đây tải im lặng).\n- Dọn mã còn trỏ tới Timeline cũ đã gỡ.",
+ "version": "0.33.1",
+ "notes": "## Mới trong 0.33.1\n\n- **Xuất lại theo đúng nguồn chữ mới:** khi ✎ Sửa & xuất lại, đổi nguồn tiêu đề/nội dung sang Cố định, Tên file hoặc Không giờ có tác dụng (trước đây bị khóa theo lần chạy đầu, bật tiêu đề cố định lại ra tên file). Chọn \"AI viết\" mà video chưa có chữ AI: app báo và hiện nút \"✍ Viết chữ AI (N video)\" trên thanh Đang sửa (mỗi video 1 lần gọi OpenAI, giọng giữ nguyên).\n- **Xuất lại theo đúng \"Âm thanh gốc\" mới:** đổi cách xử lý tiếng gốc (giảm khi có lời, lọc giọng giữa, Demucs, giữ, bỏ) hoặc mức \"Tiếng gốc khi có lời\" giờ làm lại bước tách âm (chạy trên máy, không tốn API) thay vì giữ tiếng nền cũ.\n- **Chạy thử 1 video lỗi ngay khi nạp:** báo lý do và hiện lại nút chạy thử, không còn kẹt \"Đang chạy thử…\".\n- **Thời gian còn lại ước tính đúng sau khi xuất lại:** chỉ tính thời gian của lần chạy gần nhất (trước đây cộng dồn).",
  "files": {
   "ffmpeg_setup.py": {
    "sha256": "f66eb85abf503510412af3b364a9e5e10558cc92a8caa4153aa07bbc44a227ab",
@@ -16,8 +16,8 @@
    "size": 4542
   },
   "tests/test_batch.py": {
-   "sha256": "773fabff9b1169fef24c952ad8f843d2b2e205a4ec43fc7f4e052471ccd7294c",
-   "size": 26657
+   "sha256": "a08262ba2b54e606cd5cf3fd2e85944e44664de903599c0f8d97913bca19ac7d",
+   "size": 28766
   },
   "win_meta.py": {
    "sha256": "228d18deb126f8965807b7c3a7d2249007da30d88f3a6bbf04493deb52b989a8",
@@ -60,8 +60,8 @@
    "size": 5181
   },
   "dub_ui.js": {
-   "sha256": "b8634bed4544febbc3866598e262bf04248654845816cb90c0d82463caef7cc5",
-   "size": 162882
+   "sha256": "fe8d9e1c4234a23269f0032e4b76ce4e9217443dea23b039d31a47acd93a5392",
+   "size": 164344
   },
   "key_ui.js": {
    "sha256": "4c1833943a21476f6e515115af555c36a4d763bbc5c1122f111cad0a5065574d",
@@ -72,8 +72,8 @@
    "size": 2610
   },
   "dubbing.py": {
-   "sha256": "51e21ebc63db7fad8a8170e46510907cee4ebcb01457942b91ae562840803f46",
-   "size": 208219
+   "sha256": "7d0c872f0d567303fcd402ff48c5d3832d75a878f90af429897b698c4cf38253",
+   "size": 209414
   },
   "tests/test_dubbing.py": {
    "sha256": "8cfe463e82cae6857f9073341b8c4422f1d3174b2162f366d8b1801342e2fc14",
@@ -160,7 +160,7 @@
    "size": 6858
   },
   "index.html": {
-   "sha256": "1de617604fdf4c6efd2b63c90aa941a4aebfb055ad3722b6a064752c065dc509",
+   "sha256": "de83455e52425b062df65eec21026cba282e4eb522130363d768b4d79c08b232",
    "size": 24183
   },
   "launch.py": {
@@ -176,15 +176,15 @@
    "size": 1411
   },
   "HUONG_DAN.txt": {
-   "sha256": "737a04d7ed86dce200f5ce244cf6fd2eddc7a2d00a8aaadb50a02c6005b493e8",
-   "size": 13859
+   "sha256": "d545950bcf51b190f351cc5bd561117b9111fbf52c8b05bc04c880848331e758",
+   "size": 14168
   },
   "README.md": {
-   "sha256": "f4eff82037d6636dd3db8720e5900cca5c148053dc0a2b9a88589b3f9a329a3d",
-   "size": 30957
+   "sha256": "97bc4f94c4a6762e0446c0db8d739af3eebb887190ee8e1056f32b17962b528d",
+   "size": 32066
   },
   "VERSION": {
-   "sha256": "d553a58a6837c95f31bae39ac344e63cc82fa81cc524966a7cd5174db38c8fa6",
+   "sha256": "88dc89b23d1eb296b577d2cd6b8fd2a8013d9d499299cdb24578106eb5b4f59c",
    "size": 7
   },
   ".gitignore": {

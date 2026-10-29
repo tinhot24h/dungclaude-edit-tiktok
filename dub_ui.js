@@ -3,7 +3,7 @@
 // each with a one-line summary · right: live preview of the first input (cut, frame, overlay, subtitle) and a compact
 // batch queue with filters and bulk actions. Jobs run on the server one at a time.
 (()=>{
-const view=$('view-dub'),edit=window.editorState;let bal={},balBusy=false,trial=null,editing=null;
+const view=$('view-dub'),edit=window.editorState;let bal={},balBusy=false,trial=null,editing=null,noAiTexts=[];
 const el=(tag,props={},...children)=>{const e=Object.assign(document.createElement(tag),props);e.append(...children);return e};
 const json=(url,body)=>request(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});
 const STORE0='review-dub-v1',STORE='review-dub-v2',profile=()=>window.dubProfile?.name||'dub',storeKey=()=>STORE,presetKind=()=>'dubpresets',STEPS=[['asr','01','Nhận diện'],['translate','02','Dịch'],['separate','03','Tách âm'],['tts','04','Giọng ai33'],['export','05','Xuất']];
@@ -426,7 +426,7 @@ async function run(o,only=null){
    catch(e){f.error=e.message;f.progress=null;failed.push(f);if(f.row){const t=f.row.querySelector('small');t.textContent='lỗi: '+e.message.slice(0,60);t.title=e.message}}
    if(queued%10===1)refresh()}
   say(`Đã thêm ${queued}/${total} video vào hàng đợi; ứng dụng chạy ${$('dub-parallel').value==='1'?'lần lượt từng video':$('dub-parallel').value+' video cùng lúc'}.`+(failed.length?` ${failed.length} video lỗi vẫn nằm trong danh sách (di chuột vào chữ "lỗi" để xem lý do).`:''));
-  sel=0;draw();if(first)current=first;filter='all';if(only)trial={id:first?.id||first,left:files.length};trialBar();refresh()}finally{$('dub-start').disabled=$('dub-trial').disabled=false;startLabel()}}
+  sel=0;draw();if(first)current=first;filter='all';if(only){trial=first?{id:first?.id||first,left:files.length}:null;if(!first)say('🧪 Không chạy thử được video đầu tiên: '+(failed[0]?.error||'lỗi khi tải video')+'. Sửa rồi bấm Chạy thử lại.')}trialBar();refresh()}finally{$('dub-start').disabled=$('dub-trial').disabled=false;startLabel()}}
 // ---- ✎ "Sửa & xuất lại": the job's own settings go to the left panel and its source video to the preview; change the
 // look and export again. Recognised speech, translation, title/body and voice are kept (server: KEEP_ON_REEXPORT).
 let beforeEdit=null;
@@ -450,7 +450,9 @@ function editBar(){const bar=$('dub-edit-bar');if(!editing){bar.hidden=true;retu
  const all=el('button',{type:'button',className:'outline-action small-action',textContent:'＋ Thêm video đã tick',title:'Đưa các video đang tick ở hàng đợi vào lần sửa này (cùng thông số)'});
  all.onclick=()=>{const ids=[...selected].filter(id=>!editing.ids.includes(id));if(!ids.length){say('Tick thêm video ở hàng đợi (ô vuông đầu dòng) rồi bấm lại để đưa vào lần sửa này.');return}editing.items.push(...ids.map(id=>jobMap.get(id)).filter(j=>j&&j.video_id&&['done','error','paused'].includes(j.state)).map(editItem));editBar();draw();startLabel();say(`Đã thêm ${ids.length} video vào lần sửa · tổng ${editing.ids.length} video.`)};
  const exit=el('button',{type:'button',className:'icon-button',textContent:'✕',title:'Thoát sửa và trả lại thông số trước đó'});exit.onclick=exitEdit;
- bar.replaceChildren(el('div',{},el('strong',{textContent:n>1?`✎ Đang sửa ${n} video · xem trước: ${(editing.items[editing.at]||{}).name}`:'✎ Đang sửa: '+(editing.items[0]||{}).name}),el('small',{className:'helper',textContent:'Chỉ đổi phần hình và tiếng nền (khung, màu, nền, chữ, phụ đề, lớp, nhạc, thông số xuất). Lời dịch, chữ AI và giọng đọc giữ nguyên, không gọi lại API.'})),el('div',{className:'dub-actions'},go,all,exit))}
+ const write=noAiTexts.filter(id=>editing.ids.includes(id));let ai=null;if(write.length){ai=el('button',{type:'button',className:'outline-action small-action',textContent:`✍ Viết chữ AI (${write.length} video)`,title:'Mỗi video 1 lần gọi OpenAI để viết tiêu đề / nội dung, rồi xuất lại'});const busy=write.some(id=>['queued','running'].includes(jobMap.get(id)?.state));if(busy){ai.disabled=true;ai.textContent+=' · chờ xuất xong'}
+  ai.onclick=async()=>{if(!confirm(`Viết chữ AI cho ${write.length} video? Mỗi video 1 lần gọi OpenAI, giọng đọc giữ nguyên.`))return;ai.disabled=true;let ok=0;for(const id of write){try{await json(`/dub/${id}/continue`,{from:'texts',...keys()});ok++}catch(e){say(e.message)}}noAiTexts=noAiTexts.filter(id=>!write.includes(id));say(`Đang viết chữ AI cho ${ok} video rồi xuất lại.`);editBar();refresh()}}
+ bar.replaceChildren(el('div',{},el('strong',{textContent:n>1?`✎ Đang sửa ${n} video · xem trước: ${(editing.items[editing.at]||{}).name}`:'✎ Đang sửa: '+(editing.items[0]||{}).name}),el('small',{className:'helper',textContent:'Chỉ đổi phần hình và tiếng nền (khung, màu, nền, chữ, phụ đề, lớp, nhạc, thông số xuất). Lời dịch, chữ AI và giọng đọc giữ nguyên, không gọi lại API.'})),el('div',{className:'dub-actions'},go,...(ai?[ai]:[]),all,exit))}
 // ---- 🧪 "Chạy thử 1 video\": the first video runs alone; when it is done the bar offers the rest of the list
 $('dub-trial').onclick=()=>{if(!files.length)return;const o=settings();if(o.mode!=='design'&&!o.voice_id){say('Chọn giọng đọc ở mục 🎙.');$('sec-voice').open=true;return}say('Chạy thử video đầu tiên; xong sẽ hiện nút chạy phần còn lại.');run(o,files[0])};
 function trialBar(){const bar=$('dub-trial-bar');if(!trial){bar.hidden=true;return}const j=jobMap.get(trial.id),n=files.length;bar.hidden=false;
@@ -578,13 +580,14 @@ function filters(){reviewBar();overview();errorGroups();
 async function batch(action,ids,extra={}){if(!ids.length){say('Không có tác vụ phù hợp.');return}
  try{const r=await json('/dub/batch',{action,ids,...keys(),...extra});const names={retry:'chạy lại',resume:'chạy tiếp',cancel:'dừng',delete:'xóa',top:'đưa lên đầu',bottom:'đưa xuống cuối',reexport:'xuất lại'};
   say(`Đã ${names[action]} ${r.done} tác vụ`+(r.skipped?` · bỏ qua ${r.skipped} (không đúng trạng thái)`:'')+(r.errors.length?` · ${r.errors.reduce((a,e)=>a+e.ids.length,0)} lỗi: ${r.errors[0].error}`:'')+'.');
+  noAiTexts=r.no_ai_texts||[];if(noAiTexts.length)say(`${noAiTexts.length} video chọn “AI viết” nhưng chưa có chữ AI nên đang dùng tên file. Bấm “✍ Viết chữ AI” ở thanh Đang sửa (mỗi video 1 lần gọi OpenAI), hoặc chọn nguồn chữ Cố định / Tên file.`);if(editing)editBar();
   if(action==='delete'&&ids.includes(current)){current='';detail=null}if(action==='delete')for(const id of ids)selected.delete(id)}catch(e){say(e.message)}refresh()}
 // long queues show the newest 60 rows first; the rest on demand (keeps the 1.5 s refresh light)
 let queueMax=60;function moreButton(n){const b=el('button',{type:'button',className:'outline-action small-action dub-more',textContent:`Hiện thêm ${Math.min(60,n)} / còn ${n} tác vụ`});b.onclick=()=>{queueMax+=60;refresh()};return b}
 // the server sends only what changed since the last answer (+ running jobs); the full order comes as ids
 const jobMap=new Map();let jobStamp=0;
 async function refresh(){clearTimeout(poll);try{const d=await request('/dub/jobs?since='+jobStamp);if(d.full)jobMap.clear();if(!d.full&&d.jobs.some(j=>j.state==='done'&&jobMap.get(j.id)?.state!=='done'))loadBalance();for(const j of d.jobs)jobMap.set(j.id,j);
-  const keep=new Set(d.ids);for(const id of [...jobMap.keys()])if(!keep.has(id))jobMap.delete(id);jobStamp=d.ids.every(id=>jobMap.has(id))?d.stamp||0:0;jobs=d.ids.map(id=>jobMap.get(id)).filter(Boolean);waiting=d.waiting||[];parallel=d.parallel||1;filters();batchDone();trialBar();const shown=visible();
+  const keep=new Set(d.ids);for(const id of [...jobMap.keys()])if(!keep.has(id))jobMap.delete(id);jobStamp=d.ids.every(id=>jobMap.has(id))?d.stamp||0:0;jobs=d.ids.map(id=>jobMap.get(id)).filter(Boolean);waiting=d.waiting||[];parallel=d.parallel||1;filters();batchDone();trialBar();if(editing&&noAiTexts.length)editBar();const shown=visible();
   const more=shown.length-queueMax;$('dub-queue').replaceChildren(...(shown.length?[...shown.slice(0,queueMax).map(card),...(more>0?[moreButton(more)]:[])]:[el('div',{className:'note-empty'},el('div',{textContent:'🎙'}),el('strong',{textContent:jobs.length?'Không có tác vụ phù hợp':'Chưa có video nào'}),el('p',{className:'helper',textContent:jobs.length?'Đổi nhóm, bước hoặc từ khóa tìm ở trên.':'Chọn video ở mục 🎬 rồi bấm Bắt đầu lồng tiếng.'}))]));
   if(current&&openDetail===current)await showDetail();else $('dub-detail').hidden=true}catch(e){say(e.message)}
  if(jobs.some(j=>['queued','running'].includes(j.state))&&!view.hidden)poll=setTimeout(refresh,1500)}

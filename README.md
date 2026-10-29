@@ -4,6 +4,13 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.33.1
+
+- **Xuất lại theo đúng nguồn chữ mới:** khi ✎ Sửa & xuất lại, đổi nguồn tiêu đề/nội dung sang Cố định, Tên file hoặc Không giờ có tác dụng (trước đây bị khóa theo lần chạy đầu, bật tiêu đề cố định lại ra tên file). Chọn "AI viết" mà video chưa có chữ AI: app báo và hiện nút "✍ Viết chữ AI (N video)" trên thanh Đang sửa (mỗi video 1 lần gọi OpenAI, giọng giữ nguyên).
+- **Xuất lại theo đúng "Âm thanh gốc" mới:** đổi cách xử lý tiếng gốc (giảm khi có lời, lọc giọng giữa, Demucs, giữ, bỏ) hoặc mức "Tiếng gốc khi có lời" giờ làm lại bước tách âm (chạy trên máy, không tốn API) thay vì giữ tiếng nền cũ.
+- **Chạy thử 1 video lỗi ngay khi nạp:** báo lý do và hiện lại nút chạy thử, không còn kẹt "Đang chạy thử…".
+- **Thời gian còn lại ước tính đúng sau khi xuất lại:** chỉ tính thời gian của lần chạy gần nhất (trước đây cộng dồn).
+
 ## Mới trong 0.33.0 · rà soát lỗi, nút bấm, chồng chéo
 
 **Lỗi đã sửa**
