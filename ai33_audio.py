@@ -30,7 +30,7 @@ def api_key(raw):
         raise ValueError('Yêu cầu âm thanh không hợp lệ.')
     key=raw.get('api_key') or secrets_store.get('ai33') or os.environ.get('REVIEW_AI33_KEY') or os.environ.get('AI33_API_KEY')
     if not key:
-        raise AudioError('Nhập ai33.pro API key trong mục Âm thanh. Không gửi key trong chat.',400)
+        raise AudioError('Nhập ai33.pro API key ở nút 🔑 API key trên thanh trên cùng. Không gửi key trong chat.',400)
     if not isinstance(key,str) or len(key)>1024 or any(ord(c)<33 or ord(c)>126 for c in key):
         raise AudioError('API key ai33.pro có định dạng không hợp lệ.',400)
     return key

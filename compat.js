@@ -39,8 +39,11 @@
           'Trình duyệt đang dùng: ' + navigator.userAgent, 'old');
     });
   }
+  // only the app's own files count: errors of browser extensions (ad blockers, translators…) are not the app's
+  function ours(file) { return !file || String(file).indexOf(location.origin + '/') === 0; }
   window.addEventListener('error', function (e) {
     if (!e || !e.message) return;   // a picture or video that did not load: not a script error
+    if (!ours(e.filename)) return;
     var where = e.filename ? ' (' + String(e.filename).replace(/^.*\//, '') + ':' + e.lineno + ')' : '';
     ready(function () { bar('⚠ Lỗi giao diện: ' + e.message + where + '\nChụp màn hình thông báo này gửi người hỗ trợ.', 'error'); });
   });
@@ -50,6 +53,7 @@
     // errors from the server are already shown by the page itself; only unexpected script errors here
     if (r && r.status) return;
     var text = r && (r.stack || r.message) || String(r);
+    if (/(chrome|moz|safari)-extension:\/\//.test(text)) return;
     if (/Failed to fetch|NetworkError|Load failed/i.test(text)) {
       ready(function () { bar('⚠ Mất kết nối với ứng dụng. Kiểm tra cửa sổ đen (START_WINDOWS.bat) còn mở không rồi tải lại trang.', 'error'); });
       return;

@@ -78,6 +78,12 @@ def main():
     os.environ['PATH'] = str(ROOT / 'bin') + os.pathsep + os.environ.get('PATH', '')
     # FFmpeg missing or too limited: on Windows it is downloaded once into bin/ (no searching, no setup)
     import ffmpeg_setup
+    if ffmpeg_setup.usable() and HIDDEN and os.name == 'nt':
+        # no console to show the progress: say what is happening (the app opens by itself when it is done)
+        import ctypes
+        threading.Thread(target=lambda: ctypes.windll.user32.MessageBoxW(
+            None, 'Lan dau chay: dang tai FFmpeg (khoang 200 MB, vai phut).\nUng dung se tu mo khi tai xong.\n\n'
+                  'Muon xem tien do: mo START_WINDOWS.bat thay cho loi tat.', 'Review Studio', 0x40), daemon=True).start()
     if ffmpeg_setup.usable() and not ffmpeg_setup.install(ROOT, lambda text: print(text, flush=True)):
         raise RuntimeError('Chua co FFmpeg (' + ffmpeg_setup.usable() + '). Kiem tra mang roi mo lai, hoac cai theo HUONG_DAN.txt.')
     for font in ('DejaVuSans.ttf', 'DejaVuSans-Bold.ttf', 'DejaVuSerif.ttf',

@@ -74,7 +74,8 @@ function move(step){const rows=layers(),i=rows.findIndex(l=>l.uid===chosen),j=i+
 $('image-up').onclick=()=>move(1);$('image-down').onclick=()=>move(-1);
 $('image-copy').onclick=()=>{const l=find(chosen);if(!l)return;if(layers().length>=12){status('Tối đa 12 lớp ảnh.');return}const copy={...l,uid:uid(),x:l.x+30,y:l.y+30};save([...layers(),copy]);select(copy.uid)};
 $('image-remove').onclick=()=>remove(chosen);
-function status(text){const s=$('workspace-status');if(s)s.textContent=text;$('tl-hint').textContent=text}
+// messages go to the status line of the page (the old Timeline hint box is gone)
+function status(text){(window.dubSay||(t=>{const s=$('preview-state');if(s)s.textContent=t}))(text)}
 
 // ---- add / remove (used by the media bin and the timeline)
 async function info(id){if(meta.has(id))return meta.get(id);try{const d=await request('/images');for(const r of d.images)meta.set(r.id,r)}catch{}return meta.get(id)}

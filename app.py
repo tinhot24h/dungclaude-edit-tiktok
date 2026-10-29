@@ -509,7 +509,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(200,dubbing.demucs_status('refresh' in parse_qs(urlparse(self.path).query)))
         if path == '/dub/capabilities':
             return self.respond(200,{'demucs':bool(dubbing.demucs_command()),'openai':bool(dubbing.openai_key({})),'ai33':bool(dubbing.ai33_key({})),
-                                     'defaults':dubbing.DEFAULTS,'models':dubbing.MODELS,'whisper_per_minute':dubbing.WHISPER_PER_MINUTE,'pronouns':dubbing.PRONOUNS,'styles':ai_translate.STYLE_LABELS,'energy':ai_translate.ENERGY_LABELS})
+                                     'ass':dubbing.ASS_FILTER(),'defaults':dubbing.DEFAULTS,'models':dubbing.MODELS,'whisper_per_minute':dubbing.WHISPER_PER_MINUTE,'pronouns':dubbing.PRONOUNS,'styles':ai_translate.STYLE_LABELS,'energy':ai_translate.ENERGY_LABELS})
         sample=re.fullmatch(r'/dub/sample/([a-f0-9]{24})\.mp3',path)
         if sample:
             try:return self.serve_audio(DUB.sample_file(sample[1]))

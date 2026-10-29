@@ -4,7 +4,7 @@
 const design=window.studioApi,edit=window.editorState;
 let stack=[],cursor=-1,timer,applying=false;
 function snapshot(){return JSON.stringify({design:design.snapshot(),edit:edit.snapshot()})}
-function buttons(){if($('tl-undo'))$('tl-undo').disabled=cursor<=0;if($('tl-redo'))$('tl-redo').disabled=cursor>=stack.length-1}
+function buttons(){}   // the Timeline's ↶/↷ buttons are gone; Ctrl+Z / Ctrl+Y remain
 function checkpoint(){if(applying)return;clearTimeout(timer);const value=snapshot();if(stack[cursor]===value)return;stack=stack.slice(0,cursor+1);stack.push(value);if(stack.length>100)stack.shift();cursor=stack.length-1;buttons()}
 function later(ms=0){if(applying)return;clearTimeout(timer);timer=setTimeout(checkpoint,ms)}
 function go(delta){checkpoint();const to=cursor+delta;if(to<0||to>=stack.length)return;cursor=to;applying=true;try{const v=JSON.parse(stack[cursor]);design.apply(v.design);edit.apply(v.edit)}finally{applying=false}document.dispatchEvent(new Event('history-applied'));buttons();$('status').textContent=delta<0?'Đã hoàn tác.':'Đã làm lại.'}

@@ -57,7 +57,7 @@ DEFAULTS = dict(language='zh', model=ai_translate.DEFAULT_MODEL, rate=4.2, prono
                 image_opacity=100, image_layer='below', layer_order='',
                 captions=False, caption_style='classic', caption_font='bvp-black', caption_size=68, caption_y=70, caption_words=5,
                 caption_color='#ffffff', caption_hi='#ffe14d', caption_upper=False,
-                music=False, music_ids=[], music_volume=18, music_duck=True,
+                music=False, music_ids=[], music_volume=18, music_duck=True, overwrite_export=False,
                 design=None, title_source='ai', body_source='ai', title_chars=30, body_min_chars=50, body_max_chars=100, review_texts=False, design_bg=True, design_title=True, design_body=True,
                 adjust=False, adjust_brightness=0, adjust_contrast=0, adjust_saturation=0, adjust_sharpen=0,
                 vision=True, title_style='auto', reuse=True,
@@ -105,7 +105,7 @@ def options(raw):
             raise DubError('Thông số không hợp lệ: ' + key)
         out[key] = v
     # "Phụ đề chữ chạy" (burned-in, the spoken word lights up) and "Nhạc nền" (a track from the music library)
-    for key in ('captions', 'caption_upper', 'music', 'music_duck'):
+    for key in ('captions', 'caption_upper', 'music', 'music_duck', 'overwrite_export'):
         v = raw.get(key, DEFAULTS[key])
         if not isinstance(v, bool):
             raise DubError('Thông số không hợp lệ: ' + key)
@@ -3133,9 +3133,16 @@ class Store:
                 job['warnings'].append('Thông tin file: ' + problem)
         try:
             if output_folder.load(self.settings_path)['auto_save']:
-                saved = output_folder.deliver(self.settings_path, folder / 'dubbed.mp4', job.get('file_name') or job['name'] + ('-dung' if settings['mode'] == 'design' else '-long-tieng'),
-                                              [job['file_name_alt']] if job.get('file_name') and job.get('file_name_alt') else [])
-                job['outputs']['saved_path'] = str(saved)
+                name = job.get('file_name') or job['name'] + ('-dung' if settings['mode'] == 'design' else '-long-tieng')
+                alts = [job['file_name_alt']] if job.get('file_name') and job.get('file_name_alt') else []
+                old = Path(job['last_saved']) if job.get('last_saved') else None
+                if settings.get('overwrite_export') and old and old.is_file() and old.parent == output_folder.check_dir(output_folder.load(self.settings_path)['output_dir']):
+                    # "Ghi đè file cũ khi xuất lại": the previous export of this video gives way, same name
+                    old.unlink()
+                    old.with_suffix('.srt').unlink(missing_ok=True)
+                    name, alts = old.stem, []
+                saved = output_folder.deliver(self.settings_path, folder / 'dubbed.mp4', name, alts)
+                job['outputs']['saved_path'] = job['last_saved'] = str(saved)
                 try:
                     linked = os.path.samefile(saved, folder / 'dubbed.mp4')
                 except OSError:

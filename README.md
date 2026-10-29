@@ -4,6 +4,29 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.33.0 · rà soát lỗi, nút bấm, chồng chéo
+
+**Lỗi đã sửa**
+- Thêm/xóa/chép lớp ảnh trong mẫu thiết kế không còn báo "Lỗi giao diện" (hàm báo trạng thái còn ghi vào ô gợi ý của Timeline cũ đã gỡ).
+- Báo thiếu key ai33 chỉ đúng chỗ: nút 🔑 API key (trước đây ghi "mục Âm thanh").
+- Thanh báo lỗi chỉ báo lỗi của chính app, không báo nhầm lỗi của tiện ích trình duyệt (chặn quảng cáo, dịch trang…).
+- Đang "✎ Sửa & xuất lại" mà thêm video mới: app tự thoát chế độ sửa (trả lại thông số trước đó) để video mới hiện và chạy đúng.
+
+**Bớt chồng chéo, dễ hiểu hơn**
+- Bỏ nút "⟳ Xuất lại ngay" trên thanh chọn (dễ áp nhầm thông số bên trái cho cả loạt); dùng "✎ Sửa & xuất lại".
+- "Phụ đề tiếng Việt" đổi tên thành "File phụ đề .srt (không in lên hình)"; mục 💬 Phụ đề chữ chạy chuyển xuống ngay trên mục Xuất, hai loại phụ đề nằm cạnh nhau.
+- "Lấp đầy · cắt viền" đổi tên thành "Lấp đầy · không viền (cắt phần thừa)".
+- "Đặt lại lớp ảnh" đặt lại cả thứ tự lớp.
+- Các nút Lớp ảnh (Vừa khung, Cỡ gốc, xoay, căn, xóa) báo "chọn ảnh trước" thay vì im lặng khi chưa chọn ảnh.
+
+**Kiểm tra trước khi chạy đầy đủ hơn** (báo ngay, không đợi xuất xong): FFmpeg thiếu libass mà bật phụ đề chữ chạy · bật nhạc nền mà kho nhạc trống · bật lớp ảnh mà chưa chọn ảnh · phụ đề đè lên tiêu đề/nội dung · phụ đề nằm ở vùng TikTok che (dưới 80% hoặc sát thanh trên).
+
+**Mới**
+- Khi đang ✎ Sửa một video, khung xem trước chạy phụ đề chữ chạy bằng lời thật của video đó (thay cho câu mẫu).
+- "Ghi đè file cũ khi xuất lại" (mục Xuất): xuất lại thay file cũ cùng tên thay vì sinh thêm -2, -3…
+- Mở app bằng lối tắt ẩn mà cần tải FFmpeg: hiện hộp thông báo đang tải (trước đây tải im lặng).
+- Dọn mã còn trỏ tới Timeline cũ đã gỡ.
+
 ## Mới trong 0.32.0
 
 - **Tự cài FFmpeg và Python trên Windows:** bấm START_WINDOWS.bat là xong, không phải tự đi tìm.

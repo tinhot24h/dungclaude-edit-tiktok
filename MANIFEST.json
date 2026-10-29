@@ -1,23 +1,23 @@
 {
  "app": "ReviewStudio",
- "version": "0.32.0",
- "notes": "## Mới trong 0.32.0\n\n- **Tự cài FFmpeg và Python trên Windows:** bấm START_WINDOWS.bat là xong, không phải tự đi tìm.\n  - Chưa có FFmpeg, hoặc bản đang có thiếu drawtext/libx264: app tự tải bản đầy đủ cho Windows (BtbN, dự phòng gyan.dev; khoảng 200 MB, có hiện % tiến độ, chỉ tải 1 lần) vào thư mục `bin` của ứng dụng, rồi chạy tiếp. Không cài vào hệ thống; xóa thư mục `bin` là gỡ. Bản này có sẵn libass (phụ đề chữ chạy) và NVENC.\n  - Chưa có Python 3.11+: START_WINDOWS.bat tự cài Python 3.12 bằng winget (cho tài khoản đang dùng), rồi mở app.",
+ "version": "0.33.0",
+ "notes": "## Mới trong 0.33.0 · rà soát lỗi, nút bấm, chồng chéo\n\n**Lỗi đã sửa**\n- Thêm/xóa/chép lớp ảnh trong mẫu thiết kế không còn báo \"Lỗi giao diện\" (hàm báo trạng thái còn ghi vào ô gợi ý của Timeline cũ đã gỡ).\n- Báo thiếu key ai33 chỉ đúng chỗ: nút 🔑 API key (trước đây ghi \"mục Âm thanh\").\n- Thanh báo lỗi chỉ báo lỗi của chính app, không báo nhầm lỗi của tiện ích trình duyệt (chặn quảng cáo, dịch trang…).\n- Đang \"✎ Sửa & xuất lại\" mà thêm video mới: app tự thoát chế độ sửa (trả lại thông số trước đó) để video mới hiện và chạy đúng.\n\n**Bớt chồng chéo, dễ hiểu hơn**\n- Bỏ nút \"⟳ Xuất lại ngay\" trên thanh chọn (dễ áp nhầm thông số bên trái cho cả loạt); dùng \"✎ Sửa & xuất lại\".\n- \"Phụ đề tiếng Việt\" đổi tên thành \"File phụ đề .srt (không in lên hình)\"; mục 💬 Phụ đề chữ chạy chuyển xuống ngay trên mục Xuất, hai loại phụ đề nằm cạnh nhau.\n- \"Lấp đầy · cắt viền\" đổi tên thành \"Lấp đầy · không viền (cắt phần thừa)\".\n- \"Đặt lại lớp ảnh\" đặt lại cả thứ tự lớp.\n- Các nút Lớp ảnh (Vừa khung, Cỡ gốc, xoay, căn, xóa) báo \"chọn ảnh trước\" thay vì im lặng khi chưa chọn ảnh.\n\n**Kiểm tra trước khi chạy đầy đủ hơn** (báo ngay, không đợi xuất xong): FFmpeg thiếu libass mà bật phụ đề chữ chạy · bật nhạc nền mà kho nhạc trống · bật lớp ảnh mà chưa chọn ảnh · phụ đề đè lên tiêu đề/nội dung · phụ đề nằm ở vùng TikTok che (dưới 80% hoặc sát thanh trên).\n\n**Mới**\n- Khi đang ✎ Sửa một video, khung xem trước chạy phụ đề chữ chạy bằng lời thật của video đó (thay cho câu mẫu).\n- \"Ghi đè file cũ khi xuất lại\" (mục Xuất): xuất lại thay file cũ cùng tên thay vì sinh thêm -2, -3…\n- Mở app bằng lối tắt ẩn mà cần tải FFmpeg: hiện hộp thông báo đang tải (trước đây tải im lặng).\n- Dọn mã còn trỏ tới Timeline cũ đã gỡ.",
  "files": {
   "ffmpeg_setup.py": {
    "sha256": "f66eb85abf503510412af3b364a9e5e10558cc92a8caa4153aa07bbc44a227ab",
    "size": 4524
   },
   "compat.js": {
-   "sha256": "3b72a7c0d5d15ad220a4fcd06f1c2ead7bc6830b65eeab747658980aa44cafd8",
-   "size": 3762
+   "sha256": "31c366a5f9b1cc1c080ff65fdbb2adf6cd919c886b6a55ce0c314dbe3f57538e",
+   "size": 4069
   },
   "video_tools.js": {
    "sha256": "217dc997759d9b7b26fccfb7abaa35ebf82b5eb333f816dc83fcf67b06781706",
    "size": 4542
   },
   "tests/test_batch.py": {
-   "sha256": "009e62b7717a438248fa8824892e83a9e31b7d4083dfa22c0b26e96c22934a14",
-   "size": 25924
+   "sha256": "773fabff9b1169fef24c952ad8f843d2b2e205a4ec43fc7f4e052471ccd7294c",
+   "size": 26657
   },
   "win_meta.py": {
    "sha256": "228d18deb126f8965807b7c3a7d2249007da30d88f3a6bbf04493deb52b989a8",
@@ -32,7 +32,7 @@
    "size": 25049
   },
   "design_tab.js": {
-   "sha256": "c7dfbfdd07abfef046a737ea2bc1ce884c5cf889314d099a4eb0c77d0f56ade4",
+   "sha256": "8fbb519639cbe5993b91ada22d67e2d8bda9e10588575e512ea09069d39bab4c",
    "size": 38708
   },
   "local_files.js": {
@@ -60,8 +60,8 @@
    "size": 5181
   },
   "dub_ui.js": {
-   "sha256": "81cbee8cb2f638ba0bae36b97cab8c526fa59d2e7bf823181367e05a5fa08686",
-   "size": 160278
+   "sha256": "b8634bed4544febbc3866598e262bf04248654845816cb90c0d82463caef7cc5",
+   "size": 162882
   },
   "key_ui.js": {
    "sha256": "4c1833943a21476f6e515115af555c36a4d763bbc5c1122f111cad0a5065574d",
@@ -72,16 +72,16 @@
    "size": 2610
   },
   "dubbing.py": {
-   "sha256": "f1a463c594fe95527e48832f671aab10e85b732af9541092b96d6a519c32b639",
-   "size": 207627
+   "sha256": "51e21ebc63db7fad8a8170e46510907cee4ebcb01457942b91ae562840803f46",
+   "size": 208219
   },
   "tests/test_dubbing.py": {
    "sha256": "8cfe463e82cae6857f9073341b8c4422f1d3174b2162f366d8b1801342e2fc14",
    "size": 52744
   },
   "image_ui.js": {
-   "sha256": "b8e2a905501aedea84033a7c962b180251e06dc018e6133241f0310b474ed8e9",
-   "size": 13416
+   "sha256": "ef72d2cff35041a912eb2994e80bcf90082ab5f0a478c915f2b143f67ed81bae",
+   "size": 13492
   },
   "export_ui.js": {
    "sha256": "1329b60d2c25d262f68bedad5b73aa9b476249b81005e00c980bf98bdf090652",
@@ -96,8 +96,8 @@
    "size": 3666
   },
   "history_ui.js": {
-   "sha256": "cd85a6aed733565e262043d275a2765a86376f5ba1fa645d57b302975f03aa77",
-   "size": 5749
+   "sha256": "1784fbf54a9878ec8c8cfaa03fe3c6b5414283cdbc82868bc01dbc01a10380d0",
+   "size": 5710
   },
   "media_preview.py": {
    "sha256": "a9209c714103e4fefe1c562570804a3afb601ed9ca1d0339a9b9b2849f2a65c9",
@@ -124,12 +124,12 @@
    "size": 13961
   },
   "app.py": {
-   "sha256": "88ae633662f66f863c49700ad196d52eb5fc4387e64a70aab932f7311155601e",
-   "size": 63890
+   "sha256": "d76d194449928c40d09fb364c78f3e97cc83b0ae8a86ba3b955c9f8b81cd49d2",
+   "size": 63917
   },
   "ai33_audio.py": {
-   "sha256": "bf91eee837ea08e1b3e96495f68f87b621f0d68abfeedfdbc4a53f8a13b21b7d",
-   "size": 27279
+   "sha256": "64c870ef291fbd725d4cdae68bc841d437040110ca83e429e1ff0b15ebf1fe5b",
+   "size": 27303
   },
   "audio_files.py": {
    "sha256": "0a9bdf3f385a5a9627172e2930bcbd0482d59a3cf73aaae40714a54da9eed654",
@@ -148,8 +148,8 @@
    "size": 102655
   },
   "studio.js": {
-   "sha256": "606d2f4b4825a547cc13cd5bc91af2cb4a802960047a4bcae3ff5ad0aa1e2973",
-   "size": 30690
+   "sha256": "e2ebb2f8bb72ba3bee02faa67609c6859a96a3ad16be04fe28e6aba60519f7bc",
+   "size": 30713
   },
   "design.py": {
    "sha256": "0ce1d7d212774d94cc8f7cfe4f651f0c4db68e32d0f11a1527c2547d1b0e5ab9",
@@ -160,12 +160,12 @@
    "size": 6858
   },
   "index.html": {
-   "sha256": "b2f2d7a5aacfec5e8d499aa3123baa988ffe140dc3e3108919515210e5a8cf02",
+   "sha256": "1de617604fdf4c6efd2b63c90aa941a4aebfb055ad3722b6a064752c065dc509",
    "size": 24183
   },
   "launch.py": {
-   "sha256": "259b3abb4d3abfbc789c3a2c3b6cce0a93f5004ac90474afbff201f730143f92",
-   "size": 4587
+   "sha256": "814bd4588f0bfc55db86c73e870ad4f5edf1655cc285058064497fd6f677b859",
+   "size": 5088
   },
   "build_package.py": {
    "sha256": "ac0f676561e139cce94e2c255353dea69c39de65457c91868c3d432b2d1b0ba2",
@@ -176,15 +176,15 @@
    "size": 1411
   },
   "HUONG_DAN.txt": {
-   "sha256": "5bc41f3bba67e8df6f54cceaf0abc5403656cefa22d259d28a55c5c481f44045",
-   "size": 13301
+   "sha256": "737a04d7ed86dce200f5ce244cf6fd2eddc7a2d00a8aaadb50a02c6005b493e8",
+   "size": 13859
   },
   "README.md": {
-   "sha256": "148b65ae13c499f8e1dc4f9988889b86ea6bc305d57899ce0f073fa892612659",
-   "size": 28709
+   "sha256": "f4eff82037d6636dd3db8720e5900cca5c148053dc0a2b9a88589b3f9a329a3d",
+   "size": 30957
   },
   "VERSION": {
-   "sha256": "e0ccf7913110f807adecc59be43ce6fb334f82a8a7f70f70fbbba34bf1eeaaf2",
+   "sha256": "d553a58a6837c95f31bae39ac344e63cc82fa81cc524966a7cd5174db38c8fa6",
    "size": 7
   },
   ".gitignore": {

@@ -67,6 +67,12 @@ khi mở app (đặt REVIEW_KEEP_DAYS=0 để tắt), trừ video còn trong hà
 Chỉ dùng trên máy này. Chưa gọi thử OpenAI / ai33 thật, NVENC và ghi Tags của Windows
 trên máy thật: hãy chạy thử 1–2 video trước khi chạy lô lớn.
 
+NÂNG CẤP 0.33.0
+- Sửa lỗi lớp ảnh trong mẫu thiết kế, báo key đúng chỗ, không báo nhầm lỗi tiện ích trình duyệt.
+- Bỏ nút "Xuất lại ngay"; đổi tên "File phụ đề .srt", "Lấp đầy · không viền"; Phụ đề chữ chạy nằm cạnh mục Xuất.
+- Kiểm tra trước khi chạy báo sớm: thiếu libass, kho nhạc trống, phụ đề đè chữ hoặc nằm trong vùng TikTok che.
+- Tùy chọn "Ghi đè file cũ khi xuất lại"; xem trước phụ đề bằng lời thật khi đang sửa.
+
 NÂNG CẤP 0.32.0
 - START_WINDOWS.bat tự cài Python (winget) và tự tải FFmpeg vào thư mục bin khi máy chưa có.
 

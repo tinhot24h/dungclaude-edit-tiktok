@@ -121,6 +121,17 @@ class CaptionMusicTests(test_dubbing.PipelineBase):
         self.assertNotEqual(Path(job['outputs']['saved_path']), first);self.assertTrue(first.is_file())   # a new file, the old one kept
         self.assertEqual(len(self.tasks), 1)                                                            # no new voice
 
+    def test_reexport_can_overwrite_the_old_file(self):
+        job, folder = self.run_job(overwrite_export=True)
+        first = Path(job['outputs']['saved_path'])
+        with mock.patch.object(self.store, 'enqueue'):
+            self.store.batch(dict(action='reexport', ids=[job['id']], options=dict(job['options'], frame_rotate=1)))
+        job = self.store.load(job['id'])
+        with mock.patch.object(dubbing, 'video_frames', return_value=[]):
+            self.store.process(job, dict(openai='sk', ai33='k'), threading.Event())
+        self.assertEqual(Path(job['outputs']['saved_path']), first)                       # same name, no -2
+        self.assertEqual(len([p for p in first.parent.glob(first.stem + '*.mp4')]), 1)
+
     def test_music_from_the_library_by_style_ducked_under_the_voice(self):
         src = Path(self.tmp.name) / 'beat.mp3'
         subprocess.run(['ffmpeg', '-v', 'error', '-y', '-f', 'lavfi', '-i', 'sine=frequency=220:duration=2', str(src)], check=True)
