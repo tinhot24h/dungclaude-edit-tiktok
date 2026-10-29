@@ -3,6 +3,8 @@ import json
 import os
 import shutil
 import subprocess
+
+import procs
 import sys
 import tempfile
 import threading
@@ -131,9 +133,9 @@ def reveal(target):
     if not target.exists():raise ValueError('Thư mục hoặc file không còn tồn tại.')
     try:
         if sys.platform=='win32':
-            subprocess.Popen(['explorer','/select,',str(target)] if target.is_file() else ['explorer',str(target)])
+            procs.popen_outside(['explorer','/select,',str(target)] if target.is_file() else ['explorer',str(target)])
         elif sys.platform=='darwin':
-            subprocess.Popen(['open','-R',str(target)] if target.is_file() else ['open',str(target)])
+            procs.popen_outside(['open','-R',str(target)] if target.is_file() else ['open',str(target)])
         else:
-            subprocess.Popen(['xdg-open',str(target.parent if target.is_file() else target)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+            procs.popen_outside(['xdg-open',str(target.parent if target.is_file() else target)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     except OSError:raise ValueError('Không mở được trình quản lý file trên máy này.') from None

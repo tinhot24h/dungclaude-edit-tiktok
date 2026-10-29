@@ -1,8 +1,16 @@
 {
  "app": "ReviewStudio",
- "version": "0.39.0",
- "notes": "## Mới trong 0.39.0\n\n- **Hàng đợi phân trang:** thanh trang ở đáy khung (‹ 1 2 3 … 14 ›), chọn **10 / 20 / 50 / 100 video mỗi trang** (nhớ lựa chọn), hiện \"21–40 / 269\". Đổi nhóm (Tất cả / Đang chạy / Cần xử lý / Xong), ô tìm hoặc bước thì về trang 1.\n- **Khung hàng đợi không còn tràn màn hình:** khung tự cao vừa cửa sổ, danh sách video cuộn bên trong khung; phần đầu (tiến độ, nhóm, tìm, chọn nhiều) và thanh trang luôn hiện.",
+ "version": "0.40.0",
+ "notes": "## Mới trong 0.40.0 · rà soát toàn bộ\n\n- **Tắt app sạch sẽ:** bấm ⏻ (hoặc khởi động lại sau cập nhật) giờ dừng luôn mọi FFmpeg / Demucs đang chạy. Trước đây trên Windows chúng vẫn chạy ngầm sau khi tắt (ăn CPU, giữ khóa file video). Trên Windows, app và mọi tiến trình con còn được gắn với cửa sổ đen: đóng cửa sổ, Ctrl+C hay app bị treo/crash cũng không để lại FFmpeg nào. Cửa sổ thư mục mở bằng nút \"Mở thư mục\" và trình duyệt không bị đóng theo.\n- **Video đang lồng tiếng khi tắt app** không bị đánh dấu lỗi: mở lại app sẽ tự chạy tiếp từ bước đang dở.\n- **Hàng đợi không còn có thể \"đứng im\":** một lỗi bất ngờ trong 1 video trước đây có thể làm dừng luồng xử lý (các video sau không chạy nữa) và để video đó kẹt mãi ở \"đang chạy\". Giờ video đó báo lỗi rõ ràng, hàng đợi chạy tiếp.\n- **Lỗi máy chủ luôn có thông báo:** mọi lỗi bất ngờ (kể cả ổ đĩa đầy) trả về câu báo lỗi dễ hiểu thay vì \"Không thể kết nối máy chủ\".\n- Đã cho robot bấm thử 145 nút trên cả 2 trang (mọi mục, có bật thiết kế / overlay / lớp ảnh): không lỗi JavaScript, không lỗi máy chủ, không trùng id; mọi đường dẫn giao diện gọi đều có trên máy chủ.",
  "files": {
+  "procs.py": {
+   "sha256": "3eaee398d837d1aa3f8f0bf41d2572dda153e7e2d9bc57d6336652f47cea0c70",
+   "size": 4728
+  },
+  "tests/test_procs.py": {
+   "sha256": "507f06e7adaeb4b9b15ca393f391fa095d97c11151f926455a42baf5b21f453d",
+   "size": 3805
+  },
   "ffmpeg_setup.py": {
    "sha256": "f66eb85abf503510412af3b364a9e5e10558cc92a8caa4153aa07bbc44a227ab",
    "size": 4524
@@ -84,8 +92,8 @@
    "size": 2610
   },
   "dubbing.py": {
-   "sha256": "b0c7491eb9dad14c534b4b3de109d3fc1f12351984b0383b8c54ca915628fcc6",
-   "size": 212676
+   "sha256": "5397ac96847e3e608efa460431a3036015573ee3d768c43a6fbe2fc03d95c131",
+   "size": 213839
   },
   "tests/test_dubbing.py": {
    "sha256": "8cfed9a4e9864a8e0341fdb2ea88e0def7e5a977eabe87d8414bb60f0563794e",
@@ -100,8 +108,8 @@
    "size": 8125
   },
   "output_folder.py": {
-   "sha256": "10be6efb141e1b209533c2268735adb9964cff3d955360cd9d6178bd504c59b3",
-   "size": 6898
+   "sha256": "4071b03b64bb4d6ecc0b87045c7f0f3e92caecc2d4c5e83f052fb9e6a1a910ab",
+   "size": 6921
   },
   "library_store.py": {
    "sha256": "8e5aa00350374c88245b8d2c0fc009e182d3c2a77487015e6cef6e1aff48e342",
@@ -136,8 +144,8 @@
    "size": 13961
   },
   "app.py": {
-   "sha256": "2e1d3fb2998cd43438a5ed962435798ee771e909c742cff3a286b2aa28d8a01a",
-   "size": 64280
+   "sha256": "b0ada499f4103211b48b309ca274b94c8aa77fbcdb518b11af25dfb4d76dd98a",
+   "size": 65991
   },
   "ai33_audio.py": {
    "sha256": "64c870ef291fbd725d4cdae68bc841d437040110ca83e429e1ff0b15ebf1fe5b",
@@ -172,31 +180,31 @@
    "size": 6858
   },
   "index.html": {
-   "sha256": "ff8dce94167baea43d17a97e79b827841e045b7fc13c025b1aeb30a50d6b0b6d",
+   "sha256": "4433a463287994f6558cb8e1a26762b976c45197877efecb7aace6e0c8a73018",
    "size": 24220
   },
   "launch.py": {
-   "sha256": "814bd4588f0bfc55db86c73e870ad4f5edf1655cc285058064497fd6f677b859",
-   "size": 5088
+   "sha256": "3a73cebee01ed4db1acf4bd52cd469ee948ebf6f6aab459243fa75b0afe5a419",
+   "size": 5476
   },
   "build_package.py": {
-   "sha256": "fe0260b1f0f6301d0bbf0e1b6ffea714807db6dddb853a21063f563cccada57a",
-   "size": 3312
+   "sha256": "a5e7219ee6e55fb03ebf3d6c64db29c550ce6dfc082f701be505d87355fe8d04",
+   "size": 3347
   },
   "START_WINDOWS.bat": {
    "sha256": "45917335d9a938e178467107e9ceeaed5daecef10ca9351015867336746a6957",
    "size": 1411
   },
   "HUONG_DAN.txt": {
-   "sha256": "a02d977cf551a14805f8883118c098e8f00da9c9e2a743ab12a424ccab62427f",
-   "size": 15640
+   "sha256": "535fabe199d952c1de483cbf561b1e62e19e2d830d49e3e484bc9bd185f46ea2",
+   "size": 15917
   },
   "README.md": {
-   "sha256": "dd87ba6469e89ca9286c43c188737140e7dcf8ae9b8ba24e0d8ff38674fea1d2",
-   "size": 39030
+   "sha256": "c2370e298ff9c80bcb4e9641f4101c5743485c8f0d61cfb303064eb75b65f145",
+   "size": 40492
   },
   "VERSION": {
-   "sha256": "f7ada3982d4e3ce9f5b135992938383496e4dbfda2468d51dd676d1dd86f24a0",
+   "sha256": "3019bdb106d042ba1f7cf88d1dd844530076d5ff49f6b88e48316a3e1e05d9da",
    "size": 7
   },
   ".gitignore": {

@@ -67,6 +67,10 @@ khi mở app (đặt REVIEW_KEEP_DAYS=0 để tắt), trừ video còn trong hà
 Chỉ dùng trên máy này. Chưa gọi thử OpenAI / ai33 thật, NVENC và ghi Tags của Windows
 trên máy thật: hãy chạy thử 1–2 video trước khi chạy lô lớn.
 
+NÂNG CẤP 0.40.0
+- Tắt app (nút nguồn, đóng cửa sổ đen, Ctrl+C) dừng luôn mọi FFmpeg / Demucs, không còn chạy ngầm.
+- Video đang lồng tiếng khi tắt app sẽ tự chạy tiếp lần mở sau; lỗi bất ngờ không làm đứng hàng đợi.
+
 NÂNG CẤP 0.39.0
 - Hàng đợi chia trang (10/20/50/100 video mỗi trang), khung vừa màn hình, danh sách cuộn bên trong.
 

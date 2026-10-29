@@ -1591,6 +1591,7 @@ class Store:
         self.lock = threading.RLock()
         self.queue = []
         self.keys = {}
+        self.stopping = False   # set when the app quits: killed jobs keep their state and resume at the next start
         self.cancels = {}
         self.live = {}
         self.wake = threading.Event()
@@ -2275,6 +2276,8 @@ class Store:
             if key:
                 try:
                     self.run_job(key)
+                except Exception as exc:   # a bug in one job must not stop the queue for good
+                    print(f'Dub worker: {type(exc).__name__}: {exc}', flush=True)
                 finally:
                     with self.lock:
                         self.running -= 1
@@ -2304,9 +2307,20 @@ class Store:
             job['state'] = 'error'
             job['steps'][job['step']] = 'error'
             job['message'] = 'Lỗi xử lý: ' + str(exc)[:300]
+        except Exception as exc:
+            # anything unexpected still ends as a visible error (the job could otherwise stay "running" for ever)
+            job['state'] = 'error'
+            job['steps'][job['step']] = 'error'
+            job['message'] = f'Lỗi không mong muốn ({type(exc).__name__}): {str(exc)[:240]}. Bấm Chạy lại; nếu lặp lại, gửi ảnh lỗi này để sửa.'
         finally:
             with self.lock:
                 self.keys.pop(key, None)
+            if self.stopping and job.get('state') in ('error', 'paused'):
+                # the app is quitting and killed this job's FFmpeg / Demucs: not a real error, it continues at the
+                # next start from the step it was on
+                job['state'] = 'running'
+                job['steps'][job['step']] = 'running'
+                job['message'] = 'Ứng dụng đã tắt giữa chừng: mở lại sẽ tự chạy tiếp từ bước này.'
             self.save(job)
 
     def progress(self, job, step, fraction, message):

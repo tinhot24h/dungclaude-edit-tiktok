@@ -107,8 +107,19 @@ def main():
         timer.start()
     # The app runs as a child process so "Khởi động lại" after an in-app update (exit code 75) brings it back.
     env = {**os.environ, 'REVIEW_LAUNCHER': '1'}
+    import procs
     while True:
-        code = subprocess.call([sys.executable, str(ROOT / 'app.py')], cwd=ROOT, env=env)
+        app = subprocess.Popen([sys.executable, str(ROOT / 'app.py')], cwd=ROOT, env=env)
+        # Windows: the app and every FFmpeg / Demucs it starts end with this window (closed, Ctrl+C or crashed)
+        procs.bind(app)
+        try:
+            code = app.wait()
+        except KeyboardInterrupt:
+            try:
+                code = app.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                app.kill()
+                code = 0
         if code != 75:
             return code
         print('Dang khoi dong lai Review Studio sau khi cap nhat...', flush=True)

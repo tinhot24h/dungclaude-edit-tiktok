@@ -4,6 +4,14 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.40.0 · rà soát toàn bộ
+
+- **Tắt app sạch sẽ:** bấm ⏻ (hoặc khởi động lại sau cập nhật) giờ dừng luôn mọi FFmpeg / Demucs đang chạy. Trước đây trên Windows chúng vẫn chạy ngầm sau khi tắt (ăn CPU, giữ khóa file video). Trên Windows, app và mọi tiến trình con còn được gắn với cửa sổ đen: đóng cửa sổ, Ctrl+C hay app bị treo/crash cũng không để lại FFmpeg nào. Cửa sổ thư mục mở bằng nút "Mở thư mục" và trình duyệt không bị đóng theo.
+- **Video đang lồng tiếng khi tắt app** không bị đánh dấu lỗi: mở lại app sẽ tự chạy tiếp từ bước đang dở.
+- **Hàng đợi không còn có thể "đứng im":** một lỗi bất ngờ trong 1 video trước đây có thể làm dừng luồng xử lý (các video sau không chạy nữa) và để video đó kẹt mãi ở "đang chạy". Giờ video đó báo lỗi rõ ràng, hàng đợi chạy tiếp.
+- **Lỗi máy chủ luôn có thông báo:** mọi lỗi bất ngờ (kể cả ổ đĩa đầy) trả về câu báo lỗi dễ hiểu thay vì "Không thể kết nối máy chủ".
+- Đã cho robot bấm thử 145 nút trên cả 2 trang (mọi mục, có bật thiết kế / overlay / lớp ảnh): không lỗi JavaScript, không lỗi máy chủ, không trùng id; mọi đường dẫn giao diện gọi đều có trên máy chủ.
+
 ## Mới trong 0.39.0
 
 - **Hàng đợi phân trang:** thanh trang ở đáy khung (‹ 1 2 3 … 14 ›), chọn **10 / 20 / 50 / 100 video mỗi trang** (nhớ lựa chọn), hiện "21–40 / 269". Đổi nhóm (Tất cả / Đang chạy / Cần xử lý / Xong), ô tìm hoặc bước thì về trang 1.

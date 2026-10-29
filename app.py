@@ -28,6 +28,9 @@ import update
 import dubbing
 import secrets_store
 import system_check
+import procs
+
+procs.track()   # FFmpeg, Demucs… started from here are stopped when the app quits
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / '.local'
@@ -333,8 +336,19 @@ def render(job_id,command,plan,name,cancel=None,fallback=None):
         if acquired:RENDER_LOCK.release()
 
 
+def shutdown(code):
+    """Quit / restart: dubbing jobs keep their "running" state (they continue at the next start), editor exports are
+    cancelled, every child process is killed, then the process ends."""
+    DUB.stopping=True
+    with LOCK:
+        for event in CANCELS.values():event.set()
+    try:procs.stop_all()
+    finally:os._exit(code)
+
+
 class Handler(BaseHTTPRequestHandler):
     def respond(self, code, content, mime='application/json; charset=utf-8'):
+        self.answered = True
         if not isinstance(content, bytes):
             content = json.dumps(content, ensure_ascii=False).encode()
         self.send_response(code)
@@ -399,6 +413,31 @@ class Handler(BaseHTTPRequestHandler):
             pass
 
     def do_GET(self):
+        self.safely(self.get)
+
+    def do_POST(self):
+        self.safely(self.post)
+
+    def safely(self, handler):
+        """Last safety net: a bug or a disk problem in one request answers with a readable error (the page shows it)
+        instead of dropping the connection (\"Không thể kết nối máy chủ\")."""
+        self.answered = False
+        try:
+            handler()
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            pass   # the page was closed or reloaded meanwhile
+        except Exception as exc:
+            print(f'{self.command} {urlparse(self.path).path}: {type(exc).__name__}: {exc}', flush=True)
+            if not self.answered:
+                disk = isinstance(exc, OSError) and getattr(exc, 'errno', 0) in (28, 122)
+                message = ('Ổ đĩa đã đầy: dọn bớt file hoặc chọn thư mục xuất ở ổ khác.' if disk else
+                           f'Lỗi máy chủ ({type(exc).__name__}): {str(exc)[:200]}')
+                try:
+                    self.respond(500, {'error': message})
+                except OSError:
+                    pass
+
+    def get(self):
         if not self.allowed():
             return
         path = urlparse(self.path).path
@@ -574,7 +613,7 @@ class Handler(BaseHTTPRequestHandler):
                 return
         self.respond(404, {'error': 'Không tìm thấy.'})
 
-    def do_POST(self):
+    def post(self):
         if not self.allowed():
             return
         path = urlparse(self.path).path
@@ -843,8 +882,8 @@ class Handler(BaseHTTPRequestHandler):
                     return self.respond(200,{**result,'video_id':vid})
                 except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
             if path=='/app/quit':
-                # quit button in the header
-                threading.Timer(.6,lambda:os._exit(0)).start()
+                # quit button in the header: stop the exports and every FFmpeg / Demucs still running, then exit
+                threading.Timer(.6,lambda:shutdown(0)).start()
                 return self.respond(200,{'quitting':True})
             if path in ('/update/apply','/update/restart'):
                 if (ROOT/'.git').exists():raise ValueError('Bản git clone: cập nhật bằng lệnh git pull.')
@@ -852,7 +891,7 @@ class Handler(BaseHTTPRequestHandler):
                 if busy:raise ValueError('Đang xuất video. Chờ xuất xong rồi cập nhật/khởi động lại.')
                 if path=='/update/restart':
                     # launch.py restarts the app when it exits with RESTART_CODE (started directly, it just stops).
-                    threading.Timer(.6,lambda:os._exit(RESTART_CODE)).start()
+                    threading.Timer(.6,lambda:shutdown(RESTART_CODE)).start()
                     return self.respond(200,{'restarting':True,'launcher':os.environ.get('REVIEW_LAUNCHER')=='1'})
                 try:return self.respond(200,update.apply(log=lambda line:None))
                 except update.UpdateError as exc:return self.respond(502,{'error':str(exc)})
