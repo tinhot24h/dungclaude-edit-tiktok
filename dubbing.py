@@ -2932,6 +2932,7 @@ class Store:
         when = self.meta_date(job)['at']
         # nothing in Explorer's "Media" group (Contributing artists, Year, Genre): the author goes to Directors /
         # Producers / Writers through the Windows step; only the title, copyright and the creation date are tags
+        # (Copyright is the MP4 'cprt' tag Windows reads; its property handler refuses to write it: Access Denied)
         tags = dict(title=self.meta_title(job), copyright=o['meta_copyright'], creation_time=when + 'Z')
         for k, v in tags.items():
             if v:
@@ -2946,7 +2947,7 @@ class Store:
         return {k: v for k, v in dict(title=self.meta_title(job), keywords=job.get('tags') or [], rating=o['meta_rating'],
                                        directors=people, producers=people, writers=people, publisher=o['meta_publisher'],
                                        content_provider=o['meta_publisher'] or o['meta_url'],
-                                       author_url=o['meta_url'], promotion_url=o['meta_url'], copyright=o['meta_copyright']).items() if v}
+                                       author_url=o['meta_url'], promotion_url=o['meta_url']).items() if v}
 
     # ---- image layer (one picture placed on every dubbed video: a cover box, frame, logo, sticker…)
     @property

@@ -4,6 +4,10 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.28.1
+
+- **Hết cảnh báo "Windows chưa ghi được: Copyright (Access Denied)":** Copyright đã được ghi khi xuất video (thẻ MP4 mà Windows đọc ra ở mục Copyright), bước ghi của Windows chỉ thử ghi đè lần nữa và bị Windows khóa. Nay bỏ lần ghi thừa đó; Copyright vẫn hiện đúng trong Properties → Details.
+
 ## Mới trong 0.28.0
 
 - **Xem số dư ngay trên thanh chạy (tab Lồng tiếng):** ô key hiện `OpenAI ✓ · đã dùng $1.23 | ai33 ✓ · còn ◆ 123.457`.

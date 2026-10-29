@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.28.0",
- "notes": "## Mới trong 0.28.0\n\n- **Xem số dư ngay trên thanh chạy (tab Lồng tiếng):** ô key hiện `OpenAI ✓ · đã dùng $1.23 | ai33 ✓ · còn ◆ 123.457`.\n  - **ai33:** số credit còn lại lấy trực tiếp từ ai33.pro.\n  - **OpenAI:** OpenAI không cho xem số dư bằng API key thường, nên app tự cộng chi phí các lần gọi của chính app trong tháng (token thực tế × bảng giá, Whisper theo phút). Đây là ước tính; số dư thật xem ở platform.openai.com → Billing. Rê chuột lên ô để xem chi tiết.\n  - Tự cập nhật mỗi phút, sau mỗi video xong và khi bấm vào ô.\n- **Lớp ảnh và Overlay ngẫu nhiên có công tắc bật/tắt ở tiêu đề**, giống Nền & khung / Tiêu đề / Nội dung / Điều chỉnh màu. Tắt thì giữ nguyên mọi thông số, chỉ không chèn vào video.",
+ "version": "0.28.1",
+ "notes": "## Mới trong 0.28.1\n\n- **Hết cảnh báo \"Windows chưa ghi được: Copyright (Access Denied)\":** Copyright đã được ghi khi xuất video (thẻ MP4 mà Windows đọc ra ở mục Copyright), bước ghi của Windows chỉ thử ghi đè lần nữa và bị Windows khóa. Nay bỏ lần ghi thừa đó; Copyright vẫn hiện đúng trong Properties → Details.",
  "files": {
   "video_tools.js": {
    "sha256": "217dc997759d9b7b26fccfb7abaa35ebf82b5eb333f816dc83fcf67b06781706",
@@ -64,8 +64,8 @@
    "size": 2610
   },
   "dubbing.py": {
-   "sha256": "e784514b94eae2d4d7043166a3d4774089814b753ab948a58f8002b523e04871",
-   "size": 185061
+   "sha256": "3fc64dc20dfb13fd4b4a2586b1839d5403c65862eef60731e25017b903acabf7",
+   "size": 185145
   },
   "tests/test_dubbing.py": {
    "sha256": "8f056ca16aa2b2384b13931a62cf9cf3c2b1883448b95f19743e34e8fb86a80e",
@@ -152,7 +152,7 @@
    "size": 5352
   },
   "index.html": {
-   "sha256": "fbacef53694ce157315faa9d0bff41110d8131c591c83ac9d94718faa404b2a8",
+   "sha256": "c0777c8868052ef7b886c8c8f7e23320d58dc9893515cde4c0ebd8b692eb35de",
    "size": 24079
   },
   "launch.py": {
@@ -168,15 +168,15 @@
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "e5da135c9c1fe3ca0ab3640a359439cbf836822e134dfec17d1d177a472f417b",
-   "size": 9767
+   "sha256": "94c564c76724f417403e29b9035646b366dd1ccbb339b47a8f12c02219331a1e",
+   "size": 9882
   },
   "README.md": {
-   "sha256": "780bee74704d9ee792db3bada2ddbd5c318bd864e1c5044eca8357c3a593192f",
-   "size": 16222
+   "sha256": "869a1cbef8850c3a1e98aae38920fbe5e442df938b1bc4a19e2e321192cfcb42",
+   "size": 16602
   },
   "VERSION": {
-   "sha256": "a80bff70756ff2e0f528e9b6844fcb5fe4baea4c6f257257c4aea3a38ab31222",
+   "sha256": "ff80893efe44354b6fa06f18d79dfe7162bf0c2da514fc9c422e920225200fe4",
    "size": 7
   },
   ".gitignore": {

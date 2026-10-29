@@ -65,6 +65,9 @@ khi mở app (đặt REVIEW_KEEP_DAYS=0 để tắt), trừ video còn trong hà
 Chỉ dùng trên máy này. Chưa gọi thử OpenAI / ai33 thật, NVENC và ghi Tags của Windows
 trên máy thật: hãy chạy thử 1–2 video trước khi chạy lô lớn.
 
+NÂNG CẤP 0.28.1
+- Bỏ cảnh báo Copyright "Access Denied" (Copyright vẫn được ghi đúng khi xuất).
+
 NÂNG CẤP 0.28.0
 - Ô key ở tab Lồng tiếng hiện số credit ai33 còn lại và số tiền OpenAI app đã dùng trong tháng (ước tính).
 - Lớp ảnh và Overlay có công tắc bật/tắt ở tiêu đề mục.
