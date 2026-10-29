@@ -131,7 +131,8 @@ class MetadataTests(test_dubbing.PipelineBase):
                 self.store.process(job, dict(openai='sk', ai33='k'), threading.Event())
         self.assertEqual(job['state'], 'done', job['message']);self.assertEqual(job['tags'], ['đệm lót giày', 'êm chân'])
         fmt, streams = self.tags(self.data / 'dub' / job['id'] / 'dubbed.mp4')
-        self.assertEqual(fmt.get('title'), 'dem-lot-giay-tpu');self.assertEqual(fmt.get('artist'), 'Kênh Xóm Review');self.assertEqual(fmt.get('copyright'), '© 2026 Xóm Review')
+        self.assertEqual(fmt.get('title'), 'dem-lot-giay-tpu');self.assertEqual(fmt.get('copyright'), '© 2026 Xóm Review')
+        self.assertNotIn('artist', fmt);self.assertNotIn('date', fmt)   # nothing in Explorer's "Media" group (Contributing artists, Year)
         self.assertNotIn('comment', fmt);self.assertNotIn('encoder', fmt)   # no "Encoded by" (the stream keeps only the codec name)
         props = win.call_args[0][1]
         self.assertEqual(props['keywords'], ['đệm lót giày', 'êm chân']);self.assertEqual(props['rating'], 5);self.assertEqual(props['promotion_url'], 'https://www.tiktok.com/@xom_review')
@@ -171,11 +172,38 @@ class MetadataTests(test_dubbing.PipelineBase):
         self.assertTrue(4.99 < back < 7.01, back);self.assertIn(first['days'], (5, 6, 7))
         self.assertEqual(self.store.meta_date(job), first)                                     # exporting again: same date
         args = self.store.metadata_args(job)
-        self.assertIn('creation_time=' + first['at'] + 'Z', args);self.assertIn('date=' + first['at'][:4], args)
+        self.assertIn('creation_time=' + first['at'] + 'Z', args);self.assertFalse(any(a.startswith(('date=', 'artist=')) for a in args))
         job['options'] = dubbing.options(dict(meta_back_min=0, meta_back_max=0))
         self.assertEqual(self.store.meta_date(job)['days'], 0)                                 # 0–0 = the export day
         days = {self.store.meta_date(dict(id='y', options=dubbing.options({})))['days'] for _ in range(60)}
         self.assertEqual(days, {5, 6, 7})
+
+    def test_windows_writer_uses_lpwstr_and_saves_what_it_can(self):
+        import sys, types
+        calls = []
+        class Store:
+            def SetValue(self, key, variant):
+                if key == 'System.Media.ContentDistributor':
+                    raise RuntimeError('refused')
+                calls.append((key, variant))
+            def Commit(self):
+                calls.append(('commit', None))
+        propsys = types.SimpleNamespace(SHGetPropertyStoreFromParsingName=lambda *a: Store(), IID_IPropertyStore=1,
+                                        PSGetPropertyKeyFromName=lambda name: name, PROPVARIANTType=lambda v, t: (v, t))
+        pythoncom = types.SimpleNamespace(VT_LPWSTR=31, VT_BSTR=8, VT_VECTOR=0x1000, VT_UI4=19, CoInitialize=lambda: None, CoUninitialize=lambda: None)
+        win32com = types.ModuleType('win32com');win32com.propsys = types.SimpleNamespace(propsys=propsys, pscon=types.SimpleNamespace(GPS_READWRITE=2))
+        fake = {'pythoncom': pythoncom, 'win32com': win32com, 'win32com.propsys': win32com.propsys}
+        with tempfile.NamedTemporaryFile('w', suffix='.json', delete=False, encoding='utf-8') as f:
+            json.dump(dict(path='x.mp4', props=dict(directors=['Kênh A'], author_url='https://www.tiktok.com/@a', rating=5, content_provider='Shop A')), f)
+        try:
+            with mock.patch.dict(sys.modules, fake), self.assertRaises(SystemExit) as end, mock.patch('builtins.print') as out:
+                dubbing.win_meta.main(f.name)
+        finally:
+            os.unlink(f.name)
+        self.assertEqual(end.exception.code, 2);self.assertIn('Content provider', out.call_args[0][0])
+        got = dict(calls)
+        self.assertEqual(got['System.Video.Director'], (['Kênh A'], 0x1000 | 31));self.assertEqual(got['System.Media.AuthorUrl'], ('https://www.tiktok.com/@a', 31))
+        self.assertEqual(got['System.Rating'], (99, 19));self.assertIn('commit', got)                # the other fields are still saved
 
     def test_metadata_options_validation(self):
         for bad in (dict(meta_url='tiktok.com/@a'), dict(meta_rating=6), dict(meta_author='x' * 301), dict(meta_author='a\nb'),

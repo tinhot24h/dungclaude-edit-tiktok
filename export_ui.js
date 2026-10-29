@@ -33,12 +33,14 @@ function drawStars(){[...stars.children].forEach((b,i)=>b.classList.toggle('on',
 const starNote=el('small',{className:'helper'});
 const toggle=el('button',{type:'button',className:'meta-switch',title:'Bật/tắt ghi thông tin file'},el('i'));
 const fields=el('div',{className:'meta-fields'},el('label',{className:'check-row'},strip,document.createTextNode(' Không chép metadata của video gốc (link, thiết bị, tiêu đề cũ)')),
- row('Tác giả',input('meta-author','Tên bạn hoặc tên kênh')),row('Link kênh',input('meta-url','https://www.tiktok.com/@ten_kenh')),
- row('Nhà phát hành',input('meta-publisher','Tên shop / kênh (không bắt buộc)')),row('Bản quyền',input('meta-copyright','© 2026 Tên kênh')),
+ row('Tác giả',input('meta-author','Tên kênh hoặc link kênh')),el('small',{className:'meta-map',textContent:'→ Directors, Producers, Writers'}),
+ row('Link kênh',input('meta-url','https://www.tiktok.com/@ten_kenh')),el('small',{className:'meta-map',textContent:'→ Author URL, Promotion URL (và Content provider nếu để trống Nhà phát hành)'}),
+ row('Nhà phát hành',input('meta-publisher','Tên shop / kênh (không bắt buộc)')),el('small',{className:'meta-map',textContent:'→ Publisher, Content provider'}),
+ row('Bản quyền',input('meta-copyright','© 2026 Tên kênh')),
  row('Đánh giá',stars,starNote,rating),
  row('Ngày tạo',el('span',{className:'helper',textContent:'lùi'}),el('input',{type:'number',id:'meta-back-min',min:0,max:365,value:5,'aria-label':'Lùi ít nhất (ngày)'}),el('span',{className:'helper',textContent:'–'}),el('input',{type:'number',id:'meta-back-max',min:0,max:365,value:7,'aria-label':'Lùi nhiều nhất (ngày)'}),el('span',{className:'helper',textContent:'ngày'})),
  el('p',{className:'helper',id:'meta-date-note'}),
- el('p',{className:'helper',textContent:'Mỗi video tự có: Tiêu đề = tiêu đề AI viết, Tags = từ khóa AI viết (cùng lần dịch), ngày tạo theo ô Ngày tạo. Tags, đánh giá, link kênh, nhà phát hành được Windows ghi sau khi xuất (tự cài pywin32 lần đầu, cần Internet).'}));
+ el('p',{className:'helper',textContent:'Không ghi nhóm Media (Contributing artists, Year) và Encoded by. Mỗi video tự có: Tiêu đề = tiêu đề AI viết, Tags = từ khóa AI viết (cùng lần dịch), ngày tạo (Media created) theo ô Ngày tạo. Tags, đánh giá, link kênh, nhà phát hành được Windows ghi sau khi xuất (tự cài pywin32 lần đầu, cần Internet).'}));
 const meta=group('Thông tin file (metadata)',fields);meta.querySelector('.cc-head').append(toggle,metaOn);meta.id='meta-group';
 function drawMeta(){toggle.classList.toggle('on',metaOn.checked);toggle.setAttribute('aria-pressed',String(metaOn.checked));fields.classList.toggle('off',!metaOn.checked);for(const e of fields.querySelectorAll('input,button'))e.disabled=!metaOn.checked}
 toggle.onclick=()=>{metaOn.checked=!metaOn.checked;drawMeta();metaOn.dispatchEvent(new Event('change',{bubbles:true}))};

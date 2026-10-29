@@ -1,23 +1,23 @@
 {
  "app": "ReviewStudio",
- "version": "0.27.0",
- "notes": "## Mới trong 0.27.0\n\n- **Thông số xuất áp dụng thật cho video hàng loạt:** độ phân giải (720p / 1080p / 2K / 4K hoặc **Theo video gốc**), khung hình tối đa (30 / 60 fps: nguồn 60 fps → 30 fps, nguồn 25 fps giữ 25), chất lượng (tiêu chuẩn / cao). Trước đây hộp này chỉ có bộ mã hóa là có tác dụng.\n- **Một chỗ cho mọi thông số xuất:** Bộ mã hóa và Âm lượng tổng chỉ còn trong hộp Thông số video xuất; mục \"Xuất & chạy hàng loạt\" hiện tóm tắt và nút \"Thông số xuất ›\".\n- **Cắt đầu / cuối không nén thêm lần nào:** đoạn cắt được áp ngay khi đọc video gốc, chỉ nén 1 lần lúc xuất (nhanh hơn, giữ chất lượng).\n- **Mỗi video chỉ lưu 1 bản:** thư mục xuất cùng ổ đĩa thì dùng liên kết cứng (không tốn thêm chỗ); khác ổ đĩa thì chỉ giữ bản trong thư mục xuất. Xuất lại không bao giờ ghi vào file đã lưu trước.\n- **Không xóa video gốc còn trong hàng đợi chưa xong** khi tự dọn video cũ sau 30 ngày.\n- **Tự chạy tiếp khi mở lại ứng dụng** (tắt được): video đang chờ / đang chạy dở được xếp lại hàng với key đã lưu, không mua giọng trùng.\n- **Nhanh hơn khi chạy nhiều video:** CPU chia hết số nhân cho các video đang xuất (trước cố định 2 luồng); **Tách giọng AI (Demucs) cùng lúc** chọn được 1–4 video (mặc định 1, tránh hết RAM/VRAM); hàng đợi chỉ gửi phần thay đổi thay vì cả danh sách mỗi 1,5 giây.\n- **Dọn file tạm:** nút 💾 trong hàng đợi hiện dung lượng file tạm và dọn của video đã xong (giữ giọng đọc, bản dịch, video xuất); tự dọn video xong quá 3 ngày. Xuất lại sau khi dọn tự tạo lại nhạc nền / giọng trộn, không gọi lại AI hay ai33.\n- **Từ điển phát âm chọn theo tên** (tải từ tài khoản ai33) thay vì gõ ID.\n- **Phím tắt trên khung xem trước:** Ctrl+Z / Ctrl+Y hoàn tác thiết kế, Alt + mũi tên dịch hộp đang chọn.\n- Gỡ trình dựng 1 video cũ (timeline, kho media, xuất lô kiểu cũ…) còn tải ngầm; tài liệu viết lại theo luồng hiện tại.",
+ "version": "0.27.1",
+ "notes": "## Mới trong 0.27.1\n\n- **Sửa lỗi thông tin file trống ở nhóm Origin:** Windows từ chối kiểu dữ liệu chữ cũ nên cả lần ghi bị hủy (Directors, Producers, Writers, Publisher, Author URL, Promotion URL trống). Nay dùng đúng kiểu, ghi từng trường riêng: trường nào Windows từ chối thì báo tên trong hàng đợi, các trường khác vẫn lưu.\n- **Không ghi nhóm Media:** bỏ Contributing artists (trước bị tách link thành \"https:; www.tiktok.com; …\") và Year. Tác giả → Directors / Producers / Writers; Link kênh → Author URL / Promotion URL; Nhà phát hành → Publisher / **Content provider** (mới). Hộp xuất ghi rõ ô nào vào trường nào.",
  "files": {
   "tests/test_batch.py": {
    "sha256": "e06fee55e917941d6a4a249f2919a3f2e14fbda7c7ab5b0f41aa1a76643d0406",
    "size": 8908
   },
   "win_meta.py": {
-   "sha256": "3e44bda1a50159ca17886a5b4cf280b0d6efc24d80945c1576e680b495ff2683",
-   "size": 4586
+   "sha256": "6d824bb6c47d16ff80adeed07e0e8ecc1fa9c5d36d8deb813691f4e97a36ebbd",
+   "size": 5730
   },
   "ai_texts.py": {
    "sha256": "5b5eb191c3435a43e72a0d89191fb9f418c1dec561b62ad41fd489740881ed9f",
    "size": 4901
   },
   "tests/test_ai_texts.py": {
-   "sha256": "426d4f5d70391d98c4401edfb25eba9a989a719c7b4b9a32da03079daedf9081",
-   "size": 21360
+   "sha256": "485c62199b6a2b4341906c10b2642abbb846056a184885728ddc4ba53b137997",
+   "size": 23445
   },
   "design_tab.js": {
    "sha256": "01dfd065c454e70d19ef87f81cd6ff196ae6b2bf54a59c713bfc2964210581cd",
@@ -60,8 +60,8 @@
    "size": 2610
   },
   "dubbing.py": {
-   "sha256": "8c63ad74730c07ca37249ec9e304a9dfc62b03e385b0f1fc928de1cb048b0b36",
-   "size": 179538
+   "sha256": "f70eaaa43312fd3980ec36daa818c2fb8962fdb0158453d133142f6ddcc23cdb",
+   "size": 179731
   },
   "tests/test_dubbing.py": {
    "sha256": "958db5bb2daac3cf9f40b89d846e9e5b1a23ba9611617e0e1747b23432edb3ce",
@@ -72,8 +72,8 @@
    "size": 13416
   },
   "export_ui.js": {
-   "sha256": "69da544da2a5737b635bd872f951ef47b0c91330455cfb75027d66a07693a3a3",
-   "size": 7734
+   "sha256": "1329b60d2c25d262f68bedad5b73aa9b476249b81005e00c980bf98bdf090652",
+   "size": 8125
   },
   "output_folder.py": {
    "sha256": "10be6efb141e1b209533c2268735adb9964cff3d955360cd9d6178bd504c59b3",
@@ -132,8 +132,8 @@
    "size": 5241
   },
   "studio.css": {
-   "sha256": "d400cf5a89cccf6bf2ecf3aa9cd533ee11873116fb1f36f8cf01ebf67a28fb37",
-   "size": 94642
+   "sha256": "dd2326849281e2d9c290a41e884f597af0f8649fa58e637cae1ea0ec2c551a4c",
+   "size": 94722
   },
   "studio.js": {
    "sha256": "88660710a1bdbc6d29b18e06a4464c1111d0de7db68e6e74bd8d1963e0e76c22",
@@ -148,7 +148,7 @@
    "size": 5352
   },
   "index.html": {
-   "sha256": "44dc0ad8c6c771c9d01007ad5c40201b548914e31615679b58f7cf6079636488",
+   "sha256": "b3cd70dc8b0610421d5aa7968fedad809bd683d7fbd4136c76521f76dc60b681",
    "size": 24040
   },
   "launch.py": {
@@ -164,15 +164,15 @@
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "173b046d6a54f480e2fc4a24f4ad610b2925bd9c5f089beb17052ff461244d01",
-   "size": 8147
+   "sha256": "fe0bd24226aec47c658b5beefe349c6f7c0103a1c3f23f5d400ff1ee08ebedcc",
+   "size": 8489
   },
   "README.md": {
-   "sha256": "6ce9ce47226cd877759c44731fd8c792720e3ce3029023a9e30f224752e5841f",
-   "size": 11556
+   "sha256": "de78bca702d15257adf4dfb32c618bef6da312ff92519d48a59f00bd101c3eef",
+   "size": 12290
   },
   "VERSION": {
-   "sha256": "8056838d30429d7dff5aab40c0cbae02afaa75c7016b6cc9cd586563d31bea17",
+   "sha256": "452979b753d5298bbafeeec3188b8a1b5c6bf5e8a05b658604caa5273ed72e57",
    "size": 7
   },
   ".gitignore": {

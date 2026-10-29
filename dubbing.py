@@ -2828,8 +2828,9 @@ class Store:
             return []
         args = ['-map_metadata', '-1', '-map_metadata:s:v', '-1', '-map_metadata:s:a', '-1'] if o['meta_strip'] else []
         when = self.meta_date(job)['at']
-        tags = dict(title=self.meta_title(job), artist=o['meta_author'], author=o['meta_author'], copyright=o['meta_copyright'],
-                    date=when[:4], creation_time=when + 'Z', keywords=', '.join(job.get('tags') or []))
+        # nothing in Explorer's "Media" group (Contributing artists, Year, Genre): the author goes to Directors /
+        # Producers / Writers through the Windows step; only the title, copyright and the creation date are tags
+        tags = dict(title=self.meta_title(job), copyright=o['meta_copyright'], creation_time=when + 'Z')
         for k, v in tags.items():
             if v:
                 args += ['-metadata', f'{k}={v}']
@@ -2841,6 +2842,7 @@ class Store:
         people = [o['meta_author']] if o['meta_author'] else []
         return {k: v for k, v in dict(title=self.meta_title(job), keywords=job.get('tags') or [], rating=o['meta_rating'], authors=people,
                                        directors=people, producers=people, writers=people, publisher=o['meta_publisher'],
+                                       content_provider=o['meta_publisher'] or o['meta_url'],
                                        author_url=o['meta_url'], promotion_url=o['meta_url'], copyright=o['meta_copyright']).items() if v}
 
     # ---- image layer (one picture placed on every dubbed video: a cover box, frame, logo, sticker…)
