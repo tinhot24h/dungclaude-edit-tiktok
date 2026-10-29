@@ -1,15 +1,15 @@
 {
  "app": "ReviewStudio",
- "version": "0.31.2",
- "notes": "## Mới trong 0.31.2\n\n- **Hết vệt mờ chéo ở góc khi xoay video (lỗi cũ quay lại):** video tải về thường có sẵn dải mép mờ/tối rộng vài px. Khi không xoay, zoom 103% che dải này dọc 4 cạnh. Khi xoay 0,5°, 4 góc chỉ còn chừa 2px nên dải mép bị kéo vào góc thành vệt chéo, kể cả khi đã \"Cắt viền mép 2px\". Nay khi xoay, app giữ ở góc đúng phần dư mà zoom tạo ra (phóng thêm khoảng 1–2%), nên xoay không bao giờ làm lộ mép nhiều hơn lúc không xoay. Áp dụng cho Khung xuất, video trong mẫu thiết kế và khung xem trước. Có test với video có mép mờ 6px.",
+ "version": "0.31.3",
+ "notes": "## Mới trong 0.31.3\n\n- **Sửa lỗi dải mờ ở mép phải khi bật Lớp ảnh có chế độ hòa trộn** (ánh sáng dịu, nhân, màn hình…): một số bản FFmpeg (gặp trên Windows) xử lý bộ lọc hòa trộn theo từng khối 16 điểm ảnh và làm sai các cột lẻ còn lại. Khung 1080 px dư đúng 8 px, nên 8 px mép phải không được hòa trộn mà bị phủ tối bằng đúng độ mờ của lớp ảnh. Nay khung được nới thành bội số của 64 trước khi hòa trộn rồi cắt lại đúng kích thước, nên kết quả đúng trên mọi bản FFmpeg. Overlay video chế độ \"Màn hình\" cũng được sửa theo cách này.",
  "files": {
   "video_tools.js": {
    "sha256": "217dc997759d9b7b26fccfb7abaa35ebf82b5eb333f816dc83fcf67b06781706",
    "size": 4542
   },
   "tests/test_batch.py": {
-   "sha256": "0939fff47f3766b47d4a1dd0e6b2c64d5d90952a6815e442a204d1c6264be1ca",
-   "size": 24182
+   "sha256": "009e62b7717a438248fa8824892e83a9e31b7d4083dfa22c0b26e96c22934a14",
+   "size": 25924
   },
   "win_meta.py": {
    "sha256": "228d18deb126f8965807b7c3a7d2249007da30d88f3a6bbf04493deb52b989a8",
@@ -64,8 +64,8 @@
    "size": 2610
   },
   "dubbing.py": {
-   "sha256": "80ea56d59c58cd85ca6617a7a7f17ba09f21e2dd50ceb12342f3f261ea67a748",
-   "size": 206891
+   "sha256": "f1a463c594fe95527e48832f671aab10e85b732af9541092b96d6a519c32b639",
+   "size": 207627
   },
   "tests/test_dubbing.py": {
    "sha256": "8cfe463e82cae6857f9073341b8c4422f1d3174b2162f366d8b1801342e2fc14",
@@ -152,7 +152,7 @@
    "size": 6858
   },
   "index.html": {
-   "sha256": "099f44d90eb88bca08c66a1d2d99bba166e20ac1bf8842799c03b9cc88078b60",
+   "sha256": "015d93f75ea487ac9ffcee7555aeb21a6b6b0853aa4fa4741732118abf37ada0",
    "size": 24079
   },
   "launch.py": {
@@ -168,15 +168,15 @@
    "size": 212
   },
   "HUONG_DAN.txt": {
-   "sha256": "797067631e326528f815424b213708ca0d9b8d97dd87b5e3bf2ded0de5f8ac00",
-   "size": 12214
+   "sha256": "fd88c5bcbb9684c9dd225575bd5247b3c07e81e1a65005494174c8a67695a0eb",
+   "size": 12352
   },
   "README.md": {
-   "sha256": "6f9854c7a19176c1f146b9f12411563f9caa055c21865c4f790e916614ff8705",
-   "size": 26188
+   "sha256": "bc7749990897a11a7d7cdef9cacdc41f30c7c53ce89621c2f29f0ef902aa0226",
+   "size": 26895
   },
   "VERSION": {
-   "sha256": "44471db8d48da0233f082ae81ee63933ea4c9554b7c798c3d3d0bca1cf44c812",
+   "sha256": "119ce9dcbfd9b4073524a0ae1a99923c91b7ce782a6b93f5717e3508628ac3b0",
    "size": 7
   },
   ".gitignore": {

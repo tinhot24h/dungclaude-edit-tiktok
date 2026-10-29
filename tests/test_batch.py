@@ -141,6 +141,30 @@ class CaptionMusicTests(test_dubbing.PipelineBase):
         self.assertTrue(any(w.startswith('Nhạc nền') for w in job3['warnings']))
 
 
+class BlendWidthTests(unittest.TestCase):
+    def test_blend_never_runs_on_a_width_that_is_not_a_multiple_of_64(self):
+        """Some FFmpeg builds get the last (width mod 16) columns of blend wrong: 1080 px wide gave an 8 px darker
+        strip on the right with the image layer on (ánh sáng dịu 22 %). Every blend now runs on padded frames."""
+        import re
+        o = dubbing.options(dict(image=True, image_blend='softlight', image_opacity=22, image_w=200))
+        img, _ = dubbing.image_chain(3, o, 1080, 1920, 'framed', 4)
+        ov, _ = dubbing.overlay_chain('[2:v]', dict(id='x' * 32, k=0, start=0, alpha=False), 1080, 1920, dubbing.options(dict(overlay_blend='screen')), 'framed', 4)
+        for lines in (img, ov):
+            graph = ';'.join(lines)
+            pads = re.findall(r'pad=(\d+):(\d+):0:0', graph)
+            self.assertEqual(len(pads), 2);self.assertTrue(all(int(w) % 64 == 0 and int(h) % 64 == 0 for w, h in pads))
+            self.assertIn('crop=1080:1920:0:0', graph)
+        # the result is the same picture (cut back to the frame)
+        lines = [l.replace('[3:v]', '[im0]') for l in img]
+        graph = ';'.join(['color=c=0xf0a8d0:s=1080x1920:d=1,format=yuv420p[framed]', 'color=c=black:s=2160x3840:d=1[im0]'] + lines + ['[img]format=gray[out]'])
+        px = subprocess.run(['ffmpeg', '-v', 'error', '-f', 'lavfi', '-i', 'nullsrc=s=16x16:d=1', '-filter_complex', graph, '-map', '[out]', '-frames:v', '1',
+                             '-f', 'rawvideo', '-'], capture_output=True, check=True).stdout
+        W = 1080
+        self.assertEqual(len(px), W * 1920)
+        row = px[960 * W:961 * W]
+        self.assertLessEqual(max(row) - min(row), 2)                   # no strip at the right edge
+
+
 class SpendTests(unittest.TestCase):
     def test_openai_calls_add_up_per_month(self):
         import tempfile, json as j

@@ -1403,6 +1403,16 @@ IMAGE_BLENDS = {'normal': None, 'darken': 'darken', 'multiply': 'multiply', 'bur
 IMAGE_TYPES = ('.png', '.jpg', '.jpeg', '.webp')
 
 
+def wide_blend(a, b, mode, W, H, out, extra=''):
+    """FFmpeg's blend filter, safe on every build: some builds (seen on Windows) work in blocks of 16 pixels and get
+    the leftover columns wrong; 1080 = 67×16 + 8, so the last 8 px on the right came out as a plain darker strip
+    ("viền mờ" with the image layer on). Both inputs are padded to a multiple of 64 first and cut back after."""
+    pw, ph = -(-W // 64) * 64, -(-H // 64) * 64
+    pad = f'pad={pw}:{ph}:0:0:color=black' if (pw, ph) != (W, H) else 'null'
+    return [f'[{a}]{pad}[{out}pa]', f'[{b}]{pad}[{out}pb]',
+            f'[{out}pa][{out}pb]blend=all_mode={mode}{extra}:shortest=1' + (f',crop={W}:{H}:0:0' if pad != 'null' else '') + f'[{out}]']
+
+
 def image_chain(index, settings, W, H, base, duration):
     """Graph lines putting the still image (input `index`, looped for `duration`) on [base]. Size is a share of the
     frame (image_w % of width, image_h % of height; image_h 0 = keep the picture's ratio), centre offset image_x/y %
@@ -1423,7 +1433,7 @@ def image_chain(index, settings, W, H, base, duration):
     return [chain, f'color=c=black@0:s={W}x{H}:r=30:d={duration:.3f},format=rgba[icv]',
             f'[icv][im]overlay=x={x}:y={y}:format=auto:eof_action=repeat[ilay]', '[ilay]split[ilc][ila]', '[ila]alphaextract[imask]',
             f'[{base}]split[ib1][ib2]', '[ib1]format=gbrp[ibg]', '[ilc]format=gbrp[ilg]',
-            f'[ibg][ilg]blend=all_mode={mode}:shortest=1,format=rgba[ibl]', '[ibl][imask]alphamerge[ibm]',
+            *wide_blend('ibg', 'ilg', mode, W, H, 'iblw'), '[iblw]format=rgba[ibl]', '[ibl][imask]alphamerge[ibm]',
             '[ib2][ibm]overlay=0:0:format=auto:shortest=1[img]'], 'img'
 
 
@@ -1469,7 +1479,7 @@ def overlay_chain(source, item, W, H, settings, base, duration):
         if random_time:
             chain += f",tpad=start_duration={item['start']:.3f}:stop_duration={duration + 5:.3f}:color=black"
         return [chain + f',format=gbrp[ov{k}]', f'[{base}]format=gbrp[bk{k}]',
-                f'[bk{k}][ov{k}]blend=all_mode=screen:all_opacity={op:.3f}:shortest=1[os{k}]'], f'os{k}'
+                *wide_blend(f'bk{k}', f'ov{k}', 'screen', W, H, f'os{k}', f':all_opacity={op:.3f}')], f'os{k}'
     if blend == 'key':
         chain += ',colorkey=0x00FF00:0.30:0.10'
     chain += f',format=rgba,colorchannelmixer=aa={op:.3f}'

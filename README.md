@@ -4,6 +4,10 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.31.3
+
+- **Sửa lỗi dải mờ ở mép phải khi bật Lớp ảnh có chế độ hòa trộn** (ánh sáng dịu, nhân, màn hình…): một số bản FFmpeg (gặp trên Windows) xử lý bộ lọc hòa trộn theo từng khối 16 điểm ảnh và làm sai các cột lẻ còn lại. Khung 1080 px dư đúng 8 px, nên 8 px mép phải không được hòa trộn mà bị phủ tối bằng đúng độ mờ của lớp ảnh. Nay khung được nới thành bội số của 64 trước khi hòa trộn rồi cắt lại đúng kích thước, nên kết quả đúng trên mọi bản FFmpeg. Overlay video chế độ "Màn hình" cũng được sửa theo cách này.
+
 ## Mới trong 0.31.2
 
 - **Hết vệt mờ chéo ở góc khi xoay video (lỗi cũ quay lại):** video tải về thường có sẵn dải mép mờ/tối rộng vài px. Khi không xoay, zoom 103% che dải này dọc 4 cạnh. Khi xoay 0,5°, 4 góc chỉ còn chừa 2px nên dải mép bị kéo vào góc thành vệt chéo, kể cả khi đã "Cắt viền mép 2px". Nay khi xoay, app giữ ở góc đúng phần dư mà zoom tạo ra (phóng thêm khoảng 1–2%), nên xoay không bao giờ làm lộ mép nhiều hơn lúc không xoay. Áp dụng cho Khung xuất, video trong mẫu thiết kế và khung xem trước. Có test với video có mép mờ 6px.
