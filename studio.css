@@ -827,3 +827,8 @@ details.cc-group>summary.cc-head{cursor:pointer;margin:0}details.cc-group[open]>
 .dub-edit-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;background:#10261f;border:1px solid var(--accent);border-radius:10px;padding:8px 10px;margin:6px 0 8px}
 .dub-edit-bar strong{display:block;font-size:13px;color:var(--accent)}.dub-edit-bar small{display:block;margin-top:2px}
 .dub-edit-bar .dub-actions{margin:0;gap:6px}
+
+.dub-edit-head{color:var(--accent)}.dub-edit-head .chip-button{margin-left:auto}
+.dub-edit-item{display:flex;align-items:center;gap:10px;cursor:pointer}.dub-edit-item.current{outline:1px solid var(--accent);background:#10261f}
+.dub-edit-mark{color:var(--accent);font-weight:700}
+.dub-edit-item .dub-row-name{flex:1;min-width:0}.dub-edit-item .dub-row-name small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

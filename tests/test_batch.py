@@ -94,6 +94,21 @@ class CaptionMusicTests(test_dubbing.PipelineBase):
         off, folder2 = self.run_job()
         self.assertNotIn('ass=', (folder2 / 'export.ffgraph').read_text())
 
+    def test_reexport_renders_with_the_new_settings(self):
+        job, folder = self.run_job(frame_canvas='9:16', frame_rotate=0)
+        first = Path(job['outputs']['saved_path'])
+        with mock.patch.object(self.store, 'enqueue'):
+            self.store.batch(dict(action='reexport', ids=[job['id']], options=dict(job['options'], frame_rotate=2, captions=True, out_resolution='720')))
+        job = self.store.load(job['id'])
+        with mock.patch.object(dubbing, 'video_frames', return_value=[]), mock.patch.object(dubbing, 'paragraph_request', side_effect=AssertionError('no new AI call')):
+            self.store.process(job, dict(openai='sk', ai33='k'), threading.Event())
+        self.assertEqual(job['state'], 'done', job['message'])
+        graph = (folder / 'export.ffgraph').read_text()
+        self.assertIn('rotate=0.034906585', graph);self.assertIn('ass=captions.ass', graph)          # 2° and the captions: the new look
+        self.assertEqual(dubbing.probe(folder / 'dubbed.mp4')['video']['width'], 720)
+        self.assertNotEqual(Path(job['outputs']['saved_path']), first);self.assertTrue(first.is_file())   # a new file, the old one kept
+        self.assertEqual(len(self.tasks), 1)                                                            # no new voice
+
     def test_music_from_the_library_by_style_ducked_under_the_voice(self):
         src = Path(self.tmp.name) / 'beat.mp3'
         subprocess.run(['ffmpeg', '-v', 'error', '-y', '-f', 'lavfi', '-i', 'sine=frequency=220:duration=2', str(src)], check=True)

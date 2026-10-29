@@ -149,7 +149,7 @@ function labels(){setTimeout(()=>window.dubProfile?.labels?.());syncNumbers();ca
  $('dub-duck').disabled=o.background!=='duck';$('dub-bg-volume').disabled=o.background==='remove';
  // one-line summaries on the section headers
  const n=files.length,styles=$('dub-style').selectedOptions[0]?.textContent||'',bg=BG.find(b=>b[0]===o.background)?.[1]||'';
- t('sum-input',n?`${n} video${files.some(f=>f.srt)?' · có SRT':''}`:'chưa chọn');
+ t('sum-input',editing?`✎ sửa ${editing.items.length} video`:n?`${n} video${files.some(f=>f.srt)?' · có SRT':''}`:'chưa chọn');
  t('sum-frame',[o.trim_start||o.trim_end?`cắt ${o.trim_start}s đầu · ${o.trim_end}s cuối`:'',o.frame_canvas==='source'?'khung gốc':o.frame_canvas,o.frame_zoom!==100?`zoom ${o.frame_zoom}%`:'',o.frame_rotate?`xoay ${o.frame_rotate}°`:'',o.frame_flip!=='none'?'lật':''].filter(Boolean).join(' · '));
  t('sum-overlay',o.overlay?`${o.overlay_count} overlay · ${({screen:'sáng',normal:'thường',key:'tách nền xanh'})[o.overlay_blend]} ${o.overlay_opacity}% · ${ovAll?'tất cả '+overlays.length:ovUse.size+' đã chọn'}`:'tắt · không bắt buộc');
  t('sum-translate',`${styles} · ${o.mode==='paragraph'?'đoạn văn, 1 file':'từng câu'} · ${o.rate} tiếng/s`);
@@ -274,7 +274,7 @@ let batchHint=(()=>{try{return localStorage.getItem('review-dub-hint')||''}catch
 const hintOf=f=>(f.hint||'').trim()||batchHint.trim();
 function batchHintBox(){const i=el('input',{type:'text',id:'dub-batch-hint',className:'dub-hint',maxLength:300,value:batchHint,placeholder:'💡 Gợi ý chung cho cả lô (khi cùng một sản phẩm), ví dụ: kệ gia vị nhà bếp · video có gợi ý riêng thì dùng gợi ý riêng'});
  i.oninput=()=>{batchHint=i.value.slice(0,300);try{localStorage.setItem('review-dub-hint',batchHint)}catch{}for(const f of files)f.row?.querySelector('.dub-hint-chip')&&(f.row.querySelector('.dub-hint-chip').title=hintOf(f)?'Gợi ý: '+hintOf(f):'Thêm gợi ý sản phẩm cho AI (không bắt buộc)')};return i}
-function draw(){$('dub-list').replaceChildren(...(files.length?[el('div',{className:'dub-list-head'},el('span',{textContent:`${files.length} video sẽ ${profile()==='design'?'dựng':'lồng tiếng'}`}),el('small',{textContent:files.filter(f=>f.file).reduce((t,f)=>t+f.file.size,0)/1048576>0?(files.filter(f=>f.file).reduce((t,f)=>t+f.file.size,0)/1048576).toFixed(0)+' MB cần tải lên':''})),batchHintBox()]:[]),...files.slice(0,LIST_MAX).map((f,i)=>{const srt=el('label',{className:'chip-button file-button',title:'Đính kèm SRT lời gốc có sẵn (bỏ qua bước nhận diện, giữ đúng timestamp)',textContent:f.srtName?'SRT ✓':'+ SRT'},el('input',{type:'file',accept:'.srt',hidden:true}));srt.querySelector('input').onchange=async e=>{const s=e.target.files[0];if(s){f.srt=await s.text();f.srtName=s.name;draw()}};
+function draw(){if(editing){$('dub-list').replaceChildren(...editList());return}$('dub-list').replaceChildren(...(files.length?[el('div',{className:'dub-list-head'},el('span',{textContent:`${files.length} video sẽ ${profile()==='design'?'dựng':'lồng tiếng'}`}),el('small',{textContent:files.filter(f=>f.file).reduce((t,f)=>t+f.file.size,0)/1048576>0?(files.filter(f=>f.file).reduce((t,f)=>t+f.file.size,0)/1048576).toFixed(0)+' MB cần tải lên':''})),batchHintBox()]:[]),...files.slice(0,LIST_MAX).map((f,i)=>{const srt=el('label',{className:'chip-button file-button',title:'Đính kèm SRT lời gốc có sẵn (bỏ qua bước nhận diện, giữ đúng timestamp)',textContent:f.srtName?'SRT ✓':'+ SRT'},el('input',{type:'file',accept:'.srt',hidden:true}));srt.querySelector('input').onchange=async e=>{const s=e.target.files[0];if(s){f.srt=await s.text();f.srtName=s.name;draw()}};
   const x=el('button',{type:'button',className:'icon-button',textContent:'✕',title:'Bỏ video này'});x.onclick=e=>{e.stopPropagation();files.splice(i,1);if(i<sel)sel--;draw()};
   // gợi ý sản phẩm (optional): the AI uses it to name the product right in the title, body and file name
   const hintBox=el('input',{type:'text',className:'dub-hint',maxLength:300,value:f.hint||'',placeholder:'Gợi ý sản phẩm cho AI, ví dụ: váy maxi hoa nhí · có thể dán caption Douyin gốc',hidden:!f.hintOpen});
@@ -305,7 +305,7 @@ $('dub-ov-local').onclick=async()=>{const b=$('dub-ov-local');b.disabled=true;tr
   if(alpha&&+$('dub-ov-opacity').value===60){$('dub-ov-opacity').value=100;$('dub-ov-opacity').dispatchEvent(new Event('input',{bubbles:true}))}
   await loadOverlays();if(ok&&!$('dub-overlay').checked){$('dub-overlay').checked=true;$('dub-overlay').dispatchEvent(new Event('change',{bubbles:true}));remember()}labels();preview();
   say(`Đã thêm ${ok} overlay từ máy (không tải lên).`+(list.length-todo.length?` Bỏ qua ${list.length-todo.length} file đã có.`:'')+(errors.length?` ${errors.length} file lỗi.`:''));if(errors.length)$('dub-ov-note').textContent=`${errors.length} file lỗi: `+errors.slice(0,5).join(' · ')}catch(e){say(e.message)}finally{b.disabled=false}};
-function startLabel(){const n=files.length,build=profile()==='design';$('dub-trial').hidden=n<2&&!(trial&&n);$('dub-start').textContent=build?(n>1?`▶ Xuất ${n} video`:'▶ Bắt đầu dựng video'):n>1?`▶ Lồng tiếng ${n} video`:'▶ Bắt đầu lồng tiếng'}
+function startLabel(){if(editing){$('dub-trial').hidden=true;$('dub-start').textContent=`⟳ Xuất lại ${editing.items.length} video`;return}const n=files.length,build=profile()==='design';$('dub-trial').hidden=n<2&&!(trial&&n);$('dub-start').textContent=build?(n>1?`▶ Xuất ${n} video`:'▶ Bắt đầu dựng video'):n>1?`▶ Lồng tiếng ${n} video`:'▶ Bắt đầu lồng tiếng'}
 
 // ---- overlay library
 async function loadOverlays(){try{overlays=(await request('/overlays')).overlays;drawOverlays();preview()}catch{}}
@@ -346,7 +346,7 @@ $('dub-adj-reset').onclick=()=>{for(const id of ['dub-adj-bright','dub-adj-contr
 function pickOverlay(o){const pool=overlays.filter(x=>ovAll||ovUse.has(x.id)),ov=o.overlay?pool[0]:null,ovv=$('dub-ovv'),ovi=$('dub-ovi');ovv.hidden=!ov||ov.still;ovi.hidden=!ov||!ov.still;
  if(ov){const src=`/overlays/${ov.id}/${ov.still?'file':'preview'}`,target=ov.still?ovi:ovv;if(target.dataset.src!==src){target.src=src;target.dataset.src=src;if(!ov.still)ovv.onloadedmetadata=syncOverlay}Object.assign(target.style,{opacity:o.overlay_opacity/100,mixBlendMode:o.overlay_blend==='screen'&&!ov.alpha?'screen':'normal'})}else ovv.pause();return ov}
 // what the preview shows: the video of the job being edited again (✎ Sửa), else the selected input
-const cur=()=>editing?{id:editing.video_id,name:editing.name}:files[sel];
+const cur=()=>{if(!editing)return files[sel];const it=editing.items[editing.at]||editing.items[0];return it&&{id:it.video_id,name:it.name}};
 function preview(){sel=Math.max(0,Math.min(sel,files.length-1));const ov=pickOverlay(settings());adjustPreview(settings());drawLayers();layerZ();if(window.dubProfile?.preview?.(cur())){layerZ();return}const f=cur();$('dub-frame-empty').hidden=!!f;for(const v of [fg,bgv])v.hidden=!f;
  if(!f&&previewKey){previewKey='';if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl='';for(const v of [fg,bgv]){v.pause();v.removeAttribute('src');v.load()}}
  if(f?.path&&!f.id){if(!f.importing){f.importing=true;localImport(f).then(()=>preview()).catch(e=>{f.error=e.message;draw()})}}
@@ -373,7 +373,7 @@ $('dub-pv-seek').oninput=()=>{fg.currentTime=Number($('dub-pv-seek').value);bgv.
 
 // ---- start
 function upload(f){return new Promise((resolve,reject)=>{const x=new XMLHttpRequest();x.open('POST','/upload');x.setRequestHeader('X-Filename',encodeURIComponent(f.name));x.upload.onprogress=e=>{if(e.lengthComputable){const p=Math.round(e.loaded/e.total*100);if(p!==f.progress){f.progress=p;rowProgress(f)}}};x.onload=()=>{let d={};try{d=JSON.parse(x.responseText)}catch{}x.status<300?resolve(d):reject(Error(f.name+': '+(d.error||'tải lên thất bại')))};x.onerror=()=>reject(Error('Mất kết nối khi tải video.'));x.send(f.file)})}
-$('dub-start').onclick=async()=>{if(!files.length){say('Chọn ít nhất một video ở mục 🎬.');$('sec-input').open=true;return}const o=settings();if(o.mode!=='design'&&!o.voice_id){say('Chọn giọng đọc ở mục 🎙.');$('sec-voice').open=true;$('dub-voice').focus();return}
+$('dub-start').onclick=async()=>{if(editing){reexportEditing();return}if(!files.length){say('Chọn ít nhất một video ở mục 🎬.');$('sec-input').open=true;return}const o=settings();if(o.mode!=='design'&&!o.voice_id){say('Chọn giọng đọc ở mục 🎙.');$('sec-voice').open=true;$('dub-voice').focus();return}
  if(!await precheck(o))return;run(o)};
 // ---- check before a run: duration, estimated cost, keys and what is missing (estimate only, nothing is sent to AI)
 async function precheck(o){const dlg=$('dub-check'),body=$('dub-check-body'),build=o.mode==='design',n=files.length;
@@ -422,15 +422,26 @@ async function run(o,only=null){
 // look and export again. Recognised speech, translation, title/body and voice are kept (server: KEEP_ON_REEXPORT).
 let beforeEdit=null;
 // one job, or many (ticked rows, "✎ Sửa hàng loạt"): the first one's settings and video are shown; the export goes to all
+// the videos being edited take the place of the input list (click one to preview it); "Bắt đầu" becomes "Xuất lại N video"
+const editItem=j=>({id:j.id,video_id:j.video_id,name:shown(j),src:j.name,state:j.state});
 async function editJob(job,ids=[job.id]){try{const full=await request('/dub/'+job.id);if(!editing)beforeEdit=settings();apply({...full.options,design:full.options.design});
-  editing={id:job.id,ids:[...new Set([job.id,...ids])],video_id:full.video_id,name:shown(job)};current=job.id;editBar();$('sec-frame').open=true;preview();refresh();
+  const items=[...new Set([job.id,...ids])].map(id=>jobMap.get(id)||(id===job.id?job:null)).filter(j=>j&&j.video_id).map(editItem);
+  editing={id:job.id,get ids(){return this.items.map(x=>x.id)},items,at:0,name:shown(job)};current=job.id;editBar();draw();startLabel();labels();$('sec-input').open=true;preview();refresh();
   say(editing.ids.length>1?`Đang sửa ${editing.ids.length} video (xem trước video đầu “${shown(job)}”): chỉnh thông số bên trái rồi bấm ⟳ Xuất lại ${editing.ids.length} video.`:`Đang sửa “${shown(job)}”: chỉnh thông số bên trái, xem trước ngay, rồi bấm ⟳ Xuất lại video này.`)}catch(e){say(e.message)}}
+function exitEdit(){editing=null;if(beforeEdit)apply(beforeEdit);beforeEdit=null;editBar();draw();startLabel();labels();preview();refresh()}
+async function reexportEditing(){if(!editing?.items.length)return;const b=$('dub-start');b.disabled=true;try{await batch('reexport',editing.ids,{options:settings()})}finally{b.disabled=false}}
+function editList(){const n=editing.items.length;
+ return [el('div',{className:'dub-list-head dub-edit-head'},el('span',{textContent:`✎ Sửa & xuất lại ${n} video từ hàng đợi`}),(()=>{const b=el('button',{type:'button',className:'chip-button',textContent:'✕ Thoát sửa'});b.onclick=exitEdit;return b})()),
+  el('p',{className:'helper',textContent:'Bấm một video để xem trước. Cùng thông số bên trái áp dụng cho cả danh sách; lời dịch, chữ AI và giọng đọc giữ nguyên.'}),
+  ...editing.items.map((it,i)=>{const x=el('button',{type:'button',className:'icon-button',textContent:'✕',title:'Bỏ khỏi lần sửa này'});x.onclick=e=>{e.stopPropagation();editing.items.splice(i,1);if(!editing.items.length){exitEdit();return}editing.at=Math.min(editing.at,editing.items.length-1);editBar();draw();startLabel();preview()};
+   const row=el('div',{className:'dub-file dub-edit-item'+(i===editing.at?' current':'')},el('span',{className:'dub-edit-mark',textContent:'✎'}),el('div',{className:'dub-row-name'},el('strong',{textContent:it.name}),el('small',{textContent:(it.src&&it.src!==it.name?it.src+' · ':'')+({done:'đã xong',error:'lỗi',paused:'tạm dừng'})[it.state]+' · dùng lại giọng & chữ'})),x);
+   row.onclick=()=>{editing.at=i;draw();editBar();preview()};return row})]}
 function editBar(){const bar=$('dub-edit-bar');if(!editing){bar.hidden=true;return}bar.hidden=false;
- const n=editing.ids.length,go=el('button',{type:'button',className:'primary-action small-action',textContent:n>1?`⟳ Xuất lại ${n} video`:'⟳ Xuất lại video này'});go.onclick=async()=>{go.disabled=true;await batch('reexport',editing.ids,{options:settings()});go.disabled=false};
+ const n=editing.ids.length,go=el('button',{type:'button',className:'primary-action small-action',textContent:n>1?`⟳ Xuất lại ${n} video`:'⟳ Xuất lại video này'});go.onclick=async()=>{go.disabled=true;await reexportEditing();go.disabled=false};
  const all=el('button',{type:'button',className:'outline-action small-action',textContent:'＋ Thêm video đã tick',title:'Đưa các video đang tick ở hàng đợi vào lần sửa này (cùng thông số)'});
- all.onclick=()=>{const ids=[...selected].filter(id=>!editing.ids.includes(id));if(!ids.length){say('Tick thêm video ở hàng đợi (ô vuông đầu dòng) rồi bấm lại để đưa vào lần sửa này.');return}editing.ids.push(...ids);editBar();say(`Đã thêm ${ids.length} video vào lần sửa · tổng ${editing.ids.length} video.`)};
- const exit=el('button',{type:'button',className:'icon-button',textContent:'✕',title:'Thoát sửa và trả lại thông số trước đó'});exit.onclick=()=>{editing=null;if(beforeEdit)apply(beforeEdit);beforeEdit=null;editBar();preview();refresh()};
- bar.replaceChildren(el('div',{},el('strong',{textContent:n>1?`✎ Đang sửa ${n} video · xem trước: ${editing.name}`:'✎ Đang sửa: '+editing.name}),el('small',{className:'helper',textContent:'Chỉ đổi phần hình và tiếng nền (khung, màu, nền, chữ, phụ đề, lớp, nhạc, thông số xuất). Lời dịch, chữ AI và giọng đọc giữ nguyên, không gọi lại API.'})),el('div',{className:'dub-actions'},go,all,exit))}
+ all.onclick=()=>{const ids=[...selected].filter(id=>!editing.ids.includes(id));if(!ids.length){say('Tick thêm video ở hàng đợi (ô vuông đầu dòng) rồi bấm lại để đưa vào lần sửa này.');return}editing.items.push(...ids.map(id=>jobMap.get(id)).filter(j=>j&&j.video_id&&['done','error','paused'].includes(j.state)).map(editItem));editBar();draw();startLabel();say(`Đã thêm ${ids.length} video vào lần sửa · tổng ${editing.ids.length} video.`)};
+ const exit=el('button',{type:'button',className:'icon-button',textContent:'✕',title:'Thoát sửa và trả lại thông số trước đó'});exit.onclick=exitEdit;
+ bar.replaceChildren(el('div',{},el('strong',{textContent:n>1?`✎ Đang sửa ${n} video · xem trước: ${(editing.items[editing.at]||{}).name}`:'✎ Đang sửa: '+(editing.items[0]||{}).name}),el('small',{className:'helper',textContent:'Chỉ đổi phần hình và tiếng nền (khung, màu, nền, chữ, phụ đề, lớp, nhạc, thông số xuất). Lời dịch, chữ AI và giọng đọc giữ nguyên, không gọi lại API.'})),el('div',{className:'dub-actions'},go,all,exit))}
 // ---- 🧪 "Chạy thử 1 video\": the first video runs alone; when it is done the bar offers the rest of the list
 $('dub-trial').onclick=()=>{if(!files.length)return;const o=settings();if(o.mode!=='design'&&!o.voice_id){say('Chọn giọng đọc ở mục 🎙.');$('sec-voice').open=true;return}say('Chạy thử video đầu tiên; xong sẽ hiện nút chạy phần còn lại.');run(o,files[0])};
 function trialBar(){const bar=$('dub-trial-bar');if(!trial){bar.hidden=true;return}const j=jobMap.get(trial.id),n=files.length;bar.hidden=false;

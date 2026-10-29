@@ -4,6 +4,12 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.31.1
+
+- **Sửa & xuất lại dùng luôn danh sách "Video đầu vào":** tick video ở hàng đợi rồi bấm "✎ Sửa & xuất lại" (hoặc "✎ Sửa" trên một dòng), các video đó hiện ở mục 🎬 Video đầu vào. Bấm từng dòng để xem trước video đó; nút chính trên cùng đổi thành "⟳ Xuất lại N video". Bấm "✕ Thoát sửa" để trả lại danh sách video và thông số trước đó.
+- Video trùng tên AI hiện thêm tên file gốc để dễ phân biệt.
+- Đảm bảo xuất lại theo thông số mới: mỗi lần bấm "Xuất lại", thông số đang chỉnh bên trái (khung, zoom, xoay, màu, nền, chữ, phụ đề, lớp, nhạc, độ phân giải…) được ghi vào video rồi mới render. File mới đúng thông số mới, file cũ giữ nguyên; giọng và chữ không làm lại. Có test kiểm tra.
+
 ## Mới trong 0.31.0
 
 **✎ Sửa & xuất lại (không gọi lại API)**
