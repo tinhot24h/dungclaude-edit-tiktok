@@ -4,6 +4,14 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.41.1 · chi phí ai33 chuẩn
+
+- **Giá ai33.pro: $5 / 1 triệu ký tự** (tính cả dấu cách, dấu câu). Bảng kiểm tra trước khi chạy giờ hiện ai33 bằng **$ và đ** (trước đây chỉ có số ký tự), cộng dòng **Tổng ước tính** = OpenAI + ai33.
+- **Ước ký tự chính xác hơn:** đo trên văn review tiếng Việt được trung bình 4,3 ký tự / tiếng (cũ 3,6, ước thiếu ~17 %). Video đã có bản dịch (dùng lại kết quả cũ, chỉ cần tạo lại giọng) thì tính theo **đúng số ký tự của bản dịch**, ghi "theo đúng bản dịch đã có". Video dùng lại được cả giọng cũ thì ai33 = 0 đ.
+- **ai33 tháng này:** app đếm số ký tự thật đã gửi ai33 (mỗi lần tạo giọng, cả "nghe thử"), hiện "ai33 tháng này $…" ở thanh tổng quan hàng đợi và ô key (rê chuột để xem số ký tự, số lần tạo giọng). Lưu trong `.local/dub/ai33_spend.json`.
+- Số tiền nhỏ hơn $0.01 hiện 4 chữ số lẻ (không còn "$0.000").
+- Chế độ "ai33 lồng tiếng theo timestamp" tính theo phút (bảng giá riêng của ai33), vẫn hiện số phút như cũ.
+
 ## Mới trong 0.41.0 · Chế độ chạy & Thử 5 giây
 
 - **Chế độ chạy** (ô trên cùng cột trái, lưu cùng Mẫu):

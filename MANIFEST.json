@@ -1,8 +1,12 @@
 {
  "app": "ReviewStudio",
- "version": "0.41.0",
- "notes": "## Mới trong 0.41.0 · Chế độ chạy & Thử 5 giây\n\n- **Chế độ chạy** (ô trên cùng cột trái, lưu cùng Mẫu):\n  - 🎙 **Lồng tiếng**: như trước (OpenAI + ai33).\n  - ✍ **Chỉ chữ AI**: chỉ gọi OpenAI để viết tiêu đề / nội dung (khi nguồn chữ là \"AI viết\"), không tạo giọng ai33.\n  - 🎬 **Chỉ dựng**: **không gọi API nào ($0)**, không cần key. Dùng để test nền, khung, tiêu đề, nội dung, overlay, lớp ảnh, nhạc nền.\n- Ở Chỉ dựng / Chỉ chữ AI: mục *Nhận diện, dịch & viết chữ* và *Giọng đọc ai33* mờ đi kèm lời giải thích; nút chạy ghi rõ \"▶ Xuất 12 video · không gọi API\"; bảng kiểm tra ghi \"Chỉ dựng video · không gọi API nào · $0\"; hàng đợi có nhãn 🎬 chỉ dựng / ✍ chỉ chữ AI.\n- **Chữ khi không gọi AI:** video đã có chữ AI từ lần chạy trước thì dùng lại đúng chữ đó (kèm tên file, tiêu đề file, tags AI); chưa có thì tiêu đề = tên file, nội dung = chữ ở ô **Cố định** của Nội dung (bảng kiểm tra nhắc khi ô này trống).\n- **Âm thanh khi không lồng tiếng:** theo mục 🎵 Âm thanh gốc (giữ, tách giọng AI, xóa…) + nhạc nền. **MP3 cùng tên video** (chọn bằng \"📂 Thư mục trên máy\") được ghép làm giọng đọc, hiện \"🎵 MP3\" ở danh sách và hàng đợi.\n- **⚡ Thử 5 giây** (cạnh nút chạy): xuất 5 giây đầu của video đang xem trước, luôn không gọi API, chỉ giữ trong app (không lưu ra thư mục xuất), vài giây là xong, mở ▶ Xem ngay ở hàng đợi. Video vẫn còn trong danh sách để chạy cả lô sau.\n- **Sửa lỗi:** thiếu key (hoặc chưa chọn giọng) khi bấm chạy trước đây vẫn tạo tác vụ nằm \"Đang chờ lượt\" mãi; giờ chỉ báo lỗi, không để lại tác vụ kẹt. Dòng ghi chú \"chạy mấy video cùng lúc\" không còn bị ghi lẫn. Thanh trên cùng không còn tràn ngang trên màn hẹp.\n- Khi đang \"Sửa & xuất lại\", ô Chế độ chạy bị khóa (xuất lại giữ chế độ và giọng/chữ đã có của video).",
+ "version": "0.41.1",
+ "notes": "## Mới trong 0.41.1 · chi phí ai33 chuẩn\n\n- **Giá ai33.pro: $5 / 1 triệu ký tự** (tính cả dấu cách, dấu câu). Bảng kiểm tra trước khi chạy giờ hiện ai33 bằng **$ và đ** (trước đây chỉ có số ký tự), cộng dòng **Tổng ước tính** = OpenAI + ai33.\n- **Ước ký tự chính xác hơn:** đo trên văn review tiếng Việt được trung bình 4,3 ký tự / tiếng (cũ 3,6, ước thiếu ~17 %). Video đã có bản dịch (dùng lại kết quả cũ, chỉ cần tạo lại giọng) thì tính theo **đúng số ký tự của bản dịch**, ghi \"theo đúng bản dịch đã có\". Video dùng lại được cả giọng cũ thì ai33 = 0 đ.\n- **ai33 tháng này:** app đếm số ký tự thật đã gửi ai33 (mỗi lần tạo giọng, cả \"nghe thử\"), hiện \"ai33 tháng này $…\" ở thanh tổng quan hàng đợi và ô key (rê chuột để xem số ký tự, số lần tạo giọng). Lưu trong `.local/dub/ai33_spend.json`.\n- Số tiền nhỏ hơn $0.01 hiện 4 chữ số lẻ (không còn \"$0.000\").\n- Chế độ \"ai33 lồng tiếng theo timestamp\" tính theo phút (bảng giá riêng của ai33), vẫn hiện số phút như cũ.",
  "files": {
+  "tests/test_cost.py": {
+   "sha256": "d28cd7b26ebc55062a78ef218eec9c65fd1ae1950cd86bfe34e08bf038268841",
+   "size": 2213
+  },
   "tests/test_run_mode.py": {
    "sha256": "17866e8f006c4d8f6a30dc5c86bf2d39a97d4463266acef2768febd26579da89",
    "size": 4764
@@ -84,8 +88,8 @@
    "size": 5181
   },
   "dub_ui.js": {
-   "sha256": "bb09910c62c255541de463c01460f118b24c161e8ff93cfd42d299d1ca104c0b",
-   "size": 186304
+   "sha256": "b3d86cbd1caa807ce5dba0227e1fcd23c80ec8e59312421afacb85f3c72d9fda",
+   "size": 187391
   },
   "key_ui.js": {
    "sha256": "4c1833943a21476f6e515115af555c36a4d763bbc5c1122f111cad0a5065574d",
@@ -96,8 +100,8 @@
    "size": 2610
   },
   "dubbing.py": {
-   "sha256": "31cea65e2b7da03576537b8f89d129fee715a4c90d8a919da818e6f7b45f0a85",
-   "size": 217759
+   "sha256": "f9953f905fc5b888e9c51c00a220317b7232b639bd578f5ccf84a2767af8c087",
+   "size": 220757
   },
   "tests/test_dubbing.py": {
    "sha256": "8cfed9a4e9864a8e0341fdb2ea88e0def7e5a977eabe87d8414bb60f0563794e",
@@ -148,8 +152,8 @@
    "size": 13961
   },
   "app.py": {
-   "sha256": "b0ada499f4103211b48b309ca274b94c8aa77fbcdb518b11af25dfb4d76dd98a",
-   "size": 65991
+   "sha256": "5f500bb7eedc54b8a83b051ab3e80bcb5f77b66d8fe88631d0d83502aed3e5b9",
+   "size": 66031
   },
   "ai33_audio.py": {
    "sha256": "64c870ef291fbd725d4cdae68bc841d437040110ca83e429e1ff0b15ebf1fe5b",
@@ -184,7 +188,7 @@
    "size": 6858
   },
   "index.html": {
-   "sha256": "d67858d7aed87663a40d63d07afc1cdeceba9c328c4a885ff4042479e6e62354",
+   "sha256": "90de518e4a819c11cd5cf329998457709ee49ed7042df2bcad36fcc758cb3525",
    "size": 24220
   },
   "launch.py": {
@@ -192,23 +196,23 @@
    "size": 5476
   },
   "build_package.py": {
-   "sha256": "fc2e17f2cb1351fca17a4bd8743ea774806438ef262742ca718afc912c884e6e",
-   "size": 3373
+   "sha256": "a65e0ab1696297a5c04f73d39e6d970491df207fa9e6c78a916e6a53a8b8aeb6",
+   "size": 3395
   },
   "START_WINDOWS.bat": {
    "sha256": "45917335d9a938e178467107e9ceeaed5daecef10ca9351015867336746a6957",
    "size": 1411
   },
   "HUONG_DAN.txt": {
-   "sha256": "de233928da70a2ed9a9b44fe5400667a3492cbc964bea340080628e824f18177",
-   "size": 16364
+   "sha256": "0b5c729866ae71b2155456b11d95e3ecfe76fbe6cc4bca836d993fc1238d8352",
+   "size": 16513
   },
   "README.md": {
-   "sha256": "c7d3f7526ed26949423493de2903f36bae9fa84af00fbc117dde969ab6f7a300",
-   "size": 42730
+   "sha256": "45cc9ff4db27283a865e55ee2a7a1aa4a5c8e7731c9ac5e5be71c314c8fbff28",
+   "size": 43961
   },
   "VERSION": {
-   "sha256": "b9e1ffbf82a85d39b478e2687066db201e7cf26be2629a20db4f11cc534a67d3",
+   "sha256": "afc21992ae05c8db56bc53b1097ff7a879bf62bf164a38249cc9f32d4a1f7b3e",
    "size": 7
   },
   ".gitignore": {

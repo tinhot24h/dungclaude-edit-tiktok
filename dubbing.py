@@ -592,6 +592,64 @@ class Spend:
 SPEND = Spend()
 
 
+class Ai33Spend:
+    """Characters really sent to ai33.pro text-to-speech this month (each created task is billed), in
+    .local/dub/ai33_spend.json, priced at AI33_USD_PER_MILLION. ai33's own balance is shown next to it."""
+    def __init__(self):
+        self.path, self.lock = None, threading.Lock()
+
+    def read(self):
+        try:
+            data = json.loads(self.path.read_text(encoding='utf-8')) if self.path and self.path.is_file() else {}
+        except (OSError, ValueError):
+            data = {}
+        return data if isinstance(data, dict) else {}
+
+    def add(self, chars):
+        if not self.path or not chars:
+            return
+        month = time.strftime('%Y-%m')
+        with self.lock:
+            data = self.read()
+            row = data.setdefault(month, dict(chars=0, tasks=0))
+            row['chars'], row['tasks'] = row.get('chars', 0) + int(chars), row.get('tasks', 0) + 1
+            for old in sorted(data)[:-12]:
+                data.pop(old)
+            try:
+                tmp = self.path.with_name(self.path.name + '.tmp')
+                tmp.write_text(json.dumps(data), encoding='utf-8')
+                tmp.replace(self.path)
+            except OSError:
+                pass
+
+    def summary(self):
+        row = self.read().get(time.strftime('%Y-%m'), {})
+        chars = row.get('chars', 0)
+        return dict(chars=chars, tasks=row.get('tasks', 0), usd=round(chars * AI33_USD_PER_MILLION / 1e6, 4), price=AI33_USD_PER_MILLION)
+
+
+AI33_SPEND = Ai33Spend()
+
+
+def voice_text_chars(job, mode):
+    """Characters ai33 will read for a translation that already exists (the paragraph, or every translated line
+    with its full stop and line break as tts_one sends them); None when there is no text yet."""
+    if not job:
+        return None
+    if mode == 'paragraph' and str(job.get('paragraph') or '').strip():
+        return len(job['paragraph'].strip())
+    lines = [str(s.get('vi') or '').strip() for s in job.get('segments') or []]
+    lines = [t if re.search(r'[.!?…]$', t) else t + '.' for t in lines if t]
+    return len('\n'.join(lines)) or None
+
+
+def tts_task(fields):
+    """One ai33 text-to-speech task; its characters are counted for "ai33 tháng này"."""
+    task = ai33_audio.create_tts(fields)
+    AI33_SPEND.add(len(str(fields.get('text') or '')))
+    return task
+
+
 SOURCE_NAMES = {'zh': 'tiếng Trung', 'en': 'tiếng Anh', 'auto': 'tiếng nước ngoài (tiếng Trung, tiếng Anh…)'}
 
 # Translation models shown in the app: USD per 1M tokens (input, output) from OpenAI's public price list, for an
@@ -1558,12 +1616,16 @@ def overlay_chain(source, item, W, H, settings, base, duration):
 
 # rough token counts for the cost estimate (input images at low detail differ by model family)
 IMAGE_TOKENS = {'gpt-4o-mini': 2833, 'gpt-4.1-mini': 240, 'gpt-4.1-nano': 360, 'gpt-5-mini': 240, 'gpt-5-nano': 360}
-TTS_CHARS_PER_SYLLABLE = 3.6
+# ai33.pro bills the characters sent (spaces and punctuation included): $5 per 1,000,000. Vietnamese averages
+# 4.3 characters per spoken syllable (measured on review texts), used when the voice text is not written yet.
+TTS_CHARS_PER_SYLLABLE = 4.3
+AI33_USD_PER_MILLION = 5.0
 
 
-def cost(settings, seconds, reuse=None, audio=True, redo_texts=False):
+def cost(settings, seconds, reuse=None, audio=True, redo_texts=False, voice_chars=None):
     """Estimated API use of one video: OpenAI dollars (Whisper + text calls, with the real prompt length and the
-    frames), ai33 characters or minutes. What an older run gives back (reuse level) is not counted."""
+    frames), ai33 characters (exact when the voice text already exists: voice_chars) or minutes, and the ai33 dollars
+    for characters. What an older run gives back (reuse level) is not counted."""
     model = next((m for m in MODELS if m['id'] == settings['model']), dict(price=(.4, 1.6), think=False))
     mode, minutes, texts = settings['mode'], seconds / 60, ai_texts_wanted(settings)
     covered = dict(voice={'asr', 'translate', 'tts'}, trans={'asr', 'translate'}, texts={'asr', 'translate'}, asr={'asr'}).get(reuse, set())
@@ -1593,10 +1655,11 @@ def cost(settings, seconds, reuse=None, audio=True, redo_texts=False):
     tts = dict(chars=0, minutes=0)
     if 'tts' not in covered:
         if mode in ('paragraph', 'lines'):
-            tts['chars'] = round(seconds * settings['rate'] * TTS_CHARS_PER_SYLLABLE)
+            tts['chars'] = voice_chars if voice_chars else round(seconds * settings['rate'] * TTS_CHARS_PER_SYLLABLE)
         elif mode == 'ai33':
             tts['minutes'] = round(minutes, 2)
-    return dict(usd=round(usd, 5), uses=uses, ai33_chars=tts['chars'], ai33_minutes=tts['minutes'])
+    return dict(usd=round(usd, 5), uses=uses, ai33_chars=tts['chars'], ai33_minutes=tts['minutes'],
+                ai33_usd=round(tts['chars'] * AI33_USD_PER_MILLION / 1e6, 5), ai33_exact=bool(voice_chars) and 'tts' not in covered)
 
 
 class Store:
@@ -1604,6 +1667,7 @@ class Store:
         self.root = Path(data_dir) / 'dub'
         self.root.mkdir(parents=True, exist_ok=True)
         SPEND.path = self.root / 'openai_spend.json'
+        AI33_SPEND.path = self.root / 'ai33_spend.json'
         self.settings_path = settings_path
         self.video_dir = Path(video_dir)
         self.audio_dir = Path(audio_dir)
@@ -2059,7 +2123,7 @@ class Store:
         def one(ref):
             local = ref not in ids
             path = (Path(ref) if len(ref) < 1000 else None) if local else self.video_dir / ref / 'source'
-            row, redo = dict(duration=None, audio=True, reuse=None), False
+            row, redo, old = dict(duration=None, audio=True, reuse=None), False, None
             try:
                 if local:
                     if not path or not path.is_absolute() or not path.is_file() or path.suffix.lower() not in ('.mp4', '.mov', '.m4v', '.mkv', '.webm', '.avi'):
@@ -2081,7 +2145,8 @@ class Store:
             except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError):
                 pass
             if settings:
-                row['cost'] = cost(settings, row['duration'] or 0, row['reuse'], row['audio'], redo)
+                row['cost'] = cost(settings, row['duration'] or 0, row['reuse'], row['audio'], redo,
+                                   voice_text_chars(old, settings['mode']) if row['reuse'] == 'trans' else None)
             return ref, row
         refs = [r for r in ids + paths if isinstance(r, str)]
         with ThreadPoolExecutor(8) as pool:
@@ -2114,7 +2179,7 @@ class Store:
         if o['dictionary_id']:
             base['pronunciation_dictionary_id'] = o['dictionary_id']
         try:
-            task = ai33_audio.create_tts(base)['task_id']
+            task = tts_task(base)['task_id']
             for _ in range(60):
                 time.sleep(2)
                 detail = ai33_audio.get_task(dict(api_key=key, task_id=task))
@@ -2697,7 +2762,7 @@ class Store:
                 g = todo[0]
                 if not g.get('task_id'):
                     try:
-                        g['task_id'] = ai33_audio.create_tts(dict(base, text=g['text'], file_name=f'{job["name"][:60]}-{groups.index(g) + 1}'))['task_id']
+                        g['task_id'] = tts_task(dict(base, text=g['text'], file_name=f'{job["name"][:60]}-{groups.index(g) + 1}'))['task_id']
                     except ai33_audio.AudioError as exc:
                         if exc.status == 429:
                             break
@@ -2831,7 +2896,7 @@ class Store:
                 if settings['dictionary_id']:
                     base['pronunciation_dictionary_id'] = settings['dictionary_id']
                 self.progress(job, 'tts', .05, f'Đang gửi {len(groups)} câu thành một file giọng ai33…')
-                master['task_id'] = ai33_audio.create_tts(base)['task_id']
+                master['task_id'] = tts_task(base)['task_id']
                 self.save(job)
             waited = time.monotonic()
             while True:

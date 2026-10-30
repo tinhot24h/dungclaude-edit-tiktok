@@ -546,7 +546,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == '/dub/queue':
             return self.respond(200,DUB.queue_info())
         if path == '/dub/spend':
-            return self.respond(200,dubbing.SPEND.summary())
+            return self.respond(200,{**dubbing.SPEND.summary(),'ai33':dubbing.AI33_SPEND.summary()})
         if path == '/dub/storage':
             return self.respond(200,DUB.storage())
         if path == '/dub/demucs':
