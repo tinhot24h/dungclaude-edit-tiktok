@@ -80,14 +80,49 @@ ENERGY = {'low': 'nhẹ nhàng, điềm tĩnh, ít câu cảm thán', 'mid': 't�
 ENERGY_LABELS = {'low': 'Nhẹ nhàng', 'mid': 'Vừa phải', 'high': 'Hào hứng'}
 
 
-def style_rules(style, energy='mid', full=True):
-    """The "Văn phong" part of the rules: full profile for written texts, one line for timed line translation."""
-    head = STYLES[style] + ' Mức hào hứng: ' + ENERGY.get(energy, ENERGY['mid']) + '.'
+# One văn phong as the user sees and edits it ("👁 Xem / sửa" next to the picker): the one-line summary used for
+# timed line translation + the full profile used for the voice paragraph and the title/body.
+PROFILE_FIELDS = ('summary', 'tone', 'open', 'flow', 'use', 'avoid', 'example', 'titles')
+PROFILE_LIMITS = dict(label=60, summary=600, tone=400, open=400, flow=400, use=400, avoid=400, example=300, titles=200)
+
+
+def default_profile(style):
+    style = style if style in STYLES else 'review'
+    return dict(label=STYLE_LABELS[style], summary=STYLES[style], **STYLE_PROFILES[style])
+
+
+def clean_profile(raw):
+    """A văn phong edited in the app: every field a short plain text (the summary is required)."""
+    if not isinstance(raw, dict):
+        raise ValueError('Văn phong không hợp lệ.')
+    out = {}
+    for key, limit in PROFILE_LIMITS.items():
+        value = raw.get(key, '')
+        if not isinstance(value, str):
+            raise ValueError('Văn phong không hợp lệ: ' + key)
+        value = ' '.join(value.split())
+        if len(value) > limit:
+            raise ValueError(f'Văn phong: mục {key} dài quá {limit} ký tự.')
+        out[key] = value
+    if not out['summary'] or not out['label']:
+        raise ValueError('Văn phong cần tên và mô tả ngắn.')
+    return out
+
+
+def style_rules(style, energy='mid', full=True, profile=None):
+    """The "Văn phong" part of the rules: full profile for written texts, one line for timed line translation.
+    `profile` = the văn phong as edited in the app (else the built-in one)."""
+    p = profile or default_profile(style)
+    head = p['summary'] + ' Mức hào hứng: ' + ENERGY.get(energy, ENERGY['mid']) + '.'
     if not full:
         return head
-    p = STYLE_PROFILES[style]
-    return (head + f'\n  · Giọng: {p["tone"]}.\n  · 3 giây đầu: {p["open"]} (câu đầu phải giữ chân người xem).\n  · Trình tự ý: {p["flow"]}.'
-            f'\n  · Nên dùng: {p["use"]}. Tránh: {p["avoid"]}.\n  · Câu mở mẫu (chỉ để cảm giọng, không chép): {p["example"]}')
+    lines = [('Giọng', p['tone'], ''), ('3 giây đầu', p['open'], ' (câu đầu phải giữ chân người xem)'), ('Trình tự ý', p['flow'], '')]
+    out = head + ''.join(f'\n  · {k}: {v}{tail}.' for k, v, tail in lines if v)
+    if p['use'] or p['avoid']:
+        out += '\n  ·' + (f' Nên dùng: {p["use"]}.' if p['use'] else '') + (f' Tránh: {p["avoid"]}.' if p['avoid'] else '')
+    if p['example']:
+        out += f'\n  · Câu mở mẫu (chỉ để cảm giọng, không chép): {p["example"]}'
+    return out
 
 
 # Labels of the style picker in the dubbing tab.

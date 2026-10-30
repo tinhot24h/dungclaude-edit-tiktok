@@ -443,7 +443,7 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == '/':
             return self.respond(200, (ROOT / 'index.html').read_bytes(), 'text/html; charset=utf-8')
-        if path in ('/studio.css','/compat.js','/studio.js','/local_files.js','/design_tab.js','/video_tools.js','/audio_ui.js','/editor_ui.js','/history_ui.js','/image_ui.js','/export_ui.js','/update_ui.js','/dub_ui.js','/key_ui.js','/system_ui.js'):
+        if path in ('/studio.css','/compat.js','/studio.js','/local_files.js','/design_tab.js','/video_tools.js','/audio_ui.js','/editor_ui.js','/history_ui.js','/image_ui.js','/export_ui.js','/update_ui.js','/dub_ui.js','/key_ui.js','/system_ui.js','/style_ui.js','/preset_ui.js'):
             mime = 'text/css' if path.endswith('.css') else 'text/javascript'
             return self.respond(200, (ROOT/path.lstrip('/')).read_bytes(), mime+'; charset=utf-8')
         if path in ('/assets/'+font[0] for font in FONTS.values()):
@@ -545,6 +545,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(200,DUB.jobs_since(int(since) if since.isdigit() else 0))
         if path == '/dub/queue':
             return self.respond(200,DUB.queue_info())
+        if path == '/dub/styles':
+            return self.respond(200,DUB.styles())
         if path == '/dub/spend':
             return self.respond(200,{**dubbing.SPEND.summary(),'ai33':dubbing.AI33_SPEND.summary()})
         if path == '/dub/storage':
@@ -845,7 +847,7 @@ class Handler(BaseHTTPRequestHandler):
                     except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})
                 finally:temp.unlink(missing_ok=True)
             if path=='/dub/demucs/install':return self.respond(200,dubbing.install_demucs())
-            if path in ('/dub/queue','/dub/review','/dub/estimate','/dub/sample','/dub/sweep','/dub/batch'):
+            if path in ('/dub/queue','/dub/review','/dub/estimate','/dub/sample','/dub/sweep','/dub/batch','/dub/styles/save','/dub/styles/delete','/dub/prompt-preview'):
                 size=int(self.headers.get('Content-Length',0) or 0)
                 if size>4*1024*1024:return self.respond(413,{'error':'Yêu cầu quá lớn.'})
                 raw=json.loads(self.rfile.read(size)) if size else {}
@@ -855,6 +857,9 @@ class Handler(BaseHTTPRequestHandler):
                     if path=='/dub/review':return self.respond(200,DUB.review(raw))
                     if path=='/dub/batch':return self.respond(200,DUB.batch(raw))
                     if path=='/dub/sample':return self.respond(200,DUB.voice_sample(raw))
+                    if path=='/dub/styles/save':return self.respond(200,DUB.save_style(raw))
+                    if path=='/dub/styles/delete':return self.respond(200,DUB.delete_style(raw))
+                    if path=='/dub/prompt-preview':return self.respond(200,DUB.prompt_preview(raw))
                     if path=='/dub/sweep':return self.respond(200,DUB.sweep(raw.get('days',0) if isinstance(raw.get('days',0),int) and 0<=raw.get('days',0)<=3650 else 0))
                     return self.respond(200,DUB.estimate(raw))
                 except dubbing.DubError as exc:return self.respond(exc.status,{'error':str(exc)})

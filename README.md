@@ -4,6 +4,22 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.42.0 · Văn phong & Mẫu
+
+**Văn phong xem / sửa được**
+- Nút **👁 Xem / sửa** cạnh ô Văn phong: mỗi văn phong là các mục hướng dẫn gửi AI (tên, mô tả ngắn, giọng văn, 3 giây đầu, trình tự ý, nên dùng, tránh, câu mở mẫu, kiểu tiêu đề ưu tiên), có đếm ký tự. Sửa rồi **Lưu**; văn phong có sẵn đã sửa hiện dấu ✎ và có **↺ Về mặc định**.
+- **＋ Lưu thành văn phong mới**: nhân bản thành văn phong riêng (vd "Review bếp miền Tây"), hiện ở nhóm "Văn phong tự tạo"; xóa được.
+- **Xem toàn bộ câu lệnh gửi AI** (dưới ô Văn phong): đúng nguyên văn phần hướng dẫn app gửi OpenAI cho thiết lập đang chọn (mẫu câu lệnh + văn phong + hào hứng + xưng hô + ghi chú + giới hạn + phần chữ trên khung), từng lần gọi, có nút Copy.
+- Lưu trên máy (`.local/dub/styles.json`), không mất khi cập nhật. Mỗi video giữ văn phong nó đã dùng (xuất lại ra đúng như cũ); mẫu mang theo văn phong, áp dụng mẫu trên máy khác tự thêm văn phong đó.
+
+**Mẫu làm lại**
+- **Thanh mẫu**: `📁 Mẫu: Khung hồng ✓` hoặc `● đã sửa 3` (rê chuột để xem sửa ở phần nào) · **💾 Lưu** (ghi đè mẫu đang dùng) · **＋ Lưu mới** · **↺ Về mẫu** (bỏ thay đổi). Trùng tên thì hỏi trước khi ghi đè.
+- **Mẫu theo phần**: khi lưu, chọn phần nào vào mẫu (Chế độ chạy, Giọng & dịch, Âm thanh gốc, Video, Nền & khung, Tiêu đề & nội dung, Overlay, Lớp ảnh, Nhạc nền, Phụ đề, Xuất & thông tin file). Áp dụng chỉ đổi đúng các phần đó, nên **ghép được nhiều mẫu** (mẫu khung + mẫu giọng…).
+- **Kiểm tra trước khi áp dụng**: hiện phần nào đổi bao nhiêu thông số; báo overlay / ảnh / nhạc / khung PNG không còn trong thư viện, văn phong sẽ được thêm.
+- **Không lưu thông số của máy**: bộ mã hóa, số video chạy cùng lúc, thư mục xuất, key luôn theo máy đang dùng.
+- **Quản lý mẫu** (bấm vào tên mẫu): thẻ có **ảnh xem trước** nền + khung + chữ, các phần trong mẫu, mô tả, lần dùng cuối; **Áp dụng · Đổi tên · Nhân bản · ⭐ Mặc định khi mở app · Xóa**; ô tìm mẫu.
+- Mẫu lưu trước 0.42 vẫn dùng được (coi như đủ mọi phần).
+
 ## Mới trong 0.41.1 · chi phí ai33 chuẩn
 
 - **Giá ai33.pro: $5 / 1 triệu ký tự** (tính cả dấu cách, dấu câu). Bảng kiểm tra trước khi chạy giờ hiện ai33 bằng **$ và đ** (trước đây chỉ có số ký tự), cộng dòng **Tổng ước tính** = OpenAI + ai33.

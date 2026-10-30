@@ -50,7 +50,10 @@ def items(root,kind):
         try:record=json.loads(path.read_text(encoding='utf-8'))
         except (OSError,ValueError):continue
         if isinstance(record,dict) and record.get('id')==path.stem:
-            rows.append({k:record.get(k,'') for k in ('id','kind','name','updated_at')})
+            row={k:record.get(k,'') for k in ('id','kind','name','updated_at')}
+            meta=record['data'].get('meta') if isinstance(record.get('data'),dict) else None
+            if isinstance(meta,dict):row['meta']=meta   # presets: their parts, description, last use (the list needs no second read)
+            rows.append(row)
     return sorted(rows,key=lambda r:r['updated_at'],reverse=True)[:200]
 
 

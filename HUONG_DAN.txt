@@ -67,6 +67,11 @@ khi mở app (đặt REVIEW_KEEP_DAYS=0 để tắt), trừ video còn trong hà
 Chỉ dùng trên máy này. Chưa gọi thử OpenAI / ai33 thật, NVENC và ghi Tags của Windows
 trên máy thật: hãy chạy thử 1–2 video trước khi chạy lô lớn.
 
+NÂNG CẤP 0.42.0
+- Văn phong: nút "👁 Xem / sửa" (sửa, về mặc định, tạo văn phong mới); "Xem toàn bộ câu lệnh gửi AI".
+- Mẫu: chọn phần nào lưu vào mẫu, áp dụng chỉ đổi phần đó (ghép nhiều mẫu); thanh mẫu báo "đã sửa";
+  kiểm tra trước khi áp dụng; quản lý mẫu (ảnh xem trước, đổi tên, nhân bản, mặc định khi mở app).
+
 NÂNG CẤP 0.41.1
 - Chi phí ai33 tính theo giá $5 / 1 triệu ký tự, hiện bằng $ và đ trong bảng kiểm tra; có "ai33 tháng này".
 

@@ -58,7 +58,7 @@ DEFAULTS = dict(language='zh', model=ai_translate.DEFAULT_MODEL, rate=4.2, prono
                 captions=False, caption_style='classic', caption_font='bvp-black', caption_size=68, caption_y=70, caption_words=5,
                 caption_color='#ffffff', caption_hi='#ffe14d', caption_upper=False,
                 music=False, music_ids=[], music_volume=18, music_duck=True, overwrite_export=False,
-                run_mode='full', test_seconds=0, design=None, title_source='ai', body_source='ai', title_chars=30, body_min_chars=50, body_max_chars=100, review_texts=False, design_bg=True, design_title=True, design_body=True,
+                run_mode='full', test_seconds=0, style_profile=None, design=None, title_source='ai', body_source='ai', title_chars=30, body_min_chars=50, body_max_chars=100, review_texts=False, design_bg=True, design_title=True, design_body=True,
                 adjust=False, adjust_brightness=0, adjust_contrast=0, adjust_saturation=0, adjust_sharpen=0,
                 vision=True, title_style='auto', reuse=True,
                 meta=True, meta_strip=True, meta_author='', meta_url='', meta_publisher='', meta_copyright='', meta_rating=0, meta_back_min=5, meta_back_max=7,
@@ -96,7 +96,7 @@ def options(raw):
     if raw.get('subtitles') == 'burn':  # burned-in subtitles were removed; old saved settings get the .srt file instead
         raw = dict(raw, subtitles='file')
     for key, allowed in (('language', ('zh', 'en', 'auto')), ('background', BACKGROUND), ('subtitles', SUBTITLES),
-                         ('loudness', ('off', 'tiktok')), ('pronoun', tuple(PRONOUNS)), ('mode', ('paragraph', 'lines', 'ai33', 'design')), ('align', ('auto', 'voice', 'video')), ('style', tuple(ai_translate.STYLES)), ('energy', tuple(ai_translate.ENERGY)), ('frame_canvas', tuple(CANVAS)), ('frame_fit', ('cover', 'contain', 'blur')),
+                         ('loudness', ('off', 'tiktok')), ('pronoun', tuple(PRONOUNS)), ('mode', ('paragraph', 'lines', 'ai33', 'design')), ('align', ('auto', 'voice', 'video')), ('energy', tuple(ai_translate.ENERGY)), ('frame_canvas', tuple(CANVAS)), ('frame_fit', ('cover', 'contain', 'blur')),
                          ('frame_flip', ('none', 'h', 'v', 'hv')), ('overlay_blend', ('normal', 'screen', 'key')), ('overlay_timing', ('loop', 'sequence', 'random')), ('overlay_flip', ('none', 'h', 'v', 'hv')), ('overlay_fit', ('cover', 'contain')),
                          ('image_flip', ('none', 'h', 'v', 'hv')), ('image_blend', tuple(IMAGE_BLENDS)), ('image_layer', ('below', 'above')),
                          ('title_source', TEXT_SOURCES), ('body_source', TEXT_SOURCES), ('title_style', tuple(TITLE_STYLES)),
@@ -178,6 +178,18 @@ def options(raw):
         out['body_source'] = 'none'
     if not (out['design_bg'] or out['design_title'] or out['design_body']):
         out['design'] = None
+    # Văn phong: a built-in one, or one made in the app (c_ + 8 hex) that always comes with its profile. An edited
+    # built-in văn phong also sends its profile; the job keeps it, so a re-export or a preset gives the same prompt.
+    style, profile = raw.get('style', DEFAULTS['style']), raw.get('style_profile')
+    if not isinstance(style, str) or not (style in ai_translate.STYLES or re.fullmatch('c_[a-f0-9]{8}', style)):
+        raise DubError('Văn phong không hợp lệ.')
+    try:
+        out['style_profile'] = ai_translate.clean_profile(profile) if profile is not None else None
+    except ValueError as exc:
+        raise DubError(str(exc)) from None
+    if style not in ai_translate.STYLES and not out['style_profile']:
+        style = 'review'   # a văn phong of another computer without its text: the default one
+    out['style'] = style
     # "Chế độ chạy": full = lồng tiếng (the mode above) · texts = chỉ viết chữ AI (OpenAI only, no ai33 voice) ·
     # build = chỉ dựng video, no API call at all (AI text sources fall back to the file name). An old saved
     # "Dựng video" mode (design) without run_mode keeps working as "texts".
@@ -280,7 +292,7 @@ def reuse_keys(settings, source, hint):
         return hashlib.sha1(json.dumps(parts, ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:20]
     o = settings
     asr = h(source, o['trim_start'], o['trim_end'], o['language'])
-    write = (o['model'], o['style'], o.get('energy', 'mid'), o['notes'], o['instructions'], o['vision'], hint)
+    write = (o['model'], o['style'], o.get('style_profile'), o.get('energy', 'mid'), o['notes'], o['instructions'], o['vision'], hint)
     trans = h(asr, o['mode'], o['pronoun'], o['rate'], *write) if o['mode'] in ('paragraph', 'lines') else ''
     texts = h(asr, o['mode'], *write, ai_texts_wanted(o), o['title_source'], o['body_source'], o['title_chars'], o['body_min_chars'], o['body_max_chars'], o['title_style'],
               trans if o['mode'] in ('paragraph', 'lines') else '')
@@ -671,12 +683,17 @@ def ai_texts_wanted(settings):
     return bool(settings.get('design')) and settings.get('run_mode') != 'build' and 'ai' in (settings['title_source'], settings['body_source'])
 
 
+def style_profile(settings):
+    """The văn phong a job uses: as edited in the app (kept in its options) or the built-in one."""
+    return settings.get('style_profile') or ai_translate.default_profile(settings.get('style', 'review'))
+
+
 def title_kind(settings):
     """Kiểu tiêu đề; "Tự chọn" leans on the kinds that suit the văn phong (no pain–solution title for news…)."""
     kind = settings.get('title_style', 'auto')
     if kind != 'auto':
         return TITLE_STYLES[kind]
-    return TITLE_STYLES['auto'] + '; với văn phong này ưu tiên ' + ai_translate.STYLE_PROFILES[settings.get('style', 'review')]['titles']
+    return TITLE_STYLES['auto'] + '; với văn phong này ưu tiên ' + (style_profile(settings)['titles'] or ai_translate.STYLE_PROFILES['review']['titles'])
 
 
 def text_rules(settings):
@@ -752,7 +769,7 @@ def base_rules(settings, role, pronoun=True, full=True):
     head = ('MẪU CÂU LỆNH (áp dụng các quy tắc nội dung và văn phong; BỎ QUA mọi yêu cầu về hook, script, title, body hay định dạng kết quả trong mẫu này):\n' + (shared or template)) if other else \
         ('QUY TẮC NỘI DUNG DÙNG CHUNG (mẫu câu lệnh):\n' + shared)
     rules = (DUB_GUARD + '\n\n' + role + ('\n- Xưng hô: ' + PRONOUNS[settings['pronoun']] + '.' if pronoun else '')
-             + '\n- Văn phong: ' + ai_translate.style_rules(settings.get('style', 'review'), settings.get('energy', 'mid'), full) + '\n\n' + head)
+             + '\n- Văn phong: ' + ai_translate.style_rules(settings.get('style', 'review'), settings.get('energy', 'mid'), full, settings.get('style_profile')) + '\n\n' + head)
     # Always on (cannot be switched off): no exact price, brand, size, volume, weight or power.
     rules += '\n\n' + ai_translate.STRICT + ' Ví dụ: "giá mềm", "đang có ưu đãi", "sản phẩm này", "nhỏ gọn", "dung tích lớn".'
     if settings['notes']:
@@ -923,7 +940,7 @@ def translate_request(key, model, lines, settings, want_texts=False, want_name=F
     rules = base_rules(settings, TRANSLATE_RULES.replace('{src}', SOURCE_NAMES[settings.get('language', 'zh')]), full=False)
     more, extra = extra_rules(settings, want_texts, want_name, context if (want_texts or want_name) else None)
     if want_texts:   # the title/body written in the same call get the full văn phong
-        more = '\n\nVĂN PHONG CHO TIÊU ĐỀ / NỘI DUNG: ' + ai_translate.style_rules(settings.get('style', 'review'), settings.get('energy', 'mid')) + more
+        more = '\n\nVĂN PHONG CHO TIÊU ĐỀ / NỘI DUNG: ' + ai_translate.style_rules(settings.get('style', 'review'), settings.get('energy', 'mid'), True, settings.get('style_profile')) + more
     rules += more
     schema = dict(type='object', additionalProperties=False, required=['lines', *extra], properties=dict(lines=dict(type='array', items=dict(
         type='object', additionalProperties=False, required=['id', 'vi'], properties=dict(id=dict(type='integer'), vi=dict(type='string')))), **extra))
@@ -1943,6 +1960,92 @@ class Store:
             self.copy_from(job, old, level, steps)
         return level
 
+    # ---- Văn phong edited or made in the app (.local/dub/styles.json): built-in ones can be changed and reset,
+    # new ones (c_ + 8 hex) are copies of another. The page sends the chosen profile with every job.
+    def styles_file(self):
+        try:
+            data = json.loads((self.root / 'styles.json').read_text(encoding='utf-8'))
+        except (OSError, ValueError):
+            data = {}
+        data = data if isinstance(data, dict) else {}
+        return {k: v for k, v in (data.get('overrides') or {}).items() if k in ai_translate.STYLES and isinstance(v, dict)}, \
+               {k: v for k, v in (data.get('custom') or {}).items() if re.fullmatch('c_[a-f0-9]{8}', k) and isinstance(v, dict)}
+
+    def styles(self):
+        overrides, custom = self.styles_file()
+        rows = [dict(id=k, builtin=True, edited=k in overrides, profile=overrides.get(k) or ai_translate.default_profile(k),
+                     default=ai_translate.default_profile(k)) for k in ai_translate.STYLE_LABELS]
+        rows += [dict(id=k, builtin=False, edited=True, profile=v) for k, v in sorted(custom.items(), key=lambda kv: kv[1].get('label', ''))]
+        return dict(styles=rows, fields=list(ai_translate.PROFILE_LIMITS), limits=ai_translate.PROFILE_LIMITS)
+
+    def save_style(self, raw):
+        try:
+            profile = ai_translate.clean_profile(raw.get('profile') if isinstance(raw, dict) else None)
+        except ValueError as exc:
+            raise DubError(str(exc)) from None
+        key = raw.get('id') or ''
+        overrides, custom = self.styles_file()
+        if key in ai_translate.STYLES:
+            if profile == ai_translate.default_profile(key):
+                overrides.pop(key, None)   # saved back to the default text: nothing to keep
+            else:
+                overrides[key] = profile
+        else:
+            if not re.fullmatch('c_[a-f0-9]{8}', str(key)):
+                if len(custom) >= 60:
+                    raise DubError('Tối đa 60 văn phong tự tạo.')
+                key = 'c_' + uuid.uuid4().hex[:8]
+            custom[key] = profile
+        self.write_styles(overrides, custom)
+        return dict(self.styles(), id=key)
+
+    def delete_style(self, raw):
+        key = raw.get('id') if isinstance(raw, dict) else None
+        overrides, custom = self.styles_file()
+        if key in ai_translate.STYLES:
+            overrides.pop(key, None)   # "Về mặc định"
+        elif key in custom:
+            custom.pop(key)
+        else:
+            raise DubError('Không tìm thấy văn phong.', 404)
+        self.write_styles(overrides, custom)
+        return self.styles()
+
+    def write_styles(self, overrides, custom):
+        tmp = self.root / 'styles.json.tmp'
+        tmp.write_text(json.dumps(dict(overrides=overrides, custom=custom), ensure_ascii=False), encoding='utf-8')
+        tmp.replace(self.root / 'styles.json')
+
+    def prompt_preview(self, raw):
+        """"Xem toàn bộ câu lệnh gửi AI": the exact instructions each OpenAI call of this setup gets, built by the
+        same functions as a real run (the video's own words and frames go in the user message, shown as a note)."""
+        settings = options(raw.get('options') if isinstance(raw, dict) and isinstance(raw.get('options'), dict) else {})
+        hint = clean_hint(raw.get('hint')) if isinstance(raw.get('hint'), str) else ''
+        context = dict(hint=hint or None, video_name=str(raw.get('video_name') or 'ten-video')[:120],
+                       images=[1] * 3 if settings['vision'] else [])
+        src = SOURCE_NAMES[settings.get('language', 'zh')]
+        texts, calls = ai_texts_wanted(settings), []
+        if settings['run_mode'] == 'build':
+            return dict(calls=[], note='Chế độ Chỉ dựng: không gửi câu lệnh nào cho AI.')
+        if settings['mode'] == 'paragraph':
+            more, _ = extra_rules(settings, texts, True, context)
+            calls.append(dict(title='Lồng tiếng · đoạn văn liền (1 lần gọi' + (' · kèm tiêu đề/nội dung' if texts else '') + ' + tên file)',
+                              text=base_rules(settings, PARAGRAPH_RULES.replace('{src}', src)) + more,
+                              data='Kèm theo: lời thoại gốc theo từng dòng thời gian, số giây, số tiếng tối đa' + (', 3 khung hình của video' if settings['vision'] else '') + (', gợi ý sản phẩm' if hint else '') + '.'))
+        elif settings['mode'] == 'lines':
+            more, _ = extra_rules(settings, texts, True, context)
+            if texts:
+                more = '\n\nVĂN PHONG CHO TIÊU ĐỀ / NỘI DUNG: ' + ai_translate.style_rules(settings['style'], settings['energy'], True, settings.get('style_profile')) + more
+            calls.append(dict(title='Dịch theo timestamp · lần gọi đầu (kèm tiêu đề/nội dung + tên file)', text=base_rules(settings, TRANSLATE_RULES.replace('{src}', src), full=False) + more,
+                              data='Kèm theo: tối đa 40 dòng lời thoại mỗi lần (id, số giây, số tiếng tối đa, câu trước).'))
+        if (settings['mode'] in ('design', 'ai33')) and texts:
+            more, _ = extra_rules(settings, True, True, context)
+            calls.append(dict(title='Viết tiêu đề / nội dung + tên file (1 lần gọi)', text=base_rules(settings, TEXTS_RULES, pronoun=False) + more,
+                              data='Kèm theo: lời thoại của video' + (', 3 khung hình' if settings['vision'] else '') + '.'))
+        if not calls:
+            return dict(calls=[], note='Thiết lập này không gửi câu lệnh viết chữ nào cho AI (chỉ nhận diện lời / tạo giọng).')
+        return dict(calls=calls, note='Đúng nguyên văn phần hướng dẫn app gửi OpenAI (vai trò "developer"). Lời thoại, khung hình và gợi ý của từng video đi ở phần dữ liệu.')
+
     TEXT_FIELDS = ('texts', 'text_options', 'text_flags', 'file_name', 'file_name_alt', 'video_title', 'tags')
 
     def take_texts(self, job):
@@ -2320,7 +2423,7 @@ class Store:
 
     # options that belong to the steps before the export: a re-export never changes them (no new API call)
     # (the title/body source and "Âm thanh gốc" may change: fixed text, file name, none and the sound need no API call)
-    KEEP_ON_REEXPORT = ('mode', 'run_mode', 'test_seconds', 'language', 'model', 'style', 'energy', 'pronoun', 'rate', 'notes', 'instructions', 'no_price', 'vision', 'reuse',
+    KEEP_ON_REEXPORT = ('mode', 'run_mode', 'test_seconds', 'language', 'model', 'style', 'style_profile', 'energy', 'pronoun', 'rate', 'notes', 'instructions', 'no_price', 'vision', 'reuse',
                         'voice_id', 'voice_speed', 'dictionary_id', 'title_chars', 'body_min_chars', 'body_max_chars',
                         'title_style', 'trim_start', 'trim_end', 'align', 'min_tempo', 'max_tempo', 'video_speed_min', 'video_speed_max',
                         'end_with_voice', 'review', 'review_texts')
