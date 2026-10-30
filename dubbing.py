@@ -58,11 +58,12 @@ DEFAULTS = dict(language='zh', model=ai_translate.DEFAULT_MODEL, rate=4.2, prono
                 captions=False, caption_style='classic', caption_font='bvp-black', caption_size=68, caption_y=70, caption_words=5,
                 caption_color='#ffffff', caption_hi='#ffe14d', caption_upper=False,
                 music=False, music_ids=[], music_volume=18, music_duck=True, overwrite_export=False,
-                design=None, title_source='ai', body_source='ai', title_chars=30, body_min_chars=50, body_max_chars=100, review_texts=False, design_bg=True, design_title=True, design_body=True,
+                run_mode='full', test_seconds=0, design=None, title_source='ai', body_source='ai', title_chars=30, body_min_chars=50, body_max_chars=100, review_texts=False, design_bg=True, design_title=True, design_body=True,
                 adjust=False, adjust_brightness=0, adjust_contrast=0, adjust_saturation=0, adjust_sharpen=0,
                 vision=True, title_style='auto', reuse=True,
                 meta=True, meta_strip=True, meta_author='', meta_url='', meta_publisher='', meta_copyright='', meta_rating=0, meta_back_min=5, meta_back_max=7,
                 out_resolution='1080', out_fps='30', out_quality='high', edge_trim=0)
+RUN_MODES = ('full', 'texts', 'build')
 TEXT_SOURCES = ('ai', 'fixed', 'file', 'none')
 PRONOUNS = {'neutral': 'xưng hô trung tính, hạn chế đại từ', 'ban': 'gọi người xem là "bạn"', 'minh-ban': 'người nói xưng "mình", gọi người xem là "bạn"'}
 
@@ -177,6 +178,26 @@ def options(raw):
         out['body_source'] = 'none'
     if not (out['design_bg'] or out['design_title'] or out['design_body']):
         out['design'] = None
+    # "Chế độ chạy": full = lồng tiếng (the mode above) · texts = chỉ viết chữ AI (OpenAI only, no ai33 voice) ·
+    # build = chỉ dựng video, no API call at all (AI text sources fall back to the file name). An old saved
+    # "Dựng video" mode (design) without run_mode keeps working as "texts".
+    run_mode = raw.get('run_mode', 'texts' if raw.get('mode') == 'design' else 'full')
+    if run_mode not in RUN_MODES:
+        raise DubError('Chế độ chạy không hợp lệ.')
+    if run_mode == 'full' and out['mode'] == 'design':
+        run_mode = 'texts'
+    out['run_mode'] = run_mode
+    if run_mode != 'full':
+        out['mode'] = 'design'
+    if run_mode == 'build':
+        out['review_texts'] = False   # nothing new to review: AI texts of an earlier run are reused as they are
+    # "⚡ Xuất thử 5 giây": the first seconds only, always without any API call, kept in the app (not the output folder)
+    test = raw.get('test_seconds', 0)
+    if isinstance(test, bool) or not isinstance(test, (int, float)) or not 0 <= test <= 30:
+        raise DubError('Thời lượng xuất thử không hợp lệ.')
+    out['test_seconds'] = round(float(test), 1)
+    if out['test_seconds']:
+        out['run_mode'], out['mode'], out['review_texts'], out['review'] = 'build', 'design', False, False
     # Thông tin file: the user's own author / channel / copyright written into every exported MP4
     for key in ('meta_author', 'meta_url', 'meta_publisher', 'meta_copyright'):
         v = raw.get(key, '')
@@ -588,7 +609,8 @@ WHISPER_PER_MINUTE = 0.006
 
 
 def ai_texts_wanted(settings):
-    return bool(settings.get('design')) and 'ai' in (settings['title_source'], settings['body_source'])
+    """OpenAI writes the title/body. Never in "Chỉ dựng video" (run_mode build): no API call at all."""
+    return bool(settings.get('design')) and settings.get('run_mode') != 'build' and 'ai' in (settings['title_source'], settings['body_source'])
 
 
 def title_kind(settings):
@@ -1687,7 +1709,7 @@ class Store:
 
     def summary(self, job):
         return {k: job.get(k) for k in ('id', 'name', 'file_name', 'file_name_alt', 'video_title', 'tags', 'hint', 'reused', 'text_options', 'text_flags', 'state', 'step', 'steps', 'progress', 'message', 'created', 'outputs', 'warnings', 'duration', 'video_id', 'started', 'finished', 'spent')} | \
-               dict(texts=self.texts_for(job) if job.get('options', {}).get('design') else None, mp3=bool(job.get('mp3')), mode=job.get('options', {}).get('mode', 'lines'), lines=len(job.get('segments') or []), translated=len(job.get('segments') or []) if job.get('paragraph') else sum(1 for s in job.get('segments') or [] if s.get('vi')))
+               dict(texts=self.texts_for(job) if job.get('options', {}).get('design') else None, mp3=bool(job.get('mp3')), mode=job.get('options', {}).get('mode', 'lines'), run_mode=job.get('options', {}).get('run_mode', 'full'), test=job.get('options', {}).get('test_seconds', 0), lines=len(job.get('segments') or []), translated=len(job.get('segments') or []) if job.get('paragraph') else sum(1 for s in job.get('segments') or [] if s.get('vi')))
 
     def jobs(self):
         return self.jobs_since(0)['jobs']
@@ -1805,9 +1827,16 @@ class Store:
             self.save(job)
             with self.lock:
                 self.live[key] = job
+            try:
+                self.enqueue(key, raw)
+            except DubError:
+                # not queued (a key missing, no voice chosen…): the job must not stay as "Đang chờ lượt" for ever
+                with self.lock:
+                    self.live.pop(key, None)
+                shutil.rmtree(self.root / key, ignore_errors=True)
+                raise
             self.remember_source(job)
             made.append(key)
-            self.enqueue(key, raw)
         return made
 
     def donors(self, source):
@@ -1843,10 +1872,30 @@ class Store:
     def take_over(self, job):
         """Dùng lại kết quả cũ: copy what an older job of this video already paid for (speech, translation,
         texts, voice) when everything it depends on is the same; the look and the export are always made again."""
+        if job['options'].get('run_mode') == 'build':
+            return self.take_texts(job)
         level, old, steps = self.find_donor(job['source_key'], job['reuse'], job['options']['mode'])
         if old:
             self.copy_from(job, old, level, steps)
         return level
+
+    TEXT_FIELDS = ('texts', 'text_options', 'text_flags', 'file_name', 'file_name_alt', 'video_title', 'tags')
+
+    def take_texts(self, job):
+        """"Chỉ dựng video": only the AI title/body (and the AI file name, title, tags) of the newest earlier run of
+        this video, whatever its mode; nothing about speech, translation or voice (that run's warnings stay there)."""
+        o = job['options']
+        if not (o.get('design') and 'ai' in (o['title_source'], o['body_source'])):
+            return None
+        for old in self.donors(job['source_key']):
+            if any(str((old.get('texts') or {}).get(k) or '').strip() for k in ('title', 'body')):
+                for k in self.TEXT_FIELDS:
+                    if k in old:
+                        job[k] = json.loads(json.dumps(old[k]))
+                job['reused'] = dict(level='texts', job=old['id'])
+                job['message'] = 'Dùng lại tiêu đề và nội dung AI của lần chạy trước (không gọi API). Đang chờ lượt.'
+                return 'texts'
+        return None
 
     def find_donor(self, source, want, mode):
         for level, steps in REUSE_LEVELS[mode]:
@@ -1915,7 +1964,7 @@ class Store:
         settings = job['options']
         keys = dict(openai=openai_key(raw), ai33=ai33_key(raw))
         pending = any(job['steps'][s] not in ('done', 'skipped') for s in ('asr', 'translate'))
-        need_openai = (pending and (ai_texts_wanted(settings) if settings['mode'] == 'design' else settings['mode'] != 'ai33')) or bool(job.get('texts_redo'))
+        need_openai = (pending and (ai_texts_wanted(settings) if settings['mode'] == 'design' else settings['mode'] != 'ai33')) or (bool(job.get('texts_redo')) and ai_texts_wanted(settings))
         if need_openai and not keys['openai']:
             raise DubError('Nhập OpenAI API key (dùng cho nhận diện giọng và dịch/viết chữ). Không gửi key trong chat.')
         if settings['mode'] != 'design':
@@ -2206,7 +2255,7 @@ class Store:
 
     # options that belong to the steps before the export: a re-export never changes them (no new API call)
     # (the title/body source and "Âm thanh gốc" may change: fixed text, file name, none and the sound need no API call)
-    KEEP_ON_REEXPORT = ('mode', 'language', 'model', 'style', 'energy', 'pronoun', 'rate', 'notes', 'instructions', 'no_price', 'vision', 'reuse',
+    KEEP_ON_REEXPORT = ('mode', 'run_mode', 'test_seconds', 'language', 'model', 'style', 'energy', 'pronoun', 'rate', 'notes', 'instructions', 'no_price', 'vision', 'reuse',
                         'voice_id', 'voice_speed', 'dictionary_id', 'title_chars', 'body_min_chars', 'body_max_chars',
                         'title_style', 'trim_start', 'trim_end', 'align', 'min_tempo', 'max_tempo', 'video_speed_min', 'video_speed_max',
                         'end_with_voice', 'review', 'review_texts')
@@ -2242,7 +2291,7 @@ class Store:
                         more.update({'from': 'export', **({'options': look} if look else {})})
                     job = self.proceed(key, more)
                     if action == 'reexport':
-                        need = [k for k in ('title', 'body') if job['options'].get('design') and job['options'][k + '_source'] == 'ai' and not (job.get('texts') or {}).get(k)]
+                        need = [k for k in ('title', 'body') if job['options'].get('design') and job['options'].get('run_mode') != 'build' and job['options'][k + '_source'] == 'ai' and not (job.get('texts') or {}).get(k)]
                         if need and not job.get('texts_manual'):
                             missing.append(key)
                 elif action == 'cancel':
@@ -2562,7 +2611,7 @@ class Store:
         self.finish(job, 'export')
         job['state'] = 'done'
         job['progress'] = 100
-        job['message'] = ('Đã dựng xong.' if job['options']['mode'] == 'design' else 'Đã lồng tiếng xong.') + (f' Đã lưu: {job["outputs"].get("saved_path")}' if job['outputs'].get('saved_path') else '')
+        job['message'] = (f"Đã xuất thử {job['options']['test_seconds']:g} giây đầu (chỉ trong app, không lưu ra thư mục xuất). Bấm ▶ Xem." if job['options'].get('test_seconds') else 'Đã dựng xong.' if job['options']['mode'] == 'design' else 'Đã lồng tiếng xong.') + (f' Đã lưu: {job["outputs"].get("saved_path")}' if job['outputs'].get('saved_path') else '')
 
     def separate(self, job, folder, source, info, cancel):
         mode = job['options']['background']
@@ -2707,7 +2756,9 @@ class Store:
             source = settings[key + '_source']
             value = texts.get(key, '') if source == 'ai' else settings['design'].get(key, '') if source == 'fixed' else job['name'] if source == 'file' else ''
             if source == 'ai' and not value:
-                value = job['name'] if key == 'title' else ''
+                # no AI text (yet): the title falls back to the file name; in "Chỉ dựng video" the body shows the
+                # template's fixed text, so the layout can be checked without calling the API
+                value = job['name'] if key == 'title' else settings['design'].get('body', '') if settings.get('run_mode') == 'build' else ''
             out[key] = str(value)[:design_mod.TEXT_LIMITS[key]]
         return out
 
@@ -2955,9 +3006,9 @@ class Store:
         """Cut trim_start seconds off the beginning and trim_end off the end: every later read of the video uses the
         cut timeline (recognition, voice, subtitles, export) without encoding it first. Changing the cut restarts the job."""
         settings = job['options']
-        a, b = settings.get('trim_start', 0), settings.get('trim_end', 0)
+        a, b, test = settings.get('trim_start', 0), settings.get('trim_end', 0), settings.get('test_seconds', 0)
         target = folder / 'trimmed.mp4'
-        sign = f'{a:.3f}:{b:.3f}'
+        sign = f'{a:.3f}:{b:.3f}' + (f':{test:.1f}' if test else '')
         if job.get('trim_sign', '0.000:0.000') != sign:
             if any(job['steps'][s] == 'done' for s in STEPS):
                 for s in STEPS:
@@ -2971,13 +3022,15 @@ class Store:
                     job['segments'] = []
             target.unlink(missing_ok=True)
             job['trim_sign'] = sign
-        if not a and not b:
+        if not a and not b and not test:
             return source
         target.unlink(missing_ok=True)   # made by versions before 0.27 (the cut was encoded once more)
         total = probe(source)['duration']
         keep = total - a - b
         if keep < 1:
             raise DubError(f'Cắt đầu {a}s và cuối {b}s thì video còn quá ngắn ({max(0, keep):.1f}s).')
+        if test:
+            keep = min(keep, test)
         return Clip(source, a, keep)
 
     def place_paragraph(self, job, folder, cancel):
@@ -3203,7 +3256,7 @@ class Store:
             if problem:
                 job['warnings'].append('Thông tin file: ' + problem)
         try:
-            if output_folder.load(self.settings_path)['auto_save']:
+            if output_folder.load(self.settings_path)['auto_save'] and not settings.get('test_seconds'):
                 name = job.get('file_name') or job['name'] + ('-dung' if settings['mode'] == 'design' else '-long-tieng')
                 alts = [job['file_name_alt']] if job.get('file_name') and job.get('file_name_alt') else []
                 old = Path(job['last_saved']) if job.get('last_saved') else None

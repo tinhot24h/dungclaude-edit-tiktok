@@ -4,6 +4,19 @@ Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: c
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
 
+## Mới trong 0.41.0 · Chế độ chạy & Thử 5 giây
+
+- **Chế độ chạy** (ô trên cùng cột trái, lưu cùng Mẫu):
+  - 🎙 **Lồng tiếng**: như trước (OpenAI + ai33).
+  - ✍ **Chỉ chữ AI**: chỉ gọi OpenAI để viết tiêu đề / nội dung (khi nguồn chữ là "AI viết"), không tạo giọng ai33.
+  - 🎬 **Chỉ dựng**: **không gọi API nào ($0)**, không cần key. Dùng để test nền, khung, tiêu đề, nội dung, overlay, lớp ảnh, nhạc nền.
+- Ở Chỉ dựng / Chỉ chữ AI: mục *Nhận diện, dịch & viết chữ* và *Giọng đọc ai33* mờ đi kèm lời giải thích; nút chạy ghi rõ "▶ Xuất 12 video · không gọi API"; bảng kiểm tra ghi "Chỉ dựng video · không gọi API nào · $0"; hàng đợi có nhãn 🎬 chỉ dựng / ✍ chỉ chữ AI.
+- **Chữ khi không gọi AI:** video đã có chữ AI từ lần chạy trước thì dùng lại đúng chữ đó (kèm tên file, tiêu đề file, tags AI); chưa có thì tiêu đề = tên file, nội dung = chữ ở ô **Cố định** của Nội dung (bảng kiểm tra nhắc khi ô này trống).
+- **Âm thanh khi không lồng tiếng:** theo mục 🎵 Âm thanh gốc (giữ, tách giọng AI, xóa…) + nhạc nền. **MP3 cùng tên video** (chọn bằng "📂 Thư mục trên máy") được ghép làm giọng đọc, hiện "🎵 MP3" ở danh sách và hàng đợi.
+- **⚡ Thử 5 giây** (cạnh nút chạy): xuất 5 giây đầu của video đang xem trước, luôn không gọi API, chỉ giữ trong app (không lưu ra thư mục xuất), vài giây là xong, mở ▶ Xem ngay ở hàng đợi. Video vẫn còn trong danh sách để chạy cả lô sau.
+- **Sửa lỗi:** thiếu key (hoặc chưa chọn giọng) khi bấm chạy trước đây vẫn tạo tác vụ nằm "Đang chờ lượt" mãi; giờ chỉ báo lỗi, không để lại tác vụ kẹt. Dòng ghi chú "chạy mấy video cùng lúc" không còn bị ghi lẫn. Thanh trên cùng không còn tràn ngang trên màn hẹp.
+- Khi đang "Sửa & xuất lại", ô Chế độ chạy bị khóa (xuất lại giữ chế độ và giọng/chữ đã có của video).
+
 ## Mới trong 0.40.0 · rà soát toàn bộ
 
 - **Tắt app sạch sẽ:** bấm ⏻ (hoặc khởi động lại sau cập nhật) giờ dừng luôn mọi FFmpeg / Demucs đang chạy. Trước đây trên Windows chúng vẫn chạy ngầm sau khi tắt (ăn CPU, giữ khóa file video). Trên Windows, app và mọi tiến trình con còn được gắn với cửa sổ đen: đóng cửa sổ, Ctrl+C hay app bị treo/crash cũng không để lại FFmpeg nào. Cửa sổ thư mục mở bằng nút "Mở thư mục" và trình duyệt không bị đóng theo.

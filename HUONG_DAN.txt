@@ -67,6 +67,12 @@ khi mở app (đặt REVIEW_KEEP_DAYS=0 để tắt), trừ video còn trong hà
 Chỉ dùng trên máy này. Chưa gọi thử OpenAI / ai33 thật, NVENC và ghi Tags của Windows
 trên máy thật: hãy chạy thử 1–2 video trước khi chạy lô lớn.
 
+NÂNG CẤP 0.41.0
+- Ô "Chế độ chạy" trên cùng: Lồng tiếng / Chỉ chữ AI (chỉ OpenAI) / Chỉ dựng (không gọi API, $0).
+  Test bố cục: chọn Chỉ dựng, gõ 1 câu mẫu vào ô Cố định của Nội dung, bấm "⚡ Thử 5 giây".
+- MP3 cùng tên video (Thư mục trên máy) được ghép làm giọng khi không lồng tiếng.
+- Thiếu key không còn để lại tác vụ kẹt "Đang chờ lượt".
+
 NÂNG CẤP 0.40.0
 - Tắt app (nút nguồn, đóng cửa sổ đen, Ctrl+C) dừng luôn mọi FFmpeg / Demucs, không còn chạy ngầm.
 - Video đang lồng tiếng khi tắt app sẽ tự chạy tiếp lần mở sau; lỗi bất ngờ không làm đứng hàng đợi.
