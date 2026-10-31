@@ -1,0 +1,2 @@
+google-genai==1.75.0
+jsonschema>=4.23,<5

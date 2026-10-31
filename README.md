@@ -361,3 +361,17 @@ Pipeline lồng tiếng được kiểm tra với FFmpeg thật và OpenAI / ai3
 2. `python build_package.py --manifest` (cập nhật `MANIFEST.json`).
 3. `python -m unittest discover -s tests`, rồi commit và push lên `main`.
 4. Người dùng bấm ⟳ trong ứng dụng hoặc chạy `UPDATE_WINDOWS.bat`.
+
+## Gemini (nhánh tích hợp provider)
+
+- Cài SDK chính thức vào cùng Python chạy ứng dụng: `python -m pip install -r requirements-gemini.txt`, sau đó `python launch.py --no-browser` (Windows có thể mở như trước, dùng đúng Python đã cài SDK). OpenAI cũ không cần SDK này.
+- Tạo API key trong Google AI Studio: https://aistudio.google.com/apikey. Nhập ở **API key → Gemini → Lưu**. Key được giữ trong `.local/secrets.json`, không nằm trong ZIP; giao diện chỉ nhận trạng thái và bốn ký tự cuối. Không chia sẻ key trong chat.
+- Bấm **Kiểm tra Gemini** hoặc **Làm mới model Gemini**. Backend dùng SDK `models.list`, chỉ nhận model có `generateContent`, lưu danh sách và thời điểm kiểm tra trong `.local/gemini-models.json`. Kết quả này xác nhận danh sách, không bảo đảm mọi yêu cầu generate/JSON của tài khoản đều thành công.
+- Chọn **Nhà cung cấp dịch / biên tập → Gemini**, model chính và (tùy chọn) model dự phòng. Fallback chỉ chuyển giữa các model Gemini đã có trong danh sách, tối đa ba lần thử mỗi model; không tự chuyển sang OpenAI. 401/403/404, payload hoặc JSON sai không retry. 429/5xx/lỗi mạng tạm thời retry có giới hạn, tôn trọng Retry-After; thời gian chờ trên 60 giây trả lỗi để tiếp tục sau. Có thể hủy lúc chờ; một request đang gửi có thể phải chờ timeout.
+- Các tên yêu cầu **Gemini 3.5 Flash Lite, 3.1 Flash Lite, 3.6 Flash, 3.8 Flash chưa được xác minh**. Không gán ID suy đoán. Khi danh sách đã được kiểm tra và có key, giao diện mới ưu tiên một Flash-Lite/Flash thực sự được liệt kê. Cấu hình cũ thiếu provider vẫn là OpenAI.
+- STT vẫn dùng **OpenAI Whisper** với key riêng; Gemini chỉ dịch/biên tập; giọng đọc vẫn là ai33.pro. SRT giữ timestamp bằng code. Không có tuyên bố toàn bộ pipeline miễn phí.
+- **Thống kê token Gemini** hiển thị thống kê theo ngày UTC/model: logical tasks, attempts, retries, thành công/thất bại, 429, token từ usage metadata và thời điểm gần nhất. `missing_usage` ghi số phản hồi không có usage; số 0 của bộ cộng token không có nghĩa là miễn phí. OpenAI vẫn có thống kê chi phí cũ; chưa hợp nhất thống kê attempt OpenAI vào bảng Gemini. Cache/checkpoint không tạo attempt mới.
+- Provider và cấu hình fallback được lưu cùng cấu hình/mẫu và tham gia khóa cache dịch; đổi provider không làm mất cache STT. Chi phí Gemini chưa được ước tính; tổng trước khi chạy chỉ gồm Whisper và ai33 khi chọn Gemini. Quota phụ thuộc tài khoản, không hardcode các con số tham khảo.
+- Mạng cần cho phép `generativelanguage.googleapis.com` để dùng Gemini; cài SDK cần PyPI. Không lưu khóa thật trong repository hoặc manifest.
+
+Kiểm thử: `python -m unittest discover -s tests -v`. Các test Gemini dùng API giả lập; chưa kiểm thử generateContent thật, trình duyệt trên Windows, GPU và Windows Property Store. Hai lỗi FFmpeg đã có ở baseline môi trường Linux (FPS 72 thay vì 60; chênh pixel blend 33 thay vì ≤2) cần xử lý riêng. Bản tích hợp chưa thay đổi thuật toán cân thời lượng/cắt giọng hiện có.

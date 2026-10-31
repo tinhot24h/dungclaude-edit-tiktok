@@ -8,7 +8,7 @@ import os
 import threading
 from pathlib import Path
 
-PROVIDERS = ('openai', 'ai33')
+PROVIDERS = ('openai', 'ai33', 'gemini')
 PATH = Path(__file__).resolve().parent / '.local' / 'secrets.json'
 LOCK = threading.Lock()
 
@@ -76,7 +76,7 @@ def status():
 
 
 def forget_removed():
-    """Keys of providers the app no longer uses (Gemini, removed in 0.24) are deleted from this computer."""
+    """Remove only unsupported legacy provider entries."""
     with LOCK:
         try:
             raw = json.loads(PATH.read_text(encoding='utf-8'))

@@ -3,13 +3,25 @@
  "version": "0.42.0",
  "notes": "## Mới trong 0.42.0 · Văn phong & Mẫu\n\n**Văn phong xem / sửa được**\n- Nút **👁 Xem / sửa** cạnh ô Văn phong: mỗi văn phong là các mục hướng dẫn gửi AI (tên, mô tả ngắn, giọng văn, 3 giây đầu, trình tự ý, nên dùng, tránh, câu mở mẫu, kiểu tiêu đề ưu tiên), có đếm ký tự. Sửa rồi **Lưu**; văn phong có sẵn đã sửa hiện dấu ✎ và có **↺ Về mặc định**.\n- **＋ Lưu thành văn phong mới**: nhân bản thành văn phong riêng (vd \"Review bếp miền Tây\"), hiện ở nhóm \"Văn phong tự tạo\"; xóa được.\n- **Xem toàn bộ câu lệnh gửi AI** (dưới ô Văn phong): đúng nguyên văn phần hướng dẫn app gửi OpenAI cho thiết lập đang chọn (mẫu câu lệnh + văn phong + hào hứng + xưng hô + ghi chú + giới hạn + phần chữ trên khung), từng lần gọi, có nút Copy.\n- Lưu trên máy (`.local/dub/styles.json`), không mất khi cập nhật. Mỗi video giữ văn phong nó đã dùng (xuất lại ra đúng như cũ); mẫu mang theo văn phong, áp dụng mẫu trên máy khác tự thêm văn phong đó.\n\n**Mẫu làm lại**\n- **Thanh mẫu**: `📁 Mẫu: Khung hồng ✓` hoặc `● đã sửa 3` (rê chuột để xem sửa ở phần nào) · **💾 Lưu** (ghi đè mẫu đang dùng) · **＋ Lưu mới** · **↺ Về mẫu** (bỏ thay đổi). Trùng tên thì hỏi trước khi ghi đè.\n- **Mẫu theo phần**: khi lưu, chọn phần nào vào mẫu (Chế độ chạy, Giọng & dịch, Âm thanh gốc, Video, Nền & khung, Tiêu đề & nội dung, Overlay, Lớp ảnh, Nhạc nền, Phụ đề, Xuất & thông tin file). Áp dụng chỉ đổi đúng các phần đó, nên **ghép được nhiều mẫu** (mẫu khung + mẫu giọng…).\n- **Kiểm tra trước khi áp dụng**: hiện phần nào đổi bao nhiêu thông số; báo overlay / ảnh / nhạc / khung PNG không còn trong thư viện, văn phong sẽ được thêm.\n- **Không lưu thông số của máy**: bộ mã hóa, số video chạy cùng lúc, thư mục xuất, key luôn theo máy đang dùng.\n- **Quản lý mẫu** (bấm vào tên mẫu): thẻ có **ảnh xem trước** nền + khung + chữ, các phần trong mẫu, mô tả, lần dùng cuối; **Áp dụng · Đổi tên · Nhân bản · ⭐ Mặc định khi mở app · Xóa**; ô tìm mẫu.\n- Mẫu lưu trước 0.42 vẫn dùng được (coi như đủ mọi phần).",
  "files": {
+  "ai_provider.py": {
+   "sha256": "a04c1d920a68a03487b4696ce45574a003d64597ef7e0a62a1e14f077362c0a6",
+   "size": 7799
+  },
+  "requirements-gemini.txt": {
+   "sha256": "db0ff9d6b274ab2768e57e43249e5dae67b51b2da4420fef900e45bc4e027255",
+   "size": 41
+  },
+  "tests/test_ai_provider.py": {
+   "sha256": "f19c48e346a27250ee03b12875224a21932c1a250cb9f275676dcef2b0d46718",
+   "size": 7717
+  },
   "style_ui.js": {
    "sha256": "39e8c62990f5ea114aa22c1fa6590c31ef96293560d0af5e4a8172e01f639074",
    "size": 9041
   },
   "preset_ui.js": {
-   "sha256": "5a29bc416d1137ce0cedbbed68559b8124620b8361a7ab54035b836014b9155a",
-   "size": 20092
+   "sha256": "1b899e153e6cf97a55f6f2eb35220ada57bef69d45b66a63887060049fa4cb50",
+   "size": 20146
   },
   "tests/test_presets.py": {
    "sha256": "9a0a0f916f717eafe0d4aa329c3844bba272038f4ec407ee0301466eb4928fea",
@@ -100,20 +112,20 @@
    "size": 5181
   },
   "dub_ui.js": {
-   "sha256": "973aa47d2620da566383a8bbed47a5cbf740a529e8c0fd8200f6c8562c5e917e",
-   "size": 187799
+   "sha256": "e46907a7fa75e43a2db0800fa7789ad62486b5043cce081294609aa59d31a414",
+   "size": 190973
   },
   "key_ui.js": {
-   "sha256": "4c1833943a21476f6e515115af555c36a4d763bbc5c1122f111cad0a5065574d",
-   "size": 5667
+   "sha256": "213bef3a4a46379eb659f413418f07fbb82860aa4e4b46865a67c9ae072d7926",
+   "size": 6184
   },
   "secrets_store.py": {
-   "sha256": "fce1367bbdd2c6103533bc3d3a61242b3093b253655bd29597bca79f1c517b23",
-   "size": 2610
+   "sha256": "cab579929e01d97f15c5080cd9c6f3ea68c42d158fd090483ff1c4e3368b53fa",
+   "size": 2570
   },
   "dubbing.py": {
-   "sha256": "3446ff3570766ad6d26fe918e8c70a6180a0e82bc476126473802da0e6348516",
-   "size": 227880
+   "sha256": "e791ae1c34de7428b2eaf60a866fa2a5d064a2519e24319442eaa81cdc4d442a",
+   "size": 229681
   },
   "tests/test_dubbing.py": {
    "sha256": "8cfed9a4e9864a8e0341fdb2ea88e0def7e5a977eabe87d8414bb60f0563794e",
@@ -164,8 +176,8 @@
    "size": 13961
   },
   "app.py": {
-   "sha256": "d085d57c51f3a26c5aee06c0f7e7671aa0ecfc447a831d4a269db092edc8f340",
-   "size": 66498
+   "sha256": "f4db11729459d68b36c5792f48b3f21881e4d2e16fe5ebb538396125dd69e9a4",
+   "size": 66915
   },
   "ai33_audio.py": {
    "sha256": "64c870ef291fbd725d4cdae68bc841d437040110ca83e429e1ff0b15ebf1fe5b",
@@ -208,8 +220,8 @@
    "size": 5476
   },
   "build_package.py": {
-   "sha256": "8e8feebf6218e03da12cd7603d73711bb8be5cf846d6ced074b0f2ca6e4300ac",
-   "size": 3451
+   "sha256": "d9dc7478700b6f74ca80beb7b12daa116a55542278d6eebf45fb855e5086c660",
+   "size": 3525
   },
   "START_WINDOWS.bat": {
    "sha256": "45917335d9a938e178467107e9ceeaed5daecef10ca9351015867336746a6957",
@@ -220,8 +232,8 @@
    "size": 16929
   },
   "README.md": {
-   "sha256": "25fdf95e58850d35ece30bb43281a85b43182680c49bc2af3eea3905958e846f",
-   "size": 46476
+   "sha256": "4b20fe473e75909b869d34ef610cb8358a96659cd9e4f3bf70ee62b55902f552",
+   "size": 49949
   },
   "VERSION": {
    "sha256": "6c17554dba43398fe2fba3e3c6fa2dac4695faa18b6e61aa72342cdc56fe7852",

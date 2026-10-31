@@ -15,7 +15,7 @@ const MACHINE=new Set(['encoder']);
 const NOTE=new Set(['rules_saved','rules_name']);   // which Mẫu câu lệnh a preset carries: information, not a setting to compare
 const PARTS=[
  ['run','⚙ Chế độ chạy',k=>k==='run_mode'],
- ['voice','🗣 Giọng & dịch',k=>/^(mode|language|model|style|style_profile|energy|pronoun|rate|notes|no_price|review|voice_id|voice_speed|voice_volume|max_tempo|min_tempo|video_speed_min|video_speed_max|dictionary_id|align|end_with_voice|vision|reuse|instructions|rules_saved|rules_name)$/.test(k)],
+ ['voice','🗣 Giọng & dịch',k=>/^(provider|fallback_enabled|fallback_model|stt_provider|mode|language|model|style|style_profile|energy|pronoun|rate|notes|no_price|review|voice_id|voice_speed|voice_volume|max_tempo|min_tempo|video_speed_min|video_speed_max|dictionary_id|align|end_with_voice|vision|reuse|instructions|rules_saved|rules_name)$/.test(k)],
  ['audio','🎵 Âm thanh gốc',k=>/^(background|duck_level|background_volume)$/.test(k)],
  ['video','✂ Video (cắt, vị trí, màu)',k=>/^(trim_start|trim_end|edge_trim|frame_(canvas|fit|zoom|x|y|rotate|flip)|adjust.*)$/.test(k),d=>/^(video_|motion_amount$)/.test(d)],
  ['design','🎨 Nền & khung',k=>/^(design_bg|layer_order)$/.test(k),d=>!/^(video_|motion_amount$|title|body|text\d)/.test(d)],

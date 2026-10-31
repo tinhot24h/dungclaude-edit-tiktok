@@ -1,3 +1,4 @@
+import ai_provider
 """Automatic Chinese → Vietnamese dubbing.
 
 01 Nhận diện  OpenAI Whisper (whisper-1) → Chinese SRT with timestamps (or an SRT the user already has)
@@ -234,6 +235,17 @@ def options(raw):
     if not isinstance(model, str) or not re.fullmatch('[A-Za-z0-9][A-Za-z0-9._:-]{0,99}', model):
         raise DubError('Tên model OpenAI không hợp lệ.')
     out['model'] = model
+    provider = raw.get('provider', 'openai')
+    if provider not in ('openai', 'gemini'):
+        raise DubError('Nhà cung cấp AI không hợp lệ.')
+    out['provider'] = provider
+    out['fallback_enabled'] = raw.get('fallback_enabled') is True
+    fallback = raw.get('fallback_model', '')
+    if not isinstance(fallback, str) or (fallback and not re.fullmatch('[A-Za-z0-9][A-Za-z0-9._:-]{0,99}', fallback)):
+        raise DubError('Model dự phòng không hợp lệ.')
+    out['fallback_model'] = fallback
+    out['stt_provider'] = 'openai'
+
     notes = raw.get('notes', '')
     if not isinstance(notes, str) or len(notes) > 2000:
         raise DubError('Ghi chú cho người dịch tối đa 2.000 ký tự.')
@@ -293,6 +305,8 @@ def reuse_keys(settings, source, hint):
     o = settings
     asr = h(source, o['trim_start'], o['trim_end'], o['language'])
     write = (o['model'], o['style'], o.get('style_profile'), o.get('energy', 'mid'), o['notes'], o['instructions'], o['vision'], hint)
+    if o.get('provider', 'openai') != 'openai':
+        write += (o['provider'], o.get('fallback_enabled', False), o.get('fallback_model', ''))
     trans = h(asr, o['mode'], o['pronoun'], o['rate'], *write) if o['mode'] in ('paragraph', 'lines') else ''
     texts = h(asr, o['mode'], *write, ai_texts_wanted(o), o['title_source'], o['body_source'], o['title_chars'], o['body_min_chars'], o['body_max_chars'], o['title_style'],
               trans if o['mode'] in ('paragraph', 'lines') else '')
@@ -802,6 +816,18 @@ def user_input(data, context):
     return [dict(type='input_text', text=text), *[dict(type='input_image', image_url=u, detail='low') for u in context['images']]]
 
 
+def provider_call(body, context, settings, timeout):
+    if settings.get('provider', 'openai') == 'openai':
+        return responses_call(body, context, timeout)
+    try:
+        return ai_provider.generate(body, settings, timeout)
+    except ai_provider.ProviderError as exc:
+        cancel = getattr(ai_provider.CONTEXT, "cancel", None)
+        if cancel and cancel.is_set():
+            raise Cancelled() from None
+        raise DubError(str(exc), 502) from None
+
+
 def responses_call(body, context, timeout):
     """POST /responses; a model that does not take images (custom model name) is asked again without them."""
     try:
@@ -903,7 +929,7 @@ def texts_request(key, model, lines, settings, context=None):
     body = dict(_key=key, model=model, store=False, max_output_tokens=2000, **reasoning(model),
                 input=[dict(role='developer', content=rules), dict(role='user', content=user_input(dict(lines=lines[:400]), context))],
                 text=dict(format=dict(type='json_schema', name='dub_texts', strict=True, schema=schema)))
-    raw = responses_call(body, context, 120)
+    raw = provider_call(body, context, settings, 120)
     try:
         return json.loads(output_text(raw))
     except ValueError:
@@ -948,12 +974,14 @@ def translate_request(key, model, lines, settings, want_texts=False, want_name=F
     body = dict(_key=key, model=model, store=False, max_output_tokens=12000, **reasoning(model),
                 input=[dict(role='developer', content=rules), dict(role='user', content=user_input(dict(lines=lines), context))],
                 text=dict(format=dict(type='json_schema', name='dub_lines', strict=True, schema=schema)))
-    raw = responses_call(body, context, 180)
+    raw = provider_call(body, context, settings, 180)
     if raw.get('status') != 'completed':
         raise DubError('OpenAI chưa dịch xong (phản hồi bị cắt). Bấm Tiếp tục để thử lại.', 502)
     try:
         got = json.loads(output_text(raw))
         mapping = {int(r['id']): str(r['vi']) for r in got['lines'] if isinstance(r, dict)}
+        if settings.get('provider') == 'gemini' and (len(mapping) != len(got['lines']) or set(mapping) != {l['id'] for l in lines} or any(not v.strip() for v in mapping.values())):
+            raise ValueError('Gemini segment IDs or text invalid')
         return (mapping, {k: v for k, v in got.items() if k != 'lines'}) if want_texts or want_name else mapping
     except (ValueError, KeyError, TypeError):
         raise DubError('Không đọc được bản dịch OpenAI. Bấm Tiếp tục để thử lại.', 502) from None
@@ -975,7 +1003,7 @@ def paragraph_request(key, model, segments, seconds, limit, settings, context=No
     body = dict(_key=key, model=model, store=False, max_output_tokens=12000, **reasoning(model),
                 input=[dict(role='developer', content=rules), dict(role='user', content=user_input(data, context))],
                 text=dict(format=dict(type='json_schema', name='dub_paragraph', strict=True, schema=schema)))
-    raw = responses_call(body, context, 180)
+    raw = provider_call(body, context, settings, 180)
     if raw.get('status') != 'completed':
         raise DubError('OpenAI chưa dịch xong (phản hồi bị cắt). Bấm Tiếp tục để thử lại.', 502)
     try:
@@ -1669,6 +1697,9 @@ def cost(settings, seconds, reuse=None, audio=True, redo_texts=False, voice_char
     if model['think']:
         tout *= 2.2
     usd = whisper + (tin * model['price'][0] + tout * model['price'][1]) / 1e6
+    if settings.get('provider') == 'gemini':
+        usd = whisper  # Gemini pricing is unknown, never apply the OpenAI price table.
+        uses = ['nhận diện lời'] if whisper else []
     tts = dict(chars=0, minutes=0)
     if 'tts' not in covered:
         if mode in ('paragraph', 'lines'):
@@ -2130,10 +2161,13 @@ class Store:
         job = self.load(key)
         settings = job['options']
         keys = dict(openai=openai_key(raw), ai33=ai33_key(raw))
+        if settings.get('provider') == 'gemini':
+            keys['stt'] = keys['openai']
+            keys['openai'] = secrets_store.get('gemini')
         pending = any(job['steps'][s] not in ('done', 'skipped') for s in ('asr', 'translate'))
         need_openai = (pending and (ai_texts_wanted(settings) if settings['mode'] == 'design' else settings['mode'] != 'ai33')) or (bool(job.get('texts_redo')) and ai_texts_wanted(settings))
         if need_openai and not keys['openai']:
-            raise DubError('Nhập OpenAI API key (dùng cho nhận diện giọng và dịch/viết chữ). Không gửi key trong chat.')
+            raise DubError('Nhập API key cho nhà cung cấp AI đã chọn.')
         if settings['mode'] != 'design':
             if not keys['ai33'] and job['steps']['tts'] != 'done':
                 raise DubError('Nhập ai33.pro API key (dùng để tạo giọng Việt).')
@@ -2509,6 +2543,7 @@ class Store:
         began = time.time()
         job['started'] = round(began)
         try:
+            ai_provider.CONTEXT.cancel = cancel
             self.process(job, self.keys.get(key, {}), cancel)
             if job.get('state') == 'done':
                 job['finished'] = round(time.time())
@@ -2602,7 +2637,7 @@ class Store:
                 raise DubError('Âm thanh quá dài cho OpenAI (25 MB). Cắt video ngắn hơn 60 phút.')
             self.progress(job, 'asr', .3, 'Đang nhận diện giọng nói (OpenAI Whisper)…')
             self.save(job)
-            result = transcribe_request(folder / 'asr.mp3', keys['openai'], settings['language'])
+            result = transcribe_request(folder / 'asr.mp3', keys.get('stt', keys['openai']), settings['language'])
             rows = [dict(start=round(float(s['start']), 3), end=round(float(s['end']), 3), zh=' '.join(str(s.get('text', '')).split()))
                     for s in result.get('segments') or [] if str(s.get('text', '')).strip() and float(s['end']) > float(s['start'])]
             if not rows:

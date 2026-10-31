@@ -1,3 +1,4 @@
+import ai_provider
 """Local TikTok review video composer. Python 3.11+, FFmpeg, no pip packages."""
 import base64
 import json
@@ -547,6 +548,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(200,DUB.queue_info())
         if path == '/dub/styles':
             return self.respond(200,DUB.styles())
+        if path == '/ai/models':
+            return self.respond(200,ai_provider.models())
+        if path == '/ai/usage':
+            return self.respond(200,ai_provider.read('ai-usage.json', {}))
         if path == '/dub/spend':
             return self.respond(200,{**dubbing.SPEND.summary(),'ai33':dubbing.AI33_SPEND.summary()})
         if path == '/dub/storage':
@@ -554,7 +559,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == '/dub/demucs':
             return self.respond(200,dubbing.demucs_status('refresh' in parse_qs(urlparse(self.path).query)))
         if path == '/dub/capabilities':
-            return self.respond(200,{'demucs':bool(dubbing.demucs_command()),'openai':bool(dubbing.openai_key({})),'ai33':bool(dubbing.ai33_key({})),
+            return self.respond(200,{'gemini':bool(secrets_store.get('gemini')),'gemini_catalog':ai_provider.models(),'demucs':bool(dubbing.demucs_command()),'openai':bool(dubbing.openai_key({})),'ai33':bool(dubbing.ai33_key({})),
                                      'ass':dubbing.ASS_FILTER(),'defaults':dubbing.DEFAULTS,'models':dubbing.MODELS,'whisper_per_minute':dubbing.WHISPER_PER_MINUTE,'pronouns':dubbing.PRONOUNS,'styles':ai_translate.STYLE_LABELS,'energy':ai_translate.ENERGY_LABELS})
         sample=re.fullmatch(r'/dub/sample/([a-f0-9]{24})\.mp3',path)
         if sample:
@@ -764,6 +769,8 @@ class Handler(BaseHTTPRequestHandler):
                     return self.respond(200,{'id':key,'url':'/frames/'+key})
                 for suffix in ('.png','.json'):(IMAGES/(key+suffix)).unlink(missing_ok=True)
                 return self.respond(200,{'images':images()})
+            if path == '/ai/models/refresh':
+                return self.respond(200,ai_provider.models(refresh=True))
             if path in ('/secrets/save','/secrets/delete'):
                 raw=json.loads(self.rfile.read(size)) if 0<size<=4096 else {}
                 if not isinstance(raw,dict):raise ValueError('Yêu cầu không hợp lệ.')
