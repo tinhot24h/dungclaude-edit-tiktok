@@ -1,8 +1,16 @@
-# Review Studio 0.27.4
+# Review Studio 0.43.0
 
 Làm video review / lồng tiếng TikTok **hàng loạt** trên máy Windows: chọn nhiều MP4 tiếng Trung → OpenAI nhận diện lời, dịch, viết tiêu đề / nội dung / tên file → ai33.pro đọc giọng Việt → FFmpeg ghép nền, khung, chữ, overlay và xuất MP4 hoàn chỉnh vào thư mục của bạn.
 
 **Tải bản đóng gói:** mục [Releases](https://github.com/tinhot24h/dungclaude-edit-tiktok/releases) · Cài và chạy: `HUONG_DAN.txt`.
+
+## Mới trong 0.43.0 · Gemini bên cạnh OpenAI
+
+- Chọn Gemini để dịch/biên tập, giữ OpenAI Whisper cho nhận diện lời và ai33.pro cho giọng đọc.
+- Thêm quản lý Gemini key, danh sách model được kiểm tra qua API, fallback cùng provider và thống kê token Gemini.
+- Dự án cũ vẫn dùng OpenAI. Chưa xác minh các tên model Gemini được yêu cầu; hãy làm mới danh sách bằng key của bạn.
+- **Sau khi cập nhật:** đóng ứng dụng rồi mở lại `START_WINDOWS.bat` để cài SDK Gemini vào đúng Python. Cần Internet/PyPI khi cài lần đầu. Người chạy trực tiếp bằng Python: `python -m pip install -r requirements-gemini.txt`.
+- Kiểm thử API dùng mock, chưa kiểm chứng Gemini thật hoặc GUI Windows. Hai lỗi FFmpeg baseline vẫn còn (FPS và blend); xem phần Gemini cuối tài liệu.
 
 ## Mới trong 0.42.0 · Văn phong & Mẫu
 

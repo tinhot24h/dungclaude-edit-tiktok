@@ -19,6 +19,17 @@ if not defined PYCMD (
     pause
     exit /b 1
 )
+rem Install Gemini dependencies into the same Python used to launch Review Studio.
+%PYCMD% -c "from google import genai; import jsonschema" >nul 2>nul
+if errorlevel 1 (
+    echo Dang cai thu vien Gemini, vui long doi...
+    %PYCMD% -m pip install -r requirements-gemini.txt
+    if errorlevel 1 (
+        echo Khong cai duoc SDK Gemini. Kiem tra ket noi mang roi mo lai START_WINDOWS.bat.
+        pause
+        exit /b 1
+    )
+)
 rem FFmpeg is downloaded by launch.py itself when it is missing
 %PYCMD% launch.py
 if errorlevel 1 (

@@ -1,7 +1,7 @@
 {
  "app": "ReviewStudio",
- "version": "0.42.0",
- "notes": "## Mới trong 0.42.0 · Văn phong & Mẫu\n\n**Văn phong xem / sửa được**\n- Nút **👁 Xem / sửa** cạnh ô Văn phong: mỗi văn phong là các mục hướng dẫn gửi AI (tên, mô tả ngắn, giọng văn, 3 giây đầu, trình tự ý, nên dùng, tránh, câu mở mẫu, kiểu tiêu đề ưu tiên), có đếm ký tự. Sửa rồi **Lưu**; văn phong có sẵn đã sửa hiện dấu ✎ và có **↺ Về mặc định**.\n- **＋ Lưu thành văn phong mới**: nhân bản thành văn phong riêng (vd \"Review bếp miền Tây\"), hiện ở nhóm \"Văn phong tự tạo\"; xóa được.\n- **Xem toàn bộ câu lệnh gửi AI** (dưới ô Văn phong): đúng nguyên văn phần hướng dẫn app gửi OpenAI cho thiết lập đang chọn (mẫu câu lệnh + văn phong + hào hứng + xưng hô + ghi chú + giới hạn + phần chữ trên khung), từng lần gọi, có nút Copy.\n- Lưu trên máy (`.local/dub/styles.json`), không mất khi cập nhật. Mỗi video giữ văn phong nó đã dùng (xuất lại ra đúng như cũ); mẫu mang theo văn phong, áp dụng mẫu trên máy khác tự thêm văn phong đó.\n\n**Mẫu làm lại**\n- **Thanh mẫu**: `📁 Mẫu: Khung hồng ✓` hoặc `● đã sửa 3` (rê chuột để xem sửa ở phần nào) · **💾 Lưu** (ghi đè mẫu đang dùng) · **＋ Lưu mới** · **↺ Về mẫu** (bỏ thay đổi). Trùng tên thì hỏi trước khi ghi đè.\n- **Mẫu theo phần**: khi lưu, chọn phần nào vào mẫu (Chế độ chạy, Giọng & dịch, Âm thanh gốc, Video, Nền & khung, Tiêu đề & nội dung, Overlay, Lớp ảnh, Nhạc nền, Phụ đề, Xuất & thông tin file). Áp dụng chỉ đổi đúng các phần đó, nên **ghép được nhiều mẫu** (mẫu khung + mẫu giọng…).\n- **Kiểm tra trước khi áp dụng**: hiện phần nào đổi bao nhiêu thông số; báo overlay / ảnh / nhạc / khung PNG không còn trong thư viện, văn phong sẽ được thêm.\n- **Không lưu thông số của máy**: bộ mã hóa, số video chạy cùng lúc, thư mục xuất, key luôn theo máy đang dùng.\n- **Quản lý mẫu** (bấm vào tên mẫu): thẻ có **ảnh xem trước** nền + khung + chữ, các phần trong mẫu, mô tả, lần dùng cuối; **Áp dụng · Đổi tên · Nhân bản · ⭐ Mặc định khi mở app · Xóa**; ô tìm mẫu.\n- Mẫu lưu trước 0.42 vẫn dùng được (coi như đủ mọi phần).",
+ "version": "0.43.0",
+ "notes": "## Mới trong 0.43.0 · Gemini bên cạnh OpenAI\n\n- Chọn Gemini để dịch/biên tập, giữ OpenAI Whisper cho nhận diện lời và ai33.pro cho giọng đọc.\n- Thêm quản lý Gemini key, danh sách model được kiểm tra qua API, fallback cùng provider và thống kê token Gemini.\n- Dự án cũ vẫn dùng OpenAI. Chưa xác minh các tên model Gemini được yêu cầu; hãy làm mới danh sách bằng key của bạn.\n- **Sau khi cập nhật:** đóng ứng dụng rồi mở lại `START_WINDOWS.bat` để cài SDK Gemini vào đúng Python. Cần Internet/PyPI khi cài lần đầu. Người chạy trực tiếp bằng Python: `python -m pip install -r requirements-gemini.txt`.\n- Kiểm thử API dùng mock, chưa kiểm chứng Gemini thật hoặc GUI Windows. Hai lỗi FFmpeg baseline vẫn còn (FPS và blend); xem phần Gemini cuối tài liệu.",
  "files": {
   "ai_provider.py": {
    "sha256": "a04c1d920a68a03487b4696ce45574a003d64597ef7e0a62a1e14f077362c0a6",
@@ -224,19 +224,19 @@
    "size": 3525
   },
   "START_WINDOWS.bat": {
-   "sha256": "45917335d9a938e178467107e9ceeaed5daecef10ca9351015867336746a6957",
-   "size": 1411
+   "sha256": "4fd240d0f90107e344489584c7d61aba21afccf0603e5df9c53de0c4cd8e840b",
+   "size": 1850
   },
   "HUONG_DAN.txt": {
    "sha256": "6e0e3d17a8a79602c2b4ca70275264fe85a99469ccf6a2b4bf60162d3361b0a7",
    "size": 16929
   },
   "README.md": {
-   "sha256": "4b20fe473e75909b869d34ef610cb8358a96659cd9e4f3bf70ee62b55902f552",
-   "size": 49949
+   "sha256": "2f94a794f89b291d8318ec3f3a78c1ada822c508d6c19553abdece578b76cc75",
+   "size": 50844
   },
   "VERSION": {
-   "sha256": "6c17554dba43398fe2fba3e3c6fa2dac4695faa18b6e61aa72342cdc56fe7852",
+   "sha256": "45cf252eabfb9874cf77978f8074fddb21798cd05a2ba646116b3999024fd35d",
    "size": 7
   },
   ".gitignore": {
